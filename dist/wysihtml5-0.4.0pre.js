@@ -3485,7 +3485,7 @@ wysihtml5.browser = (function() {
      * Firefox on OSX navigates through history when hitting CMD + Arrow right/left
      */
     hasHistoryIssue: function() {
-      return isGecko;
+      return isGecko && navigator.platform.substr(0, 3) === "Mac";
     },
 
     /**
@@ -3725,6 +3725,18 @@ wysihtml5.browser = (function() {
      */
     hasIframeFocusIssue: function() {
       return isIE;
+    },
+    
+    /**
+     * Chrome + Safari create invalid nested markup after paste
+     * 
+     *  <p>
+     *    foo
+     *    <p>bar</p> <!-- BOO! -->
+     *  </p>
+     */
+    createsNestedInvalidMarkupAfterPaste: function() {
+      return isWebKit;
     }
   };
 })();wysihtml5.lang.array = function(arr) {
@@ -3876,7 +3888,14 @@ wysihtml5.browser = (function() {
   };
 };(function() {
   var WHITE_SPACE_START = /^\s+/,
-      WHITE_SPACE_END   = /\s+$/;
+      WHITE_SPACE_END   = /\s+$/,
+      ENTITY_REG_EXP    = /[&<>"]/g,
+      ENTITY_MAP = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': "&quot;"
+      };
   wysihtml5.lang.string = function(str) {
     str = String(str);
     return {
@@ -3912,6 +3931,15 @@ wysihtml5.browser = (function() {
             return str.split(search).join(replace);
           }
         };
+      },
+      
+      /**
+       * @example
+       *    wysihtml5.lang.string("hello<br>").escapeHTML();
+       *    // => "hello&lt;br&gt;"
+       */
+      escapeHTML: function() {
+        return str.replace(ENTITY_REG_EXP, function(c) { return ENTITY_MAP[c]; });
       }
     };
   };
@@ -4002,11 +4030,12 @@ wysihtml5.browser = (function() {
    */
   function _wrapMatchesInNode(textNode) {
     var parentNode  = textNode.parentNode,
+        nodeValue   = wysihtml5.lang.string(textNode.data).escapeHTML(),
         tempElement = _getTempElement(parentNode.ownerDocument);
     
     // We need to insert an empty/temporary <span /> to fix IE quirks
     // Elsewise IE would strip white space in the beginning
-    tempElement.innerHTML = "<span></span>" + _convertUrlsToLinks(textNode.data);
+    tempElement.innerHTML = "<span></span>" + _convertUrlsToLinks(nodeValue);
     tempElement.removeChild(tempElement.firstChild);
     
     while (tempElement.firstChild) {
@@ -4792,9 +4821,9 @@ wysihtml5.dom.parse = (function() {
     }
     
     while (element.firstChild) {
-      firstChild  = element.firstChild;
-      element.removeChild(firstChild);
+      firstChild = element.firstChild;
       newNode = _convert(firstChild, cleanUp);
+      element.removeChild(firstChild);
       if (newNode) {
         fragment.appendChild(newNode);
       }
@@ -4815,6 +4844,7 @@ wysihtml5.dom.parse = (function() {
         oldChildsLength = oldChilds.length,
         method          = NODE_TYPE_MAPPING[oldNodeType],
         i               = 0,
+        fragment,
         newNode,
         newChild;
     
@@ -4833,10 +4863,13 @@ wysihtml5.dom.parse = (function() {
     
     // Cleanup senseless <span> elements
     if (cleanUp &&
-        newNode.childNodes.length <= 1 &&
         newNode.nodeName.toLowerCase() === DEFAULT_NODE_NAME &&
-        !newNode.attributes.length) {
-      return newNode.firstChild;
+        (!newNode.childNodes.length || !newNode.attributes.length)) {
+      fragment = newNode.ownerDocument.createDocumentFragment();
+      while (newNode.firstChild) {
+        fragment.appendChild(newNode.firstChild);
+      }
+      return fragment;
     }
     
     return newNode;
@@ -5054,8 +5087,17 @@ wysihtml5.dom.parse = (function() {
     }
   }
   
+  var INVISIBLE_SPACE_REG_EXP = /\uFEFF/g;
   function _handleText(oldNode) {
-    return oldNode.ownerDocument.createTextNode(oldNode.data);
+    var nextSibling = oldNode.nextSibling;
+    if (nextSibling && nextSibling.nodeType === wysihtml5.TEXT_NODE) {
+      // Concatenate text nodes
+      nextSibling.data = oldNode.data + nextSibling.data;
+    } else {
+      // \uFEFF = wysihtml5.INVISIBLE_SPACE (used as a hack in certain rich text editing situations)
+      var data = oldNode.data.replace(INVISIBLE_SPACE_REG_EXP, "");
+      return oldNode.ownerDocument.createTextNode(data);
+    } 
   }
   
   
@@ -5597,6 +5639,95 @@ wysihtml5.dom.replaceWithChildNodes = function(node) {
         } catch(e) {}
       }
     }
+  });
+})(wysihtml5);
+(function(wysihtml5) {
+  var doc = document;  
+  wysihtml5.dom.IframelessSandbox = Base.extend({
+      getContentEditable: function() {
+        return this.element;
+      },
+      
+      getWindow: function() {
+        return this.element.ownerDocument.defaultView;
+      },
+
+      getDocument: function() {
+        return this.element.ownerDocument;
+      },
+      
+      constructor: function(readyCallback, config) {
+        this.callback = readyCallback || wysihtml5.EMPTY_FUNCTION;
+        this.config   = wysihtml5.lang.object({}).merge(config).get();
+        this.element   = this._createElement();
+      },
+      
+      _createElement: function() {
+        var that   = this,
+            element = doc.createElement("div");
+        element.className = "wysihtml5-sandbox";
+        that._loadElement(element);
+        return element;
+      },
+      
+      _loadElement: function(element) {
+        // don't resume when the iframe got unloaded (eg. by removing it from the dom)
+        /*if (!wysihtml5.dom.contains(doc.documentElement, iframe)) {
+          return;
+        }*/
+            
+        var that           = this,
+            sandboxHtml    = this._getHtml();
+            
+        element.innerHTML = sandboxHtml;
+
+        // Create the basic dom tree including proper DOCTYPE and charset
+        /*iframeDocument.open("text/html", "replace");
+        iframeDocument.write(sandboxHtml);
+        iframeDocument.close();*/
+
+        this.getWindow = function() { return element.ownerDocument.defaultView; };
+        this.getDocument = function() { return element.ownerDocument; };
+
+        // Catch js errors and pass them to the parent's onerror event
+        // addEventListener("error") doesn't work properly in some browsers
+        // TODO: apparently this doesn't work in IE9!
+        /*iframeWindow.onerror = function(errorMessage, fileName, lineNumber) {
+          throw new Error("wysihtml5.Sandbox: " + errorMessage, fileName, lineNumber);
+        };
+
+        if (!wysihtml5.browser.supportsSandboxedIframes()) {
+          // Unset a bunch of sensitive variables
+          // Please note: This isn't hack safe!  
+          // It more or less just takes care of basic attacks and prevents accidental theft of sensitive information
+          // IE is secure though, which is the most important thing, since IE is the only browser, who
+          // takes over scripts & styles into contentEditable elements when copied from external websites
+          // or applications (Microsoft Word, ...)
+          var i, length;
+          for (i=0, length=windowProperties.length; i<length; i++) {
+            this._unset(iframeWindow, windowProperties[i]);
+          }
+          for (i=0, length=windowProperties2.length; i<length; i++) {
+            this._unset(iframeWindow, windowProperties2[i], wysihtml5.EMPTY_FUNCTION);
+          }
+          for (i=0, length=documentProperties.length; i<length; i++) {
+            this._unset(iframeDocument, documentProperties[i]);
+          }
+          // This doesn't work in Safari 5 
+          // See http://stackoverflow.com/questions/992461/is-it-possible-to-override-document-cookie-in-webkit
+          this._unset(iframeDocument, "cookie", "", true);
+        }
+
+        this.loaded = true;
+
+        // Trigger the callback*/
+        setTimeout(function() { that.callback(that); }, 0);
+      },
+      
+      _getHtml: function(templateVars) {        
+        return '';
+      }
+  
   });
 })(wysihtml5);
 (function() {
@@ -6896,8 +7027,7 @@ wysihtml5.commands.bold = {
  * Instead we set a css class
  */
 (function(wysihtml5) {
-  var undef,
-      REG_EXP = /wysiwyg-font-size-[0-9a-z\-]+/g;
+  var REG_EXP = /wysiwyg-font-size-[0-9a-z\-]+/g;
   
   wysihtml5.commands.fontSize = {
     exec: function(composer, command, size) {
@@ -6906,10 +7036,6 @@ wysihtml5.commands.bold = {
 
     state: function(composer, command, size) {
       return wysihtml5.commands.formatInline.state(composer, command, "span", "wysiwyg-font-size-" + size, REG_EXP);
-    },
-
-    value: function() {
-      return undef;
     }
   };
 })(wysihtml5);
@@ -7062,6 +7188,7 @@ wysihtml5.commands.bold = {
       });
     }
     doc.execCommand(command, false, nodeName);
+    
     if (eventListener) {
       eventListener.stop();
     }
@@ -7111,10 +7238,14 @@ wysihtml5.commands.bold = {
       // Find similiar block element and rename it (<h2 class="foo"></h2>  =>  <h1 class="foo"></h1>)
       if (nodeName === null || wysihtml5.lang.array(BLOCK_ELEMENTS_GROUP).contains(nodeName)) {
         selectedNode = composer.selection.getSelectedNode();
+        
         blockElement = dom.getParentElement(selectedNode, {
           nodeName: BLOCK_ELEMENTS_GROUP
         });
-
+        if (blockElement == composer.element) {
+            blockElement = null;
+        }
+        
         if (blockElement) {
           composer.selection.executeAndRestore(function() {
             // Rename current block element to new block element and add class
@@ -7274,7 +7405,6 @@ wysihtml5.commands.bold = {
       var doc     = composer.doc,
           image   = this.state(composer),
           textNode,
-          i,
           parent;
 
       if (image) {
@@ -7297,11 +7427,8 @@ wysihtml5.commands.bold = {
 
       image = doc.createElement(NODE_NAME);
       
-      for (i in value) {
-        if (i === "className") {
-          i = "class";
-        }
-        image.setAttribute(i, value[i]);
+      for (var i in value) {
+        image.setAttribute(i === "className" ? "class" : i, value[i]);
       }
 
       composer.selection.insertNode(image);
@@ -7882,7 +8009,11 @@ wysihtml5.views.View = Base.extend(
     constructor: function(parent, textareaElement, config) {
       this.base(parent, textareaElement, config);
       this.textarea = this.parent.textarea;
-      this._initSandbox();
+      if (this.config.noIframe) {
+          this._initIframelessSandbox();
+      } else {
+          this._initSandbox();
+      }
     },
 
     clear: function() {
@@ -7895,11 +8026,6 @@ wysihtml5.views.View = Base.extend(
       if (parse) {
         value = this.parent.parse(value);
       }
-
-      // Replace all "zero width no breaking space" chars
-      // which are used as hacks to enable some functionalities
-      // Also remove all CARET hacks that somehow got left
-      value = wysihtml5.lang.string(value).replace(wysihtml5.INVISIBLE_SPACE).by("");
 
       return value;
     },
@@ -7917,7 +8043,7 @@ wysihtml5.views.View = Base.extend(
     },
 
     show: function() {
-      this.iframe.style.display = this._displayStyle || "";
+      (this.iframe || this.contentEditable).style.display = this._displayStyle || "";
       
       if (!this.textarea.element.disabled) {
         // Firefox needs this, otherwise contentEditable becomes uneditable
@@ -7927,11 +8053,11 @@ wysihtml5.views.View = Base.extend(
     },
 
     hide: function() {
-      this._displayStyle = dom.getStyle("display").from(this.iframe);
+      this._displayStyle = dom.getStyle("display").from((this.iframe || this.contentEditable));
       if (this._displayStyle === "none") {
         this._displayStyle = null;
       }
-      this.iframe.style.display = "none";
+      (this.iframe || this.contentEditable).style.display = "none";
     },
 
     disable: function() {
@@ -7980,6 +8106,17 @@ wysihtml5.views.View = Base.extend(
              innerHTML === "<p><br></p>" ||
              this.hasPlaceholderSet();
     },
+    
+    _initIframelessSandbox: function() {
+        var that = this;
+        this.sandbox = new dom.IframelessSandbox(function() {
+            that._create();
+        });
+        this.contentEditable = this.sandbox.getContentEditable();
+        dom.insert(this.contentEditable).after(this.textarea.element);
+        
+        this._createWysiwygFormField();
+    },
 
     _initSandbox: function() {
       var that = this;
@@ -7994,21 +8131,24 @@ wysihtml5.views.View = Base.extend(
       var textareaElement = this.textarea.element;
       dom.insert(this.iframe).after(textareaElement);
       
-      // Create hidden field which tells the server after submit, that the user used an wysiwyg editor
-      if (textareaElement.form) {
-        var hiddenField = document.createElement("input");
-        hiddenField.type   = "hidden";
-        hiddenField.name   = "_wysihtml5_mode";
-        hiddenField.value  = 1;
-        dom.insert(hiddenField).after(textareaElement);
-      }
+      this._createWysiwygFormField();
+    },
+    
+    // Creates hidden field which tells the server after submit, that the user used an wysiwyg editor
+    _createWysiwygFormField: function() {
+        if (this.textarea.element.form) {
+          var hiddenField = document.createElement("input");
+          hiddenField.type   = "hidden";
+          hiddenField.name   = "_wysihtml5_mode";
+          hiddenField.value  = 1;
+          dom.insert(hiddenField).after(this.textarea.element);
+        }
     },
 
     _create: function() {
       var that = this;
-      
       this.doc                = this.sandbox.getDocument();
-      this.element            = this.doc.body;
+      this.element            = (this.config.noIframe) ? this.sandbox.getContentEditable() : this.doc.body;
       this.textarea           = this.parent.textarea;
       this.element.innerHTML  = this.textarea.getValue(true);
       
@@ -8024,8 +8164,8 @@ wysihtml5.views.View = Base.extend(
       
       dom.addClass(this.element, this.config.composerClassName);
       // 
-      // // Make the editor look like the original textarea, by syncing styles
-      if (this.config.style) {
+      // Make the editor look like the original textarea, by syncing styles
+      if (this.config.style && !this.config.noIframe) {
         this.style();
       }
       
@@ -8034,7 +8174,7 @@ wysihtml5.views.View = Base.extend(
       var name = this.config.name;
       if (name) {
         dom.addClass(this.element, name);
-        dom.addClass(this.iframe, name);
+        if (!this.config.noIframe) { dom.addClass(this.iframe, name); }
       }
       
       this.enable();
@@ -8228,6 +8368,16 @@ wysihtml5.views.View = Base.extend(
           }
         });
       }
+      
+      // Under certain circumstances Chrome + Safari create nested <p> or <hX> tags after paste
+      // Inserting an invisible white space in front of it fixes the issue
+      if (browser.createsNestedInvalidMarkupAfterPaste()) {
+        dom.observe(this.element, "paste", function(event) {
+          var invisibleSpace = that.doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
+          that.selection.insertNode(invisibleSpace);
+        });
+      }
+
       
       dom.observe(this.doc, "keydown", function(event) {
         var keyCode = event.keyCode;
@@ -8496,20 +8646,21 @@ wysihtml5.views.View = Base.extend(
   wysihtml5.views.Composer.prototype.observe = function() {
     var that                = this,
         state               = this.getValue(),
-        iframe              = this.sandbox.getIframe(),
+        container              = (this.sandbox.getIframe) ? this.sandbox.getIframe() : this.sandbox.getContentEditable(),
         element             = this.element,
         focusBlurElement    = browser.supportsEventsInIframeCorrectly() ? element : this.sandbox.getWindow(),
         pasteEvents         = ["drop", "paste"];
 
     // --------- destroy:composer event ---------
-    dom.observe(iframe, "DOMNodeRemoved", function() {
+    dom.observe(container, "DOMNodeRemoved", function() {
       clearInterval(domNodeRemovedInterval);
       that.parent.fire("destroy:composer");
     });
 
+    // TODO: Why initiate it for all browsers? make specific
     // DOMNodeRemoved event is not supported in IE 8
     var domNodeRemovedInterval = setInterval(function() {
-      if (!dom.contains(document.documentElement, iframe)) {
+      if (!dom.contains(document.documentElement, container)) {
         clearInterval(domNodeRemovedInterval);
         that.parent.fire("destroy:composer");
       }
@@ -8623,7 +8774,7 @@ wysihtml5.views.View = Base.extend(
     });
     
     // --------- IE 8+9 focus the editor when the iframe is clicked (without actually firing the 'focus' event on the <body>) ---------
-    if (browser.hasIframeFocusIssue()) {
+    if (browser.hasIframeFocusIssue() && this.iframe) {
       dom.observe(this.iframe, "focus", function() {
         setTimeout(function() {
           if (that.doc.querySelector(":focus") !== that.element) {
@@ -8896,6 +9047,7 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
           callbackWrapper(event);
         }
         if (keyCode === wysihtml5.ESCAPE_KEY) {
+          that.fire("cancel");
           that.hide();
         }
       });
@@ -9263,10 +9415,14 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
       for (; i<length; i++) {
         // 'javascript:;' and unselectable=on Needed for IE, but done in all browsers to make sure that all get the same css applied
         // (you know, a:link { ... } doesn't match anchors with missing href attribute)
-        dom.setAttributes({
-          href:         "javascript:;",
-          unselectable: "on"
-        }).on(links[i]);
+        if (links[i].nodeName === "A") {
+          dom.setAttributes({
+            href:         "javascript:;",
+            unselectable: "on"
+          }).on(links[i]);
+        } else {
+          dom.setAttributes({ unselectable: "on" }).on(links[i]);
+        }
       }
 
       // Needed for opera and chrome
@@ -9459,7 +9615,11 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
     // Placeholder text to use, defaults to the placeholder attribute on the textarea element
     placeholderText:      undef,
     // Whether the rich text editor should be rendered on touch devices (wysihtml5 >= 0.3.0 comes with basic support for iOS 5)
-    supportTouchDevices:  true
+    supportTouchDevices:  true,
+    // Whether senseless <span> elements (empty or without attributes) should be removed/replaced with their content
+    cleanUp:              true,
+    // Whether to use div instead of secure iframe
+    noIframe: false
   };
   
   wysihtml5.Editor = wysihtml5.lang.Dispatcher.extend(
@@ -9554,7 +9714,8 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
     },
     
     parse: function(htmlOrElement) {
-      var returnValue = this.config.parser(htmlOrElement, this.config.parserRules, this.composer.sandbox.getDocument(), true);
+      var parseContext = (this.config.noIframe) ? document : this.composer.sandbox.getDocument();
+      var returnValue = this.config.parser(htmlOrElement, this.config.parserRules, parseContext, this.config.cleanUp);
       if (typeof(htmlOrElement) === "object") {
         wysihtml5.quirks.redraw(htmlOrElement);
       }

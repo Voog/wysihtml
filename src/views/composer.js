@@ -12,7 +12,11 @@
     constructor: function(parent, textareaElement, config) {
       this.base(parent, textareaElement, config);
       this.textarea = this.parent.textarea;
-      this._initSandbox();
+      if (this.config.noIframe) {
+          this._initIframelessSandbox();
+      } else {
+          this._initSandbox();
+      }
     },
 
     clear: function() {
@@ -42,7 +46,7 @@
     },
 
     show: function() {
-      this.iframe.style.display = this._displayStyle || "";
+      (this.iframe || this.contentEditable).style.display = this._displayStyle || "";
       
       if (!this.textarea.element.disabled) {
         // Firefox needs this, otherwise contentEditable becomes uneditable
@@ -52,11 +56,11 @@
     },
 
     hide: function() {
-      this._displayStyle = dom.getStyle("display").from(this.iframe);
+      this._displayStyle = dom.getStyle("display").from((this.iframe || this.contentEditable));
       if (this._displayStyle === "none") {
         this._displayStyle = null;
       }
-      this.iframe.style.display = "none";
+      (this.iframe || this.contentEditable).style.display = "none";
     },
 
     disable: function() {
@@ -105,6 +109,17 @@
              innerHTML === "<p><br></p>" ||
              this.hasPlaceholderSet();
     },
+    
+    _initIframelessSandbox: function() {
+        var that = this;
+        this.sandbox = new dom.IframelessSandbox(function() {
+            that._create();
+        });
+        this.contentEditable = this.sandbox.getContentEditable();
+        dom.insert(this.contentEditable).after(this.textarea.element);
+        
+        this._createWysiwygFormField();
+    },
 
     _initSandbox: function() {
       var that = this;
@@ -119,21 +134,24 @@
       var textareaElement = this.textarea.element;
       dom.insert(this.iframe).after(textareaElement);
       
-      // Create hidden field which tells the server after submit, that the user used an wysiwyg editor
-      if (textareaElement.form) {
-        var hiddenField = document.createElement("input");
-        hiddenField.type   = "hidden";
-        hiddenField.name   = "_wysihtml5_mode";
-        hiddenField.value  = 1;
-        dom.insert(hiddenField).after(textareaElement);
-      }
+      this._createWysiwygFormField();
+    },
+    
+    // Creates hidden field which tells the server after submit, that the user used an wysiwyg editor
+    _createWysiwygFormField: function() {
+        if (this.textarea.element.form) {
+          var hiddenField = document.createElement("input");
+          hiddenField.type   = "hidden";
+          hiddenField.name   = "_wysihtml5_mode";
+          hiddenField.value  = 1;
+          dom.insert(hiddenField).after(this.textarea.element);
+        }
     },
 
     _create: function() {
       var that = this;
-      
       this.doc                = this.sandbox.getDocument();
-      this.element            = this.doc.body;
+      this.element            = (this.config.noIframe) ? this.sandbox.getContentEditable() : this.doc.body;
       this.textarea           = this.parent.textarea;
       this.element.innerHTML  = this.textarea.getValue(true);
       
@@ -149,8 +167,8 @@
       
       dom.addClass(this.element, this.config.composerClassName);
       // 
-      // // Make the editor look like the original textarea, by syncing styles
-      if (this.config.style) {
+      // Make the editor look like the original textarea, by syncing styles
+      if (this.config.style && !this.config.noIframe) {
         this.style();
       }
       
@@ -159,7 +177,7 @@
       var name = this.config.name;
       if (name) {
         dom.addClass(this.element, name);
-        dom.addClass(this.iframe, name);
+        if (!this.config.noIframe) { dom.addClass(this.iframe, name); }
       }
       
       this.enable();
