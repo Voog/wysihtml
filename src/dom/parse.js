@@ -49,6 +49,8 @@
  *    });
  *    // => '<p class="red">foo</p><p>bar</p>'
  */
+//TODO: add unwrap function to parser rules
+
 wysihtml5.dom.parse = (function() {
   
   /**

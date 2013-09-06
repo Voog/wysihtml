@@ -4781,6 +4781,8 @@ wysihtml5.dom.observe = function(element, eventNames, handler) {
  *    });
  *    // => '<p class="red">foo</p><p>bar</p>'
  */
+//TODO: add unwrap function to parser rules
+
 wysihtml5.dom.parse = (function() {
   
   /**
@@ -5656,35 +5658,37 @@ wysihtml5.dom.replaceWithChildNodes = function(node) {
         return this.element.ownerDocument;
       },
       
-      constructor: function(readyCallback, config) {
+      constructor: function(readyCallback, config, contentEditable) {
         this.callback = readyCallback || wysihtml5.EMPTY_FUNCTION;
         this.config   = wysihtml5.lang.object({}).merge(config).get();
-        this.element   = this._createElement();
+        if (contentEditable) {
+            this.element = this._bindElement(contentEditable);
+        } else {    
+            this.element = this._createElement();
+        }
       },
       
+      // creates a new contenteditable and initiates it
       _createElement: function() {
-        var that   = this,
-            element = doc.createElement("div");
+        var element = doc.createElement("div");
         element.className = "wysihtml5-sandbox";
-        that._loadElement(element);
+        this._loadElement(element);
         return element;
       },
       
-      _loadElement: function(element) {
-        // don't resume when the iframe got unloaded (eg. by removing it from the dom)
-        /*if (!wysihtml5.dom.contains(doc.documentElement, iframe)) {
-          return;
-        }*/
-            
-        var that           = this,
-            sandboxHtml    = this._getHtml();
-            
-        element.innerHTML = sandboxHtml;
-
-        // Create the basic dom tree including proper DOCTYPE and charset
-        /*iframeDocument.open("text/html", "replace");
-        iframeDocument.write(sandboxHtml);
-        iframeDocument.close();*/
+      // initiates an allready existent contenteditable
+      _bindElement: function(contentEditable) {
+        contentEditable.className = (contentEditable.className && contentEditable.className != '') ? contentEditable.className + " wysihtml5-sandbox" : "wysihtml5-sandbox";
+        this._loadElement(contentEditable, true);
+        return contentEditable;
+      },
+      
+      _loadElement: function(element, contentExists) {
+          var that = this;
+        if (!contentExists) {
+            var sandboxHtml = this._getHtml();
+            element.innerHTML = sandboxHtml;
+        }
 
         this.getWindow = function() { return element.ownerDocument.defaultView; };
         this.getDocument = function() { return element.ownerDocument; };
@@ -5692,35 +5696,13 @@ wysihtml5.dom.replaceWithChildNodes = function(node) {
         // Catch js errors and pass them to the parent's onerror event
         // addEventListener("error") doesn't work properly in some browsers
         // TODO: apparently this doesn't work in IE9!
+        // TODO: figure out and bind the errors logic for iframeless mode
         /*iframeWindow.onerror = function(errorMessage, fileName, lineNumber) {
           throw new Error("wysihtml5.Sandbox: " + errorMessage, fileName, lineNumber);
-        };
-
-        if (!wysihtml5.browser.supportsSandboxedIframes()) {
-          // Unset a bunch of sensitive variables
-          // Please note: This isn't hack safe!  
-          // It more or less just takes care of basic attacks and prevents accidental theft of sensitive information
-          // IE is secure though, which is the most important thing, since IE is the only browser, who
-          // takes over scripts & styles into contentEditable elements when copied from external websites
-          // or applications (Microsoft Word, ...)
-          var i, length;
-          for (i=0, length=windowProperties.length; i<length; i++) {
-            this._unset(iframeWindow, windowProperties[i]);
-          }
-          for (i=0, length=windowProperties2.length; i<length; i++) {
-            this._unset(iframeWindow, windowProperties2[i], wysihtml5.EMPTY_FUNCTION);
-          }
-          for (i=0, length=documentProperties.length; i<length; i++) {
-            this._unset(iframeDocument, documentProperties[i]);
-          }
-          // This doesn't work in Safari 5 
-          // See http://stackoverflow.com/questions/992461/is-it-possible-to-override-document-cookie-in-webkit
-          this._unset(iframeDocument, "cookie", "", true);
         }
-
+        */
         this.loaded = true;
-
-        // Trigger the callback*/
+        // Trigger the callback
         setTimeout(function() { that.callback(that); }, 0);
       },
       
@@ -8006,9 +7988,13 @@ wysihtml5.views.View = Base.extend(
     // Needed for firefox in order to display a proper caret in an empty contentEditable
     CARET_HACK: "<br>",
 
-    constructor: function(parent, textareaElement, config) {
-      this.base(parent, textareaElement, config);
-      this.textarea = this.parent.textarea;
+    constructor: function(parent, editableElement, config) {
+      this.base(parent, editableElement, config);
+      if (!this.config.noTextarea) {
+          this.textarea = this.parent.textarea;
+      } else {
+          this.contentEditable = editableElement;
+      }
       if (this.config.noIframe) {
           this._initIframelessSandbox();
       } else {
@@ -8045,7 +8031,7 @@ wysihtml5.views.View = Base.extend(
     show: function() {
       (this.iframe || this.contentEditable).style.display = this._displayStyle || "";
       
-      if (!this.textarea.element.disabled) {
+      if (!this.config.noTextarea && !this.textarea.element.disabled) {
         // Firefox needs this, otherwise contentEditable becomes uneditable
         this.disable();
         this.enable();
@@ -8095,7 +8081,7 @@ wysihtml5.views.View = Base.extend(
     },
 
     hasPlaceholderSet: function() {
-      return this.getTextContent() == this.textarea.element.getAttribute("placeholder") && this.placeholderSet;
+      return this.getTextContent() == ((this.config.noTextarea) ? this.contentEditable.getAttribute("data-placeholder") : this.textarea.element.getAttribute("placeholder")) && this.placeholderSet;
     },
 
     isEmpty: function() {
@@ -8109,13 +8095,19 @@ wysihtml5.views.View = Base.extend(
     
     _initIframelessSandbox: function() {
         var that = this;
-        this.sandbox = new dom.IframelessSandbox(function() {
-            that._create();
-        });
-        this.contentEditable = this.sandbox.getContentEditable();
-        dom.insert(this.contentEditable).after(this.textarea.element);
         
-        this._createWysiwygFormField();
+        if (this.config.noTextarea) {
+            this.sandbox = new dom.IframelessSandbox(function() {
+                that._create();
+            }, {}, this.contentEditable);
+        } else {
+            this.sandbox = new dom.IframelessSandbox(function() {
+                that._create();
+            });
+            this.contentEditable = this.sandbox.getContentEditable();
+            dom.insert(this.contentEditable).after(this.textarea.element);
+            this._createWysiwygFormField();
+        }
     },
 
     _initSandbox: function() {
@@ -8149,8 +8141,12 @@ wysihtml5.views.View = Base.extend(
       var that = this;
       this.doc                = this.sandbox.getDocument();
       this.element            = (this.config.noIframe) ? this.sandbox.getContentEditable() : this.doc.body;
-      this.textarea           = this.parent.textarea;
-      this.element.innerHTML  = this.textarea.getValue(true);
+      if (!this.config.noTextarea) {
+          this.textarea           = this.parent.textarea;
+          this.element.innerHTML  = this.textarea.getValue(true);
+      } else {
+          // it should be set allready
+      }
       
       // Make sure our selection handler is ready
       this.selection = new wysihtml5.Selection(this.parent);
@@ -8158,9 +8154,11 @@ wysihtml5.views.View = Base.extend(
       // Make sure commands dispatcher is ready
       this.commands  = new wysihtml5.Commands(this.parent);
       
-      dom.copyAttributes([
-        "className", "spellcheck", "title", "lang", "dir", "accessKey"
-      ]).from(this.textarea.element).to(this.element);
+      if (!this.config.noTextarea) {
+          dom.copyAttributes([
+              "className", "spellcheck", "title", "lang", "dir", "accessKey"
+          ]).from(this.textarea.element).to(this.element);
+      }
       
       dom.addClass(this.element, this.config.composerClassName);
       // 
@@ -8179,14 +8177,14 @@ wysihtml5.views.View = Base.extend(
       
       this.enable();
       
-      if (this.textarea.element.disabled) {
+      if (!this.config.noTextarea && this.textarea.element.disabled) {
         this.disable();
       }
       
       // Simulate html5 placeholder attribute on contentEditable element
       var placeholderText = typeof(this.config.placeholder) === "string"
         ? this.config.placeholder
-        : this.textarea.element.getAttribute("placeholder");
+        : ((this.config.noTextarea) ? this.contentEditable.getAttribute("data-placeholder") : this.textarea.element.getAttribute("placeholder"));
       if (placeholderText) {
         dom.simulatePlaceholder(this.parent, this, placeholderText);
       }
@@ -8201,7 +8199,7 @@ wysihtml5.views.View = Base.extend(
       
       // Simulate html5 autofocus on contentEditable element
       // This doesn't work on IOS (5.1.1)
-      if ((this.textarea.element.hasAttribute("autofocus") || document.querySelector(":focus") == this.textarea.element) && !browser.isIos()) {
+      if (!this.config.noTextarea && (this.textarea.element.hasAttribute("autofocus") || document.querySelector(":focus") == this.textarea.element) && !browser.isIos()) {
         setTimeout(function() { that.focus(true); }, 100);
       }
       
@@ -8216,7 +8214,7 @@ wysihtml5.views.View = Base.extend(
       }
       
       // Okay hide the textarea, we are ready to go
-      this.textarea.hide();
+      if (!this.config.noTextarea) { this.textarea.hide(); }
       
       // Fire global (before-)load event
       this.parent.fire("beforeload").fire("load");
@@ -9559,7 +9557,7 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
 /**
  * WYSIHTML5 Editor
  *
- * @param {Element} textareaElement Reference to the textarea which should be turned into a rich text interface
+ * @param {Element} editableElement Reference to the textarea which should be turned into a rich text interface
  * @param {Object} [config] See defaultConfig object below for explanation of each individual config option
  *
  * @events
@@ -9619,17 +9617,25 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
     // Whether senseless <span> elements (empty or without attributes) should be removed/replaced with their content
     cleanUp:              true,
     // Whether to use div instead of secure iframe
-    noIframe: false
+    noIframe: false,
+    xingAlert: false
   };
   
   wysihtml5.Editor = wysihtml5.lang.Dispatcher.extend(
     /** @scope wysihtml5.Editor.prototype */ {
-    constructor: function(textareaElement, config) {
-      this.textareaElement  = typeof(textareaElement) === "string" ? document.getElementById(textareaElement) : textareaElement;
+    constructor: function(editableElement, config) {
+      this.editableElement  = typeof(editableElement) === "string" ? document.getElementById(editableElement) : editableElement;
       this.config           = wysihtml5.lang.object({}).merge(defaultConfig).merge(config).get();
-      this.textarea         = new wysihtml5.views.Textarea(this, this.textareaElement, this.config);
-      this.currentView      = this.textarea;
       this._isCompatible    = wysihtml5.browser.supported();
+      
+      if (this.editableElement.tagName.toLowerCase() != "textarea") {
+          this.config.noIframe = true;
+          this.config.noTextarea = true;
+      }
+      if (!this.config.noTextarea) {
+          this.textarea         = new wysihtml5.views.Textarea(this, this.editableElement, this.config);
+          this.currentView      = this.textarea;
+      }
       
       // Sort out unsupported/unwanted browsers here
       if (!this._isCompatible || (!this.config.supportTouchDevices && wysihtml5.browser.isTouchDevice())) {
@@ -9641,23 +9647,28 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
       // Add class name to body, to indicate that the editor is supported
       wysihtml5.dom.addClass(document.body, this.config.bodyClassName);
       
-      this.composer = new wysihtml5.views.Composer(this, this.textareaElement, this.config);
+      this.composer = new wysihtml5.views.Composer(this, this.editableElement, this.config);
       this.currentView = this.composer;
       
       if (typeof(this.config.parser) === "function") {
         this._initParser();
       }
       
-      this.on("beforeload", function() {
-        this.synchronizer = new wysihtml5.views.Synchronizer(this, this.textarea, this.composer);
+      this.on("beforeload", this.handleBeforeLoad);
+      
+      
+      if (this.config.xingAlert) {
+          try { console.log("Heya! This page is using wysihtml5 for rich text editing. Check out https://github.com/xing/wysihtml5");} catch(e) {}
+      }
+    },
+    
+    handleBeforeLoad: function() {
+        if (!this.config.noTextarea) {
+            this.synchronizer = new wysihtml5.views.Synchronizer(this, this.textarea, this.composer);
+        }
         if (this.config.toolbar) {
           this.toolbar = new wysihtml5.toolbar.Toolbar(this, this.config.toolbar);
         }
-      });
-      
-      try {
-        console.log("Heya! This page is using wysihtml5 for rich text editing. Check out https://github.com/xing/wysihtml5");
-      } catch(e) {}
     },
     
     isCompatible: function() {

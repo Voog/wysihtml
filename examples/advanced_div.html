@@ -90,62 +90,64 @@
 
 <h1>wysihtml5 - Advanced Editor Example</h1>
 
-<form>
-  <div id="toolbar" style="display: none;">
-    <a data-wysihtml5-command="bold" title="CTRL+B">bold</a> |
-    <a data-wysihtml5-command="italic" title="CTRL+I">italic</a> |
-    <a data-wysihtml5-command="underline" title="CTRL+U">underline</a> |
-    
-    <a data-wysihtml5-command="createLink">insert link</a> |
-    <a data-wysihtml5-command="insertImage">insert image</a> |
-    <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h1">h1</a> |
-    <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h2">h2</a> |
-    <a data-wysihtml5-command="insertUnorderedList">insertUnorderedList</a> |
-    <a data-wysihtml5-command="insertOrderedList">insertOrderedList</a> |
-    
-    <a data-wysihtml5-command="justifyLeft">justifyLeft</a> |
-    <a data-wysihtml5-command="justifyRight">justifyRight</a> |
-    <a data-wysihtml5-command="justifyFull">justifyFull</a> |
-    
-    <a data-wysihtml5-command="foreColor" data-wysihtml5-command-value="red">red</a> |
-    <a data-wysihtml5-command="foreColor" data-wysihtml5-command-value="green">green</a> |
-    <a data-wysihtml5-command="foreColor" data-wysihtml5-command-value="blue">blue</a> |
-    <a data-wysihtml5-command="undo">undo</a> |
-    <a data-wysihtml5-command="redo">redo</a> |
-    <a data-wysihtml5-command="insertSpeech">speech</a>
-    <a data-wysihtml5-action="change_view">switch to html view</a>
-    
-    <div data-wysihtml5-dialog="createLink" style="display: none;">
-      <label>
-        Link:
-        <input data-wysihtml5-dialog-field="href" value="http://">
-      </label>
-      <a data-wysihtml5-dialog-action="save">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel">Cancel</a>
-    </div>
-    
-    <div data-wysihtml5-dialog="insertImage" style="display: none;">
-      <label>
-        Image:
-        <input data-wysihtml5-dialog-field="src" value="http://">
-      </label>
-      <label>
-        Align:
-        <select data-wysihtml5-dialog-field="className">
-          <option value="">default</option>
-          <option value="wysiwyg-float-left">left</option>
-          <option value="wysiwyg-float-right">right</option>
-        </select>
-      </label>
-      <a data-wysihtml5-dialog-action="save">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel">Cancel</a>
-    </div>
-    
+<div id="toolbar" style="display: none;">
+  <a data-wysihtml5-command="bold" title="CTRL+B">bold</a> |
+  <a data-wysihtml5-command="italic" title="CTRL+I">italic</a> |
+  <a data-wysihtml5-command="underline" title="CTRL+U">underline</a> |
+  
+  <a data-wysihtml5-command="createLink">insert link</a> |
+  <a data-wysihtml5-command="insertImage">insert image</a> |
+  <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h1">h1</a> |
+  <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h2">h2</a> |
+  <a data-wysihtml5-command="insertUnorderedList">insertUnorderedList</a> |
+  <a data-wysihtml5-command="insertOrderedList">insertOrderedList</a> |
+  
+  <a data-wysihtml5-command="justifyLeft">justifyLeft</a> |
+  <a data-wysihtml5-command="justifyRight">justifyRight</a> |
+  <a data-wysihtml5-command="justifyFull">justifyFull</a> |
+  
+  <a data-wysihtml5-command="foreColor" data-wysihtml5-command-value="red">red</a> |
+  <a data-wysihtml5-command="foreColor" data-wysihtml5-command-value="green">green</a> |
+  <a data-wysihtml5-command="foreColor" data-wysihtml5-command-value="blue">blue</a> |
+  <a data-wysihtml5-command="undo">undo</a> |
+  <a data-wysihtml5-command="redo">redo</a> |
+  <a data-wysihtml5-command="insertSpeech">speech</a>
+  <a data-wysihtml5-action="change_view">switch to html view</a>
+  
+  <div data-wysihtml5-dialog="createLink" style="display: none;">
+    <label>
+      Link:
+      <input data-wysihtml5-dialog-field="href" value="http://">
+    </label>
+    <a data-wysihtml5-dialog-action="save">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel">Cancel</a>
   </div>
-  <textarea id="textarea" placeholder="Enter text ...">
-    Test text<br/>
-    <img src="http://www.eso.org/public/archives/images/medium/eso1119b.jpg"/>
-  </textarea>
-  <br><input type="reset" value="Reset form!">
-</form>
+  
+  <div data-wysihtml5-dialog="insertImage" style="display: none;">
+    <label>
+      Image:
+      <input data-wysihtml5-dialog-field="src" value="http://">
+    </label>
+    <label>
+      Align:
+      <select data-wysihtml5-dialog-field="className">
+        <option value="">default</option>
+        <option value="wysiwyg-float-left">left</option>
+        <option value="wysiwyg-float-right">right</option>
+      </select>
+    </label>
+    <a data-wysihtml5-dialog-action="save">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel">Cancel</a>
+  </div>
+</div><!-- toolbar -->
+  
+<div id="editable" data-placeholder="Enter text ...">
+  Test text<br/>
+  <img src="http://www.eso.org/public/archives/images/medium/eso1119b.jpg"/>
+</div>
+
+<!-- oldschool clearfix -->
+<div style="height: 1px; width: 100%; overflow: hidden; clear: both"></div>
+
+<br>
 
 <h2>Events:</h2>
 <div id="log"></div>
@@ -155,11 +157,10 @@
 <script src="../parser_rules/advanced.js"></script>
 <script src="../dist/wysihtml5-0.4.0pre.js"></script>
 <script>
-  var editor = new wysihtml5.Editor("textarea", {
+  var editor = new wysihtml5.Editor("editable", {
     toolbar:        "toolbar",
     stylesheets:    "css/stylesheet.css",
-    parserRules:    wysihtml5ParserRules,
-    noIframe: true
+    parserRules:    wysihtml5ParserRules
   });
   
   var log = document.getElementById("log");

@@ -1,7 +1,7 @@
 /**
  * WYSIHTML5 Editor
  *
- * @param {Element} textareaElement Reference to the textarea which should be turned into a rich text interface
+ * @param {Element} editableElement Reference to the textarea which should be turned into a rich text interface
  * @param {Object} [config] See defaultConfig object below for explanation of each individual config option
  *
  * @events
@@ -61,17 +61,25 @@
     // Whether senseless <span> elements (empty or without attributes) should be removed/replaced with their content
     cleanUp:              true,
     // Whether to use div instead of secure iframe
-    noIframe: false
+    noIframe: false,
+    xingAlert: false
   };
   
   wysihtml5.Editor = wysihtml5.lang.Dispatcher.extend(
     /** @scope wysihtml5.Editor.prototype */ {
-    constructor: function(textareaElement, config) {
-      this.textareaElement  = typeof(textareaElement) === "string" ? document.getElementById(textareaElement) : textareaElement;
+    constructor: function(editableElement, config) {
+      this.editableElement  = typeof(editableElement) === "string" ? document.getElementById(editableElement) : editableElement;
       this.config           = wysihtml5.lang.object({}).merge(defaultConfig).merge(config).get();
-      this.textarea         = new wysihtml5.views.Textarea(this, this.textareaElement, this.config);
-      this.currentView      = this.textarea;
       this._isCompatible    = wysihtml5.browser.supported();
+      
+      if (this.editableElement.tagName.toLowerCase() != "textarea") {
+          this.config.noIframe = true;
+          this.config.noTextarea = true;
+      }
+      if (!this.config.noTextarea) {
+          this.textarea         = new wysihtml5.views.Textarea(this, this.editableElement, this.config);
+          this.currentView      = this.textarea;
+      }
       
       // Sort out unsupported/unwanted browsers here
       if (!this._isCompatible || (!this.config.supportTouchDevices && wysihtml5.browser.isTouchDevice())) {
@@ -83,23 +91,28 @@
       // Add class name to body, to indicate that the editor is supported
       wysihtml5.dom.addClass(document.body, this.config.bodyClassName);
       
-      this.composer = new wysihtml5.views.Composer(this, this.textareaElement, this.config);
+      this.composer = new wysihtml5.views.Composer(this, this.editableElement, this.config);
       this.currentView = this.composer;
       
       if (typeof(this.config.parser) === "function") {
         this._initParser();
       }
       
-      this.on("beforeload", function() {
-        this.synchronizer = new wysihtml5.views.Synchronizer(this, this.textarea, this.composer);
+      this.on("beforeload", this.handleBeforeLoad);
+      
+      
+      if (this.config.xingAlert) {
+          try { console.log("Heya! This page is using wysihtml5 for rich text editing. Check out https://github.com/xing/wysihtml5");} catch(e) {}
+      }
+    },
+    
+    handleBeforeLoad: function() {
+        if (!this.config.noTextarea) {
+            this.synchronizer = new wysihtml5.views.Synchronizer(this, this.textarea, this.composer);
+        }
         if (this.config.toolbar) {
           this.toolbar = new wysihtml5.toolbar.Toolbar(this, this.config.toolbar);
         }
-      });
-      
-      try {
-        console.log("Heya! This page is using wysihtml5 for rich text editing. Check out https://github.com/xing/wysihtml5");
-      } catch(e) {}
     },
     
     isCompatible: function() {

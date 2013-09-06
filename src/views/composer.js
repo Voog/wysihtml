@@ -9,9 +9,13 @@
     // Needed for firefox in order to display a proper caret in an empty contentEditable
     CARET_HACK: "<br>",
 
-    constructor: function(parent, textareaElement, config) {
-      this.base(parent, textareaElement, config);
-      this.textarea = this.parent.textarea;
+    constructor: function(parent, editableElement, config) {
+      this.base(parent, editableElement, config);
+      if (!this.config.noTextarea) {
+          this.textarea = this.parent.textarea;
+      } else {
+          this.contentEditable = editableElement;
+      }
       if (this.config.noIframe) {
           this._initIframelessSandbox();
       } else {
@@ -48,7 +52,7 @@
     show: function() {
       (this.iframe || this.contentEditable).style.display = this._displayStyle || "";
       
-      if (!this.textarea.element.disabled) {
+      if (!this.config.noTextarea && !this.textarea.element.disabled) {
         // Firefox needs this, otherwise contentEditable becomes uneditable
         this.disable();
         this.enable();
@@ -98,7 +102,7 @@
     },
 
     hasPlaceholderSet: function() {
-      return this.getTextContent() == this.textarea.element.getAttribute("placeholder") && this.placeholderSet;
+      return this.getTextContent() == ((this.config.noTextarea) ? this.contentEditable.getAttribute("data-placeholder") : this.textarea.element.getAttribute("placeholder")) && this.placeholderSet;
     },
 
     isEmpty: function() {
@@ -112,13 +116,19 @@
     
     _initIframelessSandbox: function() {
         var that = this;
-        this.sandbox = new dom.IframelessSandbox(function() {
-            that._create();
-        });
-        this.contentEditable = this.sandbox.getContentEditable();
-        dom.insert(this.contentEditable).after(this.textarea.element);
         
-        this._createWysiwygFormField();
+        if (this.config.noTextarea) {
+            this.sandbox = new dom.IframelessSandbox(function() {
+                that._create();
+            }, {}, this.contentEditable);
+        } else {
+            this.sandbox = new dom.IframelessSandbox(function() {
+                that._create();
+            });
+            this.contentEditable = this.sandbox.getContentEditable();
+            dom.insert(this.contentEditable).after(this.textarea.element);
+            this._createWysiwygFormField();
+        }
     },
 
     _initSandbox: function() {
@@ -152,8 +162,12 @@
       var that = this;
       this.doc                = this.sandbox.getDocument();
       this.element            = (this.config.noIframe) ? this.sandbox.getContentEditable() : this.doc.body;
-      this.textarea           = this.parent.textarea;
-      this.element.innerHTML  = this.textarea.getValue(true);
+      if (!this.config.noTextarea) {
+          this.textarea           = this.parent.textarea;
+          this.element.innerHTML  = this.textarea.getValue(true);
+      } else {
+          // it should be set allready
+      }
       
       // Make sure our selection handler is ready
       this.selection = new wysihtml5.Selection(this.parent);
@@ -161,9 +175,11 @@
       // Make sure commands dispatcher is ready
       this.commands  = new wysihtml5.Commands(this.parent);
       
-      dom.copyAttributes([
-        "className", "spellcheck", "title", "lang", "dir", "accessKey"
-      ]).from(this.textarea.element).to(this.element);
+      if (!this.config.noTextarea) {
+          dom.copyAttributes([
+              "className", "spellcheck", "title", "lang", "dir", "accessKey"
+          ]).from(this.textarea.element).to(this.element);
+      }
       
       dom.addClass(this.element, this.config.composerClassName);
       // 
@@ -182,14 +198,14 @@
       
       this.enable();
       
-      if (this.textarea.element.disabled) {
+      if (!this.config.noTextarea && this.textarea.element.disabled) {
         this.disable();
       }
       
       // Simulate html5 placeholder attribute on contentEditable element
       var placeholderText = typeof(this.config.placeholder) === "string"
         ? this.config.placeholder
-        : this.textarea.element.getAttribute("placeholder");
+        : ((this.config.noTextarea) ? this.contentEditable.getAttribute("data-placeholder") : this.textarea.element.getAttribute("placeholder"));
       if (placeholderText) {
         dom.simulatePlaceholder(this.parent, this, placeholderText);
       }
@@ -204,7 +220,7 @@
       
       // Simulate html5 autofocus on contentEditable element
       // This doesn't work on IOS (5.1.1)
-      if ((this.textarea.element.hasAttribute("autofocus") || document.querySelector(":focus") == this.textarea.element) && !browser.isIos()) {
+      if (!this.config.noTextarea && (this.textarea.element.hasAttribute("autofocus") || document.querySelector(":focus") == this.textarea.element) && !browser.isIos()) {
         setTimeout(function() { that.focus(true); }, 100);
       }
       
@@ -219,7 +235,7 @@
       }
       
       // Okay hide the textarea, we are ready to go
-      this.textarea.hide();
+      if (!this.config.noTextarea) { this.textarea.hide(); }
       
       // Fire global (before-)load event
       this.parent.fire("beforeload").fire("load");
