@@ -15,8 +15,6 @@ if (wysihtml5.browser.supported()) {
       
       this.originalBodyClassName = document.body.className;
       
-      ;
-      
       document.body.appendChild(this.contentEditable);
       
     },
@@ -263,5 +261,45 @@ if (wysihtml5.browser.supported()) {
     });
   });
   
+  asyncTest("Inserting an element which causes the textContent/innerText of the contentEditable element to be empty works correctly", function() {
+    expect(1);
+    
+    var that = this;
+    
+    var editor = new wysihtml5.Editor(this.contentEditable);
+    editor.on("load", function() {
+      var html            = '<img>',
+          composerElement = that.contentEditable;
+          
+      composerElement.innerHTML = html;
+      
+      // Fire events that could cause a change in the composer
+      QUnit.triggerEvent(composerElement, "keypress");
+      QUnit.triggerEvent(composerElement, "keyup");
+      QUnit.triggerEvent(composerElement, "cut");
+      QUnit.triggerEvent(composerElement, "blur");
+      
+      setTimeout(function() {
+        equal(composerElement.innerHTML.toLowerCase(), html, "Composer still has correct content");
+        start();
+      }, 500);
+    });
+  });
+  
+  asyncTest("If selection borders cross contenteditabel only editable gets modified", function() {
+      expect(3);
+      var that = this,
+          editor = new wysihtml5.Editor(this.contentEditable);
+          
+      editor.on("load", function() {
+          editor.setValue("foobar", true);
+          editor.composer.selection.selectNode(document.body);
+          equal(that.contentEditable.innerHTML, "foobar", "Content was not bold before");
+          editor.composer.commands.exec('bold');
+          equal(wysihtml5.dom.getStyle("font-weight").from(that.contentEditable.children[0]), 700, "First child has style bold");
+          equal(wysihtml5.dom.getStyle("font-weight").from(that.contentEditable), 400, "Editable element itself is not bold");
+          start();
+      });
+  });
   
 }
