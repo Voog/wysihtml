@@ -170,7 +170,7 @@
       }
       
       // Make sure our selection handler is ready
-      this.selection = new wysihtml5.Selection(this.parent);
+      this.selection = new wysihtml5.Selection(this.parent, this.element);
       
       // Make sure commands dispatcher is ready
       this.commands  = new wysihtml5.Commands(this.parent);

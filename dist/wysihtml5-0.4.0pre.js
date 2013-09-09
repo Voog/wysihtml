@@ -5955,13 +5955,14 @@ wysihtml5.quirks.ensureProperClearing = (function() {
   
   wysihtml5.Selection = Base.extend(
     /** @scope wysihtml5.Selection.prototype */ {
-    constructor: function(editor) {
+    constructor: function(editor, contain) {
       // Make sure that our external range library is initialized
       window.rangy.init();
       
       this.editor   = editor;
       this.composer = editor.composer;
       this.doc      = this.composer.doc;
+      this.contain = contain;
     },
     
     /**
@@ -6357,9 +6358,21 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       }
     },
     
+    fixRangeOverflow: function(range) {
+        if (this.contain) {
+            var containRange = rangy.createRange(this.doc);
+            containRange.selectNodeContents(this.contain);
+            range = range.intersection(containRange);
+        }
+        return range;
+    },
+    
     getRange: function() {
-      var selection = this.getSelection();
-      return selection && selection.rangeCount && selection.getRangeAt(0);
+      var selection = this.getSelection(),
+          range = selection && selection.rangeCount && selection.getRangeAt(0);
+          
+      range = this.fixRangeOverflow(range);
+      return range;
     },
 
     getSelection: function() {
@@ -7821,8 +7834,8 @@ wysihtml5.commands.redo = {
       this.position++;
       
       var range   = this.composer.selection.getRange(),
-          node    = range.startContainer || this.element,
-          offset  = range.startOffset    || 0,
+          node    = (range && range.startContainer) ? range.startContainer : this.element,
+          offset  = (range && range.startOffset) ? range.startOffset : 0,
           element,
           position;
       
@@ -8150,7 +8163,7 @@ wysihtml5.views.View = Base.extend(
       }
       
       // Make sure our selection handler is ready
-      this.selection = new wysihtml5.Selection(this.parent);
+      this.selection = new wysihtml5.Selection(this.parent, this.element);
       
       // Make sure commands dispatcher is ready
       this.commands  = new wysihtml5.Commands(this.parent);
