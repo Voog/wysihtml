@@ -426,8 +426,13 @@
     fixRangeOverflow: function(range) {
         if (this.contain) {
             var containRange = rangy.createRange(this.doc);
+            
             containRange.selectNodeContents(this.contain);
-            range = range.intersection(containRange);
+            if (range && range.intersection) {
+                range = range.intersection(containRange);
+            } else {
+                range = null;
+            }
         }
         return range;
     },
@@ -435,7 +440,6 @@
     getRange: function() {
       var selection = this.getSelection(),
           range = selection && selection.rangeCount && selection.getRangeAt(0);
-          
       range = this.fixRangeOverflow(range);
       return range;
     },
