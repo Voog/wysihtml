@@ -424,17 +424,18 @@
     },
     
     fixRangeOverflow: function(range) {
+        var r2 = null;
         if (this.contain) {
             var containRange = rangy.createRange(this.doc);
             
             containRange.selectNodeContents(this.contain);
             if (range && range.intersection) {
-                range = range.intersection(containRange);
+                r2 = range.intersection(containRange);
             } else {
-                range = null;
+                r2 = null;
             }
         }
-        return range;
+        return r2;
     },
     
     getRange: function() {
