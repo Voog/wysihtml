@@ -9408,10 +9408,12 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
     execAction: function(action) {
       var editor = this.editor;
       if (action === "change_view") {
-        if (editor.currentView === editor.textarea) {
-          editor.fire("change_view", "composer");
-        } else {
-          editor.fire("change_view", "textarea");
+        if (editor.textarea) { 
+            if (editor.currentView === editor.textarea) {
+              editor.fire("change_view", "composer");
+            } else {
+              editor.fire("change_view", "textarea");
+            }
         }
       }
     },
@@ -9470,15 +9472,17 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
 
       editor.on("change_view", function(currentView) {
         // Set timeout needed in order to let the blur event fire first
-        setTimeout(function() {
-          that.commandsDisabled = (currentView !== "composer");
-          that._updateLinkStates();
-          if (that.commandsDisabled) {
-            dom.addClass(container, CLASS_NAME_COMMANDS_DISABLED);
-          } else {
-            dom.removeClass(container, CLASS_NAME_COMMANDS_DISABLED);
-          }
-        }, 0);
+        if (editor.textarea) {
+            setTimeout(function() {
+              that.commandsDisabled = (currentView !== "composer");
+              that._updateLinkStates();
+              if (that.commandsDisabled) {
+                dom.addClass(container, CLASS_NAME_COMMANDS_DISABLED);
+              } else {
+                dom.removeClass(container, CLASS_NAME_COMMANDS_DISABLED);
+              }
+            }, 0);
+        }
       });
     },
 
