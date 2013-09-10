@@ -4781,7 +4781,6 @@ wysihtml5.dom.observe = function(element, eventNames, handler) {
  *    });
  *    // => '<p class="red">foo</p><p>bar</p>'
  */
-//TODO: add unwrap function to parser rules
 
 wysihtml5.dom.parse = (function() {
   
@@ -4853,7 +4852,19 @@ wysihtml5.dom.parse = (function() {
     newNode = method && method(oldNode);
     
     if (!newNode) {
-      return null;
+        if (newNode === false) {
+            // false defines that tag should be removed but contents should remain (unwrap)
+            fragment = oldNode.ownerDocument.createDocumentFragment();
+            for (i=0; i<oldChildsLength; i++) {
+              newChild = _convert(oldChilds[i], cleanUp);
+              if (newChild) {
+                fragment.appendChild(newChild);
+              }
+            }
+            return fragment;
+        } else {
+            return null;
+        }
     }
     
     for (i=0; i<oldChildsLength; i++) {
@@ -4924,6 +4935,8 @@ wysihtml5.dom.parse = (function() {
       rule = tagRules[nodeName];
       if (!rule || rule.remove) {
         return null;
+      } else if (rule.unwrap) {
+        return false;
       }
       
       rule = typeof(rule) === "string" ? { rename_tag: rule } : rule;
