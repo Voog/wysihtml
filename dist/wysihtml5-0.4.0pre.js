@@ -4939,6 +4939,11 @@ wysihtml5.dom.parse = (function() {
         return false;
       }
       
+      // tests if type condition is met or node should be removed/unwrapped
+      if (rule.one_of_type && !_testTypes(oldNode, currentRules, rule.one_of_type)) {
+        return (rule.remove_action && rule.remove_action == "unwrap") ? false : null;
+      }
+      
       rule = typeof(rule) === "string" ? { rename_tag: rule } : rule;
     } else if (oldNode.firstChild) {
       rule = { rename_tag: DEFAULT_NODE_NAME };
@@ -4949,9 +4954,96 @@ wysihtml5.dom.parse = (function() {
     
     newNode = oldNode.ownerDocument.createElement(rule.rename_tag || nodeName);
     _handleAttributes(oldNode, newNode, rule);
+    _handleStyles(oldNode, newNode, rule);
     
     oldNode = null;
     return newNode;
+  }
+  
+  function _testTypes(oldNode, rules, types) {
+    var definition, type;
+      
+    for (type in types) {
+      if (types.hasOwnProperty(type) && rules.type_definitions && rules.type_definitions[type]) {
+        definition = rules.type_definitions[type];
+        if (_testType(oldNode, definition)) {
+          return true; 
+        }
+      }
+    }
+    
+    return false;
+  }
+  
+  function array_contains(a, obj) {
+      var i = a.length;
+      while (i--) {
+         if (a[i] === obj) {
+             return true;
+         }
+      }
+      return false;
+  }
+  
+  function _testType(oldNode, definition) {
+    var nodeClasses = oldNode.getAttribute("class"),
+        nodeStyles =  oldNode.style,
+        classesLength, s, s_corrected, currentClass, styleProp;
+        
+    // test for classes, if one found return true
+    if (nodeClasses && definition.classes) {
+      nodeClasses = nodeClasses.replace(/^\s+/g, '').replace(/\s+$/g, '').split(WHITE_SPACE_REG_EXP);
+      classesLength = nodeClasses.length;
+      for (var i = 0; i < classesLength; i++) {
+        if (definition.classes[nodeClasses[i]]) {
+          return true;
+        }
+      }
+    }
+    
+    // test for styles, if one found return true
+    if (nodeStyles && definition.styles) {
+      for (s in definition.styles) {
+        if (definition.styles.hasOwnProperty(s)) {
+          
+          // fix browser inconsitencies here
+          s_corrected = s;
+          if (s == "float") {
+            if (nodeStyles.styleFloat) { s_corrected = "styleFloat"; }
+            if (nodeStyles.cssFloat) { s_corrected = "cssFloat"; }
+          }
+          
+          if (nodeStyles[s_corrected]) {
+            if (array_contains(definition.styles[s], nodeStyles[s_corrected])) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+    
+    return false;
+  }
+  
+  function _handleStyles(oldNode, newNode, rule) {
+    var s;
+    if(rule && rule.keep_styles) {
+      for (s in rule.keep_styles) {
+        if (rule.keep_styles.hasOwnProperty(s)) {
+          if (s == "float") {
+            // IE compability
+            if (oldNode.style.styleFloat) {
+              newNode.style.styleFloat = oldNode.style.styleFloat;
+            }
+            if (oldNode.style.cssFloat) {
+              newNode.style.cssFloat = oldNode.style.cssFloat;
+            }
+          } else if (oldNode.style[s]) {
+             newNode.style[s] = oldNode.style[s];
+           }
+        }
+      }
+    }
   }
   
   function _handleAttributes(oldNode, newNode, rule) {
