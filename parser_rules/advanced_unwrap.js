@@ -90,7 +90,13 @@ var wysihtml5ParserRules = {
                 "float": ["left", "right"],
                 "textAlign": ["left", "right", "center"]
             }
-        }
+        },
+        
+        "valid_image_src": {
+            "attributes": {
+                "src": /^[^data\:]/i
+            }
+        } 
     },
     
     /**
@@ -210,6 +216,9 @@ var wysihtml5ParserRules = {
             }
         },
         "img": {
+            "one_of_type": {
+                "valid_image_src": 1
+            },
             "check_attributes": {
                 "width": "numbers",
                 "alt": "alt",

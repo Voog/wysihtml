@@ -231,9 +231,34 @@ if (wysihtml5.browser.supported()) {
     });
   });
   
+  asyncTest("Editable area html should be cleaned up upon initiation", function() {
+      expect(2);
+      var that = this,
+          parserRules = {
+              "tags": {
+                  "div": { "unwrap": 1 }
+              }
+          },
+          input       = "<div><div>Hi,</div> there!</div>",
+          output      = "Hi, there!",
+          editor;
+          
+      this.contentEditable.innerHTML = input;
+      equal(that.contentEditable.innerHTML, input, "Content is set as unclean before editor initiation");   
+      
+      editor = new wysihtml5.Editor(this.contentEditable, {
+          parserRules: parserRules
+      }),
+          
+      editor.on("load", function() {
+          equal(that.contentEditable.innerHTML, output, "Content is cleaned after initiation");
+          start();
+      });
+  });
+  
   
   asyncTest("Parser (custom parser method with parserRules as object", function() {
-    expect(3);
+    expect(6);
     
     var that        = this,
         parserRules = { script: undefined },
@@ -244,6 +269,10 @@ if (wysihtml5.browser.supported()) {
     var editor = new wysihtml5.Editor(this.contentEditable, {
       parserRules: parserRules,
       parser:      function(html, rules, context) {
+        if (typeof html !== "string") {
+            html = html.innerHTML;
+            ok(true, "Custom parser is run element upon initiation");
+        }
         equal(html.toLowerCase(), input, "HTML passed into parser is equal to the one which just got inserted");
         equal(rules, parserRules, "Rules passed into parser are equal to those given to the editor");
         return html.replace(/\<script\>.*?\<\/script\>/gi, "");

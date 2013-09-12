@@ -4854,7 +4854,23 @@ wysihtml5.dom.parse = (function() {
     if (!newNode) {
         if (newNode === false) {
             // false defines that tag should be removed but contents should remain (unwrap)
+            
             fragment = oldNode.ownerDocument.createDocumentFragment();
+            
+            // TODO: try to minimize surplus spaces
+            if (wysihtml5.lang.array([
+                "block",
+                "box",
+                "list-item",
+                "table",
+                "table-cell",
+                "flex",
+                "inline-table"
+            ]).contains(wysihtml5.dom.getStyle("display").from(oldNode)) && oldNode.parentNode.firstChild !== oldNode) {
+                // add space as first when unwraping non-textflow elements
+                fragment.appendChild(oldNode.ownerDocument.createTextNode(" "));
+            }
+            
             for (i=0; i<oldChildsLength; i++) {
               newChild = _convert(oldChilds[i], cleanUp);
               if (newChild) {
@@ -4962,7 +4978,6 @@ wysihtml5.dom.parse = (function() {
   
   function _testTypes(oldNode, rules, types) {
     var definition, type;
-      
     for (type in types) {
       if (types.hasOwnProperty(type) && rules.type_definitions && rules.type_definitions[type]) {
         definition = rules.type_definitions[type];
@@ -4971,7 +4986,6 @@ wysihtml5.dom.parse = (function() {
         }
       }
     }
-    
     return false;
   }
   
@@ -4988,7 +5002,7 @@ wysihtml5.dom.parse = (function() {
   function _testType(oldNode, definition) {
     var nodeClasses = oldNode.getAttribute("class"),
         nodeStyles =  oldNode.style,
-        classesLength, s, s_corrected, currentClass, styleProp;
+        classesLength, s, s_corrected, a, attr, currentClass, styleProp;
         
     // test for classes, if one found return true
     if (nodeClasses && definition.classes) {
@@ -5021,7 +5035,19 @@ wysihtml5.dom.parse = (function() {
         }
       }
     }
-    
+    // test for attributes in general against regex match
+    if (definition.attrs) {
+        for (a in definition.attrs) {
+            if (definition.attrs.hasOwnProperty(a)) {
+                attr = _getAttribute(oldNode, a);
+                if (typeof(attr) === "string") {
+                    if (definition.attrs[a].test(attr)) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
     return false;
   }
   
