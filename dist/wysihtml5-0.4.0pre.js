@@ -5038,7 +5038,7 @@ wysihtml5.dom.parse = (function() {
             if (oldNode.style.cssFloat) {
               newNode.style.cssFloat = oldNode.style.cssFloat;
             }
-          } else if (oldNode.style[s]) {
+           } else if (oldNode.style[s]) {
              newNode.style[s] = oldNode.style[s];
            }
         }
@@ -8151,6 +8151,10 @@ wysihtml5.views.View = Base.extend(
         this.element.innerText = html;
       }
     },
+    
+    cleanUp: function() {
+        this.parent.parse(this.element);
+    },
 
     show: function() {
       (this.iframe || this.contentEditable).style.display = this._displayStyle || "";
@@ -8269,7 +8273,7 @@ wysihtml5.views.View = Base.extend(
           this.textarea           = this.parent.textarea;
           this.element.innerHTML  = this.textarea.getValue(true);
       } else {
-          // it should be set allready
+          this.cleanUp(); // cleans contenteditable on initiation as it may contain html
       }
       
       // Make sure our selection handler is ready
@@ -9058,6 +9062,11 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
     this.element.value = html;
   },
   
+  cleanUp: function() {
+      var html = this.parent.parse(this.element.value);
+      this.element.value = html;
+  },
+  
   hasPlaceholderSet: function() {
     var supportsPlaceholder = wysihtml5.browser.supportsPlaceholderAttributeOn(this.element),
         placeholderText     = this.element.getAttribute("placeholder") || null,
@@ -9821,6 +9830,10 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
       
       this.currentView.setValue(html, parse);
       return this;
+    },
+    
+    cleanUp: function() {
+        this.currentView.cleanUp();
     },
 
     focus: function(setToEnd) {

@@ -138,6 +138,10 @@
       this.currentView.setValue(html, parse);
       return this;
     },
+    
+    cleanUp: function() {
+        this.currentView.cleanUp();
+    },
 
     focus: function(setToEnd) {
       this.currentView.focus(setToEnd);

@@ -48,6 +48,10 @@
         this.element.innerText = html;
       }
     },
+    
+    cleanUp: function() {
+        this.parent.parse(this.element);
+    },
 
     show: function() {
       (this.iframe || this.contentEditable).style.display = this._displayStyle || "";
@@ -166,7 +170,7 @@
           this.textarea           = this.parent.textarea;
           this.element.innerHTML  = this.textarea.getValue(true);
       } else {
-          // it should be set allready
+          this.cleanUp(); // cleans contenteditable on initiation as it may contain html
       }
       
       // Make sure our selection handler is ready
