@@ -124,20 +124,20 @@ wysihtml5.dom.parse = (function() {
             // false defines that tag should be removed but contents should remain (unwrap)
             
             fragment = oldNode.ownerDocument.createDocumentFragment();
-            
             // TODO: try to minimize surplus spaces
             if (wysihtml5.lang.array([
-                "block",
-                "box",
-                "list-item",
-                "table",
-                "table-cell",
-                "flex",
-                "inline-table"
-            ]).contains(wysihtml5.dom.getStyle("display").from(oldNode)) && oldNode.parentNode.firstChild !== oldNode) {
+                "div", "pre", "p",
+                "table", "td", "th",
+                "ul", "ol", "li",
+                "dd", "dl",
+                "footer", "header", "section",
+                "h1", "h2", "h3", "h4", "h5", "h6"
+            ]).contains(oldNode.nodeName.toLowerCase()) && oldNode.parentNode.firstChild !== oldNode) {
+                
                 // add space as first when unwraping non-textflow elements
                 fragment.appendChild(oldNode.ownerDocument.createTextNode(" "));
             }
+            
             
             for (i=0; i<oldChildsLength; i++) {
               newChild = _convert(oldChilds[i], cleanUp);
@@ -309,7 +309,7 @@ wysihtml5.dom.parse = (function() {
             if (definition.attrs.hasOwnProperty(a)) {
                 attr = _getAttribute(oldNode, a);
                 if (typeof(attr) === "string") {
-                    if (definition.attrs[a].test(attr)) {
+                    if (attr.search(definition.attrs[a]) > -1) {
                         return true;
                     }
                 }
