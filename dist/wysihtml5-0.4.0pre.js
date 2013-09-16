@@ -4856,20 +4856,20 @@ wysihtml5.dom.parse = (function() {
             // false defines that tag should be removed but contents should remain (unwrap)
             
             fragment = oldNode.ownerDocument.createDocumentFragment();
-            
             // TODO: try to minimize surplus spaces
             if (wysihtml5.lang.array([
-                "block",
-                "box",
-                "list-item",
-                "table",
-                "table-cell",
-                "flex",
-                "inline-table"
-            ]).contains(wysihtml5.dom.getStyle("display").from(oldNode)) && oldNode.parentNode.firstChild !== oldNode) {
+                "div", "pre", "p",
+                "table", "td", "th",
+                "ul", "ol", "li",
+                "dd", "dl",
+                "footer", "header", "section",
+                "h1", "h2", "h3", "h4", "h5", "h6"
+            ]).contains(oldNode.nodeName.toLowerCase()) && oldNode.parentNode.firstChild !== oldNode) {
+                
                 // add space as first when unwraping non-textflow elements
                 fragment.appendChild(oldNode.ownerDocument.createTextNode(" "));
             }
+            
             
             for (i=0; i<oldChildsLength; i++) {
               newChild = _convert(oldChilds[i], cleanUp);
@@ -4900,7 +4900,6 @@ wysihtml5.dom.parse = (function() {
       }
       return fragment;
     }
-    
     return newNode;
   }
   
@@ -4910,6 +4909,7 @@ wysihtml5.dom.parse = (function() {
         tagRules    = currentRules.tags,
         nodeName    = oldNode.nodeName.toLowerCase(),
         scopeName   = oldNode.scopeName;
+        
     
     /**
      * We already parsed that element
@@ -4933,7 +4933,6 @@ wysihtml5.dom.parse = (function() {
     if (scopeName && scopeName != "HTML") {
       nodeName = scopeName + ":" + nodeName;
     }
-    
     /**
      * Repair node
      * IE is a bit bitchy when it comes to invalid nested markup which includes unclosed tags
@@ -4967,12 +4966,11 @@ wysihtml5.dom.parse = (function() {
       // Remove empty unknown elements
       return null;
     }
-    
     newNode = oldNode.ownerDocument.createElement(rule.rename_tag || nodeName);
     _handleAttributes(oldNode, newNode, rule);
     _handleStyles(oldNode, newNode, rule);
-    
     oldNode = null;
+    
     return newNode;
   }
   
@@ -5000,6 +4998,7 @@ wysihtml5.dom.parse = (function() {
   }
   
   function _testType(oldNode, definition) {
+      
     var nodeClasses = oldNode.getAttribute("class"),
         nodeStyles =  oldNode.style,
         classesLength, s, s_corrected, a, attr, currentClass, styleProp;
@@ -5041,7 +5040,7 @@ wysihtml5.dom.parse = (function() {
             if (definition.attrs.hasOwnProperty(a)) {
                 attr = _getAttribute(oldNode, a);
                 if (typeof(attr) === "string") {
-                    if (definition.attrs[a].test(attr)) {
+                    if (attr.search(definition.attrs[a]) > -1) {
                         return true;
                     }
                 }
@@ -9791,7 +9790,7 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
       this.config           = wysihtml5.lang.object({}).merge(defaultConfig).merge(config).get();
       this._isCompatible    = wysihtml5.browser.supported();
       
-      if (this.editableElement.tagName.toLowerCase() != "textarea") {
+      if (this.editableElement.nodeName.toLowerCase() != "textarea") {
           this.config.noIframe = true;
           this.config.noTextarea = true;
       }

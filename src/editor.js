@@ -72,7 +72,7 @@
       this.config           = wysihtml5.lang.object({}).merge(defaultConfig).merge(config).get();
       this._isCompatible    = wysihtml5.browser.supported();
       
-      if (this.editableElement.tagName.toLowerCase() != "textarea") {
+      if (this.editableElement.nodeName.toLowerCase() != "textarea") {
           this.config.noIframe = true;
           this.config.noTextarea = true;
       }

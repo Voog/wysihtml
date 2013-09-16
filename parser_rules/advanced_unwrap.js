@@ -93,7 +93,7 @@ var wysihtml5ParserRules = {
         },
         
         "valid_image_src": {
-            "attributes": {
+            "attrs": {
                 "src": /^[^data\:]/i
             }
         } 

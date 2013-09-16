@@ -168,7 +168,6 @@ wysihtml5.dom.parse = (function() {
       }
       return fragment;
     }
-    
     return newNode;
   }
   
@@ -178,6 +177,7 @@ wysihtml5.dom.parse = (function() {
         tagRules    = currentRules.tags,
         nodeName    = oldNode.nodeName.toLowerCase(),
         scopeName   = oldNode.scopeName;
+        
     
     /**
      * We already parsed that element
@@ -201,7 +201,6 @@ wysihtml5.dom.parse = (function() {
     if (scopeName && scopeName != "HTML") {
       nodeName = scopeName + ":" + nodeName;
     }
-    
     /**
      * Repair node
      * IE is a bit bitchy when it comes to invalid nested markup which includes unclosed tags
@@ -235,12 +234,11 @@ wysihtml5.dom.parse = (function() {
       // Remove empty unknown elements
       return null;
     }
-    
     newNode = oldNode.ownerDocument.createElement(rule.rename_tag || nodeName);
     _handleAttributes(oldNode, newNode, rule);
     _handleStyles(oldNode, newNode, rule);
-    
     oldNode = null;
+    
     return newNode;
   }
   
@@ -268,6 +266,7 @@ wysihtml5.dom.parse = (function() {
   }
   
   function _testType(oldNode, definition) {
+      
     var nodeClasses = oldNode.getAttribute("class"),
         nodeStyles =  oldNode.style,
         classesLength, s, s_corrected, a, attr, currentClass, styleProp;

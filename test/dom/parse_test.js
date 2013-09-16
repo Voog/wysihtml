@@ -708,15 +708,20 @@ if (wysihtml5.browser.supported()) {
                   "valid_image_src": 1
               },
               "check_attributes": {
-                  "src": "src"
+                  "src": "src",
+                  "height": "numbers",
+                  "width": "numbers",
+                  "alt": "alt"
               } 
           }
        }
     },
     input = '<img src="data:image/gif;base64,R0lGODlhAQABAPAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" alt="alt" />',
-    input_valid = '<img src="http://www.asd/a.jpg" />';
+    input_valid = '<img alt="" src="http://www.asd/a.jpg">',
+    input_valid_2 = '<img src="http://reykjavik.edicy.co/photos/photo02.jpg" alt="" height="243" width="710">';
     
     this.equal(this.sanitize(input, rules), "", "Image with data src gets removed");
     this.equal(this.sanitize(input_valid, rules), input_valid, "Valid image is kept");
+    this.equal(this.sanitize(input_valid_2, rules), input_valid_2, "Valid image is kept2");
   });
 }
