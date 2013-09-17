@@ -402,7 +402,7 @@
       }
 
       
-      dom.observe(this.doc, "keydown", function(event) {
+      dom.observe(this.element, "keydown", function(event) {
         var keyCode = event.keyCode;
         
         if (event.shiftKey) {
@@ -412,7 +412,6 @@
         if (keyCode !== wysihtml5.ENTER_KEY && keyCode !== wysihtml5.BACKSPACE_KEY) {
           return;
         }
-        
         var blockElement = dom.getParentElement(that.selection.getSelectedNode(), { nodeName: USE_NATIVE_LINE_BREAK_INSIDE_TAGS }, 4);
         if (blockElement) {
           setTimeout(function() {
@@ -440,8 +439,9 @@
         }
         
         if (that.config.useLineBreaks && keyCode === wysihtml5.ENTER_KEY && !wysihtml5.browser.insertsLineBreaksOnReturn()) {
-          that.commands.exec("insertLineBreak");
           event.preventDefault();
+          that.commands.exec("insertLineBreak");
+          
         }
       });
     }

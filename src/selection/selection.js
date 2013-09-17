@@ -76,6 +76,7 @@
      */
     setAfter: function(node) {
       var range = rangy.createRange(this.doc);
+      
       range.setStartAfter(node);
       range.setEndAfter(node);
       return this.setSelection(range);
@@ -270,6 +271,7 @@
       var range     = rangy.createRange(this.doc),
           node      = range.createContextualFragment(html),
           lastChild = node.lastChild;
+    
       this.insertNode(node);
       if (lastChild) {
         this.setAfter(lastChild);
@@ -424,24 +426,32 @@
     },
     
     fixRangeOverflow: function(range) {
-        var r2 = null;
-        if (this.contain) {
-            var containRange = rangy.createRange(this.doc);
+        
+        if (this.contain && range) {
+            var containment = range.compareNode(this.contain);
             
-            containRange.selectNodeContents(this.contain);
-            if (range && range.intersection) {
-                r2 = range.intersection(containRange);
-            } else {
-                r2 = null;
+            if (containment !== 2) {
+                if (containment === 1) {
+                    range.setStartBefore(this.contain.firstChild);
+                }
+                if (containment === 0) {
+                    range.setEndAfter(this.contain.lastChild);
+                }
+                if (containment === 3) {
+                    range.setStartBefore(this.contain.firstChild);
+                    range.setEndAfter(this.contain.lastChild);
+                }
+                
             }
+            this.setSelection(range);
         }
-        return r2;
+        
     },
     
     getRange: function() {
       var selection = this.getSelection(),
           range = selection && selection.rangeCount && selection.getRangeAt(0);
-      range = this.fixRangeOverflow(range);
+          this.fixRangeOverflow(range);
       return range;
     },
 

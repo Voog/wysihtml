@@ -39,6 +39,7 @@
     style:                true,
     // Id of the toolbar element, pass falsey value if you don't want any toolbar logic
     toolbar:              undef,
+    showToolbarAfterInit: true,
     // Whether urls, entered by the user should automatically become clickable-links
     autoLink:             true,
     // Object which includes parser rules to apply when html gets inserted via copy & paste
@@ -111,7 +112,7 @@
             this.synchronizer = new wysihtml5.views.Synchronizer(this, this.textarea, this.composer);
         }
         if (this.config.toolbar) {
-          this.toolbar = new wysihtml5.toolbar.Toolbar(this, this.config.toolbar);
+          this.toolbar = new wysihtml5.toolbar.Toolbar(this, this.config.toolbar, this.config.showToolbarAfterInit);
         }
     },
     

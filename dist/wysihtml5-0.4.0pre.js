@@ -6141,6 +6141,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
      */
     setAfter: function(node) {
       var range = rangy.createRange(this.doc);
+      
       range.setStartAfter(node);
       range.setEndAfter(node);
       return this.setSelection(range);
@@ -6335,6 +6336,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       var range     = rangy.createRange(this.doc),
           node      = range.createContextualFragment(html),
           lastChild = node.lastChild;
+    
       this.insertNode(node);
       if (lastChild) {
         this.setAfter(lastChild);
@@ -6489,24 +6491,32 @@ wysihtml5.quirks.ensureProperClearing = (function() {
     },
     
     fixRangeOverflow: function(range) {
-        var r2 = null;
-        if (this.contain) {
-            var containRange = rangy.createRange(this.doc);
+        
+        if (this.contain && range) {
+            var containment = range.compareNode(this.contain);
             
-            containRange.selectNodeContents(this.contain);
-            if (range && range.intersection) {
-                r2 = range.intersection(containRange);
-            } else {
-                r2 = null;
+            if (containment !== 2) {
+                if (containment === 1) {
+                    range.setStartBefore(this.contain.firstChild);
+                }
+                if (containment === 0) {
+                    range.setEndAfter(this.contain.lastChild);
+                }
+                if (containment === 3) {
+                    range.setStartBefore(this.contain.firstChild);
+                    range.setEndAfter(this.contain.lastChild);
+                }
+                
             }
+            this.setSelection(range);
         }
-        return r2;
+        
     },
     
     getRange: function() {
       var selection = this.getSelection(),
           range = selection && selection.rangeCount && selection.getRangeAt(0);
-      range = this.fixRangeOverflow(range);
+          this.fixRangeOverflow(range);
       return range;
     },
 
@@ -8530,7 +8540,7 @@ wysihtml5.views.View = Base.extend(
       }
 
       
-      dom.observe(this.doc, "keydown", function(event) {
+      dom.observe(this.element, "keydown", function(event) {
         var keyCode = event.keyCode;
         
         if (event.shiftKey) {
@@ -8540,7 +8550,6 @@ wysihtml5.views.View = Base.extend(
         if (keyCode !== wysihtml5.ENTER_KEY && keyCode !== wysihtml5.BACKSPACE_KEY) {
           return;
         }
-        
         var blockElement = dom.getParentElement(that.selection.getSelectedNode(), { nodeName: USE_NATIVE_LINE_BREAK_INSIDE_TAGS }, 4);
         if (blockElement) {
           setTimeout(function() {
@@ -8568,8 +8577,9 @@ wysihtml5.views.View = Base.extend(
         }
         
         if (that.config.useLineBreaks && keyCode === wysihtml5.ENTER_KEY && !wysihtml5.browser.insertsLineBreaksOnReturn()) {
-          that.commands.exec("insertLineBreak");
           event.preventDefault();
+          that.commands.exec("insertLineBreak");
+          
         }
       });
     }
@@ -9441,7 +9451,7 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
   
   wysihtml5.toolbar.Toolbar = Base.extend(
     /** @scope wysihtml5.toolbar.Toolbar.prototype */ {
-    constructor: function(editor, container) {
+    constructor: function(editor, container, showOnInit) {
       this.editor     = editor;
       this.container  = typeof(container) === "string" ? document.getElementById(container) : container;
       this.composer   = editor.composer;
@@ -9450,7 +9460,7 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
       this._getLinks("action");
 
       this._observe();
-      this.show();
+      if (showOnInit) { this.show(); }
       
       var speechInputLinks  = this.container.querySelectorAll("[data-wysihtml5-command=insertSpeech]"),
           length            = speechInputLinks.length,
@@ -9603,7 +9613,7 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
       editor.on("focus:composer", function() {
         that.bookmark = null;
         clearInterval(that.interval);
-        that.interval = setInterval(function() { that._updateLinkStates(); }, 500);
+        that.interval = setInterval(function() { that._updateLinkStates(); }, 100);
       });
 
       editor.on("blur:composer", function() {
@@ -9757,6 +9767,7 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
     style:                true,
     // Id of the toolbar element, pass falsey value if you don't want any toolbar logic
     toolbar:              undef,
+    showToolbarAfterInit: true,
     // Whether urls, entered by the user should automatically become clickable-links
     autoLink:             true,
     // Object which includes parser rules to apply when html gets inserted via copy & paste
@@ -9829,7 +9840,7 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
             this.synchronizer = new wysihtml5.views.Synchronizer(this, this.textarea, this.composer);
         }
         if (this.config.toolbar) {
-          this.toolbar = new wysihtml5.toolbar.Toolbar(this, this.config.toolbar);
+          this.toolbar = new wysihtml5.toolbar.Toolbar(this, this.config.toolbar, this.config.showToolbarAfterInit);
         }
     },
     

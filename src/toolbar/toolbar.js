@@ -23,7 +23,7 @@
   
   wysihtml5.toolbar.Toolbar = Base.extend(
     /** @scope wysihtml5.toolbar.Toolbar.prototype */ {
-    constructor: function(editor, container) {
+    constructor: function(editor, container, showOnInit) {
       this.editor     = editor;
       this.container  = typeof(container) === "string" ? document.getElementById(container) : container;
       this.composer   = editor.composer;
@@ -32,7 +32,7 @@
       this._getLinks("action");
 
       this._observe();
-      this.show();
+      if (showOnInit) { this.show(); }
       
       var speechInputLinks  = this.container.querySelectorAll("[data-wysihtml5-command=insertSpeech]"),
           length            = speechInputLinks.length,
@@ -185,7 +185,7 @@
       editor.on("focus:composer", function() {
         that.bookmark = null;
         clearInterval(that.interval);
-        that.interval = setInterval(function() { that._updateLinkStates(); }, 500);
+        that.interval = setInterval(function() { that._updateLinkStates(); }, 100);
       });
 
       editor.on("blur:composer", function() {
