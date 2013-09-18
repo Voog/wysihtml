@@ -198,6 +198,11 @@ Teine:
   </div>
 </div>
 
+<br/>
+<div contenteditable="true" class="e2">
+  asfdasdasdasd
+</div>
+
 <br>
 
 <h2>Events:</h2>
@@ -217,6 +222,7 @@ var editors = [];
       parserRules:    wysihtml5ParserRules
       //showToolbarAfterInit: false
     });
+    editors.push(e);
     
     /*e.on("focus", function() {
       $(wrapper).find('.toolbar').show();
