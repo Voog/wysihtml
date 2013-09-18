@@ -185,7 +185,7 @@
       editor.on("focus:composer", function() {
         that.bookmark = null;
         clearInterval(that.interval);
-        that.interval = setInterval(function() { that._updateLinkStates(); }, 100);
+        that.interval = setInterval(function() { that._updateLinkStates(); }, 500);
       });
 
       editor.on("blur:composer", function() {

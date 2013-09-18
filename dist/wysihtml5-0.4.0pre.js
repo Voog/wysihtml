@@ -6528,7 +6528,12 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       var win       = this.doc.defaultView || this.doc.parentWindow,
           selection = rangy.getSelection(win);
       return selection.setSingleRange(range);
+    },
+    
+    isCollapsed: function() {
+        return this.getSelection().isCollapsed;
     }
+    
   });
   
 })(wysihtml5);
@@ -7048,7 +7053,16 @@ wysihtml5.Commands = Base.extend(
 });
 wysihtml5.commands.bold = {
   exec: function(composer, command) {
-    return wysihtml5.commands.formatInline.exec(composer, command, "b");
+    var that = this;
+    if (this.state(composer, command) && composer.selection.isCollapsed()) {
+        // collapsed caret in a bold area indicates bold as text formatting, so clicking on bold again should unformat bold
+        composer.selection.executeAndRestore(function() {
+            composer.selection.selectNode(that.state(composer, command)[0]);
+            wysihtml5.commands.formatInline.exec(composer, command, "b");
+        });
+    } else {
+        wysihtml5.commands.formatInline.exec(composer, command, "b");
+    }
   },
 
   state: function(composer, command) {
@@ -7741,7 +7755,17 @@ wysihtml5.commands.bold = {
   }
 };wysihtml5.commands.italic = {
   exec: function(composer, command) {
-    return wysihtml5.commands.formatInline.exec(composer, command, "i");
+      var that = this;
+      if (this.state(composer, command) && composer.selection.isCollapsed()) {
+          // collapsed caret in an italic area indicates italic as text formatting.
+          // so clicking on italic again should unformat style
+          composer.selection.executeAndRestore(function() {
+              composer.selection.selectNode(that.state(composer, command)[0]);
+              wysihtml5.commands.formatInline.exec(composer, command, "i");
+          });
+      } else {
+          wysihtml5.commands.formatInline.exec(composer, command, "i");
+      }
   },
 
   state: function(composer, command) {
@@ -7815,7 +7839,17 @@ wysihtml5.commands.redo = {
   }
 };wysihtml5.commands.underline = {
   exec: function(composer, command) {
-    return wysihtml5.commands.formatInline.exec(composer, command, "u");
+      var that = this;
+      if (this.state(composer, command) && composer.selection.isCollapsed()) {
+          // collapsed caret in an underline area indicates it as text formatting.
+          // so clicking on underline should unformat style
+          composer.selection.executeAndRestore(function() {
+              composer.selection.selectNode(that.state(composer, command)[0]);
+              wysihtml5.commands.formatInline.exec(composer, command, "u");
+          });
+      } else {
+          wysihtml5.commands.formatInline.exec(composer, command, "u");
+      }
   },
 
   state: function(composer, command) {
@@ -9613,7 +9647,7 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
       editor.on("focus:composer", function() {
         that.bookmark = null;
         clearInterval(that.interval);
-        that.interval = setInterval(function() { that._updateLinkStates(); }, 100);
+        that.interval = setInterval(function() { that._updateLinkStates(); }, 500);
       });
 
       editor.on("blur:composer", function() {

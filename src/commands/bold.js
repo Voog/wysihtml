@@ -1,6 +1,15 @@
 wysihtml5.commands.bold = {
   exec: function(composer, command) {
-    return wysihtml5.commands.formatInline.exec(composer, command, "b");
+    var that = this;
+    if (this.state(composer, command) && composer.selection.isCollapsed()) {
+        // collapsed caret in a bold area indicates bold as text formatting, so clicking on bold again should unformat bold
+        composer.selection.executeAndRestore(function() {
+            composer.selection.selectNode(that.state(composer, command)[0]);
+            wysihtml5.commands.formatInline.exec(composer, command, "b");
+        });
+    } else {
+        wysihtml5.commands.formatInline.exec(composer, command, "b");
+    }
   },
 
   state: function(composer, command) {

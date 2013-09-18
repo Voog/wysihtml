@@ -463,7 +463,12 @@
       var win       = this.doc.defaultView || this.doc.parentWindow,
           selection = rangy.getSelection(win);
       return selection.setSingleRange(range);
+    },
+    
+    isCollapsed: function() {
+        return this.getSelection().isCollapsed;
     }
+    
   });
   
 })(wysihtml5);
