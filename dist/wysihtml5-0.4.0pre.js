@@ -6512,7 +6512,6 @@ wysihtml5.quirks.ensureProperClearing = (function() {
                 }
                 
             }
-            //this.setSelection(range);
         }
         
     },

@@ -325,8 +325,9 @@ if (wysihtml5.browser.supported()) {
           editor.composer.selection.selectNode(document.body);
           equal(that.contentEditable.innerHTML, "foobar", "Content was not bold before");
           editor.composer.commands.exec('bold');
-          ok(wysihtml5.dom.getStyle("font-weight").from(that.contentEditable.children[0]) === 700 || wysihtml5.dom.getStyle("font-weight").from(that.contentEditable.children[0]) === "bold", "First child has style bold");
-          ok(wysihtml5.dom.getStyle("font-weight").from(that.contentEditable) === 400 || wysihtml5.dom.getStyle("font-weight").from(that.contentEditable) === "normal", "Editable element itself is not bold");
+          console.log(wysihtml5.dom.getStyle("font-weight").from(that.contentEditable.children[0]));
+          ok(wysihtml5.dom.getStyle("font-weight").from(that.contentEditable.children[0]) == 700 || wysihtml5.dom.getStyle("font-weight").from(that.contentEditable.children[0]) == "bold", "First child has style bold");
+          ok(wysihtml5.dom.getStyle("font-weight").from(that.contentEditable) == 400 || wysihtml5.dom.getStyle("font-weight").from(that.contentEditable) == "normal", "Editable element itself is not bold");
           start();
       });
   });
