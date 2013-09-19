@@ -4,8 +4,9 @@ wysihtml5.commands.underline = {
       if (this.state(composer, command) && composer.selection.isCollapsed()) {
           // collapsed caret in an underline area indicates it as text formatting.
           // so clicking on underline should unformat style
-          composer.selection.executeAndRestore(function() {
-              composer.selection.selectNode(that.state(composer, command)[0]);
+          var underline_node =  that.state(composer, command)[0];
+          composer.selection.executeAndRestoreSimple(function() {
+              composer.selection.selectNode(underline_node);
               wysihtml5.commands.formatInline.exec(composer, command, "u");
           });
       } else {
