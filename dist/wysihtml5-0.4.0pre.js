@@ -3737,6 +3737,10 @@ wysihtml5.browser = (function() {
      */
     createsNestedInvalidMarkupAfterPaste: function() {
       return isWebKit;
+    },
+    
+    supportsMutationEvents: function() {
+        return ("MutationEvent" in window);
     }
   };
 })();wysihtml5.lang.array = function(arr) {
@@ -6508,7 +6512,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
                 }
                 
             }
-            this.setSelection(range);
+            //this.setSelection(range);
         }
         
     },
@@ -6516,7 +6520,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
     getRange: function() {
       var selection = this.getSelection(),
           range = selection && selection.rangeCount && selection.getRangeAt(0);
-      //this.fixRangeOverflow(range);
+      this.fixRangeOverflow(range);
       return range;
     },
 
@@ -8845,10 +8849,11 @@ wysihtml5.views.View = Base.extend(
   wysihtml5.views.Composer.prototype.observe = function() {
     var that                = this,
         state               = this.getValue(),
-        container              = (this.sandbox.getIframe) ? this.sandbox.getIframe() : this.sandbox.getContentEditable(),
+        container           = (this.sandbox.getIframe) ? this.sandbox.getIframe() : this.sandbox.getContentEditable(),
         element             = this.element,
-        focusBlurElement    = browser.supportsEventsInIframeCorrectly() ? element : this.sandbox.getWindow(),
-        pasteEvents         = ["drop", "paste"];
+        focusBlurElement    = (browser.supportsEventsInIframeCorrectly() || this.sandbox.getContentEditable) ? element : this.sandbox.getWindow(),
+        pasteEvents         = ["drop", "paste"],
+        interactionEvents   = ["drop", "paste", "mouseup", "focus", "blur", "keyup"];
 
     // --------- destroy:composer event ---------
     dom.observe(container, "DOMNodeRemoved", function() {
@@ -8856,14 +8861,23 @@ wysihtml5.views.View = Base.extend(
       that.parent.fire("destroy:composer");
     });
 
-    // TODO: Why initiate it for all browsers? make specific
     // DOMNodeRemoved event is not supported in IE 8
-    var domNodeRemovedInterval = setInterval(function() {
-      if (!dom.contains(document.documentElement, container)) {
-        clearInterval(domNodeRemovedInterval);
-        that.parent.fire("destroy:composer");
-      }
-    }, 250);
+    if (!browser.supportsMutationEvents()) {
+        var domNodeRemovedInterval = setInterval(function() {
+          if (!dom.contains(document.documentElement, container)) {
+            clearInterval(domNodeRemovedInterval);
+            that.parent.fire("destroy:composer");
+          }
+        }, 250);
+    }
+    
+    // --------- User interaction tracking --
+    
+    dom.observe(focusBlurElement, interactionEvents, function() {
+      setTimeout(function() {
+        that.parent.fire("interaction").fire("interaction:composer");
+      }, 0);
+    });
 
     // --------- Focus & blur logic ---------
     dom.observe(focusBlurElement, "focus", function() {
@@ -9647,20 +9661,27 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
         that.execAction(action);
         event.preventDefault();
       });
+      
+      editor.on("interaction:composer", function() {
+          that._updateLinkStates();
+      });
 
       editor.on("focus:composer", function() {
         that.bookmark = null;
+        
+       /* //TODO: rewrite this as polling in such way is bad practice.
+        
         clearInterval(that.interval);
-        that.interval = setInterval(function() { that._updateLinkStates(); }, 500);
+        that.interval = setInterval(function() { that._updateLinkStates(); }, 500);*/
       });
 
-      editor.on("blur:composer", function() {
+      /*editor.on("blur:composer", function() {
         clearInterval(that.interval);
       });
 
       editor.on("destroy:composer", function() {
         clearInterval(that.interval);
-      });
+      });*/
 
       editor.on("change_view", function(currentView) {
         // Set timeout needed in order to let the blur event fire first

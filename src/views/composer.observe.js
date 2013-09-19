@@ -21,10 +21,11 @@
   wysihtml5.views.Composer.prototype.observe = function() {
     var that                = this,
         state               = this.getValue(),
-        container              = (this.sandbox.getIframe) ? this.sandbox.getIframe() : this.sandbox.getContentEditable(),
+        container           = (this.sandbox.getIframe) ? this.sandbox.getIframe() : this.sandbox.getContentEditable(),
         element             = this.element,
-        focusBlurElement    = browser.supportsEventsInIframeCorrectly() ? element : this.sandbox.getWindow(),
-        pasteEvents         = ["drop", "paste"];
+        focusBlurElement    = (browser.supportsEventsInIframeCorrectly() || this.sandbox.getContentEditable) ? element : this.sandbox.getWindow(),
+        pasteEvents         = ["drop", "paste"],
+        interactionEvents   = ["drop", "paste", "mouseup", "focus", "blur", "keyup"];
 
     // --------- destroy:composer event ---------
     dom.observe(container, "DOMNodeRemoved", function() {
@@ -32,14 +33,23 @@
       that.parent.fire("destroy:composer");
     });
 
-    // TODO: Why initiate it for all browsers? make specific
     // DOMNodeRemoved event is not supported in IE 8
-    var domNodeRemovedInterval = setInterval(function() {
-      if (!dom.contains(document.documentElement, container)) {
-        clearInterval(domNodeRemovedInterval);
-        that.parent.fire("destroy:composer");
-      }
-    }, 250);
+    if (!browser.supportsMutationEvents()) {
+        var domNodeRemovedInterval = setInterval(function() {
+          if (!dom.contains(document.documentElement, container)) {
+            clearInterval(domNodeRemovedInterval);
+            that.parent.fire("destroy:composer");
+          }
+        }, 250);
+    }
+    
+    // --------- User interaction tracking --
+    
+    dom.observe(focusBlurElement, interactionEvents, function() {
+      setTimeout(function() {
+        that.parent.fire("interaction").fire("interaction:composer");
+      }, 0);
+    });
 
     // --------- Focus & blur logic ---------
     dom.observe(focusBlurElement, "focus", function() {

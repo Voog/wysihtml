@@ -443,7 +443,6 @@
                 }
                 
             }
-            this.setSelection(range);
         }
         
     },
