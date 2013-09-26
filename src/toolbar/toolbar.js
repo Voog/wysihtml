@@ -77,8 +77,13 @@
           caretBookmark;
       
       if (dialogElement) {
-        dialog = new wysihtml5.toolbar.Dialog(link, dialogElement);
-
+        if (wysihtml5.toolbar["Dialog_" + command]) {
+            console.log('a');
+            dialog = new wysihtml5.toolbar["Dialog_" + command](link, dialogElement);
+        } else {
+            dialog = new wysihtml5.toolbar.Dialog(link, dialogElement);
+        }
+        
         dialog.on("show", function() {
           caretBookmark = that.composer.selection.getBookmark();
 
@@ -142,6 +147,9 @@
             }
         }
       }
+      if (action == "showSource") {
+          editor.fire("showSource");
+      }
     },
 
     _observe: function() {
@@ -188,20 +196,7 @@
 
       editor.on("focus:composer", function() {
         that.bookmark = null;
-        
-       /* //TODO: rewrite this as polling in such way is bad practice.
-        
-        clearInterval(that.interval);
-        that.interval = setInterval(function() { that._updateLinkStates(); }, 500);*/
       });
-
-      /*editor.on("blur:composer", function() {
-        clearInterval(that.interval);
-      });
-
-      editor.on("destroy:composer", function() {
-        clearInterval(that.interval);
-      });*/
 
       editor.on("change_view", function(currentView) {
         // Set timeout needed in order to let the blur event fire first

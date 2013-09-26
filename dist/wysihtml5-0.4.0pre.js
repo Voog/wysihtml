@@ -5949,6 +5949,201 @@ wysihtml5.dom.replaceWithChildNodes = function(node) {
 })(wysihtml5.dom);
 
 /**
+ * Get a set of attribute from one element
+ *
+ * IE gives wrong results for hasAttribute/getAttribute, for example:
+ *    var td = document.createElement("td");
+ *    td.getAttribute("rowspan"); // => "1" in IE
+ *
+ * Therefore we have to check the element's outerHTML for the attribute
+*/
+
+wysihtml5.dom.getAttribute = function(node, attributeName) {
+  var HAS_GET_ATTRIBUTE_BUG = !wysihtml5.browser.supportsGetAttributeCorrectly();
+  attributeName = attributeName.toLowerCase();
+  var nodeName = node.nodeName;
+  if (nodeName == "IMG" && attributeName == "src" && _isLoadedImage(node) === true) {
+    // Get 'src' attribute value via object property since this will always contain the
+    // full absolute url (http://...)
+    // this fixes a very annoying bug in firefox (ver 3.6 & 4) and IE 8 where images copied from the same host
+    // will have relative paths, which the sanitizer strips out (see attributeCheckMethods.url)
+    return node.src;
+  } else if (HAS_GET_ATTRIBUTE_BUG && "outerHTML" in node) {
+    // Don't trust getAttribute/hasAttribute in IE 6-8, instead check the element's outerHTML
+    var outerHTML      = node.outerHTML.toLowerCase(),
+        // TODO: This might not work for attributes without value: <input disabled>
+        hasAttribute   = outerHTML.indexOf(" " + attributeName +  "=") != -1;
+    
+    return hasAttribute ? node.getAttribute(attributeName) : null;
+  } else{
+    return node.getAttribute(attributeName);
+  }
+};(function(wysihtml5) {
+    
+    var api = wysihtml5.dom;
+
+    var MapCell = function(cell) {
+      this.el = cell;
+      this.isColspan= false;
+      this.isRowspan= false;
+      this.firstCol= true;
+      this.lastCol= true;
+      this.firstRow= true;
+      this.lastRow= true;
+      this.isReal= true;
+      this.spanCollection= [];
+      this.modified = false;
+    };
+
+    var TableModifyerByCell = function (cell) {
+      this.cell = cell;
+      this.table = api.getParentElement(cell, { nodeName: ["TABLE"] });
+    };
+    
+    function queryInList(list, query) {
+        var ret = [],
+            q;
+        for (var e = 0, len = list.length; e < len; e++) {
+            q = list[e].querySelectorAll(query);
+            if (q) {
+                for(var i = q.length; i--; ret.unshift(q[i]));
+            }
+        }
+        return ret;
+    }
+
+
+    TableModifyerByCell.prototype = {
+        
+        addSpannedCellToMap: function(cell, map, r, c, cspan, rspan) {
+            var spanCollect = [],
+                rmax = r + ((rspan) ? parseInt(rspan, 10) - 1 : 0),
+                cmax = c + ((cspan) ? parseInt(cspan, 10) - 1 : 0);
+        
+            for (var rr = r; rr <= rmax; rr++) {
+                if (typeof map[rr] == "undefined") { map[rr] = []; }
+                for (var cc = c; cc <= cmax; cc++) {
+                    map[rr][cc] = new MapCell(cell);
+                    map[rr][cc].isColspan = (cspan && parseInt(cspan, 10) > 1);
+                    map[rr][cc].isRowspan = (rspan && parseInt(rspan, 10) > 1);
+                    map[rr][cc].firstCol = cc == c;
+                    map[rr][cc].lastCol = cc == cmax;
+                    map[rr][cc].firstRow = rr == r;
+                    map[rr][cc].lastRow = rr == rmax;
+                    map[rr][cc].isReal = cc == c && rr == r;
+                    map[rr][cc].spanCollection = spanCollect;
+        
+                    spanCollect.push(map[rr][cc]);
+                }
+            }
+        },
+        
+        
+
+        setTableMap: function() {
+            var map = [];    
+
+            var inlineTables = this.table.querySelectorAll('table'),
+                inlineRows = (inlineTables) ? queryInList(inlineTables, 'tr') : [],
+                allRows = this.table.querySelectorAll('tr'),
+                tableRows = (inlineRows.length > 0) ? wysihtml5.lang.array(allRows).without(inlineRows) : allRows,
+                ridx, row, cells, cidx, cell,
+                c,
+                cspan, rspan;
+                
+                
+
+            for (ridx = 0; ridx < tableRows.length; ridx++) {
+                row = tableRows[ridx];
+                cells = this.getRowCells(row);
+                c = 0;
+                if (typeof map[ridx] == "undefined") { map[ridx] = []; }
+                for (cidx = 0; cidx < cells.length; cidx++) {
+                    cell = cells[cidx];
+
+                    // If cell allready set means it is set by col or rowspan,
+                    // so increase cols index until free col is found 
+                    while (typeof map[ridx][c] != "undefined") { c++; }
+
+                    cspan = api.getAttribute(cell, 'colspan');
+                    rspan = api.getAttribute(cell, 'rowspan');
+
+                    if (cspan || rspan) {
+                        this.addSpannedCellToMap(cell, map, ridx, c, cspan, rspan);
+                        c = c + ((cspan) ? parseInt(cspan, 10) : 1);
+                    } else {
+                        map[ridx][c] = new MapCell(cell);
+                        c++;
+                    }
+                }
+            }    
+            this.map = map;
+            return map;
+        },
+        
+        getRowCells: function(row) {
+            var inlineTables = this.table.querySelectorAll('table'),
+                inlineCells = (inlineTables) ? queryInList(inlineTables, 'th, td') : [],
+                allCells = row.querySelectorAll('th, td'),
+                tableCells = (inlineCells.length > 0) ? wysihtml5.lang.array(allCells).without(inlineCells) : allCells;
+    
+            return tableCells;
+        },
+        
+        getMapIndex: function(cell) {
+          var r_length = this.map.length,
+              c_length = (this.map && this.map[0]) ? this.map[0].length : 0;
+              
+          for (var r_idx = 0;r_idx < r_length; r_idx++) {
+              for (var c_idx = 0;c_idx < c_length; c_idx++) {
+                  if (this.map[r_idx][c_idx].el === cell) {
+                      return {'row': r_idx, 'col': c_idx};
+                  }
+              }
+          }
+          return false;
+        },
+        
+        getMapElsTo: function(to_cell) {
+            var els = [];
+            this.setTableMap();
+            this.idx_start = this.getMapIndex(this.cell);
+            this.idx_end = this.getMapIndex(to_cell);
+            
+            // switch indexes if start is bigger than end
+            if (this.idx_start.row > this.idx_end.row || (this.idx_start.row == this.idx_end.row && this.idx_start.col > this.idx_end.col)) {
+                var temp_idx = this.idx_start;
+                this.idx_start = this.idx_end;
+                this.idx_end = temp_idx;
+            }
+            if (this.idx_start.col > this.idx_end.col) {
+                var temp_cidx = this.idx_start.col;
+                this.idx_start.col = this.idx_end.col;
+                this.idx_end.col = temp_cidx;
+            }
+            
+            if (this.idx_start != null && this.idx_end != null) {
+                for (var row = this.idx_start.row, maxr = this.idx_end.row; row <= maxr; row++) {
+                    for (var col = this.idx_start.col, maxc = this.idx_end.col; col <= maxc; col++) {
+                        els.push(this.map[row][col].el);
+                    }
+                }
+            }
+            
+            
+            return els;
+        } 
+    };
+    
+    api.table = {
+        getCellsBetween: function(cell1, cell2) {
+            var c1 = new TableModifyerByCell(cell1);
+            return c1.getMapElsTo(cell2);
+        }
+    };
+    
+})(wysihtml5);
+/**
  * Fix most common html formatting misbehaviors of browsers implementation when inserting
  * content via copy & paste contentEditable
  *
@@ -6067,7 +6262,80 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       doc.execCommand("italic", false, null);
     } catch(e) {}
   };
-})(wysihtml5);/**
+})(wysihtml5);wysihtml5.quirks.tableCellsSelection = (function() {
+  
+  var dom = wysihtml5.dom,
+      selectionStart = null,
+      selctionEnd = null,
+      editable = null,
+      selection_class = "wysiwyg-tmp-selected-cell",
+      moveHandler = null,
+      upHandler = null,
+      startTable = null;
+  
+  function handleSelectionMousedown (target, element) {
+    selectionStart = target;
+    editable = element;
+    startTable = dom.getParentElement(selectionStart, { nodeName: ["TABLE"] });
+    
+    if (startTable) {
+      removeCellSelections();
+      dom.addClass(target, selection_class);
+      moveHandler = dom.observe(editable, "mousemove", handleMouseMove);
+      upHandler = dom.observe(editable, "mouseup", handleMouseUp);
+    }
+  }
+  
+  // remove all selection classes
+  function removeCellSelections () {
+      if (editable) {
+          var selectedCells = editable.querySelectorAll('.' + selection_class);
+          if (selectedCells.length > 0) {
+            for (var i = 0; i < selectedCells.length; i++) {
+                dom.removeClass(selectedCells[i], selection_class);
+            }
+          }
+      }
+  }
+  
+  function addSelections (cells) {
+    for (var i = 0; i < cells.length; i++) {
+      dom.addClass(cells[i], selection_class);
+    }
+  }
+  
+  function handleMouseMove (event) {
+    var curTable = null,
+        cell = dom.getParentElement(event.target, { nodeName: ["TD","TH"] }),
+        selectedCells;
+        
+    if (cell && startTable && selectionStart && selectionStart != cell) {
+      curTable =  dom.getParentElement(cell, { nodeName: ["TABLE"] });
+      if (curTable && curTable === startTable) {
+        removeCellSelections();
+        selectedCells = dom.table.getCellsBetween(selectionStart, cell);
+        addSelections(selectedCells);
+        
+        
+        /*if (document.selection) {
+            document.selection.empty();
+        } else if (window.getSelection) {
+            window.getSelection().removeAllRanges();
+        }*/
+      }
+    }
+  }
+  
+  function handleMouseUp (event) {
+    moveHandler.stop();
+    upHandler.stop();
+  }
+  
+  return handleSelectionMousedown;
+
+})();
+
+/**
  * Selection API
  *
  * @example
@@ -7189,7 +7457,19 @@ wysihtml5.commands.bold = {
   
   wysihtml5.commands.fontSize = {
     exec: function(composer, command, size) {
-      return wysihtml5.commands.formatInline.exec(composer, command, "span", "wysiwyg-font-size-" + size, REG_EXP);
+        var that = this;
+        if (this.state(composer, command, size) && composer.selection.isCollapsed()) {
+            
+            // collapsed caret in an italic area indicates italic as text formatting.
+            // so clicking on italic again should unformat style
+            var italic_element = that.state(composer, command, size)[0];
+            composer.selection.executeAndRestoreSimple(function() {
+                composer.selection.selectNode(italic_element);
+                wysihtml5.commands.formatInline.exec(composer, command, "span", "wysiwyg-font-size-" + size, REG_EXP);
+            });
+        } else {
+            wysihtml5.commands.formatInline.exec(composer, command, "span", "wysiwyg-font-size-" + size, REG_EXP);
+        }
     },
 
     state: function(composer, command, size) {
@@ -7219,7 +7499,7 @@ wysihtml5.commands.bold = {
       // Following elements are grouped
       // when the caret is within a H1 and the H4 is invoked, the H1 should turn into H4
       // instead of creating a H4 within a H1 which would result in semantically invalid html
-      BLOCK_ELEMENTS_GROUP    = ["H1", "H2", "H3", "H4", "H5", "H6", "P", "BLOCKQUOTE", "DIV"];
+      BLOCK_ELEMENTS_GROUP    = ["H1", "H2", "H3", "H4", "H5", "H6", "P", "PRE", "BLOCKQUOTE", "DIV"];
   
   /**
    * Remove similiar classes (based on classRegExp)
@@ -7869,6 +8149,29 @@ wysihtml5.commands.redo = {
 
   state: function(composer) {
     return false;
+  }
+};wysihtml5.commands.createTable = {
+  exec: function(composer, command, value) {
+      var col, row, html;
+      if (value && value.cols && value.rows && parseInt(value.cols, 10) > 0 && parseInt(value.rows, 10) > 0) {
+          html = "<table><tbody>";
+          for (row = 0; row < value.rows; row ++) {
+              html += '<tr>';
+              for (col = 0; col < value.cols; col ++) {
+                  html += "<td>&nbsp;</td>";
+              }
+              html += '</tr>';
+          }
+          html += "</tbody></table>";
+          composer.commands.exec("insertHTML", html);
+          //composer.selection.insertHTML(html);
+      } 
+      
+      
+  },
+
+  state: function(composer, command) {
+      return false;
   }
 };/**
  * Undo Manager for wysihtml5
@@ -8877,6 +9180,14 @@ wysihtml5.views.View = Base.extend(
         that.parent.fire("interaction").fire("interaction:composer");
       }, 0);
     });
+    
+    dom.observe(element, "mousedown", function(event) {
+      var target   = event.target,
+          nodeName = target.nodeName;
+      if (that.config.handleTables && (nodeName == "TD" || nodeName == "TH")) {
+          wysihtml5.quirks.tableCellsSelection(target, element);
+      }
+    });
 
     // --------- Focus & blur logic ---------
     dom.observe(focusBlurElement, "focus", function() {
@@ -9556,8 +9867,13 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
           caretBookmark;
       
       if (dialogElement) {
-        dialog = new wysihtml5.toolbar.Dialog(link, dialogElement);
-
+        if (wysihtml5.toolbar["Dialog_" + command]) {
+            console.log('a');
+            dialog = new wysihtml5.toolbar["Dialog_" + command](link, dialogElement);
+        } else {
+            dialog = new wysihtml5.toolbar.Dialog(link, dialogElement);
+        }
+        
         dialog.on("show", function() {
           caretBookmark = that.composer.selection.getBookmark();
 
@@ -9621,6 +9937,9 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
             }
         }
       }
+      if (action == "showSource") {
+          editor.fire("showSource");
+      }
     },
 
     _observe: function() {
@@ -9667,20 +9986,7 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
 
       editor.on("focus:composer", function() {
         that.bookmark = null;
-        
-       /* //TODO: rewrite this as polling in such way is bad practice.
-        
-        clearInterval(that.interval);
-        that.interval = setInterval(function() { that._updateLinkStates(); }, 500);*/
       });
-
-      /*editor.on("blur:composer", function() {
-        clearInterval(that.interval);
-      });
-
-      editor.on("destroy:composer", function() {
-        clearInterval(that.interval);
-      });*/
 
       editor.on("change_view", function(currentView) {
         // Set timeout needed in order to let the blur event fire first
@@ -9784,7 +10090,15 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
   });
   
 })(wysihtml5);
-/**
+(function(wysihtml5) {
+    wysihtml5.toolbar.Dialog_createTable = wysihtml5.toolbar.Dialog.extend({
+        show: function(elementToChange) {
+            this.base(elementToChange);
+            
+        }
+        
+    });
+})(wysihtml5);/**
  * WYSIHTML5 Editor
  *
  * @param {Element} editableElement Reference to the textarea which should be turned into a rich text interface
@@ -9828,6 +10142,8 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
     showToolbarAfterInit: true,
     // Whether urls, entered by the user should automatically become clickable-links
     autoLink:             true,
+    // Includes table editing events and cell selection tracking 
+    handleTables:         true,
     // Object which includes parser rules to apply when html gets inserted via copy & paste
     // See parser_rules/*.js for examples
     parserRules:          { tags: { br: {}, span: {}, div: {}, p: {} }, classes: {} },

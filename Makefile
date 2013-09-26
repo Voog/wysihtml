@@ -38,10 +38,13 @@ JS_FILES = src/wysihtml5.js \
   src/dom/set_styles.js \
   src/dom/simulate_placeholder.js \
   src/dom/text_content.js \
+  src/dom/get_attribute.js \
+  src/dom/table.js \
   src/quirks/clean_pasted_html.js \
   src/quirks/ensure_proper_clearing.js \
   src/quirks/get_correct_inner_html.js \
   src/quirks/redraw.js \
+  src/quirks/table_cells_selection.js\
   src/selection/selection.js \
   src/selection/html_applier.js \
   src/commands.js \
@@ -64,6 +67,7 @@ JS_FILES = src/wysihtml5.js \
   src/commands/redo.js \
   src/commands/underline.js \
   src/commands/undo.js \
+  src/commands/createTable.js\
   src/undo_manager.js \
   src/views/view.js \
   src/views/composer.js \
@@ -74,6 +78,7 @@ JS_FILES = src/wysihtml5.js \
   src/toolbar/dialog.js \
   src/toolbar/speech.js \
   src/toolbar/toolbar.js \
+  src/toolbar/dialog_createTable.js\
   src/editor.js
 
 all: bundle minify

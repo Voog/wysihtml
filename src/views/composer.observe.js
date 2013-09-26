@@ -50,6 +50,14 @@
         that.parent.fire("interaction").fire("interaction:composer");
       }, 0);
     });
+    
+    dom.observe(element, "mousedown", function(event) {
+      var target   = event.target,
+          nodeName = target.nodeName;
+      if (that.config.handleTables && (nodeName == "TD" || nodeName == "TH")) {
+          wysihtml5.quirks.tableCellsSelection(target, element);
+      }
+    });
 
     // --------- Focus & blur logic ---------
     dom.observe(focusBlurElement, "focus", function() {
