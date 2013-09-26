@@ -6329,6 +6329,12 @@ wysihtml5.quirks.ensureProperClearing = (function() {
   function handleMouseUp (event) {
     moveHandler.stop();
     upHandler.stop();
+    setTimeout(function() {
+      var sideClickHandler = dom.observe(editable.ownerDocument, "click", function() {
+        sideClickHandler.stop();
+        removeCellSelections();
+      });
+    });
   }
   
   return handleSelectionMousedown;
