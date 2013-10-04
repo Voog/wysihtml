@@ -7056,17 +7056,7 @@ wysihtml5.Commands = Base.extend(
 });
 wysihtml5.commands.bold = {
   exec: function(composer, command) {
-    var that = this;
-    if (this.state(composer, command) && composer.selection.isCollapsed()) {
-        // collapsed caret in a bold area indicates bold as text formatting, so clicking on bold again should unformat bold
-        var bold_element = that.state(composer, command)[0];
-        composer.selection.executeAndRestoreSimple(function() {
-            composer.selection.selectNode(bold_element);
-            wysihtml5.commands.formatInline.exec(composer, command, "b");
-        });
-    } else {
-        wysihtml5.commands.formatInline.exec(composer, command, "b");
-    }
+    wysihtml5.commands.formatInline.execWithToggle(composer, command, "b");
   },
 
   state: function(composer, command) {
@@ -7189,19 +7179,7 @@ wysihtml5.commands.bold = {
   
   wysihtml5.commands.fontSize = {
     exec: function(composer, command, size) {
-        var that = this;
-        if (this.state(composer, command, size) && composer.selection.isCollapsed()) {
-    
-            // collapsed caret in an italic area indicates italic as text formatting.
-            // so clicking on italic again should unformat style
-            var italic_element = that.state(composer, command, size)[0];
-            composer.selection.executeAndRestoreSimple(function() {
-                composer.selection.selectNode(italic_element);
-                wysihtml5.commands.formatInline.exec(composer, command, "span", "wysiwyg-font-size-" + size, REG_EXP);
-            });
-        } else {
-            wysihtml5.commands.formatInline.exec(composer, command, "span", "wysiwyg-font-size-" + size, REG_EXP);
-        }
+        wysihtml5.commands.formatInline.execWithToggle(composer, command, "span", "wysiwyg-font-size-" + size, REG_EXP);
     },
 
     state: function(composer, command, size) {
@@ -7219,7 +7197,7 @@ wysihtml5.commands.bold = {
   
   wysihtml5.commands.foreColor = {
     exec: function(composer, command, color) {
-      return wysihtml5.commands.formatInline.exec(composer, command, "span", "wysiwyg-color-" + color, REG_EXP);
+        wysihtml5.commands.formatInline.execWithToggle(composer, command, "span", "wysiwyg-color-" + color, REG_EXP);
     },
 
     state: function(composer, command, color) {
@@ -7518,6 +7496,22 @@ wysihtml5.commands.bold = {
       _getApplier(tagName, className, classRegExp).toggleRange(range);
       composer.selection.setSelection(range);
     },
+    
+    // Executes so that if collapsed caret is in a state and executing that state it should unformat that state
+    // It is achieved by selecting the entire state element before executing.
+    // This works on built in contenteditable inline format commands
+    execWithToggle: function(composer, command, tagName, className, classRegExp) {
+        var that = this;
+        if (this.state(composer, command, tagName, className, classRegExp) && composer.selection.isCollapsed()) {
+            var state_element = that.state(composer, command, tagName, className, classRegExp)[0];
+            composer.selection.executeAndRestoreSimple(function() {
+                composer.selection.selectNode(state_element);
+                wysihtml5.commands.formatInline.exec(composer, command, tagName, className, classRegExp);
+            });
+        } else {
+            wysihtml5.commands.formatInline.exec(composer, command, tagName, className, classRegExp);
+        }
+    },
 
     state: function(composer, command, tagName, className, classRegExp) {
       var doc           = composer.doc,
@@ -7772,18 +7766,7 @@ wysihtml5.commands.bold = {
   }
 };wysihtml5.commands.italic = {
   exec: function(composer, command) {
-      var that = this;
-      if (this.state(composer, command) && composer.selection.isCollapsed()) {
-          // collapsed caret in an italic area indicates italic as text formatting.
-          // so clicking on italic again should unformat style
-          var italic_element = that.state(composer, command)[0];
-          composer.selection.executeAndRestoreSimple(function() {
-              composer.selection.selectNode(italic_element);
-              wysihtml5.commands.formatInline.exec(composer, command, "i");
-          });
-      } else {
-          wysihtml5.commands.formatInline.exec(composer, command, "i");
-      }
+    wysihtml5.commands.formatInline.execWithToggle(composer, command, "i");
   },
 
   state: function(composer, command) {
@@ -7857,18 +7840,7 @@ wysihtml5.commands.redo = {
   }
 };wysihtml5.commands.underline = {
   exec: function(composer, command) {
-      var that = this;
-      if (this.state(composer, command) && composer.selection.isCollapsed()) {
-          // collapsed caret in an underline area indicates it as text formatting.
-          // so clicking on underline should unformat style
-          var underline_node =  that.state(composer, command)[0];
-          composer.selection.executeAndRestoreSimple(function() {
-              composer.selection.selectNode(underline_node);
-              wysihtml5.commands.formatInline.exec(composer, command, "u");
-          });
-      } else {
-          wysihtml5.commands.formatInline.exec(composer, command, "u");
-      }
+    wysihtml5.commands.formatInline.execWithToggle(composer, command, "u");
   },
 
   state: function(composer, command) {
