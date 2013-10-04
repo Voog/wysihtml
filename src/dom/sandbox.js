@@ -55,7 +55,7 @@
     constructor: function(readyCallback, config) {
       this.callback = readyCallback || wysihtml5.EMPTY_FUNCTION;
       this.config   = wysihtml5.lang.object({}).merge(config).get();
-      this.iframe   = this._createIframe();
+      this.editableArea   = this._createIframe();
     },
     
     insertInto: function(element) {
@@ -63,11 +63,11 @@
         element = doc.getElementById(element);
       }
       
-      element.appendChild(this.iframe);
+      element.appendChild(this.editableArea);
     },
 
     getIframe: function() {
-      return this.iframe;
+      return this.editableArea;
     },
 
     getWindow: function() {

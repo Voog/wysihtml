@@ -167,7 +167,7 @@
     });
     
     // --------- IE 8+9 focus the editor when the iframe is clicked (without actually firing the 'focus' event on the <body>) ---------
-    if (browser.hasIframeFocusIssue() && this.iframe) {
+    if (!this.config.contentEditableMode && browser.hasIframeFocusIssue()) {
       dom.observe(this.iframe, "focus", function() {
         setTimeout(function() {
           if (that.doc.querySelector(":focus") !== that.element) {
