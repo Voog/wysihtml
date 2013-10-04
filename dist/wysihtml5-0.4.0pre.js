@@ -5779,7 +5779,7 @@ wysihtml5.dom.replaceWithChildNodes = function(node) {
 })(wysihtml5);
 (function(wysihtml5) {
   var doc = document;  
-  wysihtml5.dom.IframelessSandbox = Base.extend({
+  wysihtml5.dom.ContentEditableArea = Base.extend({
       getContentEditable: function() {
         return this.element;
       },
@@ -5830,7 +5830,7 @@ wysihtml5.dom.replaceWithChildNodes = function(node) {
         // Catch js errors and pass them to the parent's onerror event
         // addEventListener("error") doesn't work properly in some browsers
         // TODO: apparently this doesn't work in IE9!
-        // TODO: figure out and bind the errors logic for iframeless mode
+        // TODO: figure out and bind the errors logic for contenteditble mode
         /*iframeWindow.onerror = function(errorMessage, fileName, lineNumber) {
           throw new Error("wysihtml5.Sandbox: " + errorMessage, fileName, lineNumber);
         }
@@ -8207,8 +8207,8 @@ wysihtml5.views.View = Base.extend(
       } else {
           this.contentEditable = editableElement;
       }
-      if (this.config.noIframe) {
-          this._initIframelessSandbox();
+      if (this.config.contentEditableMode) {
+          this._initContentEditableArea();
       } else {
           this._initSandbox();
       }
@@ -8309,15 +8309,15 @@ wysihtml5.views.View = Base.extend(
              this.hasPlaceholderSet();
     },
     
-    _initIframelessSandbox: function() {
+    _initContentEditableArea: function() {
         var that = this;
         
         if (this.config.noTextarea) {
-            this.sandbox = new dom.IframelessSandbox(function() {
+            this.sandbox = new dom.ContentEditableArea(function() {
                 that._create();
             }, {}, this.contentEditable);
         } else {
-            this.sandbox = new dom.IframelessSandbox(function() {
+            this.sandbox = new dom.ContentEditableArea(function() {
                 that._create();
             });
             this.contentEditable = this.sandbox.getContentEditable();
@@ -8356,7 +8356,7 @@ wysihtml5.views.View = Base.extend(
     _create: function() {
       var that = this;
       this.doc                = this.sandbox.getDocument();
-      this.element            = (this.config.noIframe) ? this.sandbox.getContentEditable() : this.doc.body;
+      this.element            = (this.config.contentEditableMode) ? this.sandbox.getContentEditable() : this.doc.body;
       if (!this.config.noTextarea) {
           this.textarea           = this.parent.textarea;
           this.element.innerHTML  = this.textarea.getValue(true);
@@ -8379,7 +8379,7 @@ wysihtml5.views.View = Base.extend(
       dom.addClass(this.element, this.config.composerClassName);
       // 
       // Make the editor look like the original textarea, by syncing styles
-      if (this.config.style && !this.config.noIframe) {
+      if (this.config.style && !this.config.contentEditableMode) {
         this.style();
       }
       
@@ -8388,7 +8388,7 @@ wysihtml5.views.View = Base.extend(
       var name = this.config.name;
       if (name) {
         dom.addClass(this.element, name);
-        if (!this.config.noIframe) { dom.addClass(this.iframe, name); }
+        if (!this.config.contentEditableMode) { dom.addClass(this.iframe, name); }
       }
       
       this.enable();
@@ -9847,7 +9847,7 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
     // Whether senseless <span> elements (empty or without attributes) should be removed/replaced with their content
     cleanUp:              true,
     // Whether to use div instead of secure iframe
-    noIframe: false,
+    contentEditableMode: false,
     xingAlert: false
   };
   
@@ -9859,7 +9859,7 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
       this._isCompatible    = wysihtml5.browser.supported();
       
       if (this.editableElement.nodeName.toLowerCase() != "textarea") {
-          this.config.noIframe = true;
+          this.config.contentEditableMode = true;
           this.config.noTextarea = true;
       }
       if (!this.config.noTextarea) {
@@ -9959,7 +9959,7 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
     },
     
     parse: function(htmlOrElement) {
-      var parseContext = (this.config.noIframe) ? document : this.composer.sandbox.getDocument();
+      var parseContext = (this.config.contentEditableMode) ? document : this.composer.sandbox.getDocument();
       var returnValue = this.config.parser(htmlOrElement, this.config.parserRules, parseContext, this.config.cleanUp);
       if (typeof(htmlOrElement) === "object") {
         wysihtml5.quirks.redraw(htmlOrElement);

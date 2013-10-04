@@ -62,7 +62,7 @@
     // Whether senseless <span> elements (empty or without attributes) should be removed/replaced with their content
     cleanUp:              true,
     // Whether to use div instead of secure iframe
-    noIframe: false,
+    contentEditableMode: false,
     xingAlert: false
   };
   
@@ -74,7 +74,7 @@
       this._isCompatible    = wysihtml5.browser.supported();
       
       if (this.editableElement.nodeName.toLowerCase() != "textarea") {
-          this.config.noIframe = true;
+          this.config.contentEditableMode = true;
           this.config.noTextarea = true;
       }
       if (!this.config.noTextarea) {
@@ -174,7 +174,7 @@
     },
     
     parse: function(htmlOrElement) {
-      var parseContext = (this.config.noIframe) ? document : this.composer.sandbox.getDocument();
+      var parseContext = (this.config.contentEditableMode) ? document : this.composer.sandbox.getDocument();
       var returnValue = this.config.parser(htmlOrElement, this.config.parserRules, parseContext, this.config.cleanUp);
       if (typeof(htmlOrElement) === "object") {
         wysihtml5.quirks.redraw(htmlOrElement);
