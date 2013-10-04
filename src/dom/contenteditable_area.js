@@ -1,6 +1,6 @@
 (function(wysihtml5) {
   var doc = document;  
-  wysihtml5.dom.IframelessSandbox = Base.extend({
+  wysihtml5.dom.ContentEditableArea = Base.extend({
       getContentEditable: function() {
         return this.element;
       },
@@ -51,7 +51,7 @@
         // Catch js errors and pass them to the parent's onerror event
         // addEventListener("error") doesn't work properly in some browsers
         // TODO: apparently this doesn't work in IE9!
-        // TODO: figure out and bind the errors logic for iframeless mode
+        // TODO: figure out and bind the errors logic for contenteditble mode
         /*iframeWindow.onerror = function(errorMessage, fileName, lineNumber) {
           throw new Error("wysihtml5.Sandbox: " + errorMessage, fileName, lineNumber);
         }

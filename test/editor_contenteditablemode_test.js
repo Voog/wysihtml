@@ -1,5 +1,5 @@
 if (wysihtml5.browser.supported()) {
-  module("wysihtml5.Editor iframeless", {
+  module("wysihtml5.Editor contenteditable mode", {
     setup: function() {
       wysihtml5.dom.insertCSS([
         "#wysihtml5-test-editable { width: 50%; height: 100px; margin-top: 5px; font-style: italic; border: 2px solid red; border-radius: 2px; }",
@@ -40,16 +40,16 @@ if (wysihtml5.browser.supported()) {
       ok(wysihtml5.dom.hasClass(editableElement, "wysihtml5-test-class"), "editable kept its original class name");
       ok(wysihtml5.dom.hasClass(editableElement, "wysihtml5-sandbox"), "editable added its own sandbox class name");
       
-      equal(editor.config.noIframe, true, "noIframe mode deduced correctly as editable is initiated on non textarea");
+      equal(editor.config.contentEditableMode, true, "contentEditableMode deduced correctly as editable is initiated on non textarea");
       equal(editor.config.noTextarea, true, "noTextarea mode deduced correctly as editable is initiated on non textarea");
       equal(editableElement.style.display, "", "Editor contenteditable is visible");
       equal(editor.currentView.name, "composer", "Current view is 'composer'");
-      equal(editableElement.getAttribute("contentEditable"), "true", "Body element in iframe is editable");
+      equal(editableElement.getAttribute("contentEditable"), "true", "Element is editable");
       equal(typeof editor.textarea, "undefined", "Textarea correctly not available on editor instance");
       equal(editor.composer.element, editableElement, "contentEditable element available on editor instance");
       equal(editableElement.innerHTML.toLowerCase(), "hey tiff, what's up?", "Initial value preserved in editor");
       ok(wysihtml5.dom.hasClass(editableElement, "wysihtml5-editor"), "Editor element has correct class name");
-      equal(typeof editor.synchronizer, "undefined", "Syncronizer correctly not initiated in iframe and textarealess mode");
+      equal(typeof editor.synchronizer, "undefined", "Syncronizer correctly not initiated in contenteditable mode");
       
       start();
     });
@@ -108,8 +108,6 @@ if (wysihtml5.browser.supported()) {
       
       editor.fire("custom_event");
       
-      // Delay teardown in order to avoid unwanted js errors caused by a too early removed sandbox iframe
-      // which then causes js errors in Safari 5
       setTimeout(function() { start(); }, 100);
     });
   });

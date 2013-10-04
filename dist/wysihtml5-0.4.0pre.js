@@ -5779,7 +5779,7 @@ wysihtml5.dom.replaceWithChildNodes = function(node) {
 })(wysihtml5);
 (function(wysihtml5) {
   var doc = document;  
-  wysihtml5.dom.IframelessSandbox = Base.extend({
+  wysihtml5.dom.ContentEditableArea = Base.extend({
       getContentEditable: function() {
         return this.element;
       },
@@ -5830,7 +5830,7 @@ wysihtml5.dom.replaceWithChildNodes = function(node) {
         // Catch js errors and pass them to the parent's onerror event
         // addEventListener("error") doesn't work properly in some browsers
         // TODO: apparently this doesn't work in IE9!
-        // TODO: figure out and bind the errors logic for iframeless mode
+        // TODO: figure out and bind the errors logic for contenteditble mode
         /*iframeWindow.onerror = function(errorMessage, fileName, lineNumber) {
           throw new Error("wysihtml5.Sandbox: " + errorMessage, fileName, lineNumber);
         }
@@ -7641,17 +7641,7 @@ wysihtml5.Commands = Base.extend(
 });
 wysihtml5.commands.bold = {
   exec: function(composer, command) {
-    var that = this;
-    if (this.state(composer, command) && composer.selection.isCollapsed()) {
-        // collapsed caret in a bold area indicates bold as text formatting, so clicking on bold again should unformat bold
-        var bold_element = that.state(composer, command)[0];
-        composer.selection.executeAndRestoreSimple(function() {
-            composer.selection.selectNode(bold_element);
-            wysihtml5.commands.formatInline.exec(composer, command, "b");
-        });
-    } else {
-        wysihtml5.commands.formatInline.exec(composer, command, "b");
-    }
+    wysihtml5.commands.formatInline.execWithToggle(composer, command, "b");
   },
 
   state: function(composer, command) {
@@ -7774,19 +7764,7 @@ wysihtml5.commands.bold = {
   
   wysihtml5.commands.fontSize = {
     exec: function(composer, command, size) {
-        var that = this;
-        if (this.state(composer, command, size) && composer.selection.isCollapsed()) {
-            
-            // collapsed caret in an italic area indicates italic as text formatting.
-            // so clicking on italic again should unformat style
-            var italic_element = that.state(composer, command, size)[0];
-            composer.selection.executeAndRestoreSimple(function() {
-                composer.selection.selectNode(italic_element);
-                wysihtml5.commands.formatInline.exec(composer, command, "span", "wysiwyg-font-size-" + size, REG_EXP);
-            });
-        } else {
-            wysihtml5.commands.formatInline.exec(composer, command, "span", "wysiwyg-font-size-" + size, REG_EXP);
-        }
+        wysihtml5.commands.formatInline.execWithToggle(composer, command, "span", "wysiwyg-font-size-" + size, REG_EXP);
     },
 
     state: function(composer, command, size) {
@@ -7804,7 +7782,7 @@ wysihtml5.commands.bold = {
   
   wysihtml5.commands.foreColor = {
     exec: function(composer, command, color) {
-      return wysihtml5.commands.formatInline.exec(composer, command, "span", "wysiwyg-color-" + color, REG_EXP);
+        wysihtml5.commands.formatInline.execWithToggle(composer, command, "span", "wysiwyg-color-" + color, REG_EXP);
     },
 
     state: function(composer, command, color) {
@@ -8103,6 +8081,22 @@ wysihtml5.commands.bold = {
       _getApplier(tagName, className, classRegExp).toggleRange(range);
       composer.selection.setSelection(range);
     },
+    
+    // Executes so that if collapsed caret is in a state and executing that state it should unformat that state
+    // It is achieved by selecting the entire state element before executing.
+    // This works on built in contenteditable inline format commands
+    execWithToggle: function(composer, command, tagName, className, classRegExp) {
+        var that = this;
+        if (this.state(composer, command, tagName, className, classRegExp) && composer.selection.isCollapsed()) {
+            var state_element = that.state(composer, command, tagName, className, classRegExp)[0];
+            composer.selection.executeAndRestoreSimple(function() {
+                composer.selection.selectNode(state_element);
+                wysihtml5.commands.formatInline.exec(composer, command, tagName, className, classRegExp);
+            });
+        } else {
+            wysihtml5.commands.formatInline.exec(composer, command, tagName, className, classRegExp);
+        }
+    },
 
     state: function(composer, command, tagName, className, classRegExp) {
       var doc           = composer.doc,
@@ -8357,18 +8351,7 @@ wysihtml5.commands.bold = {
   }
 };wysihtml5.commands.italic = {
   exec: function(composer, command) {
-      var that = this;
-      if (this.state(composer, command) && composer.selection.isCollapsed()) {
-          // collapsed caret in an italic area indicates italic as text formatting.
-          // so clicking on italic again should unformat style
-          var italic_element = that.state(composer, command)[0];
-          composer.selection.executeAndRestoreSimple(function() {
-              composer.selection.selectNode(italic_element);
-              wysihtml5.commands.formatInline.exec(composer, command, "i");
-          });
-      } else {
-          wysihtml5.commands.formatInline.exec(composer, command, "i");
-      }
+    wysihtml5.commands.formatInline.execWithToggle(composer, command, "i");
   },
 
   state: function(composer, command) {
@@ -8442,18 +8425,7 @@ wysihtml5.commands.redo = {
   }
 };wysihtml5.commands.underline = {
   exec: function(composer, command) {
-      var that = this;
-      if (this.state(composer, command) && composer.selection.isCollapsed()) {
-          // collapsed caret in an underline area indicates it as text formatting.
-          // so clicking on underline should unformat style
-          var underline_node =  that.state(composer, command)[0];
-          composer.selection.executeAndRestoreSimple(function() {
-              composer.selection.selectNode(underline_node);
-              wysihtml5.commands.formatInline.exec(composer, command, "u");
-          });
-      } else {
-          wysihtml5.commands.formatInline.exec(composer, command, "u");
-      }
+    wysihtml5.commands.formatInline.execWithToggle(composer, command, "u");
   },
 
   state: function(composer, command) {
@@ -8815,8 +8787,8 @@ wysihtml5.views.View = Base.extend(
       } else {
           this.contentEditable = editableElement;
       }
-      if (this.config.noIframe) {
-          this._initIframelessSandbox();
+      if (this.config.contentEditableMode) {
+          this._initContentEditableArea();
       } else {
           this._initSandbox();
       }
@@ -8917,15 +8889,15 @@ wysihtml5.views.View = Base.extend(
              this.hasPlaceholderSet();
     },
     
-    _initIframelessSandbox: function() {
+    _initContentEditableArea: function() {
         var that = this;
         
         if (this.config.noTextarea) {
-            this.sandbox = new dom.IframelessSandbox(function() {
+            this.sandbox = new dom.ContentEditableArea(function() {
                 that._create();
             }, {}, this.contentEditable);
         } else {
-            this.sandbox = new dom.IframelessSandbox(function() {
+            this.sandbox = new dom.ContentEditableArea(function() {
                 that._create();
             });
             this.contentEditable = this.sandbox.getContentEditable();
@@ -8964,7 +8936,7 @@ wysihtml5.views.View = Base.extend(
     _create: function() {
       var that = this;
       this.doc                = this.sandbox.getDocument();
-      this.element            = (this.config.noIframe) ? this.sandbox.getContentEditable() : this.doc.body;
+      this.element            = (this.config.contentEditableMode) ? this.sandbox.getContentEditable() : this.doc.body;
       if (!this.config.noTextarea) {
           this.textarea           = this.parent.textarea;
           this.element.innerHTML  = this.textarea.getValue(true);
@@ -8987,7 +8959,7 @@ wysihtml5.views.View = Base.extend(
       dom.addClass(this.element, this.config.composerClassName);
       // 
       // Make the editor look like the original textarea, by syncing styles
-      if (this.config.style && !this.config.noIframe) {
+      if (this.config.style && !this.config.contentEditableMode) {
         this.style();
       }
       
@@ -8996,7 +8968,7 @@ wysihtml5.views.View = Base.extend(
       var name = this.config.name;
       if (name) {
         dom.addClass(this.element, name);
-        if (!this.config.noIframe) { dom.addClass(this.iframe, name); }
+        if (!this.config.contentEditableMode) { dom.addClass(this.iframe, name); }
       }
       
       this.enable();
@@ -10185,7 +10157,6 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
       
       if (dialogElement) {
         if (wysihtml5.toolbar["Dialog_" + command]) {
-            console.log('a');
             dialog = new wysihtml5.toolbar["Dialog_" + command](link, dialogElement);
         } else {
             dialog = new wysihtml5.toolbar.Dialog(link, dialogElement);
@@ -10481,7 +10452,7 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
     // Whether senseless <span> elements (empty or without attributes) should be removed/replaced with their content
     cleanUp:              true,
     // Whether to use div instead of secure iframe
-    noIframe: false,
+    contentEditableMode: false,
     xingAlert: false
   };
   
@@ -10493,7 +10464,7 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
       this._isCompatible    = wysihtml5.browser.supported();
       
       if (this.editableElement.nodeName.toLowerCase() != "textarea") {
-          this.config.noIframe = true;
+          this.config.contentEditableMode = true;
           this.config.noTextarea = true;
       }
       if (!this.config.noTextarea) {
@@ -10593,7 +10564,7 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
     },
     
     parse: function(htmlOrElement) {
-      var parseContext = (this.config.noIframe) ? document : this.composer.sandbox.getDocument();
+      var parseContext = (this.config.contentEditableMode) ? document : this.composer.sandbox.getDocument();
       var returnValue = this.config.parser(htmlOrElement, this.config.parserRules, parseContext, this.config.cleanUp);
       if (typeof(htmlOrElement) === "object") {
         wysihtml5.quirks.redraw(htmlOrElement);

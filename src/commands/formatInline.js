@@ -64,6 +64,22 @@
       _getApplier(tagName, className, classRegExp).toggleRange(range);
       composer.selection.setSelection(range);
     },
+    
+    // Executes so that if collapsed caret is in a state and executing that state it should unformat that state
+    // It is achieved by selecting the entire state element before executing.
+    // This works on built in contenteditable inline format commands
+    execWithToggle: function(composer, command, tagName, className, classRegExp) {
+        var that = this;
+        if (this.state(composer, command, tagName, className, classRegExp) && composer.selection.isCollapsed()) {
+            var state_element = that.state(composer, command, tagName, className, classRegExp)[0];
+            composer.selection.executeAndRestoreSimple(function() {
+                composer.selection.selectNode(state_element);
+                wysihtml5.commands.formatInline.exec(composer, command, tagName, className, classRegExp);
+            });
+        } else {
+            wysihtml5.commands.formatInline.exec(composer, command, tagName, className, classRegExp);
+        }
+    },
 
     state: function(composer, command, tagName, className, classRegExp) {
       var doc           = composer.doc,

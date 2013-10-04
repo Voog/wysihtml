@@ -16,8 +16,8 @@
       } else {
           this.contentEditable = editableElement;
       }
-      if (this.config.noIframe) {
-          this._initIframelessSandbox();
+      if (this.config.contentEditableMode) {
+          this._initContentEditableArea();
       } else {
           this._initSandbox();
       }
@@ -118,15 +118,15 @@
              this.hasPlaceholderSet();
     },
     
-    _initIframelessSandbox: function() {
+    _initContentEditableArea: function() {
         var that = this;
         
         if (this.config.noTextarea) {
-            this.sandbox = new dom.IframelessSandbox(function() {
+            this.sandbox = new dom.ContentEditableArea(function() {
                 that._create();
             }, {}, this.contentEditable);
         } else {
-            this.sandbox = new dom.IframelessSandbox(function() {
+            this.sandbox = new dom.ContentEditableArea(function() {
                 that._create();
             });
             this.contentEditable = this.sandbox.getContentEditable();
@@ -165,7 +165,7 @@
     _create: function() {
       var that = this;
       this.doc                = this.sandbox.getDocument();
-      this.element            = (this.config.noIframe) ? this.sandbox.getContentEditable() : this.doc.body;
+      this.element            = (this.config.contentEditableMode) ? this.sandbox.getContentEditable() : this.doc.body;
       if (!this.config.noTextarea) {
           this.textarea           = this.parent.textarea;
           this.element.innerHTML  = this.textarea.getValue(true);
@@ -188,7 +188,7 @@
       dom.addClass(this.element, this.config.composerClassName);
       // 
       // Make the editor look like the original textarea, by syncing styles
-      if (this.config.style && !this.config.noIframe) {
+      if (this.config.style && !this.config.contentEditableMode) {
         this.style();
       }
       
@@ -197,7 +197,7 @@
       var name = this.config.name;
       if (name) {
         dom.addClass(this.element, name);
-        if (!this.config.noIframe) { dom.addClass(this.iframe, name); }
+        if (!this.config.contentEditableMode) { dom.addClass(this.iframe, name); }
       }
       
       this.enable();

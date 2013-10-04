@@ -33,7 +33,7 @@ JS_FILES = src/wysihtml5.js \
   src/dom/replace_with_child_nodes.js \
   src/dom/resolve_list.js \
   src/dom/sandbox.js \
-  src/dom/iframeless_sandbox.js \
+  src/dom/contenteditable_area.js \
   src/dom/set_attributes.js \
   src/dom/set_styles.js \
   src/dom/simulate_placeholder.js \

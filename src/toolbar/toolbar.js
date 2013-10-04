@@ -78,7 +78,6 @@
       
       if (dialogElement) {
         if (wysihtml5.toolbar["Dialog_" + command]) {
-            console.log('a');
             dialog = new wysihtml5.toolbar["Dialog_" + command](link, dialogElement);
         } else {
             dialog = new wysihtml5.toolbar.Dialog(link, dialogElement);
