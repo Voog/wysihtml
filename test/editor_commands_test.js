@@ -2,13 +2,13 @@ if (wysihtml5.browser.supported()) {
   module("wysihtml5.Editor.commands", {
     setup: function() {
         
-      this.contentEditable        = document.createElement("div");
-      this.contentEditable.id     = "wysihtml5-test-editable";
-      this.contentEditable.className = "wysihtml5-test-class";
-      this.contentEditable.title  = "Please enter your foo";
-      this.contentEditable.innerHTML  = "hey tiff, what's up?";
+      this.editableArea        = document.createElement("div");
+      this.editableArea.id     = "wysihtml5-test-editable";
+      this.editableArea.className = "wysihtml5-test-class";
+      this.editableArea.title  = "Please enter your foo";
+      this.editableArea.innerHTML  = "hey tiff, what's up?";
       
-      document.body.appendChild(this.contentEditable);
+      document.body.appendChild(this.editableArea);
       
     },
 
@@ -26,11 +26,11 @@ if (wysihtml5.browser.supported()) {
   asyncTest("Basic formating tests", function() {
      expect(10);
     var that = this,
-        editor = new wysihtml5.Editor(this.contentEditable),
+        editor = new wysihtml5.Editor(this.editableArea),
         text = "once upon a time there was an unformated text.";
         
     editor.on("load", function() {
-      var editableElement   = that.contentEditable;
+      var editableElement   = that.editableArea;
       editor.setValue(text, true);
       
       // basic bold

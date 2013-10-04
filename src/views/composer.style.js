@@ -131,7 +131,7 @@
     }
     
     // --------- iframe styles (has to be set before editor styles, otherwise IE9 sets wrong fontFamily on blurStylesHost) ---------
-    dom.copyStyles(BOX_FORMATTING).from(textareaElement).to(this.iframe).andTo(this.blurStylesHost);
+    dom.copyStyles(BOX_FORMATTING).from(textareaElement).to(this.editableArea).andTo(this.blurStylesHost);
     
     // --------- editor styles ---------
     dom.copyStyles(TEXT_FORMATTING).from(textareaElement).to(this.element).andTo(this.blurStylesHost);
@@ -156,7 +156,7 @@
     // reset textarea
     textareaElement.style.display = originalDisplayValue;
     
-    dom.copyStyles(["display"]).from(textareaElement).to(this.iframe);
+    dom.copyStyles(["display"]).from(textareaElement).to(this.editableArea);
     
     // Make sure that we don't change the display style of the iframe when copying styles oblur/onfocus
     // this is needed for when the change_view event is fired where the iframe is hidden and then
@@ -177,22 +177,22 @@
     
     // --------- Sync focus/blur styles ---------
     this.parent.on("focus:composer", function() {
-      dom.copyStyles(boxFormattingStyles) .from(that.focusStylesHost).to(that.iframe);
+      dom.copyStyles(boxFormattingStyles) .from(that.focusStylesHost).to(that.editableArea);
       dom.copyStyles(TEXT_FORMATTING)     .from(that.focusStylesHost).to(that.element);
     });
     
     this.parent.on("blur:composer", function() {
-      dom.copyStyles(boxFormattingStyles) .from(that.blurStylesHost).to(that.iframe);
+      dom.copyStyles(boxFormattingStyles) .from(that.blurStylesHost).to(that.editableArea);
       dom.copyStyles(TEXT_FORMATTING)     .from(that.blurStylesHost).to(that.element);
     });
     
     this.parent.observe("disable:composer", function() {
-      dom.copyStyles(boxFormattingStyles) .from(that.disabledStylesHost).to(that.iframe);
+      dom.copyStyles(boxFormattingStyles) .from(that.disabledStylesHost).to(that.editableArea);
       dom.copyStyles(TEXT_FORMATTING)     .from(that.disabledStylesHost).to(that.element);
     });
     
     this.parent.observe("enable:composer", function() {
-      dom.copyStyles(boxFormattingStyles) .from(that.blurStylesHost).to(that.iframe);
+      dom.copyStyles(boxFormattingStyles) .from(that.blurStylesHost).to(that.editableArea);
       dom.copyStyles(TEXT_FORMATTING)     .from(that.blurStylesHost).to(that.element);
     });
     

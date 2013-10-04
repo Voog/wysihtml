@@ -5582,7 +5582,7 @@ wysihtml5.dom.replaceWithChildNodes = function(node) {
     constructor: function(readyCallback, config) {
       this.callback = readyCallback || wysihtml5.EMPTY_FUNCTION;
       this.config   = wysihtml5.lang.object({}).merge(config).get();
-      this.iframe   = this._createIframe();
+      this.editableArea   = this._createIframe();
     },
     
     insertInto: function(element) {
@@ -5590,11 +5590,11 @@ wysihtml5.dom.replaceWithChildNodes = function(node) {
         element = doc.getElementById(element);
       }
       
-      element.appendChild(this.iframe);
+      element.appendChild(this.editableArea);
     },
 
     getIframe: function() {
-      return this.iframe;
+      return this.editableArea;
     },
 
     getWindow: function() {
@@ -8177,7 +8177,7 @@ wysihtml5.views.View = Base.extend(
       if (!this.config.noTextarea) {
           this.textarea = this.parent.textarea;
       } else {
-          this.contentEditable = editableElement;
+          this.editableArea = editableElement;
       }
       if (this.config.contentEditableMode) {
           this._initContentEditableArea();
@@ -8217,7 +8217,7 @@ wysihtml5.views.View = Base.extend(
     },
 
     show: function() {
-      (this.iframe || this.contentEditable).style.display = this._displayStyle || "";
+      this.editableArea.style.display = this._displayStyle || "";
       
       if (!this.config.noTextarea && !this.textarea.element.disabled) {
         // Firefox needs this, otherwise contentEditable becomes uneditable
@@ -8227,11 +8227,11 @@ wysihtml5.views.View = Base.extend(
     },
 
     hide: function() {
-      this._displayStyle = dom.getStyle("display").from((this.iframe || this.contentEditable));
+      this._displayStyle = dom.getStyle("display").from(this.editableArea);
       if (this._displayStyle === "none") {
         this._displayStyle = null;
       }
-      (this.iframe || this.contentEditable).style.display = "none";
+      this.editableArea.style.display = "none";
     },
 
     disable: function() {
@@ -8269,7 +8269,7 @@ wysihtml5.views.View = Base.extend(
     },
 
     hasPlaceholderSet: function() {
-      return this.getTextContent() == ((this.config.noTextarea) ? this.contentEditable.getAttribute("data-placeholder") : this.textarea.element.getAttribute("placeholder")) && this.placeholderSet;
+      return this.getTextContent() == ((this.config.noTextarea) ? this.editableArea.getAttribute("data-placeholder") : this.textarea.element.getAttribute("placeholder")) && this.placeholderSet;
     },
 
     isEmpty: function() {
@@ -8287,13 +8287,13 @@ wysihtml5.views.View = Base.extend(
         if (this.config.noTextarea) {
             this.sandbox = new dom.ContentEditableArea(function() {
                 that._create();
-            }, {}, this.contentEditable);
+            }, {}, this.editableArea);
         } else {
             this.sandbox = new dom.ContentEditableArea(function() {
                 that._create();
             });
-            this.contentEditable = this.sandbox.getContentEditable();
-            dom.insert(this.contentEditable).after(this.textarea.element);
+            this.editableArea = this.sandbox.getContentEditable();
+            dom.insert(this.editableArea).after(this.textarea.element);
             this._createWysiwygFormField();
         }
     },
@@ -8306,10 +8306,10 @@ wysihtml5.views.View = Base.extend(
       }, {
         stylesheets:  this.config.stylesheets
       });
-      this.iframe  = this.sandbox.getIframe();
+      this.editableArea  = this.sandbox.getIframe();
       
       var textareaElement = this.textarea.element;
-      dom.insert(this.iframe).after(textareaElement);
+      dom.insert(this.editableArea).after(textareaElement);
       
       this._createWysiwygFormField();
     },
@@ -8360,7 +8360,7 @@ wysihtml5.views.View = Base.extend(
       var name = this.config.name;
       if (name) {
         dom.addClass(this.element, name);
-        if (!this.config.contentEditableMode) { dom.addClass(this.iframe, name); }
+        if (!this.config.contentEditableMode) { dom.addClass(this.editableArea, name); }
       }
       
       this.enable();
@@ -8372,7 +8372,7 @@ wysihtml5.views.View = Base.extend(
       // Simulate html5 placeholder attribute on contentEditable element
       var placeholderText = typeof(this.config.placeholder) === "string"
         ? this.config.placeholder
-        : ((this.config.noTextarea) ? this.contentEditable.getAttribute("data-placeholder") : this.textarea.element.getAttribute("placeholder"));
+        : ((this.config.noTextarea) ? this.editableArea.getAttribute("data-placeholder") : this.textarea.element.getAttribute("placeholder"));
       if (placeholderText) {
         dom.simulatePlaceholder(this.parent, this, placeholderText);
       }
@@ -8742,7 +8742,7 @@ wysihtml5.views.View = Base.extend(
     }
     
     // --------- iframe styles (has to be set before editor styles, otherwise IE9 sets wrong fontFamily on blurStylesHost) ---------
-    dom.copyStyles(BOX_FORMATTING).from(textareaElement).to(this.iframe).andTo(this.blurStylesHost);
+    dom.copyStyles(BOX_FORMATTING).from(textareaElement).to(this.editableArea).andTo(this.blurStylesHost);
     
     // --------- editor styles ---------
     dom.copyStyles(TEXT_FORMATTING).from(textareaElement).to(this.element).andTo(this.blurStylesHost);
@@ -8767,7 +8767,7 @@ wysihtml5.views.View = Base.extend(
     // reset textarea
     textareaElement.style.display = originalDisplayValue;
     
-    dom.copyStyles(["display"]).from(textareaElement).to(this.iframe);
+    dom.copyStyles(["display"]).from(textareaElement).to(this.editableArea);
     
     // Make sure that we don't change the display style of the iframe when copying styles oblur/onfocus
     // this is needed for when the change_view event is fired where the iframe is hidden and then
@@ -8788,22 +8788,22 @@ wysihtml5.views.View = Base.extend(
     
     // --------- Sync focus/blur styles ---------
     this.parent.on("focus:composer", function() {
-      dom.copyStyles(boxFormattingStyles) .from(that.focusStylesHost).to(that.iframe);
+      dom.copyStyles(boxFormattingStyles) .from(that.focusStylesHost).to(that.editableArea);
       dom.copyStyles(TEXT_FORMATTING)     .from(that.focusStylesHost).to(that.element);
     });
     
     this.parent.on("blur:composer", function() {
-      dom.copyStyles(boxFormattingStyles) .from(that.blurStylesHost).to(that.iframe);
+      dom.copyStyles(boxFormattingStyles) .from(that.blurStylesHost).to(that.editableArea);
       dom.copyStyles(TEXT_FORMATTING)     .from(that.blurStylesHost).to(that.element);
     });
     
     this.parent.observe("disable:composer", function() {
-      dom.copyStyles(boxFormattingStyles) .from(that.disabledStylesHost).to(that.iframe);
+      dom.copyStyles(boxFormattingStyles) .from(that.disabledStylesHost).to(that.editableArea);
       dom.copyStyles(TEXT_FORMATTING)     .from(that.disabledStylesHost).to(that.element);
     });
     
     this.parent.observe("enable:composer", function() {
-      dom.copyStyles(boxFormattingStyles) .from(that.blurStylesHost).to(that.iframe);
+      dom.copyStyles(boxFormattingStyles) .from(that.blurStylesHost).to(that.editableArea);
       dom.copyStyles(TEXT_FORMATTING)     .from(that.blurStylesHost).to(that.element);
     });
     
@@ -8970,7 +8970,7 @@ wysihtml5.views.View = Base.extend(
     });
     
     // --------- IE 8+9 focus the editor when the iframe is clicked (without actually firing the 'focus' event on the <body>) ---------
-    if (browser.hasIframeFocusIssue() && this.iframe) {
+    if (!this.config.contentEditableMode && browser.hasIframeFocusIssue()) {
       dom.observe(this.iframe, "focus", function() {
         setTimeout(function() {
           if (that.doc.querySelector(":focus") !== that.element) {

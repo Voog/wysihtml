@@ -14,7 +14,7 @@
       if (!this.config.noTextarea) {
           this.textarea = this.parent.textarea;
       } else {
-          this.contentEditable = editableElement;
+          this.editableArea = editableElement;
       }
       if (this.config.contentEditableMode) {
           this._initContentEditableArea();
@@ -54,7 +54,7 @@
     },
 
     show: function() {
-      (this.iframe || this.contentEditable).style.display = this._displayStyle || "";
+      this.editableArea.style.display = this._displayStyle || "";
       
       if (!this.config.noTextarea && !this.textarea.element.disabled) {
         // Firefox needs this, otherwise contentEditable becomes uneditable
@@ -64,11 +64,11 @@
     },
 
     hide: function() {
-      this._displayStyle = dom.getStyle("display").from((this.iframe || this.contentEditable));
+      this._displayStyle = dom.getStyle("display").from(this.editableArea);
       if (this._displayStyle === "none") {
         this._displayStyle = null;
       }
-      (this.iframe || this.contentEditable).style.display = "none";
+      this.editableArea.style.display = "none";
     },
 
     disable: function() {
@@ -106,7 +106,7 @@
     },
 
     hasPlaceholderSet: function() {
-      return this.getTextContent() == ((this.config.noTextarea) ? this.contentEditable.getAttribute("data-placeholder") : this.textarea.element.getAttribute("placeholder")) && this.placeholderSet;
+      return this.getTextContent() == ((this.config.noTextarea) ? this.editableArea.getAttribute("data-placeholder") : this.textarea.element.getAttribute("placeholder")) && this.placeholderSet;
     },
 
     isEmpty: function() {
@@ -124,13 +124,13 @@
         if (this.config.noTextarea) {
             this.sandbox = new dom.ContentEditableArea(function() {
                 that._create();
-            }, {}, this.contentEditable);
+            }, {}, this.editableArea);
         } else {
             this.sandbox = new dom.ContentEditableArea(function() {
                 that._create();
             });
-            this.contentEditable = this.sandbox.getContentEditable();
-            dom.insert(this.contentEditable).after(this.textarea.element);
+            this.editableArea = this.sandbox.getContentEditable();
+            dom.insert(this.editableArea).after(this.textarea.element);
             this._createWysiwygFormField();
         }
     },
@@ -143,10 +143,10 @@
       }, {
         stylesheets:  this.config.stylesheets
       });
-      this.iframe  = this.sandbox.getIframe();
+      this.editableArea  = this.sandbox.getIframe();
       
       var textareaElement = this.textarea.element;
-      dom.insert(this.iframe).after(textareaElement);
+      dom.insert(this.editableArea).after(textareaElement);
       
       this._createWysiwygFormField();
     },
@@ -197,7 +197,7 @@
       var name = this.config.name;
       if (name) {
         dom.addClass(this.element, name);
-        if (!this.config.contentEditableMode) { dom.addClass(this.iframe, name); }
+        if (!this.config.contentEditableMode) { dom.addClass(this.editableArea, name); }
       }
       
       this.enable();
@@ -209,7 +209,7 @@
       // Simulate html5 placeholder attribute on contentEditable element
       var placeholderText = typeof(this.config.placeholder) === "string"
         ? this.config.placeholder
-        : ((this.config.noTextarea) ? this.contentEditable.getAttribute("data-placeholder") : this.textarea.element.getAttribute("placeholder"));
+        : ((this.config.noTextarea) ? this.editableArea.getAttribute("data-placeholder") : this.textarea.element.getAttribute("placeholder"));
       if (placeholderText) {
         dom.simulatePlaceholder(this.parent, this, placeholderText);
       }
