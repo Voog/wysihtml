@@ -7189,7 +7189,19 @@ wysihtml5.commands.bold = {
   
   wysihtml5.commands.fontSize = {
     exec: function(composer, command, size) {
-      return wysihtml5.commands.formatInline.exec(composer, command, "span", "wysiwyg-font-size-" + size, REG_EXP);
+        var that = this;
+        if (this.state(composer, command, size) && composer.selection.isCollapsed()) {
+    
+            // collapsed caret in an italic area indicates italic as text formatting.
+            // so clicking on italic again should unformat style
+            var italic_element = that.state(composer, command, size)[0];
+            composer.selection.executeAndRestoreSimple(function() {
+                composer.selection.selectNode(italic_element);
+                wysihtml5.commands.formatInline.exec(composer, command, "span", "wysiwyg-font-size-" + size, REG_EXP);
+            });
+        } else {
+            wysihtml5.commands.formatInline.exec(composer, command, "span", "wysiwyg-font-size-" + size, REG_EXP);
+        }
     },
 
     state: function(composer, command, size) {
@@ -7219,7 +7231,7 @@ wysihtml5.commands.bold = {
       // Following elements are grouped
       // when the caret is within a H1 and the H4 is invoked, the H1 should turn into H4
       // instead of creating a H4 within a H1 which would result in semantically invalid html
-      BLOCK_ELEMENTS_GROUP    = ["H1", "H2", "H3", "H4", "H5", "H6", "P", "BLOCKQUOTE", "DIV"];
+      BLOCK_ELEMENTS_GROUP    = ["H1", "H2", "H3", "H4", "H5", "H6", "P", "PRE", "BLOCKQUOTE", "DIV"];
   
   /**
    * Remove similiar classes (based on classRegExp)
@@ -9667,20 +9679,7 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
 
       editor.on("focus:composer", function() {
         that.bookmark = null;
-        
-       /* //TODO: rewrite this as polling in such way is bad practice.
-        
-        clearInterval(that.interval);
-        that.interval = setInterval(function() { that._updateLinkStates(); }, 500);*/
       });
-
-      /*editor.on("blur:composer", function() {
-        clearInterval(that.interval);
-      });
-
-      editor.on("destroy:composer", function() {
-        clearInterval(that.interval);
-      });*/
 
       editor.on("change_view", function(currentView) {
         // Set timeout needed in order to let the blur event fire first

@@ -82,36 +82,94 @@
     color: blue;
   }
   
-  .wysihtml5-editor {
-    outline: 1px dashed #abc;
-    
+  code {
+    background: #ddd;
+    padding: 10px;
+    white-space: pre;
+    display: block;
+    margin: 1em 0;
   }
+  
+  .toolbar {
+    display: block;
+    border-radius: 3px;
+    border: 1px solid #fff;
+    margin-bottom: 10px;
+  }
+  .toolbar a {
+    display: inline-block;
+    height: 1.7em;
+    border-radius: 3px;
+    font-size: 11px;
+    line-height: 1.7em;
+    text-decoration: none;
+    background: #e1e1e1;
+    border: 1px solid #ddd;
+    padding: 0 0.5em;
+    margin: 1px 0;
+  }
+  .toolbar a.wysihtml5-command-active {
+    background: #222;
+    color: white;
+  }
+  .toolbar .block { 
+    padding: 2px 3px;
+    display: inline-block;
+    background: #eee;
+    border-radius: 3px;
+    margin: 2px 2px 2px 0;
+  }
+  
 </style>
 
 <h1>wysihtml5 - Advanced Editor Example</h1>
 
 <div class="ewrapper">
   <div class="toolbar" style="display: none;">
-    <a data-wysihtml5-command="bold" title="CTRL+B">bold</a> |
-    <a data-wysihtml5-command="italic" title="CTRL+I">italic</a> |
-    <a data-wysihtml5-command="underline" title="CTRL+U">underline</a> |
-  
-    <a data-wysihtml5-command="createLink">insert link</a> |
-    <a data-wysihtml5-command="insertImage">insert image</a> |
-    <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h1">h1</a> |
-    <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h2">h2</a> |
-    <a data-wysihtml5-command="insertUnorderedList">insertUnorderedList</a> |
-    <a data-wysihtml5-command="insertOrderedList">insertOrderedList</a> |
-  
-    <a data-wysihtml5-command="justifyLeft">justifyLeft</a> |
-    <a data-wysihtml5-command="justifyRight">justifyRight</a> |
-    <a data-wysihtml5-command="justifyFull">justifyFull</a> |
-  
-    <a data-wysihtml5-command="foreColor" data-wysihtml5-command-value="red">red</a> |
-    <a data-wysihtml5-command="foreColor" data-wysihtml5-command-value="green">green</a> |
-    <a data-wysihtml5-command="foreColor" data-wysihtml5-command-value="blue">blue</a> |
-    <a data-wysihtml5-command="undo">undo</a> |
-    <a data-wysihtml5-command="redo">redo</a> |
+    <div class="block">
+      <a data-wysihtml5-command="bold" title="CTRL+B">bold</a>
+      <a data-wysihtml5-command="italic" title="CTRL+I">italic</a>
+      <a data-wysihtml5-command="underline" title="CTRL+U">underline</a>
+    </div>
+    <div class="block">
+      <a data-wysihtml5-command="createLink">insert link</a>
+      <a data-wysihtml5-command="insertImage">insert image</a>
+      <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h1">h1</a>
+      <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h2">h2</a>
+      <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h3">h3</a>
+      <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="p">p</a>
+      <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="pre">pre</a>
+      <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="blockquote">blockquote</a>
+    </div>
+    <div class="block">
+      <a data-wysihtml5-command="fontSize" data-wysihtml5-command-value="x-small">x-small</a> 
+      <a data-wysihtml5-command="fontSize" data-wysihtml5-command-value="small">small</a> 
+      <a data-wysihtml5-command="fontSize" data-wysihtml5-command-value="large">large</a> 
+    </div>
+    <div class="block">
+      <a data-wysihtml5-command="insertUnorderedList">insertUnorderedList</a>
+      <a data-wysihtml5-command="insertOrderedList">insertOrderedList</a>
+    </div>
+    <div class="block">
+      <a data-wysihtml5-command="justifyLeft">justifyLeft</a>
+      <a data-wysihtml5-command="justifyRight">justifyRight</a>
+      <a data-wysihtml5-command="justifyFull">justifyFull</a>
+    </div>
+    
+    <div class="block">
+      <a data-wysihtml5-command="foreColor" data-wysihtml5-command-value="red">red</a>
+      <a data-wysihtml5-command="foreColor" data-wysihtml5-command-value="green">green</a>
+      <a data-wysihtml5-command="foreColor" data-wysihtml5-command-value="blue">blue</a>
+    </div>
+    <div class="block">
+      <a data-wysihtml5-command="undo">undo</a>
+      <a data-wysihtml5-command="redo">redo</a>
+    </div>
+    
+    <div class="block">
+      <a data-wysihtml5-action="showSource">HTML</a>
+    </div>
+    
     <div data-wysihtml5-dialog="createLink" style="display: none;">
       <label>
         Link:
@@ -157,26 +215,46 @@ Teine:
 <br/>
 <div class="ewrapper">
   <div class="toolbar" style="display: none;">
-    <a data-wysihtml5-command="bold" title="CTRL+B">bold</a> |
-    <a data-wysihtml5-command="italic" title="CTRL+I">italic</a> |
-    <a data-wysihtml5-command="underline" title="CTRL+U">underline</a> |
-  
-    <a data-wysihtml5-command="createLink">insert link</a> |
-    <a data-wysihtml5-command="insertImage">insert image</a> |
-    <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h1">h1</a> |
-    <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h2">h2</a> |
-    <a data-wysihtml5-command="insertUnorderedList">insertUnorderedList</a> |
-    <a data-wysihtml5-command="insertOrderedList">insertOrderedList</a> |
-  
-    <a data-wysihtml5-command="justifyLeft">justifyLeft</a> |
-    <a data-wysihtml5-command="justifyRight">justifyRight</a> |
-    <a data-wysihtml5-command="justifyFull">justifyFull</a> |
-  
-    <a data-wysihtml5-command="foreColor" data-wysihtml5-command-value="red">red</a> |
-    <a data-wysihtml5-command="foreColor" data-wysihtml5-command-value="green">green</a> |
-    <a data-wysihtml5-command="foreColor" data-wysihtml5-command-value="blue">blue</a> |
-    <a data-wysihtml5-command="undo">undo</a> |
-    <a data-wysihtml5-command="redo">redo</a> |
+    <div class="block">
+      <a data-wysihtml5-command="bold" title="CTRL+B">bold</a>
+      <a data-wysihtml5-command="italic" title="CTRL+I">italic</a>
+      <a data-wysihtml5-command="underline" title="CTRL+U">underline</a>
+    </div>
+    <div class="block">
+      <a data-wysihtml5-command="createLink">insert link</a>
+      <a data-wysihtml5-command="insertImage">insert image</a>
+      <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h1">h1</a>
+      <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h2">h2</a>
+      <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h3">h3</a>
+      <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="p">p</a>
+      <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="pre">pre</a>
+    </div>
+    <div class="block">
+      <a data-wysihtml5-command="fontSize" data-wysihtml5-command-value="small">small</a> 
+      <a data-wysihtml5-command="fontSize" data-wysihtml5-command-value="large">large</a> 
+    </div>
+    <div class="block">
+      <a data-wysihtml5-command="insertUnorderedList">insertUnorderedList</a>
+      <a data-wysihtml5-command="insertOrderedList">insertOrderedList</a>
+    </div>
+    <div class="block">
+      <a data-wysihtml5-command="justifyLeft">justifyLeft</a>
+      <a data-wysihtml5-command="justifyRight">justifyRight</a>
+      <a data-wysihtml5-command="justifyFull">justifyFull</a>
+    </div>
+    
+    <div class="block">
+      <a data-wysihtml5-command="foreColor" data-wysihtml5-command-value="red">red</a>
+      <a data-wysihtml5-command="foreColor" data-wysihtml5-command-value="green">green</a>
+      <a data-wysihtml5-command="foreColor" data-wysihtml5-command-value="blue">blue</a>
+    </div>
+    <div class="block">
+      <a data-wysihtml5-command="undo">undo</a>
+      <a data-wysihtml5-command="redo">redo</a>
+    </div>
+    <div class="block">
+      <a data-wysihtml5-action="showSource">HTML</a>
+    </div>
     <div data-wysihtml5-dialog="createLink" style="display: none;">
       <label>
         Link:
@@ -203,12 +281,8 @@ Teine:
   
   <div class="editable" data-placeholder="Enter text ...">
     <div><div><div>tekst</div></div></div>
+    sdfgsdfg
   </div>
-</div>
-
-<br/>
-<div contenteditable="true" class="e2">
-  asfdasdasdasd
 </div>
 
 <br>
@@ -233,6 +307,10 @@ var editors = [];
       //showToolbarAfterInit: false
     });
     editors.push(e);
+    
+    e.on("showSource", function() {
+      alert(e.getValue(true));
+    });
     
     /*e.on("focus", function() {
       $(wrapper).find('.toolbar').show();

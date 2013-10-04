@@ -188,20 +188,7 @@
 
       editor.on("focus:composer", function() {
         that.bookmark = null;
-        
-       /* //TODO: rewrite this as polling in such way is bad practice.
-        
-        clearInterval(that.interval);
-        that.interval = setInterval(function() { that._updateLinkStates(); }, 500);*/
       });
-
-      /*editor.on("blur:composer", function() {
-        clearInterval(that.interval);
-      });
-
-      editor.on("destroy:composer", function() {
-        clearInterval(that.interval);
-      });*/
 
       editor.on("change_view", function(currentView) {
         // Set timeout needed in order to let the blur event fire first
