@@ -51,13 +51,10 @@
       }, 0);
     });
     
-    dom.observe(element, "mousedown", function(event) {
-      var target   = event.target,
-          nodeName = target.nodeName;
-      if (that.config.handleTables && (nodeName == "TD" || nodeName == "TH")) {
-          wysihtml5.quirks.tableCellsSelection(target, element);
-      }
-    });
+
+    if (this.config.handleTables) {
+        this.tableSelection = wysihtml5.quirks.tableCellsSelection(element, that.parent);
+    }
 
     // --------- Focus & blur logic ---------
     dom.observe(focusBlurElement, "focus", function() {

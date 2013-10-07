@@ -68,6 +68,7 @@ JS_FILES = src/wysihtml5.js \
   src/commands/underline.js \
   src/commands/undo.js \
   src/commands/createTable.js\
+  src/commands/mergeTableCells.js\
   src/undo_manager.js \
   src/views/view.js \
   src/views/composer.js \

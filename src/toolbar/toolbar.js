@@ -196,6 +196,19 @@
       editor.on("focus:composer", function() {
         that.bookmark = null;
       });
+      
+      if (this.editor.config.handleTables) {
+          editor.on("table_tools", function(visibility) {
+              switch (visibility) {
+                  case "show":
+                      that.container.querySelectorAll('[data-wysihtml5-hiddentools="table"]')[0].style.display = "";
+                  break;
+                  case "hide": 
+                       that.container.querySelectorAll('[data-wysihtml5-hiddentools="table"]')[0].style.display = "none";
+                  break;
+              }
+          });
+      }
 
       editor.on("change_view", function(currentView) {
         // Set timeout needed in order to let the blur event fire first

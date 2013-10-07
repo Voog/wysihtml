@@ -1,20 +1,38 @@
 wysihtml5.quirks.tableCellsSelection = (function() {
   
   var dom = wysihtml5.dom,
-      selectionStart = null,
-      selctionEnd = null,
+      select = {
+          table: null,
+          start: null,
+          end: null
+      },
       editable = null,
       selection_class = "wysiwyg-tmp-selected-cell",
       moveHandler = null,
       upHandler = null,
-      startTable = null;
+      editor = null;
+      
+  function init (element, edit) {
+      editable = element;
+      editor = edit;
+      
+      dom.observe(editable, "mousedown", function(event) {
+        var target   = event.target,
+            nodeName = target.nodeName;
+        if (nodeName == "TD" || nodeName == "TH") {
+            handleSelectionMousedown(target);
+        }    
+        
+      });
+      
+      return select;
+  }
   
-  function handleSelectionMousedown (target, element) {
-    selectionStart = target;
-    editable = element;
-    startTable = dom.getParentElement(selectionStart, { nodeName: ["TABLE"] });
+  function handleSelectionMousedown (target) {
+    select.start = target;
+    select.table = dom.getParentElement(select.start, { nodeName: ["TABLE"] });
     
-    if (startTable) {
+    if (select.table) {
       removeCellSelections();
       dom.addClass(target, selection_class);
       moveHandler = dom.observe(editable, "mousemove", handleMouseMove);
@@ -45,19 +63,13 @@ wysihtml5.quirks.tableCellsSelection = (function() {
         cell = dom.getParentElement(event.target, { nodeName: ["TD","TH"] }),
         selectedCells;
         
-    if (cell && startTable && selectionStart && selectionStart != cell) {
+    if (cell && select.table && select.start && select.start != cell) {
       curTable =  dom.getParentElement(cell, { nodeName: ["TABLE"] });
-      if (curTable && curTable === startTable) {
+      if (curTable && curTable === select.table) {
         removeCellSelections();
-        selectedCells = dom.table.getCellsBetween(selectionStart, cell);
+        select.end = cell;
+        selectedCells = dom.table.getCellsBetween(select.start, cell);
         addSelections(selectedCells);
-        
-        
-        /*if (document.selection) {
-            document.selection.empty();
-        } else if (window.getSelection) {
-            window.getSelection().removeAllRanges();
-        }*/
       }
     }
   }
@@ -65,15 +77,23 @@ wysihtml5.quirks.tableCellsSelection = (function() {
   function handleMouseUp (event) {
     moveHandler.stop();
     upHandler.stop();
+    editor.fire("table_tools", "show");
     setTimeout(function() {
       var sideClickHandler = dom.observe(editable.ownerDocument, "click", function() {
         sideClickHandler.stop();
         removeCellSelections();
+        setTimeout(function() {
+            select.table = null;
+            select.start = null;
+            select.end = null;
+        }, 0);
+        editor.fire("table_tools", "hide");
+        
       });
     });
   }
   
-  return handleSelectionMousedown;
+  return init;
 
 })();
 

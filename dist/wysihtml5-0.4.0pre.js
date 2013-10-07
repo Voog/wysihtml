@@ -6019,6 +6019,17 @@ wysihtml5.dom.getAttribute = function(node, attributeName) {
     function insertAfter(referenceNode, newNode) {
         referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
     }
+    
+    function nextNode(node, tag) {
+        var element = node.nextSibling;
+        while (element.nodeType !=1) {
+            element = element.nextSibling;
+            if (!tag || tag == element.tagName.toLowerCase()) {
+                return element;
+            }
+        }
+        return null;
+    }
 
     TableModifyerByCell.prototype = {
         
@@ -6174,6 +6185,7 @@ wysihtml5.dom.getAttribute = function(node, attributeName) {
             return frag;
         },
         
+        // Returns next real cell (not part of spanned cell unless first) on row if selected index is not real. I no real cells -1 will be returned
         correctColIndexForUnreals: function(col, row) {
             var r = this.map[row],
                 corrIdx = -1;
@@ -6226,7 +6238,7 @@ wysihtml5.dom.getAttribute = function(node, attributeName) {
             var r = null,
                 c = null;
                 
-            idx = idx || this._idx;
+            idx = idx || this.idx;
             
             for (var cidx = 0, cmax = this.map[idx.row].length; cidx < cmax; cidx++) {
                 c = this.map[idx.row][cidx];
@@ -6275,9 +6287,9 @@ wysihtml5.dom.getAttribute = function(node, attributeName) {
         },
         
         decreaseCellSpan: function(cell, span) {
-            var nr = parseInt(api.getAttribute(cell, span), 10) - 1;
+            var nr = parseInt(api.getAttribute(cell.el, span), 10) - 1;
             if (nr >= 1) { 
-                cell.el.attr(span, nr);
+                cell.el.setAttribute(span, nr);
             } else {
                 cell.el.removeAttribute(span);
                 if (span == 'colspan') {
@@ -6308,7 +6320,7 @@ wysihtml5.dom.getAttribute = function(node, attributeName) {
                     cmax = row.length;
                     for (; cidx < cmax; cidx++) {
                         cell = row[cidx];
-                        if (!(api.getAttribute(cell, "rowspan") && parseInt(api.getAttribute(cell, "rowspan"), 10) > 1 && cell.firstRow !== true)) {
+                        if (!(api.getAttribute(cell.el, "rowspan") && parseInt(api.getAttribute(cell.el, "rowspan"), 10) > 1 && cell.firstRow !== true)) {
                             allRowspan = false;
                             break;
                         }
@@ -6336,7 +6348,8 @@ wysihtml5.dom.getAttribute = function(node, attributeName) {
         
         fillMissingCells: function() {
             var r_max = 0,
-                c_max = 0;
+                c_max = 0,
+                prevcell = null;
                 
             this.setTableMap();
             if (this.map) {
@@ -6347,12 +6360,15 @@ wysihtml5.dom.getAttribute = function(node, attributeName) {
                     if (this.map[ridx].length > c_max) { c_max = this.map[ridx].length; }
                 }
                 
-                for (var row = 0; row <= r_max; row++) {
-                    for (var col = 0; col <= c_max; col++) {
-                        if (this.map[row][col]) {
+                for (var row = 0; row < r_max; row++) {
+                    for (var col = 0; col < c_max; col++) {
+                        if (this.map[row] && !this.map[row][col]) {
                             if (col > 0) {
                                 this.map[row][col] = new MapCell(this.createCells('td', 1));
-                                insertAfter(this.map[row][col-1].el, this.map[row][col].el);
+                                prevcell = this.map[row][col-1];
+                                if (prevcell && prevcell.el && prevcell.el.parent) { // if parent does not exist element is removed from dom
+                                    insertAfter(this.map[row][col-1].el, this.map[row][col].el);
+                                }
                             }
                         }
                     }
@@ -6394,6 +6410,7 @@ wysihtml5.dom.getAttribute = function(node, attributeName) {
             }
         },
         
+        // merges cells from start cell (defined in creating obj) to "to" cell
         merge: function(to) {
             if (this.rectify()) {
                 this.to = to;
@@ -6412,7 +6429,6 @@ wysihtml5.dom.getAttribute = function(node, attributeName) {
                     this.idx_start.col = this.idx_end.col;
                     this.idx_end.col = temp_cidx;
                 }
-            
                 if (this.canMerge()) {
                     var rowspan = this.idx_end.row - this.idx_start.row + 1,
                         colspan = this.idx_end.col - this.idx_start.col + 1;
@@ -6443,6 +6459,263 @@ wysihtml5.dom.getAttribute = function(node, attributeName) {
                     }
                 }
             }
+        },
+        
+        // Decreases rowspan of a cell if it is done on first cell of rowspan row (real cell)
+        // Cell is moved to next row (if it is real)
+        collapseCellToNextRow: function(cell) {
+            var cellIdx = this.getMapIndex(cell.el),
+                newRowIdx = cellIdx.row + 1,
+                newIdx = {'row': newRowIdx, 'col': cellIdx.col};
+                
+            if (newRowIdx < this.map.length) {
+                
+                var row = this.getRealRowEl(false, newIdx);
+                if (row !== null) {
+                    var n_cidx = this.correctColIndexForUnreals(newIdx.col, newIdx.row);
+                    if (n_cidx >= 0) {
+                        insertAfter(this.getRowCells(row)[n_cidx], cell.el);
+                    } else {
+                        var lastCell = this.getLastNewCellOnRow(row, newRowIdx);
+                        if (lastCell !== null) {
+                            insertAfter(lastCell, cell.el);
+                        } else {
+                            row.insertBefore(cell.el, row.firstChild);
+                        }
+                    }
+                    cell.el.setAttribute('rowspan', parseInt(api.getAttribute(cell.el, 'rowspan'), 10) - 1);
+                }
+            }
+        },
+        
+        // Removes a cell when removing a row
+        // If is rowspan cell then decreases the rowspan
+        // and moves cell to next row if needed (is first cell of rowspan)
+        removeRowCell: function(cell) {
+            if (cell.isReal) {
+               if (cell.isRowspan) {
+                   this.collapseCellToNextRow(cell);
+               } else {
+                   removeElement(cell.el);
+               }
+            } else {
+                cell.el.setAttribute('rowspan', parseInt(api.getAttribute(cell.el, 'rowspan'), 10) - 1);
+            }
+        },
+        
+        // Removes the row of selected cell
+        removeRow: function() {
+            var oldRow = api.getParentElement(this.cell, { nodeName: ["TR"] });
+            if (oldRow) {
+                this.setTableMap();
+                this.idx = this.getMapIndex(this.cell);
+                if (this.idx !== false) {
+                    var modRow = this.map[this.idx.row];
+                    for (var cidx = 0, cmax = modRow.length; cidx < cmax; cidx++) {
+                        if (!modRow[cidx].modified) {
+                            this.setAsModified(modRow[cidx]);
+                            this.removeRowCell(modRow[cidx]);
+                        }
+                    }
+                }
+                removeElement(oldRow);
+            }
+        },
+        
+        removeColCell: function(cell) {
+            if (cell.isColspan) {
+                cell.el.setAttribute('colspan', parseInt(api.getAttribute(cell.el, 'colspan'), 10) - 1);
+            } else if (cell.isReal) {
+                removeElement(cell.el);
+            }
+        },
+        
+        removeColumn: function() {
+            this.setTableMap();
+            this.idx = this.getMapIndex(this.cell);
+            if (this.idx !== false) {
+                for (var ridx = 0, rmax = this.map.length; ridx < rmax; ridx++) {
+                    if (!this.map[ridx][this.idx.col].modified) {
+                        this.setAsModified(this.map[ridx][this.idx.col]);
+                        this.removeColCell(this.map[ridx][this.idx.col]);
+                    }
+                }
+            }
+        },
+        
+        // removes row or column by selected cell element
+        remove: function(what) {
+            if (this.rectify()) {
+                switch (what) {
+                    case 'row':
+                        this.removeRow();
+                    break;
+                    case 'column':
+                        this.removeColumn();
+                    break;
+                }
+                this.rectify();
+            }
+        },
+        
+        addRow: function(where) {
+            var doc = this.table.ownerDocument;
+            
+            this.setTableMap();
+            this.idx = this.getMapIndex(this.cell);
+            if (where == "below" && api.getAttribute(cell.el, 'rowspan')) {
+                this.idx.row = this.idx.row + parseInt(api.getAttribute(cell.el, 'rowspan'), 10) - 1;
+            }
+                
+            if (this.idx !== false) {
+                var modRow = this.map[this.idx.row],
+                    newRow = doc.createElement('tr'); 
+                
+                for (var ridx = 0, rmax = modRow.length; ridx < rmax; ridx++) {
+                    if (!modRow[ridx].modified) {
+                        this.setAsModified(modRow[ridx]);
+                        this.addRowCell(modRow[ridx], newRow, where);
+                    }
+                }
+                
+                switch (where) {
+                    case 'below': 
+                        insertAfter(this.getRealRowEl(true), newRow);
+                    break;
+                    case 'above': 
+                        var cr = api.getParentElement(this.map[this.idx.row][this.idx.col].el, { nodeName: ["TR"] });
+                        if (cr) {
+                            cr.parentNode.insertBefore(cr, newRow);
+                        }
+                    break;
+                }
+            }
+        },
+        
+        addRowCell: function(cell, row, where) {
+            var colSpanAttr = (cell.isColspan) ? {"colspan" : api.getAttribute(cell.el, 'colspan')} : null;
+            if (cell.isReal) {
+                if (where != 'above' && cell.isRowspan) {
+                    cell.el.setAttribute('rowspan', parseInt(api.getAttribute(cell.el,'rowspan'), 10) + 1);
+                } else {
+                    row.appendChild(this.createCells('td', 1, colSpanAttr));
+                }
+            } else {
+                if (where != 'above' && cell.isRowspan && cell.lastRow) {
+                    row.appendChild(this.createCells('td', 1, colSpanAttr));
+                } else if (c.isRowspan) {
+                    cell.el.attr('rowspan', parseInt(api.getAttribute(cell.el, 'rowspan'), 10) + 1);
+                } 
+            }
+        },
+        
+        add: function(where) {
+            if (this.rectify()) {
+                if (where == 'below' || where == 'above') {
+                    this.addRow(where);
+                }
+                if (where == 'before' || where == 'after') {
+                    this.addColumn(where);
+                }
+            }
+        },
+        
+        addColCell: function (cell, ridx, where) {
+            var doAdd,
+                cType = cell.el.tagName.toLowerCase();
+                    
+            // defines add cell vs expand cell conditions
+            // true means add
+            switch (where) {
+                case "before": 
+                    doAdd = (!cell.isColspan || cell.firstCol);
+                break;
+                case "after":
+                    doAdd = (!cell.isColspan || cell.lastCol || (cell.isColspan && c.el == this.cell));
+                break;
+            }
+            
+            if (doAdd){
+                // adds a cell before or after current cell element 
+                switch (where) {
+                    case "before":
+                        cell.el.parentNode.insertBefore(cell.el, createCells(cType, 1));
+                    break;
+                    case "after":
+                        inserAfter(cell.el, createCells(cType, 1));
+                    break;
+                }
+                
+                // handles if cell has rowspan 
+                if (c.isRowspan) {
+                    this.handleCellAddWithRowspan(cell, ridx+1, where);
+                }
+                
+            } else {
+                // expands cell
+                cell.el.setAttribute('colspan',  parseInt(api.getAttribute(cell.el, 'colspan'), 10) + 1);
+            }
+        },
+        
+        addColumn: function(where) {
+            var row, modCell;
+            
+            this.setTableMap();
+            this.idx = this.getMapIndex(this.cell);
+            if (where == "after" && api.getAttribute(this.cell.el, 'colspan')) {
+              this.idx.col = this.idx.col + parseInt(api.getAttribute(this.cell.el, 'colspan'), 10) - 1;
+            }
+                
+            if (this.idx !== false) {
+                for (var ridx = 0, rmax = this.map.length; ridx < rmax; ridx++ ) {
+                    row = this.map[ridx];
+                    if (row[this.idx.col]) {
+                        modCell = row[this.idx.col];
+                        if (!modCell.modified) {
+                            this.setAsModified(modCell);
+                            this.addColCell(modCell, ridx , where);
+                        }
+                    }
+                }
+            }
+        },
+        
+        handleCellAddWithRowspan: function (cell, ridx, where) {
+            var addRowsNr = parseInt(api.getAttribute(this.cell.el, 'rowspan'), 10) - 1,
+                crow = api.getParentElement(cell.el, { nodeName: ["TR"] }),
+                cType = cell.el.tagName.toLowerCase(),
+                cidx, temp_r_cells,
+                doc = this.table.ownerDocument,
+                nrow;
+                
+            for (var i = 0; i < addRowsNr; i++) {
+                cidx = this.correctColIndexForUnreals(this.idx.col, (ridx + i));
+                crow = nextNode(crow, 'tr');
+                if (crow) {
+                    if (cidx > 0) {
+                        switch (where) {
+                            case "before": 
+                                temp_r_cells = this.getRowCells(crow);
+                                if (cidx > 0 && this.map[ridx + i][this.idx.col].el != temp_r_cells[cidx] && cidx == temp_r_cells.length - 1) {
+                                     insertAfter(temp_r_cells[cidx], this.createCells(cType, 1));
+                                } else {
+                                    temp_r_cells[cidx].parentNode.insertBefore(temp_r_cells[cidx], this.createCells(cType, 1));
+                                }
+                                    
+                            break;
+                            case "after":
+                                insertAfter(this.getRowCells(crow)[cidx], this.createCells(cType, 1));
+                            break;
+                        }
+                    } else {
+                        crow.insertBefore(crow.firstChild, this.createCells(cType, 1));
+                    }
+                } else {
+                    nrow = doc.createElement('tr');
+                    nrow.appendChild(this.createCells(cType, 1));
+                    this.table.appendChild(nrow);
+                }
+            }
         }
     };
     
@@ -6450,8 +6723,30 @@ wysihtml5.dom.getAttribute = function(node, attributeName) {
         getCellsBetween: function(cell1, cell2) {
             var c1 = new TableModifyerByCell(cell1);
             return c1.getMapElsTo(cell2);
+        },
+        
+        addCells: function(cell, where) {
+            var c = new TableModifyerByCell(cell, options);
+            c.add(where);
+        },
+        
+        removeCells: function(cell, what) {
+            var c = new TableModifyerByCell(cell, options);
+            c.remove(what);
+        },
+        
+        mergeCellsBetween: function(cell1, cell2) {
+            var c1 = new TableModifyerByCell(cell1);
+            c1.merge(cell2);
+        },
+        
+        unmergeCell: function(cell) {
+            var c = new TableModifyerByCell(cell, options);
+            c.unmerge();
         }
     };
+    
+    
     
 })(wysihtml5);
 /**
@@ -6576,20 +6871,38 @@ wysihtml5.quirks.ensureProperClearing = (function() {
 })(wysihtml5);wysihtml5.quirks.tableCellsSelection = (function() {
   
   var dom = wysihtml5.dom,
-      selectionStart = null,
-      selctionEnd = null,
+      select = {
+          table: null,
+          start: null,
+          end: null
+      },
       editable = null,
       selection_class = "wysiwyg-tmp-selected-cell",
       moveHandler = null,
       upHandler = null,
-      startTable = null;
+      editor = null;
+      
+  function init (element, edit) {
+      editable = element;
+      editor = edit;
+      
+      dom.observe(editable, "mousedown", function(event) {
+        var target   = event.target,
+            nodeName = target.nodeName;
+        if (nodeName == "TD" || nodeName == "TH") {
+            handleSelectionMousedown(target);
+        }    
+        
+      });
+      
+      return select;
+  }
   
-  function handleSelectionMousedown (target, element) {
-    selectionStart = target;
-    editable = element;
-    startTable = dom.getParentElement(selectionStart, { nodeName: ["TABLE"] });
+  function handleSelectionMousedown (target) {
+    select.start = target;
+    select.table = dom.getParentElement(select.start, { nodeName: ["TABLE"] });
     
-    if (startTable) {
+    if (select.table) {
       removeCellSelections();
       dom.addClass(target, selection_class);
       moveHandler = dom.observe(editable, "mousemove", handleMouseMove);
@@ -6620,19 +6933,13 @@ wysihtml5.quirks.ensureProperClearing = (function() {
         cell = dom.getParentElement(event.target, { nodeName: ["TD","TH"] }),
         selectedCells;
         
-    if (cell && startTable && selectionStart && selectionStart != cell) {
+    if (cell && select.table && select.start && select.start != cell) {
       curTable =  dom.getParentElement(cell, { nodeName: ["TABLE"] });
-      if (curTable && curTable === startTable) {
+      if (curTable && curTable === select.table) {
         removeCellSelections();
-        selectedCells = dom.table.getCellsBetween(selectionStart, cell);
+        select.end = cell;
+        selectedCells = dom.table.getCellsBetween(select.start, cell);
         addSelections(selectedCells);
-        
-        
-        /*if (document.selection) {
-            document.selection.empty();
-        } else if (window.getSelection) {
-            window.getSelection().removeAllRanges();
-        }*/
       }
     }
   }
@@ -6640,15 +6947,23 @@ wysihtml5.quirks.ensureProperClearing = (function() {
   function handleMouseUp (event) {
     moveHandler.stop();
     upHandler.stop();
+    editor.fire("table_tools", "show");
     setTimeout(function() {
       var sideClickHandler = dom.observe(editable.ownerDocument, "click", function() {
         sideClickHandler.stop();
         removeCellSelections();
+        setTimeout(function() {
+            select.table = null;
+            select.start = null;
+            select.end = null;
+        }, 0);
+        editor.fire("table_tools", "hide");
+        
       });
     });
   }
   
-  return handleSelectionMousedown;
+  return init;
 
 })();
 
@@ -8462,6 +8777,16 @@ wysihtml5.commands.redo = {
   state: function(composer, command) {
       return false;
   }
+};wysihtml5.commands.mergeTableCells = {
+  exec: function(composer, command) {
+    if (composer.tableSelection && composer.tableSelection.start && composer.tableSelection.end) {
+        wysihtml5.dom.table.mergeCellsBetween(composer.tableSelection.start, composer.tableSelection.end);
+    }
+  },
+
+  state: function(composer, command) {
+    return false;
+  }
 };/**
  * Undo Manager for wysihtml5
  * slightly inspired by http://rniwa.com/editing/undomanager.html#the-undomanager-interface
@@ -9470,13 +9795,10 @@ wysihtml5.views.View = Base.extend(
       }, 0);
     });
     
-    dom.observe(element, "mousedown", function(event) {
-      var target   = event.target,
-          nodeName = target.nodeName;
-      if (that.config.handleTables && (nodeName == "TD" || nodeName == "TH")) {
-          wysihtml5.quirks.tableCellsSelection(target, element);
-      }
-    });
+
+    if (this.config.handleTables) {
+        this.tableSelection = wysihtml5.quirks.tableCellsSelection(element, that.parent);
+    }
 
     // --------- Focus & blur logic ---------
     dom.observe(focusBlurElement, "focus", function() {
@@ -10275,6 +10597,19 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
       editor.on("focus:composer", function() {
         that.bookmark = null;
       });
+      
+      if (this.editor.config.handleTables) {
+          editor.on("table_tools", function(visibility) {
+              switch (visibility) {
+                  case "show":
+                      that.container.querySelectorAll('[data-wysihtml5-hiddentools="table"]')[0].style.display = "";
+                  break;
+                  case "hide": 
+                       that.container.querySelectorAll('[data-wysihtml5-hiddentools="table"]')[0].style.display = "none";
+                  break;
+              }
+          });
+      }
 
       editor.on("change_view", function(currentView) {
         // Set timeout needed in order to let the blur event fire first
