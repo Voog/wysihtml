@@ -6933,7 +6933,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
         cell = dom.getParentElement(event.target, { nodeName: ["TD","TH"] }),
         selectedCells;
         
-    if (cell && select.table && select.start && select.start != cell) {
+    if (cell && select.table && select.start) {
       curTable =  dom.getParentElement(cell, { nodeName: ["TABLE"] });
       if (curTable && curTable === select.table) {
         removeCellSelections();
@@ -6949,18 +6949,17 @@ wysihtml5.quirks.ensureProperClearing = (function() {
     upHandler.stop();
     editor.fire("table_tools", "show");
     setTimeout(function() {
-      var sideClickHandler = dom.observe(editable.ownerDocument, "click", function() {
+      var sideClickHandler = dom.observe(editable.ownerDocument, "click", function(event) {
         sideClickHandler.stop();
-        removeCellSelections();
-        setTimeout(function() {
+        if (dom.getParentElement(event.target, { nodeName: ["TABLE"] }) != select.table) {
+            removeCellSelections();
             select.table = null;
             select.start = null;
             select.end = null;
-        }, 0);
-        editor.fire("table_tools", "hide");
-        
+            editor.fire("table_tools", "hide");
+        }
       });
-    });
+    },0);
   }
   
   return init;
