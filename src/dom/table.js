@@ -15,9 +15,14 @@
       this.modified = false;
     };
 
-    var TableModifyerByCell = function (cell) {
-      this.cell = cell;
-      this.table = api.getParentElement(cell, { nodeName: ["TABLE"] });
+    var TableModifyerByCell = function (cell, table) {
+        if (cell) {
+            this.cell = cell;
+            this.table = api.getParentElement(cell, { nodeName: ["TABLE"] });
+        } else if (table) {
+            this.table = table;
+            this.cell = this.table.querySelectorAll('th, td')[0];
+        }
     };
     
     function queryInList(list, query) {
@@ -87,12 +92,10 @@
 
         setTableMap: function() {
             var map = [];    
-
             var tableRows = this.getTableRows(),
                 ridx, row, cells, cidx, cell,
                 c,
                 cspan, rspan;
-                
 
             for (ridx = 0; ridx < tableRows.length; ridx++) {
                 row = tableRows[ridx];
@@ -152,6 +155,14 @@
               }
           }
           return false;
+        },
+        
+        getElementAtIndex: function(idx) {
+            this.setTableMap();
+            if (this.map[idx.row] && this.map[idx.row][idx.col] && this.map[idx.row][idx.col].el) {
+                return this.map[idx.row][idx.col].el;
+            }
+            return null;
         },
         
         getMapElsTo: function(to_cell) {
@@ -792,6 +803,17 @@
             var c = new TableModifyerByCell(cell);
             return c.orderSelectionEnds(cell2);
         },
+        
+        indexOf: function(cell) {
+            var c = new TableModifyerByCell(cell);
+            c.setTableMap();
+            return c.getMapIndex(cell);
+        },
+        
+        findCell: function(table, idx) {
+            var c = new TableModifyerByCell(null, table);
+            return c.getElementAtIndex(idx);
+        }
     };
     
     

@@ -5995,9 +5995,14 @@ wysihtml5.dom.getAttribute = function(node, attributeName) {
       this.modified = false;
     };
 
-    var TableModifyerByCell = function (cell) {
-      this.cell = cell;
-      this.table = api.getParentElement(cell, { nodeName: ["TABLE"] });
+    var TableModifyerByCell = function (cell, table) {
+        if (cell) {
+            this.cell = cell;
+            this.table = api.getParentElement(cell, { nodeName: ["TABLE"] });
+        } else if (table) {
+            this.table = table;
+            this.cell = this.table.querySelectorAll('th, td')[0];
+        }
     };
     
     function queryInList(list, query) {
@@ -6067,12 +6072,10 @@ wysihtml5.dom.getAttribute = function(node, attributeName) {
 
         setTableMap: function() {
             var map = [];    
-
             var tableRows = this.getTableRows(),
                 ridx, row, cells, cidx, cell,
                 c,
                 cspan, rspan;
-                
 
             for (ridx = 0; ridx < tableRows.length; ridx++) {
                 row = tableRows[ridx];
@@ -6132,6 +6135,14 @@ wysihtml5.dom.getAttribute = function(node, attributeName) {
               }
           }
           return false;
+        },
+        
+        getElementAtIndex: function(idx) {
+            this.setTableMap();
+            if (this.map[idx.row] && this.map[idx.row][idx.col] && this.map[idx.row][idx.col].el) {
+                return this.map[idx.row][idx.col].el;
+            }
+            return null;
         },
         
         getMapElsTo: function(to_cell) {
@@ -6772,6 +6783,17 @@ wysihtml5.dom.getAttribute = function(node, attributeName) {
             var c = new TableModifyerByCell(cell);
             return c.orderSelectionEnds(cell2);
         },
+        
+        indexOf: function(cell) {
+            var c = new TableModifyerByCell(cell);
+            c.setTableMap();
+            return c.getMapIndex(cell);
+        },
+        
+        findCell: function(table, idx) {
+            var c = new TableModifyerByCell(null, table);
+            return c.getElementAtIndex(idx);
+        }
     };
     
     
@@ -8863,6 +8885,45 @@ wysihtml5.commands.redo = {
           setTimeout(function() {
               composer.tableSelection.select(tableSelect.start, tableSelect.end);
           },0);
+      }
+  },
+
+  state: function(composer, command) {
+      return false;
+  }
+};wysihtml5.commands.deleteTableCells = {
+  exec: function(composer, command, value) {
+      if (composer.tableSelection && composer.tableSelection.start && composer.tableSelection.end) {
+          var tableSelect = wysihtml5.dom.table.orderSelectionEnds(composer.tableSelection.start, composer.tableSelection.end),
+              idx = wysihtml5.dom.table.indexOf(tableSelect.start),
+              selCell,
+              table = composer.tableSelection.table;
+              
+          wysihtml5.dom.table.removeCells(tableSelect.start, value);
+          setTimeout(function() {
+              // move selection to next or previous if not present
+              selCell = wysihtml5.dom.table.findCell(table, idx);
+              
+              if (!selCell){
+                  if (value == "row") {
+                      selCell = wysihtml5.dom.table.findCell(table, {
+                          "row": idx.row - 1,
+                          "col": idx.col
+                      });
+                  }
+              
+                  if (value == "column") {
+                      selCell = wysihtml5.dom.table.findCell(table, {
+                          "row": idx.row,
+                          "col": idx.col - 1
+                      });
+                  }
+              } 
+              if (selCell) {
+                  composer.tableSelection.select(selCell, selCell);
+              }
+          }, 0);
+
       }
   },
 

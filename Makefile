@@ -70,6 +70,7 @@ JS_FILES = src/wysihtml5.js \
   src/commands/createTable.js\
   src/commands/mergeTableCells.js\
   src/commands/addTableCells.js\
+  src/commands/deleteTableCells.js\
   src/undo_manager.js \
   src/views/view.js \
   src/views/composer.js \
