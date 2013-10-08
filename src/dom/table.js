@@ -182,6 +182,29 @@
             return els;
         },
         
+        orderSelectionEnds: function(secondcell) {
+            this.setTableMap();
+            this.idx_start = this.getMapIndex(this.cell);
+            this.idx_end = this.getMapIndex(secondcell);
+            
+            // switch indexes if start is bigger than end
+            if (this.idx_start.row > this.idx_end.row || (this.idx_start.row == this.idx_end.row && this.idx_start.col > this.idx_end.col)) {
+                var temp_idx = this.idx_start;
+                this.idx_start = this.idx_end;
+                this.idx_end = temp_idx;
+            }
+            if (this.idx_start.col > this.idx_end.col) {
+                var temp_cidx = this.idx_start.col;
+                this.idx_start.col = this.idx_end.col;
+                this.idx_end.col = temp_cidx;
+            }
+            
+            return {
+                "start": this.map[this.idx_start.row][this.idx_start.col].el,
+                "end": this.map[this.idx_end.row][this.idx_end.col].el
+            };
+        },
+        
         createCells: function(tag, nr, attrs) {
             var doc = this.table.ownerDocument,
                 frag = doc.createDocumentFragment(),
@@ -247,7 +270,7 @@
                 var colspan = parseInt(api.getAttribute(cell.el, 'colspan') || 1, 10),
                     cType = cell.el.tagName.toLowerCase();
                 if (colspan > 1) {
-                    var newCells = createCells(cType, colspan -1);
+                    var newCells = this.createCells(cType, colspan -1);
                     insertAfter(cell.el, newCells);
                 }
                 cell.el.removeAttribute('colspan');
@@ -410,14 +433,14 @@
             if (this.rectify()) {
                 this.setTableMap();
                 this.idx = this.getMapIndex(this.cell);
-            
+                
                 if (this.idx) {
                     var thisCell = this.map[this.idx.row][this.idx.col],
-                        colspan = (api.getAttribute(thisCell, "colspan")) ? parseInt(api.getAttribute(thisCell, "colspan"), 10) : 1,
-                        cType = thisCell.tagName.toLowerCase();
+                        colspan = (api.getAttribute(thisCell.el, "colspan")) ? parseInt(api.getAttribute(thisCell.el, "colspan"), 10) : 1,
+                        cType = thisCell.el.tagName.toLowerCase();
                     
                     if (thisCell.isRowspan) {
-                        var rowspan = parseInt(api.getAttribute(thisCell, "rowspan"), 10);
+                        var rowspan = parseInt(api.getAttribute(thisCell.el, "rowspan"), 10);
                         if (rowspan > 1) {
                             for (var nr = 1, maxr = rowspan - 1; nr <= maxr; nr++){
                                 this.injectRowAt(this.idx.row + nr, this.idx.col, colspan, cType, thisCell);
@@ -533,7 +556,7 @@
                     var modRow = this.map[this.idx.row];
                     for (var cidx = 0, cmax = modRow.length; cidx < cmax; cidx++) {
                         if (!modRow[cidx].modified) {
-                            this.setAsModified(modRow[cidx]);
+                            this.setCellAsModified(modRow[cidx]);
                             this.removeRowCell(modRow[cidx]);
                         }
                     }
@@ -556,7 +579,7 @@
             if (this.idx !== false) {
                 for (var ridx = 0, rmax = this.map.length; ridx < rmax; ridx++) {
                     if (!this.map[ridx][this.idx.col].modified) {
-                        this.setAsModified(this.map[ridx][this.idx.col]);
+                        this.setCellAsModified(this.map[ridx][this.idx.col]);
                         this.removeColCell(this.map[ridx][this.idx.col]);
                     }
                 }
@@ -583,8 +606,8 @@
             
             this.setTableMap();
             this.idx = this.getMapIndex(this.cell);
-            if (where == "below" && api.getAttribute(cell.el, 'rowspan')) {
-                this.idx.row = this.idx.row + parseInt(api.getAttribute(cell.el, 'rowspan'), 10) - 1;
+            if (where == "below" && api.getAttribute(this.cell, 'rowspan')) {
+                this.idx.row = this.idx.row + parseInt(api.getAttribute(this.cell, 'rowspan'), 10) - 1;
             }
                 
             if (this.idx !== false) {
@@ -593,7 +616,7 @@
                 
                 for (var ridx = 0, rmax = modRow.length; ridx < rmax; ridx++) {
                     if (!modRow[ridx].modified) {
-                        this.setAsModified(modRow[ridx]);
+                        this.setCellAsModified(modRow[ridx]);
                         this.addRowCell(modRow[ridx], newRow, where);
                     }
                 }
@@ -605,7 +628,7 @@
                     case 'above': 
                         var cr = api.getParentElement(this.map[this.idx.row][this.idx.col].el, { nodeName: ["TR"] });
                         if (cr) {
-                            cr.parentNode.insertBefore(cr, newRow);
+                            cr.parentNode.insertBefore(newRow, cr);
                         }
                     break;
                 }
@@ -659,15 +682,15 @@
                 // adds a cell before or after current cell element 
                 switch (where) {
                     case "before":
-                        cell.el.parentNode.insertBefore(cell.el, createCells(cType, 1));
+                        cell.el.parentNode.insertBefore(this.createCells(cType, 1), cell.el);
                     break;
                     case "after":
-                        inserAfter(cell.el, createCells(cType, 1));
+                        insertAfter(cell.el, this.createCells(cType, 1));
                     break;
                 }
                 
                 // handles if cell has rowspan 
-                if (c.isRowspan) {
+                if (cell.isRowspan) {
                     this.handleCellAddWithRowspan(cell, ridx+1, where);
                 }
                 
@@ -682,8 +705,8 @@
             
             this.setTableMap();
             this.idx = this.getMapIndex(this.cell);
-            if (where == "after" && api.getAttribute(this.cell.el, 'colspan')) {
-              this.idx.col = this.idx.col + parseInt(api.getAttribute(this.cell.el, 'colspan'), 10) - 1;
+            if (where == "after" && api.getAttribute(this.cell, 'colspan')) {
+              this.idx.col = this.idx.col + parseInt(api.getAttribute(this.cell, 'colspan'), 10) - 1;
             }
                 
             if (this.idx !== false) {
@@ -692,7 +715,7 @@
                     if (row[this.idx.col]) {
                         modCell = row[this.idx.col];
                         if (!modCell.modified) {
-                            this.setAsModified(modCell);
+                            this.setCellAsModified(modCell);
                             this.addColCell(modCell, ridx , where);
                         }
                     }
@@ -701,7 +724,7 @@
         },
         
         handleCellAddWithRowspan: function (cell, ridx, where) {
-            var addRowsNr = parseInt(api.getAttribute(this.cell.el, 'rowspan'), 10) - 1,
+            var addRowsNr = parseInt(api.getAttribute(this.cell, 'rowspan'), 10) - 1,
                 crow = api.getParentElement(cell.el, { nodeName: ["TR"] }),
                 cType = cell.el.tagName.toLowerCase(),
                 cidx, temp_r_cells,
@@ -719,7 +742,7 @@
                                 if (cidx > 0 && this.map[ridx + i][this.idx.col].el != temp_r_cells[cidx] && cidx == temp_r_cells.length - 1) {
                                      insertAfter(temp_r_cells[cidx], this.createCells(cType, 1));
                                 } else {
-                                    temp_r_cells[cidx].parentNode.insertBefore(temp_r_cells[cidx], this.createCells(cType, 1));
+                                    temp_r_cells[cidx].parentNode.insertBefore(this.createCells(cType, 1), temp_r_cells[cidx]);
                                 }
                                     
                             break;
@@ -728,7 +751,7 @@
                             break;
                         }
                     } else {
-                        crow.insertBefore(crow.firstChild, this.createCells(cType, 1));
+                        crow.insertBefore(this.createCells(cType, 1), crow.firstChild);
                     }
                 } else {
                     nrow = doc.createElement('tr');
@@ -746,12 +769,12 @@
         },
         
         addCells: function(cell, where) {
-            var c = new TableModifyerByCell(cell, options);
+            var c = new TableModifyerByCell(cell);
             c.add(where);
         },
         
         removeCells: function(cell, what) {
-            var c = new TableModifyerByCell(cell, options);
+            var c = new TableModifyerByCell(cell);
             c.remove(what);
         },
         
@@ -761,9 +784,14 @@
         },
         
         unmergeCell: function(cell) {
-            var c = new TableModifyerByCell(cell, options);
+            var c = new TableModifyerByCell(cell);
             c.unmerge();
-        }
+        },
+        
+        orderSelectionEnds: function(cell, cell2) {
+            var c = new TableModifyerByCell(cell);
+            return c.orderSelectionEnds(cell2);
+        },
     };
     
     

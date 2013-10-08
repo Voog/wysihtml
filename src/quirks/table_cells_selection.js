@@ -4,7 +4,8 @@ wysihtml5.quirks.tableCellsSelection = (function() {
       select = {
           table: null,
           start: null,
-          end: null
+          end: null,
+          select: selectCells
       },
       editable = null,
       selection_class = "wysiwyg-tmp-selected-cell",
@@ -30,6 +31,7 @@ wysihtml5.quirks.tableCellsSelection = (function() {
   
   function handleSelectionMousedown (target) {
     select.start = target;
+    select.end = target;
     select.table = dom.getParentElement(select.start, { nodeName: ["TABLE"] });
     
     if (select.table) {
@@ -79,6 +81,11 @@ wysihtml5.quirks.tableCellsSelection = (function() {
     upHandler.stop();
     editor.fire("table_tools", "show");
     setTimeout(function() {
+      bindSideclick();
+    },0);
+  }
+  
+  function bindSideclick () {
       var sideClickHandler = dom.observe(editable.ownerDocument, "click", function(event) {
         sideClickHandler.stop();
         if (dom.getParentElement(event.target, { nodeName: ["TABLE"] }) != select.table) {
@@ -89,7 +96,16 @@ wysihtml5.quirks.tableCellsSelection = (function() {
             editor.fire("table_tools", "hide");
         }
       });
-    },0);
+  }
+  
+  function selectCells (start, end) {
+      select.start = start;
+      select.end = end;
+      select.table = dom.getParentElement(select.start, { nodeName: ["TABLE"] });
+      selectedCells = dom.table.getCellsBetween(select.start, select.end);
+      addSelections(selectedCells);
+      bindSideclick();
+      editor.fire("table_tools", "show");
   }
   
   return init;

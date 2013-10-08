@@ -6162,6 +6162,29 @@ wysihtml5.dom.getAttribute = function(node, attributeName) {
             return els;
         },
         
+        orderSelectionEnds: function(secondcell) {
+            this.setTableMap();
+            this.idx_start = this.getMapIndex(this.cell);
+            this.idx_end = this.getMapIndex(secondcell);
+            
+            // switch indexes if start is bigger than end
+            if (this.idx_start.row > this.idx_end.row || (this.idx_start.row == this.idx_end.row && this.idx_start.col > this.idx_end.col)) {
+                var temp_idx = this.idx_start;
+                this.idx_start = this.idx_end;
+                this.idx_end = temp_idx;
+            }
+            if (this.idx_start.col > this.idx_end.col) {
+                var temp_cidx = this.idx_start.col;
+                this.idx_start.col = this.idx_end.col;
+                this.idx_end.col = temp_cidx;
+            }
+            
+            return {
+                "start": this.map[this.idx_start.row][this.idx_start.col].el,
+                "end": this.map[this.idx_end.row][this.idx_end.col].el
+            };
+        },
+        
         createCells: function(tag, nr, attrs) {
             var doc = this.table.ownerDocument,
                 frag = doc.createDocumentFragment(),
@@ -6227,7 +6250,7 @@ wysihtml5.dom.getAttribute = function(node, attributeName) {
                 var colspan = parseInt(api.getAttribute(cell.el, 'colspan') || 1, 10),
                     cType = cell.el.tagName.toLowerCase();
                 if (colspan > 1) {
-                    var newCells = createCells(cType, colspan -1);
+                    var newCells = this.createCells(cType, colspan -1);
                     insertAfter(cell.el, newCells);
                 }
                 cell.el.removeAttribute('colspan');
@@ -6390,14 +6413,14 @@ wysihtml5.dom.getAttribute = function(node, attributeName) {
             if (this.rectify()) {
                 this.setTableMap();
                 this.idx = this.getMapIndex(this.cell);
-            
+                
                 if (this.idx) {
                     var thisCell = this.map[this.idx.row][this.idx.col],
-                        colspan = (api.getAttribute(thisCell, "colspan")) ? parseInt(api.getAttribute(thisCell, "colspan"), 10) : 1,
-                        cType = thisCell.tagName.toLowerCase();
+                        colspan = (api.getAttribute(thisCell.el, "colspan")) ? parseInt(api.getAttribute(thisCell.el, "colspan"), 10) : 1,
+                        cType = thisCell.el.tagName.toLowerCase();
                     
                     if (thisCell.isRowspan) {
-                        var rowspan = parseInt(api.getAttribute(thisCell, "rowspan"), 10);
+                        var rowspan = parseInt(api.getAttribute(thisCell.el, "rowspan"), 10);
                         if (rowspan > 1) {
                             for (var nr = 1, maxr = rowspan - 1; nr <= maxr; nr++){
                                 this.injectRowAt(this.idx.row + nr, this.idx.col, colspan, cType, thisCell);
@@ -6513,7 +6536,7 @@ wysihtml5.dom.getAttribute = function(node, attributeName) {
                     var modRow = this.map[this.idx.row];
                     for (var cidx = 0, cmax = modRow.length; cidx < cmax; cidx++) {
                         if (!modRow[cidx].modified) {
-                            this.setAsModified(modRow[cidx]);
+                            this.setCellAsModified(modRow[cidx]);
                             this.removeRowCell(modRow[cidx]);
                         }
                     }
@@ -6536,7 +6559,7 @@ wysihtml5.dom.getAttribute = function(node, attributeName) {
             if (this.idx !== false) {
                 for (var ridx = 0, rmax = this.map.length; ridx < rmax; ridx++) {
                     if (!this.map[ridx][this.idx.col].modified) {
-                        this.setAsModified(this.map[ridx][this.idx.col]);
+                        this.setCellAsModified(this.map[ridx][this.idx.col]);
                         this.removeColCell(this.map[ridx][this.idx.col]);
                     }
                 }
@@ -6563,8 +6586,8 @@ wysihtml5.dom.getAttribute = function(node, attributeName) {
             
             this.setTableMap();
             this.idx = this.getMapIndex(this.cell);
-            if (where == "below" && api.getAttribute(cell.el, 'rowspan')) {
-                this.idx.row = this.idx.row + parseInt(api.getAttribute(cell.el, 'rowspan'), 10) - 1;
+            if (where == "below" && api.getAttribute(this.cell, 'rowspan')) {
+                this.idx.row = this.idx.row + parseInt(api.getAttribute(this.cell, 'rowspan'), 10) - 1;
             }
                 
             if (this.idx !== false) {
@@ -6573,7 +6596,7 @@ wysihtml5.dom.getAttribute = function(node, attributeName) {
                 
                 for (var ridx = 0, rmax = modRow.length; ridx < rmax; ridx++) {
                     if (!modRow[ridx].modified) {
-                        this.setAsModified(modRow[ridx]);
+                        this.setCellAsModified(modRow[ridx]);
                         this.addRowCell(modRow[ridx], newRow, where);
                     }
                 }
@@ -6585,7 +6608,7 @@ wysihtml5.dom.getAttribute = function(node, attributeName) {
                     case 'above': 
                         var cr = api.getParentElement(this.map[this.idx.row][this.idx.col].el, { nodeName: ["TR"] });
                         if (cr) {
-                            cr.parentNode.insertBefore(cr, newRow);
+                            cr.parentNode.insertBefore(newRow, cr);
                         }
                     break;
                 }
@@ -6639,15 +6662,15 @@ wysihtml5.dom.getAttribute = function(node, attributeName) {
                 // adds a cell before or after current cell element 
                 switch (where) {
                     case "before":
-                        cell.el.parentNode.insertBefore(cell.el, createCells(cType, 1));
+                        cell.el.parentNode.insertBefore(this.createCells(cType, 1), cell.el);
                     break;
                     case "after":
-                        inserAfter(cell.el, createCells(cType, 1));
+                        insertAfter(cell.el, this.createCells(cType, 1));
                     break;
                 }
                 
                 // handles if cell has rowspan 
-                if (c.isRowspan) {
+                if (cell.isRowspan) {
                     this.handleCellAddWithRowspan(cell, ridx+1, where);
                 }
                 
@@ -6662,8 +6685,8 @@ wysihtml5.dom.getAttribute = function(node, attributeName) {
             
             this.setTableMap();
             this.idx = this.getMapIndex(this.cell);
-            if (where == "after" && api.getAttribute(this.cell.el, 'colspan')) {
-              this.idx.col = this.idx.col + parseInt(api.getAttribute(this.cell.el, 'colspan'), 10) - 1;
+            if (where == "after" && api.getAttribute(this.cell, 'colspan')) {
+              this.idx.col = this.idx.col + parseInt(api.getAttribute(this.cell, 'colspan'), 10) - 1;
             }
                 
             if (this.idx !== false) {
@@ -6672,7 +6695,7 @@ wysihtml5.dom.getAttribute = function(node, attributeName) {
                     if (row[this.idx.col]) {
                         modCell = row[this.idx.col];
                         if (!modCell.modified) {
-                            this.setAsModified(modCell);
+                            this.setCellAsModified(modCell);
                             this.addColCell(modCell, ridx , where);
                         }
                     }
@@ -6681,7 +6704,7 @@ wysihtml5.dom.getAttribute = function(node, attributeName) {
         },
         
         handleCellAddWithRowspan: function (cell, ridx, where) {
-            var addRowsNr = parseInt(api.getAttribute(this.cell.el, 'rowspan'), 10) - 1,
+            var addRowsNr = parseInt(api.getAttribute(this.cell, 'rowspan'), 10) - 1,
                 crow = api.getParentElement(cell.el, { nodeName: ["TR"] }),
                 cType = cell.el.tagName.toLowerCase(),
                 cidx, temp_r_cells,
@@ -6699,7 +6722,7 @@ wysihtml5.dom.getAttribute = function(node, attributeName) {
                                 if (cidx > 0 && this.map[ridx + i][this.idx.col].el != temp_r_cells[cidx] && cidx == temp_r_cells.length - 1) {
                                      insertAfter(temp_r_cells[cidx], this.createCells(cType, 1));
                                 } else {
-                                    temp_r_cells[cidx].parentNode.insertBefore(temp_r_cells[cidx], this.createCells(cType, 1));
+                                    temp_r_cells[cidx].parentNode.insertBefore(this.createCells(cType, 1), temp_r_cells[cidx]);
                                 }
                                     
                             break;
@@ -6708,7 +6731,7 @@ wysihtml5.dom.getAttribute = function(node, attributeName) {
                             break;
                         }
                     } else {
-                        crow.insertBefore(crow.firstChild, this.createCells(cType, 1));
+                        crow.insertBefore(this.createCells(cType, 1), crow.firstChild);
                     }
                 } else {
                     nrow = doc.createElement('tr');
@@ -6726,12 +6749,12 @@ wysihtml5.dom.getAttribute = function(node, attributeName) {
         },
         
         addCells: function(cell, where) {
-            var c = new TableModifyerByCell(cell, options);
+            var c = new TableModifyerByCell(cell);
             c.add(where);
         },
         
         removeCells: function(cell, what) {
-            var c = new TableModifyerByCell(cell, options);
+            var c = new TableModifyerByCell(cell);
             c.remove(what);
         },
         
@@ -6741,9 +6764,14 @@ wysihtml5.dom.getAttribute = function(node, attributeName) {
         },
         
         unmergeCell: function(cell) {
-            var c = new TableModifyerByCell(cell, options);
+            var c = new TableModifyerByCell(cell);
             c.unmerge();
-        }
+        },
+        
+        orderSelectionEnds: function(cell, cell2) {
+            var c = new TableModifyerByCell(cell);
+            return c.orderSelectionEnds(cell2);
+        },
     };
     
     
@@ -6874,7 +6902,8 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       select = {
           table: null,
           start: null,
-          end: null
+          end: null,
+          select: selectCells
       },
       editable = null,
       selection_class = "wysiwyg-tmp-selected-cell",
@@ -6900,6 +6929,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
   
   function handleSelectionMousedown (target) {
     select.start = target;
+    select.end = target;
     select.table = dom.getParentElement(select.start, { nodeName: ["TABLE"] });
     
     if (select.table) {
@@ -6949,6 +6979,11 @@ wysihtml5.quirks.ensureProperClearing = (function() {
     upHandler.stop();
     editor.fire("table_tools", "show");
     setTimeout(function() {
+      bindSideclick();
+    },0);
+  }
+  
+  function bindSideclick () {
       var sideClickHandler = dom.observe(editable.ownerDocument, "click", function(event) {
         sideClickHandler.stop();
         if (dom.getParentElement(event.target, { nodeName: ["TABLE"] }) != select.table) {
@@ -6959,7 +6994,16 @@ wysihtml5.quirks.ensureProperClearing = (function() {
             editor.fire("table_tools", "hide");
         }
       });
-    },0);
+  }
+  
+  function selectCells (start, end) {
+      select.start = start;
+      select.end = end;
+      select.table = dom.getParentElement(select.start, { nodeName: ["TABLE"] });
+      selectedCells = dom.table.getCellsBetween(select.start, select.end);
+      addSelections(selectedCells);
+      bindSideclick();
+      editor.fire("table_tools", "show");
   }
   
   return init;
@@ -8778,13 +8822,52 @@ wysihtml5.commands.redo = {
   }
 };wysihtml5.commands.mergeTableCells = {
   exec: function(composer, command) {
-    if (composer.tableSelection && composer.tableSelection.start && composer.tableSelection.end) {
-        wysihtml5.dom.table.mergeCellsBetween(composer.tableSelection.start, composer.tableSelection.end);
-    }
+      if (composer.tableSelection && composer.tableSelection.start && composer.tableSelection.end) {
+          if (this.state(composer, command)) {
+              wysihtml5.dom.table.unmergeCell(composer.tableSelection.start);
+          } else {
+              wysihtml5.dom.table.mergeCellsBetween(composer.tableSelection.start, composer.tableSelection.end);
+          }
+      }
   },
 
   state: function(composer, command) {
-    return false;
+      if (composer.tableSelection) {
+          var start = composer.tableSelection.start,
+              end = composer.tableSelection.end;
+          if (start && end && start == end &&
+              ((
+                  wysihtml5.dom.getAttribute(start, "colspan") &&
+                  parseInt(wysihtml5.dom.getAttribute(start, "colspan"), 10) > 1
+              ) || (
+                  wysihtml5.dom.getAttribute(start, "rowspan") &&
+                  parseInt(wysihtml5.dom.getAttribute(start, "rowspan"), 10) > 1
+              ))
+          ) {
+              return [start];
+          }
+      }
+      return false;
+  }
+};wysihtml5.commands.addTableCells = {
+  exec: function(composer, command, value) {
+      if (composer.tableSelection && composer.tableSelection.start && composer.tableSelection.end) {
+          
+          // switches start and end if start is bigger than end (reverse selection)
+          var tableSelect = wysihtml5.dom.table.orderSelectionEnds(composer.tableSelection.start, composer.tableSelection.end);
+          if (value == "before" || value == "above") {
+              wysihtml5.dom.table.addCells(tableSelect.start, value);
+          } else if (value == "after" || value == "below") {
+              wysihtml5.dom.table.addCells(tableSelect.end, value);
+          }
+          setTimeout(function() {
+              composer.tableSelection.select(tableSelect.start, tableSelect.end);
+          },0);
+      }
+  },
+
+  state: function(composer, command) {
+      return false;
   }
 };/**
  * Undo Manager for wysihtml5
