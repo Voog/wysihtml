@@ -125,6 +125,66 @@ test("addCells (before/after)", function() {
     wysihtml5.dom.table.addCells(cellLast, "after");
     equal(this.getTable().querySelectorAll('td').length, cells.length +  (4 * nr_rows), "One column added successfully to table location after (on last to second column)");
     equal(this.getTable().querySelectorAll('td')[this.getTable().querySelectorAll('td').length - 3], cellLast, "Row added correctly after cell and original DOM object is intact");
+});
+
+test("merge/unmerge", function() {
+    var cells = this.getTable().querySelectorAll('td'),
+        nr_cells = cells.length,
+        txt1 = document.createTextNode('Cell'),
+        txt2 = document.createTextNode('texts'),
+        txt3 = document.createTextNode('merged');
     
+    cells[0].appendChild(txt1);
+    cells[1].appendChild(txt2);
+    cells[5].appendChild(txt3);
+    
+    // merge
+    wysihtml5.dom.table.mergeCellsBetween(cells[0], cells[9]);
+    equal(this.getTable().querySelectorAll('td').length, nr_cells - 5, "Top left corner (6 cells) correctly merged");
+    equal(this.getTable().querySelectorAll('td')[0].getAttribute('colspan'), 2, "Colspan attribute added correctly");
+    equal(this.getTable().querySelectorAll('td')[0].getAttribute('rowspan'), 3, "Rowspan attribute added correctly");
+    
+    equal(this.getTable().querySelectorAll('td')[0].innerHTML.replace(/\s\s+/g, ' ').replace(/\s+$/g, ''), "Cell texts merged" , "cell texts correctly merged");
+    
+    var cells_m1 = this.getTable().querySelectorAll('td');
+    
+    wysihtml5.dom.table.mergeCellsBetween(cells_m1[cells_m1.length - 6], cells_m1[cells_m1.length - 1]);
+    equal(this.getTable().querySelectorAll('td').length, nr_cells - 8, "Bottom right corner (4 cells) correctly merged");
+    
+    var cells_m2 = this.getTable().querySelectorAll('td');
+    equal(cells_m2[cells_m2.length -3].getAttribute('colspan'), 2, "Colspan attribute added correctly (Bottom right corner)");
+    equal(cells_m2[cells_m2.length -3].getAttribute('rowspan'), 2, "Rowspan attribute added correctly (Bottom right corner)");
+    
+    var nr_cells_m2 = cells_m2.length;
+    
+    // should not merge
+    wysihtml5.dom.table.mergeCellsBetween(cells_m2[0], cells_m2[cells_m2.length - 1]);
+    equal(this.getTable().querySelectorAll('td').length, nr_cells_m2, "Correctly refuses to merge allready merged cells");
+    
+    // unmerge
+    var umerge_cell1 = cells_m2[cells_m2.length -3];
+    
+    equal(umerge_cell1.getAttribute('colspan'), 2, "Colspan attribute is set before unmerge (Bottom right corner)");
+    equal(umerge_cell1.getAttribute('rowspan'), 2, "Rowspan attribute is set before unmerge (Bottom right corner)");
+    
+    wysihtml5.dom.table.unmergeCell(umerge_cell1);
+    equal(this.getTable().querySelectorAll('td').length, nr_cells - 5, "Bottom right corner (4 cells) correctly unmerged");
+    
+    var cells_m3 = this.getTable().querySelectorAll('td');
+    equal(cells_m3[cells_m3.length - 6], umerge_cell1, "Unmerged cell is intact and not removed from DOM");
+    equal(umerge_cell1.getAttribute('colspan'), null, "Colspan attribute removed correctly (Bottom right corner)");
+    equal(umerge_cell1.getAttribute('rowspan'), null, "Rowspan attribute removed correctly (Bottom right corner)");
+    
+    equal(cells_m3[0].getAttribute('colspan') , 2, "Colspan of top right corner is untouched");
+    equal(cells_m3[0].getAttribute('rowspan'), 3, "Rowspan of top right corner is untouched");
+    
+    wysihtml5.dom.table.unmergeCell(cells_m3[0]);
+    
+    equal(this.getTable().querySelectorAll('td').length, nr_cells, "Top right unmerged correctly, table is back at start layout");
+    
+    equal(this.getTable().querySelectorAll('td')[0].getAttribute('colspan') , null, "Colspan removed (Top Left)");
+    equal(this.getTable().querySelectorAll('td')[0].getAttribute('rowspan'), null, "Rowspan removed (Top Left)");
+    
+    equal(this.getTable().querySelectorAll('td')[0].innerHTML.replace(/\s\s+/g, ' ').replace(/\s+$/g, ''), "Cell texts merged" , "cell texts correctly in first cell");
 });
 
