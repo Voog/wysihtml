@@ -63,8 +63,8 @@ test("getCellsBetween", function() {
      equal(between.length, 2*4, "List is 8 cells long if selections is moved from second cell to before last (first and last column not selected)");
      
      var notInList = true;
-     for (var i = 0, imax = between.length; i < imax; i++) {
-         if (between[i] == secondRowFirstCell || between[i] == cellFirst || between[i] == cellLast) {
+     for (var j = 0, jmax = between.length; j < jmax; j++) {
+         if (between[j] == secondRowFirstCell || between[j] == cellFirst || between[j] == cellLast) {
              notInList = false;
          } 
      }
@@ -127,6 +127,8 @@ test("addCells (before/after)", function() {
     equal(this.getTable().querySelectorAll('td')[this.getTable().querySelectorAll('td').length - 3], cellLast, "Row added correctly after cell and original DOM object is intact");
 });
 
+
+
 test("merge/unmerge", function() {
     var cells = this.getTable().querySelectorAll('td'),
         nr_cells = cells.length,
@@ -187,4 +189,48 @@ test("merge/unmerge", function() {
     
     equal(this.getTable().querySelectorAll('td')[0].innerHTML.replace(/\s\s+/g, ' ').replace(/\s+$/g, ''), "Cell texts merged" , "cell texts correctly in first cell");
 });
+
+test("removeCells", function() {
+    var cells = this.getTable().querySelectorAll('td'),
+        nr_rows = this.getTable().querySelectorAll('tr').length,
+        nr_cols = this.getTable().querySelectorAll('tr')[0].querySelectorAll('td').length;
+    
+    wysihtml5.dom.table.removeCells(cells[1], "column");
+    equal(this.getTable().querySelectorAll('tr')[0].querySelectorAll('td').length, nr_cols - 1, "One column removed successfully");
+    equal(this.getTable().querySelectorAll('tr').length, nr_rows, "Rows untouched");
+    
+    wysihtml5.dom.table.removeCells(this.getTable().querySelectorAll('td')[4], "row");
+    
+    equal(this.getTable().querySelectorAll('tr')[0].querySelectorAll('td').length, nr_cols - 1, "Columns untouched");
+    equal(this.getTable().querySelectorAll('tr').length, nr_rows -1, "One row removed successfully");
+    
+    var cells1 = this.getTable().querySelectorAll('td');
+    
+    wysihtml5.dom.table.mergeCellsBetween(cells1[0], cells1[4]);
+    equal(this.getTable().querySelectorAll('td')[0].getAttribute('rowspan'), 2, "One cell merged for testing, rowspan 2");
+    equal(this.getTable().querySelectorAll('td')[0].getAttribute('colspan'), 2, "One cell merged for testing, colspan 2");
+    
+    wysihtml5.dom.table.removeCells(this.getTable().querySelectorAll('tr')[1].querySelectorAll('td')[0], "row");
+    equal(this.getTable().querySelectorAll('td')[0].getAttribute('rowspan'), null, "Meged cell rowspan removed correlctly");
+    equal(this.getTable().querySelectorAll('td')[0].getAttribute('colspan'), 2, "Colspan remained correct");
+    
+    
+    equal(this.getTable().querySelectorAll('tr')[1].querySelectorAll('td').length, nr_cols - 1, "Nr of columns correct");
+    equal(this.getTable().querySelectorAll('tr').length, nr_rows -2, "Nr of rows correct");
+    
+    wysihtml5.dom.table.removeCells(this.getTable().querySelectorAll('td')[3], "column");
+    
+    equal(this.getTable().querySelectorAll('tr')[0].querySelectorAll('td').length, nr_cols - 2, "Nr of columns correct afrer merged column removed");
+    
+    equal(this.getTable().querySelectorAll('td')[0].getAttribute('colspan'), null, "Meged cell colspan removed correlctly");
+    
+    wysihtml5.dom.table.removeCells(this.getTable().querySelectorAll('td')[0], "column");
+    wysihtml5.dom.table.removeCells(this.getTable().querySelectorAll('td')[0], "row");
+    wysihtml5.dom.table.removeCells(this.getTable().querySelectorAll('td')[0], "column");
+
+    equal(this.getTable().parentNode, null, "Table removec from dom when last cell removed");
+    
+});
+
+
 

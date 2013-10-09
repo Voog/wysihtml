@@ -537,7 +537,11 @@
                             row.insertBefore(cell.el, row.firstChild);
                         }
                     }
-                    cell.el.setAttribute('rowspan', parseInt(api.getAttribute(cell.el, 'rowspan'), 10) - 1);
+                    if (parseInt(api.getAttribute(cell.el, 'rowspan'), 10) > 2) {
+                        cell.el.setAttribute('rowspan', parseInt(api.getAttribute(cell.el, 'rowspan'), 10) - 1);
+                    } else {
+                        cell.el.removeAttribute('rowspan');
+                    }
                 }
             }
         },
@@ -553,7 +557,11 @@
                    removeElement(cell.el);
                }
             } else {
-                cell.el.setAttribute('rowspan', parseInt(api.getAttribute(cell.el, 'rowspan'), 10) - 1);
+                if (parseInt(api.getAttribute(cell.el, 'rowspan'), 10) > 2) {
+                    cell.el.setAttribute('rowspan', parseInt(api.getAttribute(cell.el, 'rowspan'), 10) - 1);
+                } else {
+                    cell.el.removeAttribute('rowspan');
+                }
             }
         },
         
@@ -578,7 +586,11 @@
         
         removeColCell: function(cell) {
             if (cell.isColspan) {
-                cell.el.setAttribute('colspan', parseInt(api.getAttribute(cell.el, 'colspan'), 10) - 1);
+                if (parseInt(api.getAttribute(cell.el, 'colspan'), 10) > 2) {
+                    cell.el.setAttribute('colspan', parseInt(api.getAttribute(cell.el, 'colspan'), 10) - 1);
+                } else {
+                    cell.el.removeAttribute('colspan');
+                }
             } else if (cell.isReal) {
                 removeElement(cell.el);
             }
