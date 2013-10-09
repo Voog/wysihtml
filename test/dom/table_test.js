@@ -228,9 +228,27 @@ test("removeCells", function() {
     wysihtml5.dom.table.removeCells(this.getTable().querySelectorAll('td')[0], "row");
     wysihtml5.dom.table.removeCells(this.getTable().querySelectorAll('td')[0], "column");
 
-    equal(this.getTable().parentNode, null, "Table removec from dom when last cell removed");
+    equal(this.getTable().parentNode, null, "Table remove table from dom when last cell removed");
     
 });
 
+test("orderSelectionEnds", function() {
+    var cells = this.getTable().querySelectorAll('td'),
+        cellFirst = cells[0],
+        cellLast = cells[cells.length - 1];
+        
+    var ends = wysihtml5.dom.table.orderSelectionEnds(cellLast, cellFirst);
+    
+    ok(ends.end == cellLast && ends.start == cellFirst, "Given cells ordered correctly");
+});
 
+test("indexOf/findCell", function() {
+    wysihtml5.dom.table.mergeCellsBetween(this.getTable().querySelectorAll('td')[1], this.getTable().querySelectorAll('td')[6]);
+    var cell = this.getTable().querySelectorAll('td')[4],
+        idx = wysihtml5.dom.table.indexOf(cell);
+        
+    ok(idx.row == 1 && idx.col == 3, "Index gets position correctly in table with merged cell");
+    
+    equal(wysihtml5.dom.table.findCell(this.getTable(), idx), cell, "Cell element got correctly by index");
+});
 
