@@ -79,7 +79,7 @@ wysihtml5.quirks.tableCellsSelection = (function() {
   function handleMouseUp (event) {
     moveHandler.stop();
     upHandler.stop();
-    editor.fire("table_tools", "show");
+    editor.fire("tableselect").fire("tableselect:composer");
     setTimeout(function() {
       bindSideclick();
     },0);
@@ -93,7 +93,7 @@ wysihtml5.quirks.tableCellsSelection = (function() {
             select.table = null;
             select.start = null;
             select.end = null;
-            editor.fire("table_tools", "hide");
+            editor.fire("tableunselect").fire("tableunselect:composer");
         }
       });
   }
@@ -105,7 +105,7 @@ wysihtml5.quirks.tableCellsSelection = (function() {
       selectedCells = dom.table.getCellsBetween(select.start, select.end);
       addSelections(selectedCells);
       bindSideclick();
-      editor.fire("table_tools", "show");
+      editor.fire("tableselect").fire("tableselect:composer");
   }
   
   return init;

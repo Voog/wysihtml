@@ -3893,7 +3893,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
   function handleMouseUp (event) {
     moveHandler.stop();
     upHandler.stop();
-    editor.fire("table_tools", "show");
+    editor.fire("tableselect").fire("tableselect:composer");
     setTimeout(function() {
       bindSideclick();
     },0);
@@ -3907,7 +3907,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
             select.table = null;
             select.start = null;
             select.end = null;
-            editor.fire("table_tools", "hide");
+            editor.fire("tableunselect").fire("tableunselect:composer");
         }
       });
   }
@@ -3919,7 +3919,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       selectedCells = dom.table.getCellsBetween(select.start, select.end);
       addSelections(selectedCells);
       bindSideclick();
-      editor.fire("table_tools", "show");
+      editor.fire("tableselect").fire("tableselect:composer");
   }
   
   return init;
@@ -7637,15 +7637,11 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
       });
       
       if (this.editor.config.handleTables) {
-          editor.on("table_tools", function(visibility) {
-              switch (visibility) {
-                  case "show":
-                      that.container.querySelectorAll('[data-wysihtml5-hiddentools="table"]')[0].style.display = "";
-                  break;
-                  case "hide": 
-                       that.container.querySelectorAll('[data-wysihtml5-hiddentools="table"]')[0].style.display = "none";
-                  break;
-              }
+          editor.on("tableselect:composer", function() {
+              that.container.querySelectorAll('[data-wysihtml5-hiddentools="table"]')[0].style.display = "";
+          });
+          editor.on("tableunselect:composer", function() {
+              that.container.querySelectorAll('[data-wysihtml5-hiddentools="table"]')[0].style.display = "none";
           });
       }
 
