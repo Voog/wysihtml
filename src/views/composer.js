@@ -92,7 +92,7 @@
       this.base();
       
       var lastChild = this.element.lastChild;
-      if (setToEnd && lastChild) {
+      if (setToEnd && lastChild && this.selection) {
         if (lastChild.nodeName === "BR") {
           this.selection.setBefore(this.element.lastChild);
         } else {

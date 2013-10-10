@@ -39,6 +39,8 @@
     style:                true,
     // Id of the toolbar element, pass falsey value if you don't want any toolbar logic
     toolbar:              undef,
+    // Wether toolbar is displayed after init by script automatically.
+    // Can be set to false if toolobar is set to display only on editable area focus
     showToolbarAfterInit: true,
     // Whether urls, entered by the user should automatically become clickable-links
     autoLink:             true,
