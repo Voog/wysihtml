@@ -5790,13 +5790,13 @@ wysihtml5.views.View = Base.extend(
         var target = event.target;
         if (target.nodeName === "IMG") {
           that.selection.selectNode(target);
-          //event.preventDefault();
         }
       });
     }
     
     if (!browser.canSelectImagesInContentEditable()) {
         dom.observe(element, "drop", function(event) {
+            // TODO: if I knew how to get dropped elements list from event I could limit it to only IMG element case
             setTimeout(function() {
                 that.selection.getSelection().removeAllRanges();
             }, 0);
