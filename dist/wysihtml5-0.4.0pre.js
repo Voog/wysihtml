@@ -5790,9 +5790,17 @@ wysihtml5.views.View = Base.extend(
         var target = event.target;
         if (target.nodeName === "IMG") {
           that.selection.selectNode(target);
-          event.preventDefault();
+          //event.preventDefault();
         }
       });
+    }
+    
+    if (!browser.canSelectImagesInContentEditable()) {
+        dom.observe(element, "drop", function(event) {
+            setTimeout(function() {
+                that.selection.getSelection().removeAllRanges();
+            }, 0);
+        });
     }
     
     if (browser.hasHistoryIssue() && browser.supportsSelectionModify()) {
