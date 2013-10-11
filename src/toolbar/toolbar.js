@@ -77,8 +77,12 @@
           caretBookmark;
       
       if (dialogElement) {
-        dialog = new wysihtml5.toolbar.Dialog(link, dialogElement);
-
+        if (wysihtml5.toolbar["Dialog_" + command]) {
+            dialog = new wysihtml5.toolbar["Dialog_" + command](link, dialogElement);
+        } else {
+            dialog = new wysihtml5.toolbar.Dialog(link, dialogElement);
+        }
+        
         dialog.on("show", function() {
           caretBookmark = that.composer.selection.getBookmark();
 
@@ -142,6 +146,9 @@
             }
         }
       }
+      if (action == "showSource") {
+          editor.fire("showSource");
+      }
     },
 
     _observe: function() {
@@ -189,6 +196,15 @@
       editor.on("focus:composer", function() {
         that.bookmark = null;
       });
+      
+      if (this.editor.config.handleTables) {
+          editor.on("tableselect:composer", function() {
+              that.container.querySelectorAll('[data-wysihtml5-hiddentools="table"]')[0].style.display = "";
+          });
+          editor.on("tableunselect:composer", function() {
+              that.container.querySelectorAll('[data-wysihtml5-hiddentools="table"]')[0].style.display = "none";
+          });
+      }
 
       editor.on("change_view", function(currentView) {
         // Set timeout needed in order to let the blur event fire first

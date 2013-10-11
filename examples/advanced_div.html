@@ -70,6 +70,8 @@
     border: 1px solid #666;
   }
   
+  
+  
   a[data-wysihtml5-command-value="red"] {
     color: red;
   }
@@ -80,6 +82,11 @@
   
   a[data-wysihtml5-command-value="blue"] {
     color: blue;
+  }
+  
+  .wysihtml5-editor, .wysihtml5-editor table td {
+    outline: 1px dashed #abc;
+    
   }
   
   code {
@@ -120,6 +127,19 @@
     margin: 2px 2px 2px 0;
   }
   
+  div[data-wysihtml5-dialog="createTable"] {
+    position: absolute;
+    background: white;
+  }
+  
+  div[data-wysihtml5-dialog="createTable"] td {
+    width: 10px; height: 5px;
+    border: 1px solid #666;
+  }
+  
+  .wysihtml5-editor table td.wysiwyg-tmp-selected-cell {
+    outline: 2px solid green;
+  }
 </style>
 
 <h1>wysihtml5 - Advanced Editor Example</h1>
@@ -257,6 +277,28 @@ Teine:
     <div class="block">
       <a data-wysihtml5-action="showSource">HTML</a>
     </div>
+    
+    <div class="block">
+      <a data-wysihtml5-command="createTable">Table</a>
+      <div data-wysihtml5-dialog="createTable" style="display: none;">
+        Rows: <input type="text" data-wysihtml5-dialog-field="rows" /><br/>
+        Cols: <input type="text" data-wysihtml5-dialog-field="cols" /><br/>
+        <a data-wysihtml5-dialog-action="save">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel">Cancel</a>
+      </div>
+    </div>
+    <div class="block" data-wysihtml5-hiddentools="table" style="display: none;">
+      <a data-wysihtml5-command="mergeTableCells">Merge</a>
+      <a data-wysihtml5-command="addTableCells" data-wysihtml5-command-value="above">row-before</a>
+      <a data-wysihtml5-command="addTableCells" data-wysihtml5-command-value="below">row-after</a>
+      <a data-wysihtml5-command="addTableCells" data-wysihtml5-command-value="before">col-before</a>
+      <a data-wysihtml5-command="addTableCells" data-wysihtml5-command-value="after">col-after</a>
+      
+      <a data-wysihtml5-command="deleteTableCells" data-wysihtml5-command-value="row">delete row</a>
+      <a data-wysihtml5-command="deleteTableCells" data-wysihtml5-command-value="column">delete col</a>
+      
+    </div>
+    
+    
     <div data-wysihtml5-dialog="createLink" style="display: none;">
       <label>
         Link:
@@ -283,6 +325,18 @@ Teine:
   
   <div class="editable" data-placeholder="Enter text ...">
     <div><div><div>tekst</div></div></div>
+
+    <table>
+      <tr>
+        <td>1&nbsp;</td><td>2&nbsp;</td><td>3&nbsp;</td>
+      </tr>
+      <tr>
+        <td>4&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+      </tr>
+      <tr>
+        <td>7&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+      </tr>
+    </table>
     sdfgsdfg
   </div>
 </div>

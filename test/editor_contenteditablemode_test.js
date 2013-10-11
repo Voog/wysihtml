@@ -323,7 +323,6 @@ if (wysihtml5.browser.supported()) {
           editor.composer.selection.selectNode(document.body);
           equal(that.editableArea.innerHTML, "foobar", "Content was not bold before");
           editor.composer.commands.exec('bold');
-          console.log(wysihtml5.dom.getStyle("font-weight").from(that.editableArea.children[0]));
           ok(wysihtml5.dom.getStyle("font-weight").from(that.editableArea.children[0]) == 700 || wysihtml5.dom.getStyle("font-weight").from(that.editableArea.children[0]) == "bold", "First child has style bold");
           ok(wysihtml5.dom.getStyle("font-weight").from(that.editableArea) == 400 || wysihtml5.dom.getStyle("font-weight").from(that.editableArea) == "normal", "Editable element itself is not bold");
           start();

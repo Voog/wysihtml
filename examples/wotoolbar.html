@@ -120,6 +120,13 @@
     margin: 2px 2px 2px 0;
   }
   
+  .wysihtml5-editor table td, .wysihtml5-editor table th {
+      outline: 1px dotted #ddd;
+  }
+  .wysihtml5-editor table .wysiwyg-tmp-selected-cell {
+    outline: 1px solid green;
+  }
+  
 </style>
 
 <h1>wysihtml5 - Advanced Editor Example</h1>
@@ -127,8 +134,22 @@
 <div class="ewrapper">
   <div class="toolbar">
     <div class="block">
-      <a id="boldbtn">bold</a>
-      <a id="italicbtn">italic</a>
+      <a id="boldbtn" class="editor-btn">bold</a>
+      <a id="italicbtn" class="editor-btn">italic</a>
+      <span style="display:none" id="tableBtns">
+        &nbsp;
+        <a id="addRowAbove" class="editor-btn">+⋀</a>
+        <a id="addRowBelow" class="editor-btn">+⋁</a>
+        <a id="addRowBefore" class="editor-btn">+&lt;</a>
+        <a id="addRowAfter" class="editor-btn">+&gt;</a>
+        
+        &nbsp;
+        <a id="removeRow" class="editor-btn">-=</a>
+        <a id="removeCol" class="editor-btn">-||</a>
+        
+        &nbsp;
+        <a id="merge" class="editor-btn">[&nbsp;]</a>
+      </div>
     </div>
   </div><!-- toolbar -->
   
@@ -142,6 +163,18 @@
     Aenean pretium diam nunc, at imperdiet elit vehicula a. Mauris nec felis non sem condimentum adipiscing ut et lacus. Donec facilisis facilisis lacinia. Nam posuere at nulla ut malesuada. Fusce ultricies lectus eu iaculis molestie. Ut consequat id magna et placerat. Nulla sed ante lectus. Donec congue, velit in ultricies tempus, felis lectus tempus sem, non bibendum lorem mi vel lorem. Mauris a placerat dui, nec auctor erat.
 
     Suspendisse id mauris vel urna venenatis pharetra. Pellentesque luctus et nulla in vulputate. Donec id ligula id enim congue convallis id eu nibh. Phasellus a leo non dui porta sodales ac vel justo. Etiam sed dignissim ligula. Morbi consequat adipiscing risus vitae accumsan. Curabitur dignissim nec quam non blandit. Etiam venenatis, est a facilisis convallis, mauris nibh ultricies sapien, eget egestas neque eros sed libero. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Maecenas et velit sit amet quam pulvinar accumsan. Donec id sollicitudin dolor.
+    <table>
+      <tr>
+        <th>1&nbsp;</th><th>2&nbsp;</th><th>3&nbsp;</th>
+      </tr>
+      <tr>
+        <td>4&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+      </tr>
+      <tr>
+        <td>7&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+      </tr>
+    </table>
+  
   </div>
 </div>
 
@@ -183,23 +216,82 @@
       } else {
         $('#italicbtn').removeClass('active');
       }
+      if (composer.commands.state('mergeTableCells')) {
+        $('#merge').addClass('active');
+      } else {
+        $('#merge').removeClass('active');
+      }
+      
     }
     
-    $('#boldbtn').mousedown(function(event) {
+// Listen to events and update menu
+    editor.on("interaction", function() {
+      updateStates();
+    });
+    
+    editor.on("tableselect", function() {
+      $('#tableBtns').show();
+    });
+    
+    editor.on("tableunselect", function() {
+      $('#tableBtns').hide();
+    });
+    
+// Prevent buttons from deselecting selected text before action is performed
+    $(".editor-btn").mousedown(function(event){
+      event.preventDefault();
+    });
+    
+// commands binding
+    $('#boldbtn').click(function(event) {
       event.preventDefault();
       composer.commands.exec('bold');
       updateStates();
     });
     
-    $('#italicbtn').mousedown(function(event) {
+    $('#italicbtn').click(function(event) {
       event.preventDefault();
       composer.commands.exec('italic');
       updateStates();
     });
     
-    editor.on("interaction", function() {
-      updateStates();
+    //table
+    $('#addRowBelow').click(function(event) {
+      event.preventDefault();
+      composer.commands.exec("addTableCells", "below");
     });
+    
+    $('#addRowAbove').click(function(event) {
+      event.preventDefault();
+      composer.commands.exec("addTableCells", "above");
+    });
+    
+    $('#addRowBefore').click(function(event) {
+      event.preventDefault();
+      composer.commands.exec("addTableCells", "before");
+    });
+    
+    $('#addRowAfter').click(function(event) {
+      event.preventDefault();
+      composer.commands.exec("addTableCells", "after");
+    });
+    
+    $('#removeRow').click(function(event) {
+      event.preventDefault();
+      composer.commands.exec("deleteTableCells", "row");
+    });
+    
+    $('#removeCol').click(function(event) {
+      event.preventDefault();
+      composer.commands.exec("deleteTableCells", "column");
+    });
+    
+    $('#merge').click(function(event) {
+      event.preventDefault();
+      composer.commands.exec("mergeTableCells");
+    });
+    
+    
     
     
 </script>
