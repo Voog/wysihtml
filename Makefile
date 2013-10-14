@@ -41,11 +41,13 @@ JS_FILES = src/wysihtml5.js \
   src/dom/text_content.js \
   src/dom/get_attribute.js \
   src/dom/table.js \
+  src/dom/query.js \
   src/quirks/clean_pasted_html.js \
   src/quirks/ensure_proper_clearing.js \
   src/quirks/get_correct_inner_html.js \
   src/quirks/redraw.js \
   src/quirks/table_cells_selection.js\
+  src/quirks/handle_embeds.js\
   src/selection/selection.js \
   src/selection/html_applier.js \
   src/commands.js \

@@ -51,9 +51,14 @@
       }, 0);
     });
     
-
+    // Observe table cells for custom selection
     if (this.config.handleTables) {
         this.tableSelection = wysihtml5.quirks.tableCellsSelection(element, that.parent);
+    }
+    
+    // Observe embed objects and iframes for resize and drag drop functions
+    if (this.config.handleEmbeds) {
+        this.embedObjects = wysihtml5.quirks.handleEmbeds(element, that.parent);
     }
 
     // --------- Focus & blur logic ---------

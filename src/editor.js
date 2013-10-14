@@ -46,6 +46,8 @@
     autoLink:             true,
     // Includes table editing events and cell selection tracking 
     handleTables:         true,
+    // Includes objects, embeds and iframes resize and drag drop functions
+    handleEmbeds:         true,
     // Object which includes parser rules to apply when html gets inserted via copy & paste
     // See parser_rules/*.js for examples
     parserRules:          { tags: { br: {}, span: {}, div: {}, p: {} }, classes: {} },

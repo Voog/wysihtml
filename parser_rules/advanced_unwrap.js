@@ -157,7 +157,8 @@ var wysihtml5ParserRules = {
      *                            - src:            allows something like "/foobar.jpg", "http://google.com", ...
      *                            - href:           allows something like "mailto:bert@foo.com", "http://google.com", "/foobar.jpg"
      *                            - alt:            strips unwanted characters. if the attribute is not set, then it gets set (to ensure valid and compatible HTML)
-     *                            - numbers:  ensures that the attribute only contains numeric characters
+     *                            - numbers:        ensures that the attribute only contains numeric characters
+     *                            - all:            keeps the original attribute as is
      */
     "tags": {
         "tr": {
@@ -231,7 +232,13 @@ var wysihtml5ParserRules = {
             "unwrap": 1
         },
         "iframe": {
-            "remove": 1
+            //"remove": 1
+            "check_attributes": {
+                "frameborder": "numbers",
+                "height": "numbers",
+                "width": "numbers",
+                "src": "src"
+            }
         },
         "figcaption": {
             "unwrap": 1
@@ -317,7 +324,13 @@ var wysihtml5ParserRules = {
             }
         },
         "object": {
-            "remove": 1
+            "check_attributes": {
+                "type": "all",
+                "data": "all",
+                "width": "numbers",
+                "height": "numbers"
+            }
+            //"remove": 1
         },
         
         "div": {
@@ -525,7 +538,11 @@ var wysihtml5ParserRules = {
             }
         },
         "param": {
-            "remove": 1
+            "check_attributes": {
+                "name": "all",
+                "value": "all"
+            }
+            //"remove": 1
         },
         "th": {
             "check_attributes": {
