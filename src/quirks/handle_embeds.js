@@ -1,6 +1,10 @@
 wysihtml5.quirks.handleEmbeds = (function() {
+    
+    
   
     var dom = wysihtml5.dom,
+        maskData = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==",
+        mask = null,
         editable = null,
         editor = null,
         embeds = null,
@@ -14,7 +18,7 @@ wysihtml5.quirks.handleEmbeds = (function() {
             allEmbeds =         wysihtml5.lang.array(dom.query(editable, 'embed')).without(ifameObjs),
             embeds =            wysihtml5.lang.array(allEmbeds).without(embedInObjects);
 
-            return [].concat(iframes, objects, embeds);
+        return [].concat(iframes, objects, embeds);
     };
 
     var observeEmbeds = function() {
@@ -40,17 +44,40 @@ wysihtml5.quirks.handleEmbeds = (function() {
 
     var handleMouseOver = function(event) {
         target = event.target;
-        //console.log(target.nodeName);
+        addMask(target);
     };
     
+    var addMask = function(element) { 
+        element.parentNode.insertBefore(mask, element);
+        mask.style.height = element.offsetHeight + 'px';
+        mask.style.width = element.offsetWidth + 'px';
+        mask.style.position = "absolute";
+    };
     
-
+    var removeMask = function() {
+        mask = mask.parentNode.removeChild(mask);
+    };
+    
+    var makeMask = function() {
+        mask = editable.ownerDocument.createElement('img');
+        mask.src = maskData;
+        mask.title = "";
+        
+        
+        dom.observe(mask, "mouseout", removeMask);
+        dom.observe(mask, "click", startResizeMode);
+    }
+    
+    var startResizeMode = function(event) {
+        
+    };
 
     var init = function (element, edit) {
         editable = element;
         editor = edit;
         embeds = getEmbeds();
         observeEmbeds();
+        makeMask();
         
         return {
             "refresh": refreshEmbeds
