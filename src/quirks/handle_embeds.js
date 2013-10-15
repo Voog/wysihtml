@@ -7,7 +7,9 @@ wysihtml5.quirks.handleEmbeds = (function() {
         editor = null,
         embeds = null,
         observers = [],
-        activeElement = null;
+        activeElement = null,
+        resizer = null,
+        sideclickHandler = null;
   
     var getEmbeds = function() {
         var iframes =           dom.query(editable, 'iframe'),
@@ -73,7 +75,23 @@ wysihtml5.quirks.handleEmbeds = (function() {
     
     var startResizeMode = function(event) {
         if (activeElement) {
-            wysihtml5.quirks.resize(activeElement, handleResize);
+            if (resizer) {
+                resizer.stop();
+            }
+            resizer = wysihtml5.quirks.resize(activeElement, handleResize);
+            setTimeout(function() {
+                sideclickHandler = dom.observe(editable.ownerDocument, "click", handleSideClick);
+            }, 0);
+        }
+    };
+    
+    var handleSideClick = function(event) {
+        var target = event.target;
+        if (!dom.hasClass(target, "wysihtml5-quirks-resize-handle") && target !== mask) {
+            resizer.stop();
+            resizer = null;
+            sideclickHandler.stop();
+            sideclickHandler = null;
         }
     };
     

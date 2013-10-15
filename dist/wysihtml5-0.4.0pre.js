@@ -4052,7 +4052,9 @@ wysihtml5.quirks.handleEmbeds = (function() {
         editor = null,
         embeds = null,
         observers = [],
-        activeElement = null;
+        activeElement = null,
+        resizer = null,
+        sideclickHandler = null;
   
     var getEmbeds = function() {
         var iframes =           dom.query(editable, 'iframe'),
@@ -4118,7 +4120,23 @@ wysihtml5.quirks.handleEmbeds = (function() {
     
     var startResizeMode = function(event) {
         if (activeElement) {
-            wysihtml5.quirks.resize(activeElement, handleResize);
+            if (resizer) {
+                resizer.stop();
+            }
+            resizer = wysihtml5.quirks.resize(activeElement, handleResize);
+            setTimeout(function() {
+                sideclickHandler = dom.observe(editable.ownerDocument, "click", handleSideClick);
+            }, 0);
+        }
+    };
+    
+    var handleSideClick = function(event) {
+        var target = event.target;
+        if (!dom.hasClass(target, "wysihtml5-quirks-resize-handle") && target !== mask) {
+            resizer.stop();
+            resizer = null;
+            sideclickHandler.stop();
+            sideclickHandler = null;
         }
     };
     
@@ -4155,7 +4173,6 @@ wysihtml5.quirks.resize = function(element, handleResize) {
   var start = function(event) {
       positionBoxes();
       addBoxesToDom();
-      
   };
   
   var handleResizeStart = function(event) {
@@ -4181,7 +4198,6 @@ wysihtml5.quirks.resize = function(element, handleResize) {
   };
   
   var unbindMoveEvents = function() {
-      console.log('a');
       for (var i = 0, imax = moveHandlers.length; i < imax; i++) {
           moveHandlers[i].stop();
       };
@@ -4241,7 +4257,6 @@ wysihtml5.quirks.resize = function(element, handleResize) {
   var removeBoxesFromDom = function() {
       for (var i = 0, maxi = resizeBoxes.length; i < maxi; i++) {
           resizeBoxes[i].el = resizeBoxes[i].el.parentNode.removeChild(resizeBoxes[i].el);
-          doc.appendChild(resizeBoxes[i].el);
       }
   };
   
@@ -4264,19 +4279,15 @@ wysihtml5.quirks.resize = function(element, handleResize) {
   };
   
   var unbindResize = function() {
-      
-  };
-  
-  var getSize = function() {
-      
+      unbindMoveEvents();
+      removeBoxesFromDom();
   };
   
   makeResizeBoxes();
   start();
       
   return {
-      "stop": unbindResize,
-      "getSize": getSize
+      "stop": unbindResize
   };
 };/**
  * Selection API

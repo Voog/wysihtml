@@ -11,7 +11,6 @@ wysihtml5.quirks.resize = function(element, handleResize) {
   var start = function(event) {
       positionBoxes();
       addBoxesToDom();
-      
   };
   
   var handleResizeStart = function(event) {
@@ -96,7 +95,6 @@ wysihtml5.quirks.resize = function(element, handleResize) {
   var removeBoxesFromDom = function() {
       for (var i = 0, maxi = resizeBoxes.length; i < maxi; i++) {
           resizeBoxes[i].el = resizeBoxes[i].el.parentNode.removeChild(resizeBoxes[i].el);
-          doc.appendChild(resizeBoxes[i].el);
       }
   };
   
@@ -119,18 +117,14 @@ wysihtml5.quirks.resize = function(element, handleResize) {
   };
   
   var unbindResize = function() {
-      
-  };
-  
-  var getSize = function() {
-      
+      unbindMoveEvents();
+      removeBoxesFromDom();
   };
   
   makeResizeBoxes();
   start();
       
   return {
-      "stop": unbindResize,
-      "getSize": getSize
+      "stop": unbindResize
   };
 };
