@@ -3716,6 +3716,88 @@ wysihtml5.dom.query = function(elements, query) {
         }
     }
     return ret; 
+};wysihtml5.dom.offset = function(element, options) {
+    
+    var getOffset = function() {
+        var doc = element.ownerDocument,
+            docElem = doc.documentElement,
+            win = doc.defaultView,
+        	box = element.getBoundingClientRect();
+
+    	return {
+    		top: box.top + win.pageYOffset - docElem.clientTop,
+    		left: box.left + win.pageXOffset - docElem.clientLeft
+    	};
+    };
+    
+    var setOffset = function() {
+    	var curPosition, curLeft, curCSSTop, curTop, curOffset, curCSSLeft, calculatePosition,
+            position = element.style.position || "static",
+    		props = {};
+
+    	if (position === "static" ) {
+    		elem.style.position = "relative";
+    	}
+
+    	curOffset = getOffset();
+    	curCSSTop = element.style.top;
+    	curCSSLeft = element.style.left;
+
+        // Need to be able to calculate position if either top or left is auto and position is either absolute or fixed
+    	calculatePosition = (position === "absolute" || position === "fixed") && (curCSSTop + curCSSLeft).indexOf("auto") > -1;
+    	if (calculatePosition) {
+    		curPosition = wysihtml5.dom.position(element);
+    		curTop = curPosition.top;
+    		curLeft = curPosition.left;
+    	} else {
+    		curTop = parseFloat(curCSSTop) || 0;
+    		curLeft = parseFloat(curCSSLeft) || 0;
+    	}
+        
+    	if ( options.top != null ) {
+    		props.top = (options.top - curOffset.top) + curTop;
+    	}
+    	if (options.left != null) {
+    		props.left = ( options.left - curOffset.left ) + curLeft;
+    	}
+
+    	element.style.left = (typeof props.left !== "undefined") ? props.left + 'px' : "auto";
+        element.style.top = (typeof props.top !== "undefined") ? props.top + 'px': "auto";
+    };
+    
+    return (options) ? setOffset() : getOffset(); 
+};wysihtml5.dom.position = function(element) {
+
+    var getPosition = function() {
+        var offsetParent, offset,
+        	parentOffset = { top: 0, left: 0 };
+
+        if (element.style.position === "fixed") {
+        	offset = element.getBoundingClientRect();
+        } else {
+        	offsetParent = offsetParent();
+        	offset = wysihtml5.dom.offset(element).get();
+        	if (offsetParent.nodeName.toLowerCase() !== "html") {
+        		parentOffset = wysihtml5.dom.offset(offsetParent).get();
+        	}
+        	parentOffset.top += parseFloat(offsetParent.style.borderTopWidth);
+        	parentOffset.left += parseFloat(offsetParent.style.borderLeftWidth);
+        }
+        return {
+            top: offset.top - parentOffset.top - parseFloat(element.style.marginTop),
+        	left: offset.left - parentOffset.left - parseFloat(element.style.marginLeft)
+        };
+    };
+    
+    var offsetParent = function() {
+    	var offsetParent = element.offsetParent || element.ownerDocument;
+		while (offsetParent && (offsetParent.nodeName.toLowerCase() !== "html"  && offsetParent.style.position === "static")) {
+			offsetParent = offsetParent.offsetParent;
+		}
+		return offsetParent || element.ownerDocument;
+    };
+    
+    return getPosition;
 };/**
  * Fix most common html formatting misbehaviors of browsers implementation when inserting
  * content via copy & paste contentEditable
@@ -3951,15 +4033,14 @@ wysihtml5.quirks.ensureProperClearing = (function() {
 
 wysihtml5.quirks.handleEmbeds = (function() {
     
-    
-  
     var dom = wysihtml5.dom,
         maskData = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==",
         mask = null,
         editable = null,
         editor = null,
         embeds = null,
-        observers = [];
+        observers = [],
+        activeElement = null;
   
     var getEmbeds = function() {
         var iframes =           dom.query(editable, 'iframe'),
@@ -4003,24 +4084,28 @@ wysihtml5.quirks.handleEmbeds = (function() {
         mask.style.height = element.offsetHeight + 'px';
         mask.style.width = element.offsetWidth + 'px';
         mask.style.position = "absolute";
+        activeElement = element;
     };
     
     var removeMask = function() {
         mask = mask.parentNode.removeChild(mask);
+        activeElement = null;
     };
     
     var makeMask = function() {
         mask = editable.ownerDocument.createElement('img');
         mask.src = maskData;
         mask.title = "";
-        
-        
+        mask.style.backgroundColor = "rgba(0,0,0,0.3)";
+        dom.addClass(mask, "wysihtml5-temp");
         dom.observe(mask, "mouseout", removeMask);
         dom.observe(mask, "click", startResizeMode);
     }
     
     var startResizeMode = function(event) {
-        
+        if (activeElement) {
+            wysihtml5.quirks.resize(activeElement);
+        }
     };
 
     var init = function (element, edit) {
@@ -4038,7 +4123,87 @@ wysihtml5.quirks.handleEmbeds = (function() {
     return init;
 })();
 
-/**
+wysihtml5.quirks.resize = function(element) {
+  
+  var dom = wysihtml5.dom,
+      doc = element.ownerDocument,
+      body = doc.body,
+      startH = null,
+      startW = null,
+      startObserver = null,
+      resizeBoxes = []; 
+  
+  var start = function(event) {
+      positionBoxes();
+      addBoxesToDom();
+      
+  };
+  
+  var makeResizeBoxes = function () {
+      var el, handler;
+          
+      for (var i = 0; i < 4; i++) {
+          el = doc.createElement('div');
+          el.style.position = "absolute";
+          el.style.zIndex = 100;
+          dom.addClass(el, "wysihtml5-quirks-resize-handle");
+          handler = dom.observe(el, 'mousedown', start);
+          resizeBoxes.push({
+              "el": el,
+              "handler": handler
+          });
+      }
+  };
+  
+  var addBoxesToDom = function() {
+      for (var i = 0, maxi = resizeBoxes.length; i < maxi; i++) {
+          body.appendChild(resizeBoxes[i].el);
+      }
+  };
+  
+  var removeBoxesFromDom = function() {
+      for (var i = 0, maxi = resizeBoxes.length; i < maxi; i++) {
+          resizeBoxes[i].el = resizeBoxes[i].el.parentNode.removeChild(resizeBoxes[i].el);
+          doc.appendChild(resizeBoxes[i].el);
+      }
+  };
+  
+  var positionBoxes = function() {
+      var offset = dom.offset(element),
+          width = element.offsetWidth,
+          height = element.offsetHeight;
+          
+          console.log(resizeBoxes);
+          
+      resizeBoxes[0].el.style.top = offset.top + 'px';
+      resizeBoxes[0].el.style.left = offset.left + 'px';
+      
+      resizeBoxes[1].el.style.top = offset.top + 'px';
+      resizeBoxes[1].el.style.left = offset.left + width + 'px';
+      
+      resizeBoxes[2].el.style.top = offset.top + height + 'px';
+      resizeBoxes[2].el.style.left = offset.left + width + 'px';
+      
+      resizeBoxes[3].el.style.top = offset.top + height + 'px';
+      resizeBoxes[3].el.style.left = offset.left + 'px';
+  };
+  
+  var unbindResize = function() {
+      
+  };
+  
+  var getSize = function() {
+      
+  };
+  
+  makeResizeBoxes();
+  start();
+      
+  return {
+      "stop": unbindResize,
+      "getSize": getSize
+  };
+};/**
  * Selection API
  *
  * @example
@@ -6998,7 +7163,7 @@ wysihtml5.views.View = Base.extend(
     if (!browser.canSelectImagesInContentEditable()) {
       dom.observe(element, "mousedown", function(event) {
         var target = event.target;
-        if (target.nodeName === "IMG") {
+        if (target.nodeName === "IMG" && !dom.hasClass(target, 'wysihtml5-temp')) {
           that.selection.selectNode(target);
         }
       });

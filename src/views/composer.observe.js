@@ -104,7 +104,7 @@
     if (!browser.canSelectImagesInContentEditable()) {
       dom.observe(element, "mousedown", function(event) {
         var target = event.target;
-        if (target.nodeName === "IMG") {
+        if (target.nodeName === "IMG" && !dom.hasClass(target, 'wysihtml5-temp')) {
           that.selection.selectNode(target);
         }
       });

@@ -1,14 +1,13 @@
 wysihtml5.quirks.handleEmbeds = (function() {
     
-    
-  
     var dom = wysihtml5.dom,
         maskData = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==",
         mask = null,
         editable = null,
         editor = null,
         embeds = null,
-        observers = [];
+        observers = [],
+        activeElement = null;
   
     var getEmbeds = function() {
         var iframes =           dom.query(editable, 'iframe'),
@@ -52,24 +51,28 @@ wysihtml5.quirks.handleEmbeds = (function() {
         mask.style.height = element.offsetHeight + 'px';
         mask.style.width = element.offsetWidth + 'px';
         mask.style.position = "absolute";
+        activeElement = element;
     };
     
     var removeMask = function() {
         mask = mask.parentNode.removeChild(mask);
+        activeElement = null;
     };
     
     var makeMask = function() {
         mask = editable.ownerDocument.createElement('img');
         mask.src = maskData;
         mask.title = "";
-        
-        
+        mask.style.backgroundColor = "rgba(0,0,0,0.3)";
+        dom.addClass(mask, "wysihtml5-temp");
         dom.observe(mask, "mouseout", removeMask);
         dom.observe(mask, "click", startResizeMode);
     }
     
     var startResizeMode = function(event) {
-        
+        if (activeElement) {
+            wysihtml5.quirks.resize(activeElement);
+        }
     };
 
     var init = function (element, edit) {
