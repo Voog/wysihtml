@@ -55,8 +55,10 @@ wysihtml5.quirks.handleEmbeds = (function() {
     };
     
     var removeMask = function() {
-        mask = mask.parentNode.removeChild(mask);
-        activeElement = null;
+        if (mask.parentNode) {
+            mask = mask.parentNode.removeChild(mask);
+            activeElement = null;
+        }
     };
     
     var makeMask = function() {
@@ -71,8 +73,13 @@ wysihtml5.quirks.handleEmbeds = (function() {
     
     var startResizeMode = function(event) {
         if (activeElement) {
-            wysihtml5.quirks.resize(activeElement);
+            wysihtml5.quirks.resize(activeElement, handleResize);
         }
+    };
+    
+    var handleResize = function (w, h) {
+        mask.style.height = h + 'px';
+        mask.style.width = w + 'px';
     };
 
     var init = function (element, edit) {

@@ -1,12 +1,12 @@
-wysihtml5.quirks.resize = function(element) {
+wysihtml5.quirks.resize = function(element, handleResize) {
   
   var dom = wysihtml5.dom,
       doc = element.ownerDocument,
       body = doc.body,
-      startH = null,
-      startW = null,
-      startObserver = null,
-      resizeBoxes = []; 
+      resizeBoxes = [],
+      directions = [1,1],
+      moveHandlers = [],
+      startObserver, startX, startY, startW, startH; 
   
   var start = function(event) {
       positionBoxes();
@@ -14,6 +14,62 @@ wysihtml5.quirks.resize = function(element) {
       
   };
   
+  var handleResizeStart = function(event) {
+      var el = event.target,
+          i = parseInt(el.getAttribute('data-resizer-idx'), 10);
+          
+       startX = event.clientX;
+       startY = event.clientY;
+       startW = element.offsetWidth;
+       startH = element.offsetHeight;
+       
+       directions = [
+           (i == 0 || i == 3 ) ? -1 : 1,
+           (i < 2) ? -1 : 1
+       ];
+       
+       bindMoveEvents();
+  };
+  
+  var bindMoveEvents = function () {
+      moveHandlers.push(dom.observe(doc, 'mousemove', handleMouseMove));
+      moveHandlers.push(dom.observe(doc, 'mouseup', handleMouseUp));
+  };
+  
+  var unbindMoveEvents = function() {
+      for (var i = 0, imax = moveHandlers.length; i < imax; i++) {
+          moveHandlers[i].stop();
+      };
+      moveHandlers = [];
+  };
+  
+  var handleMouseMove = function(event) {
+      var dX = (event.clientX - startX) * directions[0],
+          dY = (event.clientY - startY) * directions[1],
+          width = startW + dX,
+          height = startH + dY;
+          
+      if (width < 0) {
+          width = 0;
+      }
+      
+      if (height < 0) {
+          height = 0;
+      }
+      
+      element.style.width = width + 'px';
+      element.style.height = height + 'px';
+      
+      positionBoxes();
+      if (handleResize) {
+          handleResize(width, height);
+      }
+  };
+  
+  var handleMouseUp = function(event) {
+      unbindMoveEvents();
+  };
+   
   var makeResizeBoxes = function () {
       var el, handler;
           
@@ -21,8 +77,9 @@ wysihtml5.quirks.resize = function(element) {
           el = doc.createElement('div');
           el.style.position = "absolute";
           el.style.zIndex = 100;
+          el.setAttribute('data-resizer-idx', i);
           dom.addClass(el, "wysihtml5-quirks-resize-handle");
-          handler = dom.observe(el, 'mousedown', start);
+          handler = dom.observe(el, 'mousedown', handleResizeStart);
           resizeBoxes.push({
               "el": el,
               "handler": handler

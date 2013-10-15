@@ -635,14 +635,26 @@ wysihtml5.browser = (function() {
      *    // => true
      */
     contains: function(needle) {
-      if (arr.indexOf) {
-        return arr.indexOf(needle) !== -1;
-      } else {
-        for (var i=0, length=arr.length; i<length; i++) {
-          if (arr[i] === needle) { return true; }
+        return wysihtml5.lang.array(arr).indexOf(needle) !== -1;
+    },
+    
+    /**
+     * Check whether a given object exists in an array and return index
+     * If no elelemt found returns -1
+     *
+     * @example
+     *    wysihtml5.lang.array([1, 2]).indexOf(2);
+     *    // => 1
+     */
+    indexOf: function(needle) {
+        if (arr.indexOf) {
+          return arr.indexOf(needle);
+        } else {
+          for (var i=0, length=arr.length; i<length; i++) {
+            if (arr[i] === needle) { return i; }
+          }
+          return -1;
         }
-        return false;
-      }
     },
     
     /**
@@ -4088,8 +4100,10 @@ wysihtml5.quirks.handleEmbeds = (function() {
     };
     
     var removeMask = function() {
-        mask = mask.parentNode.removeChild(mask);
-        activeElement = null;
+        if (mask.parentNode) {
+            mask = mask.parentNode.removeChild(mask);
+            activeElement = null;
+        }
     };
     
     var makeMask = function() {
@@ -4104,8 +4118,13 @@ wysihtml5.quirks.handleEmbeds = (function() {
     
     var startResizeMode = function(event) {
         if (activeElement) {
-            wysihtml5.quirks.resize(activeElement);
+            wysihtml5.quirks.resize(activeElement, handleResize);
         }
+    };
+    
+    var handleResize = function (w, h) {
+        mask.style.height = h + 'px';
+        mask.style.width = w + 'px';
     };
 
     var init = function (element, edit) {
@@ -4123,15 +4142,15 @@ wysihtml5.quirks.handleEmbeds = (function() {
     return init;
 })();
 
-wysihtml5.quirks.resize = function(element) {
+wysihtml5.quirks.resize = function(element, handleResize) {
   
   var dom = wysihtml5.dom,
       doc = element.ownerDocument,
       body = doc.body,
-      startH = null,
-      startW = null,
-      startObserver = null,
-      resizeBoxes = []; 
+      resizeBoxes = [],
+      directions = [1,1],
+      moveHandlers = [],
+      startObserver, startX, startY, startW, startH; 
   
   var start = function(event) {
       positionBoxes();
@@ -4139,6 +4158,63 @@ wysihtml5.quirks.resize = function(element) {
       
   };
   
+  var handleResizeStart = function(event) {
+      var el = event.target,
+          i = parseInt(el.getAttribute('data-resizer-idx'), 10);
+          
+       startX = event.clientX;
+       startY = event.clientY;
+       startW = element.offsetWidth;
+       startH = element.offsetHeight;
+       
+       directions = [
+           (i == 0 || i == 3 ) ? -1 : 1,
+           (i < 2) ? -1 : 1
+       ];
+       
+       bindMoveEvents();
+  };
+  
+  var bindMoveEvents = function () {
+      moveHandlers.push(dom.observe(doc, 'mousemove', handleMouseMove));
+      moveHandlers.push(dom.observe(doc, 'mouseup', handleMouseUp));
+  };
+  
+  var unbindMoveEvents = function() {
+      console.log('a');
+      for (var i = 0, imax = moveHandlers.length; i < imax; i++) {
+          moveHandlers[i].stop();
+      };
+      moveHandlers = [];
+  };
+  
+  var handleMouseMove = function(event) {
+      var dX = (event.clientX - startX) * directions[0],
+          dY = (event.clientY - startY) * directions[1],
+          width = startW + dX,
+          height = startH + dY;
+          
+      if (width < 0) {
+          width = 0;
+      }
+      
+      if (height < 0) {
+          height = 0;
+      }
+      
+      element.style.width = width + 'px';
+      element.style.height = height + 'px';
+      
+      positionBoxes();
+      if (handleResize) {
+          handleResize(width, height);
+      }
+  };
+  
+  var handleMouseUp = function(event) {
+      unbindMoveEvents();
+  };
+   
   var makeResizeBoxes = function () {
       var el, handler;
           
@@ -4146,8 +4222,9 @@ wysihtml5.quirks.resize = function(element) {
           el = doc.createElement('div');
           el.style.position = "absolute";
           el.style.zIndex = 100;
+          el.setAttribute('data-resizer-idx', i);
           dom.addClass(el, "wysihtml5-quirks-resize-handle");
-          handler = dom.observe(el, 'mousedown', start);
+          handler = dom.observe(el, 'mousedown', handleResizeStart);
           resizeBoxes.push({
               "el": el,
               "handler": handler
@@ -4172,8 +4249,6 @@ wysihtml5.quirks.resize = function(element) {
       var offset = dom.offset(element),
           width = element.offsetWidth,
           height = element.offsetHeight;
-          
-          console.log(resizeBoxes);
           
       resizeBoxes[0].el.style.top = offset.top + 'px';
       resizeBoxes[0].el.style.left = offset.left + 'px';
