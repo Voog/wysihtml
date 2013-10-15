@@ -48,13 +48,22 @@ wysihtml5.quirks.handleEmbeds = (function() {
         addMask(target);
     };
     
-    var addMask = function(element) { 
-        element.parentNode.insertBefore(mask, element);
-        mask.style.height = element.offsetHeight + 'px';
-        mask.style.width = element.offsetWidth + 'px';
-        mask.style.position = "absolute";
+    var addMask = function(element) {
         activeElement = element;
+        positionMask();
+        editable.ownerDocument.body.appendChild(mask);
     };
+    
+    var positionMask = function() {
+        if (activeElement) {
+            var offset = dom.offset(activeElement);
+            mask.style.height = activeElement.offsetHeight + 'px';
+            mask.style.width = activeElement.offsetWidth + 'px';
+            mask.style.position = "absolute";
+            mask.style.top = offset.top + 'px';
+            mask.style.left = offset.left + 'px';
+        }
+    }; 
     
     var removeMask = function() {
         if (mask.parentNode) {
@@ -67,7 +76,8 @@ wysihtml5.quirks.handleEmbeds = (function() {
         mask = editable.ownerDocument.createElement('img');
         mask.src = maskData;
         mask.title = "";
-        mask.style.backgroundColor = "rgba(0,0,0,0.3)";
+        // for testing
+        // mask.style.backgroundColor = "rgba(255,0,0,0.3)"; 
         dom.addClass(mask, "wysihtml5-temp");
         dom.observe(mask, "mouseout", removeMask);
         dom.observe(mask, "click", startResizeMode);
@@ -98,6 +108,7 @@ wysihtml5.quirks.handleEmbeds = (function() {
     var handleResize = function (w, h) {
         mask.style.height = h + 'px';
         mask.style.width = w + 'px';
+        positionMask();
     };
 
     var init = function (element, edit) {
