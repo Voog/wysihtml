@@ -71,7 +71,6 @@ wysihtml5.quirks.handleEmbeds = (function() {
             this.activeElement = element;
             this.positionMask();
             this.editable.ownerDocument.body.appendChild(this.mask);
-            console.log('added');
         },
         
         positionMask: function() {
