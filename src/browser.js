@@ -9,7 +9,8 @@ wysihtml5.browser = (function() {
       isGecko     = userAgent.indexOf("Gecko")        !== -1 && userAgent.indexOf("KHTML") === -1,
       isWebKit    = userAgent.indexOf("AppleWebKit/") !== -1,
       isChrome    = userAgent.indexOf("Chrome/")      !== -1,
-      isOpera     = userAgent.indexOf("Opera/")       !== -1;
+      isOpera     = userAgent.indexOf("Opera/")       !== -1,
+      isSafari    = userAgent.indexOf("Safari") !== -1 && userAgent.indexOf("Chrome") == -1;
   
   function iosVersion(userAgent) {
     return +((/ipad|iphone|ipod/.test(userAgent) && userAgent.match(/ os (\d+).+? like mac os x/)) || [undefined, 0])[1];
@@ -321,6 +322,16 @@ wysihtml5.browser = (function() {
      */
     hasProblemsSettingCaretAfterImg: function() {
       return isIE;
+    },
+    
+    /* In IE iframes and objects come on top of absolutely positioned divs */ 
+    hasIframesPenetratingContentIssue: function () {
+        return isIE;
+    },
+    
+    /* Safari at least up to 6 breaks draggable on native functions if dataTransfer setdata is used */ 
+    hasDragstartSetdataIssue: function () {
+        return isSafari;
     },
     
     hasUndoInContextMenu: function() {

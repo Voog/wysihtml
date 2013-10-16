@@ -274,7 +274,8 @@ wysihtml5.browser = (function() {
       isGecko     = userAgent.indexOf("Gecko")        !== -1 && userAgent.indexOf("KHTML") === -1,
       isWebKit    = userAgent.indexOf("AppleWebKit/") !== -1,
       isChrome    = userAgent.indexOf("Chrome/")      !== -1,
-      isOpera     = userAgent.indexOf("Opera/")       !== -1;
+      isOpera     = userAgent.indexOf("Opera/")       !== -1,
+      isSafari    = userAgent.indexOf("Safari") !== -1 && userAgent.indexOf("Chrome") == -1;
   
   function iosVersion(userAgent) {
     return +((/ipad|iphone|ipod/.test(userAgent) && userAgent.match(/ os (\d+).+? like mac os x/)) || [undefined, 0])[1];
@@ -586,6 +587,16 @@ wysihtml5.browser = (function() {
      */
     hasProblemsSettingCaretAfterImg: function() {
       return isIE;
+    },
+    
+    /* In IE iframes and objects come on top of absolutely positioned divs */ 
+    hasIframesPenetratingContentIssue: function () {
+        return isIE;
+    },
+    
+    /* Safari at least up to 6 breaks draggable on native functions if dataTransfer setdata is used */ 
+    hasDragstartSetdataIssue: function () {
+        return isSafari;
     },
     
     hasUndoInContextMenu: function() {
@@ -4119,6 +4130,7 @@ wysihtml5.quirks.handleEmbeds = (function() {
             this.activeElement = element;
             this.positionMask();
             this.editable.ownerDocument.body.appendChild(this.mask);
+            console.log('added');
         },
         
         positionMask: function() {
@@ -4141,19 +4153,22 @@ wysihtml5.quirks.handleEmbeds = (function() {
         
         makeMask: function() {
             var that = this;
-            
-            this.mask = this.editable.ownerDocument.createElement('img');
-            this.mask.src = maskData;
+                this.mask = this.editable.ownerDocument.createElement('img');   
+                this.mask.src = maskData;
+
             this.mask.title = "";
             this.mask.setAttribute("data-tracker", this.trackerID);
-            // for testing
-            // this.mask.style.backgroundColor = "rgba(255,0,0,0.3)";
-            dom.observe(this.mask, "dragstart", function(event) {
-                event.dataTransfer.setData("wysihtml5/elementdrop", this.trackerID);
-            }, this);
+            
+            if (!wysihtml5.browser.hasDragstartSetdataIssue()) {
+                dom.observe(this.mask, "dragstart", function(event) {
+                    event.dataTransfer.setData("wysihtml5/elementdrop", this.trackerID);
+                }, this);
+            }
+            
              
             dom.observe(this.mask, "dragend", function(event) {
-                var droppedMask = dom.query(this.editable, 'img[data-tracker="' + this.trackerID +  '"]')[0];
+                event.dataTransfer.setData("wysihtml5/elementdrop", this.trackerID);
+                var droppedMask = dom.query(this.editable, '[data-tracker="' + this.trackerID +  '"]')[0];
                 if (droppedMask) {
                     this.endResizeMode();
                     droppedMask.parentNode.insertBefore(this.activeElement, droppedMask);

@@ -71,6 +71,7 @@ wysihtml5.quirks.handleEmbeds = (function() {
             this.activeElement = element;
             this.positionMask();
             this.editable.ownerDocument.body.appendChild(this.mask);
+            console.log('added');
         },
         
         positionMask: function() {
@@ -93,19 +94,22 @@ wysihtml5.quirks.handleEmbeds = (function() {
         
         makeMask: function() {
             var that = this;
-            
-            this.mask = this.editable.ownerDocument.createElement('img');
-            this.mask.src = maskData;
+                this.mask = this.editable.ownerDocument.createElement('img');   
+                this.mask.src = maskData;
+
             this.mask.title = "";
             this.mask.setAttribute("data-tracker", this.trackerID);
-            // for testing
-            // this.mask.style.backgroundColor = "rgba(255,0,0,0.3)";
-            dom.observe(this.mask, "dragstart", function(event) {
-                event.dataTransfer.setData("wysihtml5/elementdrop", this.trackerID);
-            }, this);
+            
+            if (!wysihtml5.browser.hasDragstartSetdataIssue()) {
+                dom.observe(this.mask, "dragstart", function(event) {
+                    event.dataTransfer.setData("wysihtml5/elementdrop", this.trackerID);
+                }, this);
+            }
+            
              
             dom.observe(this.mask, "dragend", function(event) {
-                var droppedMask = dom.query(this.editable, 'img[data-tracker="' + this.trackerID +  '"]')[0];
+                event.dataTransfer.setData("wysihtml5/elementdrop", this.trackerID);
+                var droppedMask = dom.query(this.editable, '[data-tracker="' + this.trackerID +  '"]')[0];
                 if (droppedMask) {
                     this.endResizeMode();
                     droppedMask.parentNode.insertBefore(this.activeElement, droppedMask);
