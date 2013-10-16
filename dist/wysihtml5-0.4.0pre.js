@@ -589,12 +589,15 @@ wysihtml5.browser = (function() {
       return isIE;
     },
     
-    /* In IE iframes and objects come on top of absolutely positioned divs */ 
+    /* In IE iframes and objects come on top of absolutely positioned divs */
+    /* TODO: If possible substitute with feature detection */
     hasIframesPenetratingContentIssue: function () {
         return isIE;
     },
     
-    /* Safari at least up to 6 breaks draggable on native functions if dataTransfer setdata is used */ 
+    /* Safari at least up to 6 breaks draggable on native functions if dataTransfer setdata is used */
+    /* TODO: If possible substitute with feature detection */
+    /* TODO: test in safari 7 too. maybe fixed */
     hasDragstartSetdataIssue: function () {
         return isSafari;
     },
@@ -4070,6 +4073,7 @@ wysihtml5.quirks.handleEmbeds = (function() {
         this.observers = [];
         this.activeElement = null;
         this.resizer = null;
+        this.resizeWindowHandler = null;
         this.sideclickHandler = null;
         this.trackerID = (new Date()).getTime() + '.' + (Math.random()*100);
         this.init();
@@ -4112,6 +4116,7 @@ wysihtml5.quirks.handleEmbeds = (function() {
                     "mouseover": dom.observe(this.embeds[i], "mouseover", this.handleMouseOver, this)
                 });
             }
+            this.resizeWindowHandler = dom.observe(this.editable.ownerDocument.defaultView, "resize", this.handleWindowResize, this);
         },
         
         stopObserving: function() {
@@ -4119,6 +4124,10 @@ wysihtml5.quirks.handleEmbeds = (function() {
                 this.observers[i].mouseover.stop();
             }
             this.observers = [];
+            if (this.resizeWindowHandler) {
+                this.resizeWindowHandler.stop();
+                this.resizeWindowHandler = null;
+            }
         },
         
         handleMouseOver: function(event) {
@@ -4130,7 +4139,6 @@ wysihtml5.quirks.handleEmbeds = (function() {
             this.activeElement = element;
             this.positionMask();
             this.editable.ownerDocument.body.appendChild(this.mask);
-            console.log('added');
         },
         
         positionMask: function() {
@@ -4212,6 +4220,12 @@ wysihtml5.quirks.handleEmbeds = (function() {
             }
         },
         
+        handleWindowResize: function() {
+            this.positionMask();
+            if (this.resizer) { 
+                this.resizer.refresh();
+            }
+        },
         
         handleResize: function (w, h) {
             this.mask.style.height = h + 'px';
@@ -4283,6 +4297,8 @@ wysihtml5.quirks.resize = function(element, handleResize, context) {
       
       element.style.width = width + 'px';
       element.style.height = height + 'px';
+      element.setAttribute("width", width + 'px');
+      element.setAttribute("height", height + 'px');
       
       positionBoxes();
       if (handleResize) {
@@ -4354,7 +4370,8 @@ wysihtml5.quirks.resize = function(element, handleResize, context) {
   start();
       
   return {
-      "stop": unbindResize
+      "stop": unbindResize,
+      "refresh": positionBoxes
   };
 };/**
  * Selection API

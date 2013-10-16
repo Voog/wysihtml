@@ -11,6 +11,7 @@ wysihtml5.quirks.handleEmbeds = (function() {
         this.observers = [];
         this.activeElement = null;
         this.resizer = null;
+        this.resizeWindowHandler = null;
         this.sideclickHandler = null;
         this.trackerID = (new Date()).getTime() + '.' + (Math.random()*100);
         this.init();
@@ -53,6 +54,7 @@ wysihtml5.quirks.handleEmbeds = (function() {
                     "mouseover": dom.observe(this.embeds[i], "mouseover", this.handleMouseOver, this)
                 });
             }
+            this.resizeWindowHandler = dom.observe(this.editable.ownerDocument.defaultView, "resize", this.handleWindowResize, this);
         },
         
         stopObserving: function() {
@@ -60,6 +62,10 @@ wysihtml5.quirks.handleEmbeds = (function() {
                 this.observers[i].mouseover.stop();
             }
             this.observers = [];
+            if (this.resizeWindowHandler) {
+                this.resizeWindowHandler.stop();
+                this.resizeWindowHandler = null;
+            }
         },
         
         handleMouseOver: function(event) {
@@ -152,6 +158,12 @@ wysihtml5.quirks.handleEmbeds = (function() {
             }
         },
         
+        handleWindowResize: function() {
+            this.positionMask();
+            if (this.resizer) { 
+                this.resizer.refresh();
+            }
+        },
         
         handleResize: function (w, h) {
             this.mask.style.height = h + 'px';

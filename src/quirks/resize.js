@@ -58,6 +58,8 @@ wysihtml5.quirks.resize = function(element, handleResize, context) {
       
       element.style.width = width + 'px';
       element.style.height = height + 'px';
+      element.setAttribute("width", width + 'px');
+      element.setAttribute("height", height + 'px');
       
       positionBoxes();
       if (handleResize) {
@@ -129,6 +131,7 @@ wysihtml5.quirks.resize = function(element, handleResize, context) {
   start();
       
   return {
-      "stop": unbindResize
+      "stop": unbindResize,
+      "refresh": positionBoxes
   };
 };

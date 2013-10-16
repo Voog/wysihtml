@@ -324,12 +324,15 @@ wysihtml5.browser = (function() {
       return isIE;
     },
     
-    /* In IE iframes and objects come on top of absolutely positioned divs */ 
+    /* In IE iframes and objects come on top of absolutely positioned divs */
+    /* TODO: If possible substitute with feature detection */
     hasIframesPenetratingContentIssue: function () {
         return isIE;
     },
     
-    /* Safari at least up to 6 breaks draggable on native functions if dataTransfer setdata is used */ 
+    /* Safari at least up to 6 breaks draggable on native functions if dataTransfer setdata is used */
+    /* TODO: If possible substitute with feature detection */
+    /* TODO: test in safari 7 too. maybe fixed */
     hasDragstartSetdataIssue: function () {
         return isSafari;
     },
