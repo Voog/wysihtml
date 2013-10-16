@@ -4,7 +4,7 @@
  * @example
  *    wysihtml5.dom.observe(iframe.contentWindow.document.body, ["focus", "blur"], function() { ... });
  */
-wysihtml5.dom.observe = function(element, eventNames, handler) {
+wysihtml5.dom.observe = function(element, eventNames, handler, context) {
   eventNames = typeof(eventNames) === "string" ? [eventNames] : eventNames;
   
   var handlerWrapper,
@@ -15,7 +15,10 @@ wysihtml5.dom.observe = function(element, eventNames, handler) {
   for (; i<length; i++) {
     eventName = eventNames[i];
     if (element.addEventListener) {
-      element.addEventListener(eventName, handler, false);
+      handlerWrapper = (context) ? function(event) {
+        handler.call(context, event);
+      } : handler;
+      element.addEventListener(eventName, handlerWrapper, false);
     } else {
       handlerWrapper = function(event) {
         if (!("target" in event)) {
@@ -27,7 +30,7 @@ wysihtml5.dom.observe = function(element, eventNames, handler) {
         event.stopPropagation = event.stopPropagation || function() {
           this.cancelBubble = true;
         };
-        handler.call(element, event);
+        handler.call((context) ? context : element, event);
       };
       element.attachEvent("on" + eventName, handlerWrapper);
     }
@@ -41,7 +44,7 @@ wysihtml5.dom.observe = function(element, eventNames, handler) {
       for (; i<length; i++) {
         eventName = eventNames[i];
         if (element.removeEventListener) {
-          element.removeEventListener(eventName, handler, false);
+          element.removeEventListener(eventName, handlerWrapper, false);
         } else {
           element.detachEvent("on" + eventName, handlerWrapper);
         }

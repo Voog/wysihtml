@@ -1583,7 +1583,7 @@ wysihtml5.dom.insert = function(elementToInsert) {
  * @example
  *    wysihtml5.dom.observe(iframe.contentWindow.document.body, ["focus", "blur"], function() { ... });
  */
-wysihtml5.dom.observe = function(element, eventNames, handler) {
+wysihtml5.dom.observe = function(element, eventNames, handler, context) {
   eventNames = typeof(eventNames) === "string" ? [eventNames] : eventNames;
   
   var handlerWrapper,
@@ -1594,7 +1594,10 @@ wysihtml5.dom.observe = function(element, eventNames, handler) {
   for (; i<length; i++) {
     eventName = eventNames[i];
     if (element.addEventListener) {
-      element.addEventListener(eventName, handler, false);
+      handlerWrapper = (context) ? function(event) {
+        handler.call(context, event);
+      } : handler;
+      element.addEventListener(eventName, handlerWrapper, false);
     } else {
       handlerWrapper = function(event) {
         if (!("target" in event)) {
@@ -1606,7 +1609,7 @@ wysihtml5.dom.observe = function(element, eventNames, handler) {
         event.stopPropagation = event.stopPropagation || function() {
           this.cancelBubble = true;
         };
-        handler.call(element, event);
+        handler.call((context) ? context : element, event);
       };
       element.attachEvent("on" + eventName, handlerWrapper);
     }
@@ -1620,7 +1623,7 @@ wysihtml5.dom.observe = function(element, eventNames, handler) {
       for (; i<length; i++) {
         eventName = eventNames[i];
         if (element.removeEventListener) {
-          element.removeEventListener(eventName, handler, false);
+          element.removeEventListener(eventName, handlerWrapper, false);
         } else {
           element.detachEvent("on" + eventName, handlerWrapper);
         }
@@ -4046,132 +4049,166 @@ wysihtml5.quirks.ensureProperClearing = (function() {
 wysihtml5.quirks.handleEmbeds = (function() {
     
     var dom = wysihtml5.dom,
-        maskData = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==",
-        mask = null,
-        editable = null,
-        editor = null,
-        embeds = null,
-        observers = [],
-        activeElement = null,
-        resizer = null,
-        sideclickHandler = null;
-  
-    var getEmbeds = function() {
-        var iframes =           dom.query(editable, 'iframe'),
-            ifameObjs =         dom.query(iframes, 'object, embed'),
-            objects =           wysihtml5.lang.array(dom.query(editable, 'object')).without(ifameObjs),
-            embedInObjects =    dom.query(objects, 'embed'),
-            allEmbeds =         wysihtml5.lang.array(dom.query(editable, 'embed')).without(ifameObjs),
-            embeds =            wysihtml5.lang.array(allEmbeds).without(embedInObjects);
-
-        return [].concat(iframes, objects, embeds);
-    };
-
-    var observeEmbeds = function() {
-        for (var i = 0, maxi = embeds.length; i < maxi; i++) {
-            observers.push({
-                "mouseover": dom.observe(embeds[i], "mouseover", handleMouseOver)
-            });
-        }
+        maskData = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==";
+    
+    var EmbedHandler = function(element, edit) {
+        this.editable = element;
+        this.editor = edit;
+        this.embeds = null;
+        this.mask = null;
+        this.observers = [];
+        this.activeElement = null;
+        this.resizer = null;
+        this.sideclickHandler = null;
+        this.trackerID = (new Date()).getTime() + '.' + (Math.random()*100);
+        this.init();
     };
     
-    var stopObserving = function() {
-        for (var i = 0, maxi = observers.length; i < maxi; i++) {
-            observers[i].mouseover.stop();
-        }
-        observers = [];
-    };
-    
-    var refreshEmbeds = function() {
-        stopObserving();
-        embeds = getEmbeds();
-        observeEmbeds();
-    };
-
-    var handleMouseOver = function(event) {
-        target = event.target;
-        addMask(target);
-    };
-    
-    var addMask = function(element) {
-        activeElement = element;
-        positionMask();
-        editable.ownerDocument.body.appendChild(mask);
-    };
-    
-    var positionMask = function() {
-        if (activeElement) {
-            var offset = dom.offset(activeElement);
-            mask.style.height = activeElement.offsetHeight + 'px';
-            mask.style.width = activeElement.offsetWidth + 'px';
-            mask.style.position = "absolute";
-            mask.style.top = offset.top + 'px';
-            mask.style.left = offset.left + 'px';
-        }
-    }; 
-    
-    var removeMask = function() {
-        if (mask.parentNode) {
-            mask = mask.parentNode.removeChild(mask);
-            activeElement = null;
-        }
-    };
-    
-    var makeMask = function() {
-        mask = editable.ownerDocument.createElement('img');
-        mask.src = maskData;
-        mask.title = "";
-        // for testing
-        // mask.style.backgroundColor = "rgba(255,0,0,0.3)"; 
-        dom.addClass(mask, "wysihtml5-temp");
-        dom.observe(mask, "mouseout", removeMask);
-        dom.observe(mask, "click", startResizeMode);
-    }
-    
-    var startResizeMode = function(event) {
-        if (activeElement) {
-            if (resizer) {
-                resizer.stop();
-            }
-            resizer = wysihtml5.quirks.resize(activeElement, handleResize);
-            setTimeout(function() {
-                sideclickHandler = dom.observe(editable.ownerDocument, "click", handleSideClick);
-            }, 0);
-        }
-    };
-    
-    var handleSideClick = function(event) {
-        var target = event.target;
-        if (!dom.hasClass(target, "wysihtml5-quirks-resize-handle") && target !== mask) {
-            resizer.stop();
-            resizer = null;
-            sideclickHandler.stop();
-            sideclickHandler = null;
-        }
-    };
-    
-    var handleResize = function (w, h) {
-        mask.style.height = h + 'px';
-        mask.style.width = w + 'px';
-        positionMask();
-    };
-
-    var init = function (element, edit) {
-        editable = element;
-        editor = edit;
-        embeds = getEmbeds();
-        observeEmbeds();
-        makeMask();
+    EmbedHandler.prototype = {
+        init: function () {
+            this.embeds = this.getEmbeds();
+            this.observeEmbeds();
+            this.makeMask();
+        },
         
-        return {
-            "refresh": refreshEmbeds
-        };
+        refresh: function() {
+            this.stopObserving();
+            this.endResizeMode();
+            if (this.sideclickHandler) {
+                this.sideclickHandler.stop();
+                this.sideclickHandler = null;
+            }
+            this.removeMask();
+            this.embeds = this.getEmbeds();
+            this.observeEmbeds();
+            this.makeMask();
+        },
+        
+        getEmbeds: function() {
+            var iframes =           dom.query(this.editable, 'iframe'),
+                ifameObjs =         dom.query(iframes, 'object, embed'),
+                objects =           wysihtml5.lang.array(dom.query(this.editable, 'object')).without(ifameObjs),
+                embedInObjects =    dom.query(objects, 'embed'),
+                allEmbeds =         wysihtml5.lang.array(dom.query(this.editable, 'embed')).without(ifameObjs),
+                embeds =            wysihtml5.lang.array(allEmbeds).without(embedInObjects);
+
+            return [].concat(iframes, objects, embeds);
+        },
+        
+        observeEmbeds: function() {
+            for (var i = 0, maxi = this.embeds.length; i < maxi; i++) {
+                this.observers.push({
+                    "mouseover": dom.observe(this.embeds[i], "mouseover", this.handleMouseOver, this)
+                });
+            }
+        },
+        
+        stopObserving: function() {
+            for (var i = 0, maxi = this.observers.length; i < maxi; i++) {
+                this.observers[i].mouseover.stop();
+            }
+            this.observers = [];
+        },
+        
+        handleMouseOver: function(event) {
+            var target = event.target;
+            this.addMask(target);
+        },
+        
+        addMask: function(element) {
+            this.activeElement = element;
+            this.positionMask();
+            this.editable.ownerDocument.body.appendChild(this.mask);
+        },
+        
+        positionMask: function() {
+            if (this.activeElement) {
+                var offset = dom.offset(this.activeElement);
+                this.mask.style.height = this.activeElement.offsetHeight + 'px';
+                this.mask.style.width = this.activeElement.offsetWidth + 'px';
+                this.mask.style.position = "absolute";
+                this.mask.style.top = offset.top + 'px';
+                this.mask.style.left = offset.left + 'px';
+            }
+        },
+        
+        removeMask: function() {
+            if (this.mask.parentNode) {
+                this.mask = this.mask.parentNode.removeChild(this.mask);
+                this.activeElement = null;
+            }
+        },
+        
+        makeMask: function() {
+            var that = this;
+            
+            this.mask = this.editable.ownerDocument.createElement('img');
+            this.mask.src = maskData;
+            this.mask.title = "";
+            this.mask.setAttribute("data-tracker", this.trackerID);
+            // for testing
+            // this.mask.style.backgroundColor = "rgba(255,0,0,0.3)";
+            dom.observe(this.mask, "dragstart", function(event) {
+                event.dataTransfer.setData("wysihtml5/elementdrop", this.trackerID);
+            }, this);
+             
+            dom.observe(this.mask, "dragend", function(event) {
+                var droppedMask = dom.query(this.editable, 'img[data-tracker="' + this.trackerID +  '"]')[0];
+                if (droppedMask) {
+                    this.endResizeMode();
+                    droppedMask.parentNode.insertBefore(this.activeElement, droppedMask);
+                    droppedMask.parentNode.removeChild(droppedMask);
+                    this.removeMask();
+                }
+            }, this);
+            
+            dom.addClass(this.mask, "wysihtml5-temp");
+            dom.observe(this.mask, "mouseout", this.removeMask, this); 
+            dom.observe(this.mask, "click", this.startResizeMode, this);
+        },
+        
+        startResizeMode: function(event) {
+            var that = this;
+            if (this.activeElement) {
+                this.endResizeMode();
+                this.resizer = wysihtml5.quirks.resize(this.activeElement, this.handleResize, this);
+                setTimeout(function() {
+                    if (that.sideclickHandler) {
+                        that.sideclickHandler.stop();
+                    }
+                    that.sideclickHandler = dom.observe(that.editable.ownerDocument, "click", that.handleSideClick, that);
+                }, 0);
+            }
+        },
+        
+        endResizeMode: function() {
+            if (this.resizer) {
+                this.resizer.stop();
+                this.resizer = null;
+            }
+        },
+        
+        handleSideClick: function(event) {
+            var target = event.target;
+            if (!dom.hasClass(target, "wysihtml5-quirks-resize-handle") && target !== this.mask) {
+                this.endResizeMode();
+                this.sideclickHandler.stop();
+                this.sideclickHandler = null;
+            }
+        },
+        
+        
+        handleResize: function (w, h) {
+            this.mask.style.height = h + 'px';
+            this.mask.style.width = w + 'px';
+            this.positionMask();
+        }
     };
 
-    return init;
+    return EmbedHandler;
 })();
 
-wysihtml5.quirks.resize = function(element, handleResize) {
+wysihtml5.quirks.resize = function(element, handleResize, context) {
   
   var dom = wysihtml5.dom,
       doc = element.ownerDocument,
@@ -4234,7 +4271,11 @@ wysihtml5.quirks.resize = function(element, handleResize) {
       
       positionBoxes();
       if (handleResize) {
-          handleResize(width, height);
+          if (context) {
+              handleResize.call(context, width, height);
+          } else {
+              handleResize(width, height);
+          }
       }
   };
   
@@ -7214,7 +7255,7 @@ wysihtml5.views.View = Base.extend(
     
     // Observe embed objects and iframes for resize and drag drop functions
     if (this.config.handleEmbeds) {
-        this.embedObjects = wysihtml5.quirks.handleEmbeds(element, that.parent);
+        this.embedObjects = new wysihtml5.quirks.handleEmbeds(element, that.parent);
     }
 
     // --------- Focus & blur logic ---------
@@ -7238,10 +7279,19 @@ wysihtml5.views.View = Base.extend(
       that.parent.fire("unset_placeholder");
     });
 
-    dom.observe(element, pasteEvents, function() {
-      setTimeout(function() {
-        that.parent.fire("paste").fire("paste:composer");
-      }, 0);
+    dom.observe(element, pasteEvents, function(event) {
+      if (event.dataTransfer &&
+          event.dataTransfer.getData("wysihtml5/elementdrop") &&
+          that.embedObjects && that.embedObjects.trackerID &&
+          event.dataTransfer.getData("wysihtml5/elementdrop") == that.embedObjects.trackerID
+      ){
+          
+      } else {
+          setTimeout(function() {
+            that.parent.fire("paste").fire("paste:composer");
+            that.embedObjects.refresh();
+          }, 0);
+      }
     });
 
     // --------- neword event ---------

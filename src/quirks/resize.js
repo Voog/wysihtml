@@ -1,4 +1,4 @@
-wysihtml5.quirks.resize = function(element, handleResize) {
+wysihtml5.quirks.resize = function(element, handleResize, context) {
   
   var dom = wysihtml5.dom,
       doc = element.ownerDocument,
@@ -61,7 +61,11 @@ wysihtml5.quirks.resize = function(element, handleResize) {
       
       positionBoxes();
       if (handleResize) {
-          handleResize(width, height);
+          if (context) {
+              handleResize.call(context, width, height);
+          } else {
+              handleResize(width, height);
+          }
       }
   };
   

@@ -58,7 +58,7 @@
     
     // Observe embed objects and iframes for resize and drag drop functions
     if (this.config.handleEmbeds) {
-        this.embedObjects = wysihtml5.quirks.handleEmbeds(element, that.parent);
+        this.embedObjects = new wysihtml5.quirks.handleEmbeds(element, that.parent);
     }
 
     // --------- Focus & blur logic ---------
@@ -82,10 +82,19 @@
       that.parent.fire("unset_placeholder");
     });
 
-    dom.observe(element, pasteEvents, function() {
-      setTimeout(function() {
-        that.parent.fire("paste").fire("paste:composer");
-      }, 0);
+    dom.observe(element, pasteEvents, function(event) {
+      if (event.dataTransfer &&
+          event.dataTransfer.getData("wysihtml5/elementdrop") &&
+          that.embedObjects && that.embedObjects.trackerID &&
+          event.dataTransfer.getData("wysihtml5/elementdrop") == that.embedObjects.trackerID
+      ){
+          
+      } else {
+          setTimeout(function() {
+            that.parent.fire("paste").fire("paste:composer");
+            that.embedObjects.refresh();
+          }, 0);
+      }
     });
 
     // --------- neword event ---------
