@@ -90,7 +90,6 @@
           event.dataTransfer.getData(that.embedObjects.transferKey) == that.embedObjects.trackerID
       ) {
       } else {
-          console.log('incorrect');
           setTimeout(function() {
             that.parent.fire("paste").fire("paste:composer");
             if (that.embedObjects) { that.embedObjects.refresh(); }
