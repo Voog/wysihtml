@@ -271,6 +271,7 @@ wysihtml5.browser = (function() {
       testElement = document.createElement("div"),
       // Browser sniffing is unfortunately needed since some behaviors are impossible to feature detect
       isIE        = userAgent.indexOf("MSIE")         !== -1 && userAgent.indexOf("Opera") === -1,
+      lteIE8      = (window.attachEvent && !window.addEventListener) ? true : false,
       isGecko     = userAgent.indexOf("Gecko")        !== -1 && userAgent.indexOf("KHTML") === -1,
       isWebKit    = userAgent.indexOf("AppleWebKit/") !== -1,
       isChrome    = userAgent.indexOf("Chrome/")      !== -1,
@@ -592,7 +593,7 @@ wysihtml5.browser = (function() {
     /* In IE iframes and objects come on top of absolutely positioned divs */
     /* TODO: If possible substitute with feature detection */
     hasIframesPenetratingContentIssue: function () {
-        return isIE;
+        return lteIE8;
     },
     
     /* Safari at least up to 6 breaks draggable on native functions if dataTransfer setdata is used */
@@ -4075,6 +4076,7 @@ wysihtml5.quirks.handleEmbeds = (function() {
         this.resizer = null;
         this.resizeWindowHandler = null;
         this.sideclickHandler = null;
+        this.transferKey = "wysihtml5/elementdrop";
         this.trackerID = (new Date()).getTime() + '.' + (Math.random()*100);
         this.init();
     };
@@ -4169,19 +4171,33 @@ wysihtml5.quirks.handleEmbeds = (function() {
             
             if (!wysihtml5.browser.hasDragstartSetdataIssue()) {
                 dom.observe(this.mask, "dragstart", function(event) {
-                    event.dataTransfer.setData("wysihtml5/elementdrop", this.trackerID);
+                    try {
+                        event.dataTransfer.setData(this.transferKey, this.trackerID);
+                    } catch (err) {
+                        // IE cannot do better than text to track insertion caret. Will insert one space though
+                        event.dataTransfer.setData("text", " ");
+                        this.trackerID = " ";
+                        this.transferKey = "text";
+                    }
                 }, this);
             }
             
-             
             dom.observe(this.mask, "dragend", function(event) {
-                event.dataTransfer.setData("wysihtml5/elementdrop", this.trackerID);
-                var droppedMask = dom.query(this.editable, '[data-tracker="' + this.trackerID +  '"]')[0];
-                if (droppedMask) {
+                if (this.transferKey == "text") {
                     this.endResizeMode();
-                    droppedMask.parentNode.insertBefore(this.activeElement, droppedMask);
-                    droppedMask.parentNode.removeChild(droppedMask);
+                    this.editor.composer.selection.insertNode(this.activeElement);
                     this.removeMask();
+                } else {
+                    if (wysihtml5.browser.hasDragstartSetdataIssue()) {
+                        event.dataTransfer.setData(this.transferKey, this.trackerID);
+                    }
+                    var droppedMask = dom.query(this.editable, '[data-tracker="' + this.trackerID +  '"]')[0];
+                    if (droppedMask) {
+                        this.endResizeMode();
+                        droppedMask.parentNode.insertBefore(this.activeElement, droppedMask);
+                        droppedMask.parentNode.removeChild(droppedMask);
+                        this.removeMask();
+                    }
                 }
             }, this);
             
@@ -7286,7 +7302,7 @@ wysihtml5.views.View = Base.extend(
     }
     
     // Observe embed objects and iframes for resize and drag drop functions
-    if (this.config.handleEmbeds) {
+    if (this.config.handleEmbeds && !wysihtml5.browser.hasIframesPenetratingContentIssue()) {
         this.embedObjects = new wysihtml5.quirks.handleEmbeds(element, that.parent);
     }
 
@@ -7312,16 +7328,16 @@ wysihtml5.views.View = Base.extend(
     });
 
     dom.observe(element, pasteEvents, function(event) {
-      if (event.dataTransfer &&
-          event.dataTransfer.getData("wysihtml5/elementdrop") &&
-          that.embedObjects && that.embedObjects.trackerID &&
-          event.dataTransfer.getData("wysihtml5/elementdrop") == that.embedObjects.trackerID
+      if (that.embedObjects &&
+          that.embedObjects.trackerID &&
+          event.dataTransfer &&
+          event.dataTransfer.getData(that.embedObjects.transferKey) &&
+          event.dataTransfer.getData(that.embedObjects.transferKey) == that.embedObjects.trackerID
       ){
-          
       } else {
           setTimeout(function() {
             that.parent.fire("paste").fire("paste:composer");
-            that.embedObjects.refresh();
+            if (that.embedObjects) { that.embedObjects.refresh(); }
           }, 0);
       }
     });

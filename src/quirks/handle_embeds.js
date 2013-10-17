@@ -13,6 +13,7 @@ wysihtml5.quirks.handleEmbeds = (function() {
         this.resizer = null;
         this.resizeWindowHandler = null;
         this.sideclickHandler = null;
+        this.transferKey = "wysihtml5/elementdrop";
         this.trackerID = (new Date()).getTime() + '.' + (Math.random()*100);
         this.init();
     };
@@ -107,19 +108,33 @@ wysihtml5.quirks.handleEmbeds = (function() {
             
             if (!wysihtml5.browser.hasDragstartSetdataIssue()) {
                 dom.observe(this.mask, "dragstart", function(event) {
-                    event.dataTransfer.setData("wysihtml5/elementdrop", this.trackerID);
+                    try {
+                        event.dataTransfer.setData(this.transferKey, this.trackerID);
+                    } catch (err) {
+                        // IE cannot do better than text to track insertion caret. Will insert one space though
+                        event.dataTransfer.setData("text", " ");
+                        this.trackerID = " ";
+                        this.transferKey = "text";
+                    }
                 }, this);
             }
             
-             
             dom.observe(this.mask, "dragend", function(event) {
-                event.dataTransfer.setData("wysihtml5/elementdrop", this.trackerID);
-                var droppedMask = dom.query(this.editable, '[data-tracker="' + this.trackerID +  '"]')[0];
-                if (droppedMask) {
+                if (this.transferKey == "text") {
                     this.endResizeMode();
-                    droppedMask.parentNode.insertBefore(this.activeElement, droppedMask);
-                    droppedMask.parentNode.removeChild(droppedMask);
+                    this.editor.composer.selection.insertNode(this.activeElement);
                     this.removeMask();
+                } else {
+                    if (wysihtml5.browser.hasDragstartSetdataIssue()) {
+                        event.dataTransfer.setData(this.transferKey, this.trackerID);
+                    }
+                    var droppedMask = dom.query(this.editable, '[data-tracker="' + this.trackerID +  '"]')[0];
+                    if (droppedMask) {
+                        this.endResizeMode();
+                        droppedMask.parentNode.insertBefore(this.activeElement, droppedMask);
+                        droppedMask.parentNode.removeChild(droppedMask);
+                        this.removeMask();
+                    }
                 }
             }, this);
             

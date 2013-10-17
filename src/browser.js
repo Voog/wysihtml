@@ -6,6 +6,7 @@ wysihtml5.browser = (function() {
       testElement = document.createElement("div"),
       // Browser sniffing is unfortunately needed since some behaviors are impossible to feature detect
       isIE        = userAgent.indexOf("MSIE")         !== -1 && userAgent.indexOf("Opera") === -1,
+      lteIE8      = (window.attachEvent && !window.addEventListener) ? true : false,
       isGecko     = userAgent.indexOf("Gecko")        !== -1 && userAgent.indexOf("KHTML") === -1,
       isWebKit    = userAgent.indexOf("AppleWebKit/") !== -1,
       isChrome    = userAgent.indexOf("Chrome/")      !== -1,
@@ -327,7 +328,7 @@ wysihtml5.browser = (function() {
     /* In IE iframes and objects come on top of absolutely positioned divs */
     /* TODO: If possible substitute with feature detection */
     hasIframesPenetratingContentIssue: function () {
-        return isIE;
+        return lteIE8;
     },
     
     /* Safari at least up to 6 breaks draggable on native functions if dataTransfer setdata is used */

@@ -57,7 +57,7 @@
     }
     
     // Observe embed objects and iframes for resize and drag drop functions
-    if (this.config.handleEmbeds) {
+    if (this.config.handleEmbeds && !wysihtml5.browser.hasIframesPenetratingContentIssue()) {
         this.embedObjects = new wysihtml5.quirks.handleEmbeds(element, that.parent);
     }
 
@@ -83,16 +83,16 @@
     });
 
     dom.observe(element, pasteEvents, function(event) {
-      if (event.dataTransfer &&
-          event.dataTransfer.getData("wysihtml5/elementdrop") &&
-          that.embedObjects && that.embedObjects.trackerID &&
-          event.dataTransfer.getData("wysihtml5/elementdrop") == that.embedObjects.trackerID
+      if (that.embedObjects &&
+          that.embedObjects.trackerID &&
+          event.dataTransfer &&
+          event.dataTransfer.getData(that.embedObjects.transferKey) &&
+          event.dataTransfer.getData(that.embedObjects.transferKey) == that.embedObjects.trackerID
       ){
-          
       } else {
           setTimeout(function() {
             that.parent.fire("paste").fire("paste:composer");
-            that.embedObjects.refresh();
+            if (that.embedObjects) { that.embedObjects.refresh(); }
           }, 0);
       }
     });
