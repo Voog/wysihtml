@@ -20,3 +20,9 @@ test("get()", function() {
   equal(arr.length, nodeList.length);
   ok(arr instanceof Array);
 });
+
+test("indexOf()", function() {
+  var arr = [1, "2", "foo"];
+  ok(wysihtml5.lang.array(arr).indexOf("foo") == 2, "finds index correctly");
+  ok(wysihtml5.lang.array(arr).indexOf("not present") == -1, "retuens -1 if not found");
+});

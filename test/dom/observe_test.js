@@ -36,6 +36,19 @@ test("Basic test", function() {
   QUnit.triggerEvent(element, "click");
 });
 
+test("Basic test with user defined handler context", function() {
+  expect(1);
+  
+  var element = this.element,
+      obj = {"test": "value"};
+  
+  wysihtml5.dom.observe(element, ["click"], function(event) {
+    ok(this === obj, "'" + event.type + "' correctly fired and handler with correct context");
+  }, obj);
+  
+  QUnit.triggerEvent(element, "click");
+});
+
 
 test("Test stopPropagation and scope of event handler", function(event) {
   expect(2);
