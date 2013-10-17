@@ -1262,17 +1262,19 @@ wysihtml5.dom.copyAttributes = function(attributesToCopy) {
  *    wysihtml5.dom.delegate(document.body, "a", "click", function() {
  *      // foo
  *    });
+ *
+ * As an option when contenxt is given handler will be called with "this" as context instead of target
  */
 (function(wysihtml5) {
   
-  wysihtml5.dom.delegate = function(container, selector, eventName, handler) {
+  wysihtml5.dom.delegate = function(container, selector, eventName, handler, context) {
     return wysihtml5.dom.observe(container, eventName, function(event) {
       var target    = event.target,
           match     = wysihtml5.lang.array(container.querySelectorAll(selector));
       
       while (target && target !== container) {
         if (match.contains(target)) {
-          handler.call(target, event);
+          handler.call((context) ? context : target, event);
           break;
         }
         target = target.parentNode;
@@ -4076,6 +4078,7 @@ wysihtml5.quirks.handleEmbeds = (function() {
         this.resizer = null;
         this.resizeWindowHandler = null;
         this.sideclickHandler = null;
+        this.keypressHandler = null;
         this.transferKey = "wysihtml5/elementdrop";
         this.trackerID = (new Date()).getTime() + '.' + (Math.random()*100);
         this.init();
@@ -4167,8 +4170,10 @@ wysihtml5.quirks.handleEmbeds = (function() {
                 this.mask.src = maskData;
 
             this.mask.title = "";
+            
             this.mask.setAttribute("data-tracker", this.trackerID);
             
+            // TODO: instead of this check find a way to add custom data in safari without preventing drag start on mask (will prevent filicker if this works)            
             if (!wysihtml5.browser.hasDragstartSetdataIssue()) {
                 dom.observe(this.mask, "dragstart", function(event) {
                     try {
@@ -4182,15 +4187,13 @@ wysihtml5.quirks.handleEmbeds = (function() {
                 }, this);
             }
             
+           
             dom.observe(this.mask, "dragend", function(event) {
                 if (this.transferKey == "text") {
                     this.endResizeMode();
                     this.editor.composer.selection.insertNode(this.activeElement);
                     this.removeMask();
                 } else {
-                    if (wysihtml5.browser.hasDragstartSetdataIssue()) {
-                        event.dataTransfer.setData(this.transferKey, this.trackerID);
-                    }
                     var droppedMask = dom.query(this.editable, '[data-tracker="' + this.trackerID +  '"]')[0];
                     if (droppedMask) {
                         this.endResizeMode();
@@ -4217,6 +4220,7 @@ wysihtml5.quirks.handleEmbeds = (function() {
                     }
                     that.sideclickHandler = dom.observe(that.editable.ownerDocument, "click", that.handleSideClick, that);
                 }, 0);
+                this.keypressHandler = dom.observe(that.editable.ownerDocument, "keydown", this.handleKeyDown, this); 
             }
         },
         
@@ -4224,6 +4228,9 @@ wysihtml5.quirks.handleEmbeds = (function() {
             if (this.resizer) {
                 this.resizer.stop();
                 this.resizer = null;
+            }
+            if (this.keypressHandler) {
+                 this.keypressHandler.stop();
             }
         },
         
@@ -4247,6 +4254,16 @@ wysihtml5.quirks.handleEmbeds = (function() {
             this.mask.style.height = h + 'px';
             this.mask.style.width = w + 'px';
             this.positionMask();
+        },
+        
+        handleKeyDown: function(event) {
+            if (event.keyCode == 8) {
+                event.preventDefault();
+                if (this.activeElement) {
+                    this.activeElement.parentNode.removeChild(this.activeElement);
+                }
+                this.refresh();
+            }
         }
     };
 
@@ -7333,8 +7350,9 @@ wysihtml5.views.View = Base.extend(
           event.dataTransfer &&
           event.dataTransfer.getData(that.embedObjects.transferKey) &&
           event.dataTransfer.getData(that.embedObjects.transferKey) == that.embedObjects.trackerID
-      ){
+      ) {
       } else {
+          console.log('incorrect');
           setTimeout(function() {
             that.parent.fire("paste").fire("paste:composer");
             if (that.embedObjects) { that.embedObjects.refresh(); }
