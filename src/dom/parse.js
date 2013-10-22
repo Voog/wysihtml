@@ -363,7 +363,7 @@ wysihtml5.dom.parse = (function() {
       attributes = wysihtml5.lang.object(setAttributes).clone();
     }
     
-     if (checkAttributes) {
+    if (checkAttributes) {
       for (attributeName in checkAttributes) {
         method = attributeCheckMethods[checkAttributes[attributeName]];
         if (!method) {
