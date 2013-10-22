@@ -136,8 +136,10 @@
     }
   }
 
-  function _selectLineAndWrap(composer, element) {
-    composer.selection.selectLine();
+  function _selectionWrap(composer, element) {
+    if (composer.selection.isCollapsed()) {
+        composer.selection.selectLine();
+    }
     composer.selection.surround(element);
     _removeLineBreakBeforeAndAfter(element);
     _removeLastChildIfLineBreak(element);
@@ -201,17 +203,20 @@
           return;
         }
       }
-
-      if (composer.commands.support(command)) {
+      
+      // Native command does not create elements from selecton boundaries.
+      // Not quite user expected behaviour
+      // TODO: test and make this a fallback instead for cases when custom method misbehaves
+      /*if (composer.commands.support(command)) {
         _execCommand(doc, command, nodeName || defaultNodeName, className);
         return;
-      }
+      }*/
 
       blockElement = doc.createElement(nodeName || defaultNodeName);
       if (className) {
         blockElement.className = className;
       }
-      _selectLineAndWrap(composer, blockElement);
+      _selectionWrap(composer, blockElement);
     },
 
     state: function(composer, command, nodeName, className, classRegExp) {
