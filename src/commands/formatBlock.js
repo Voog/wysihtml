@@ -203,20 +203,24 @@
           return;
         }
       }
-      
-      // Native command does not create elements from selecton boundaries.
-      // Not quite user expected behaviour
-      // TODO: test and make this a fallback instead for cases when custom method misbehaves
-      /*if (composer.commands.support(command)) {
-        _execCommand(doc, command, nodeName || defaultNodeName, className);
-        return;
-      }*/
 
-      blockElement = doc.createElement(nodeName || defaultNodeName);
-      if (className) {
-        blockElement.className = className;
+      if (wysihtml5.browser.supportsSelectLine()) {
+          blockElement = doc.createElement(nodeName || defaultNodeName);
+          if (className) {
+            blockElement.className = className;
+          }
+          _selectionWrap(composer, blockElement);
+      } else {
+          // Falling back to native command for Opera up to 12 mostly
+          // Native command does not create elements from selecton boundaries.
+          // Not quite user expected behaviour
+          if (composer.commands.support(command)) {
+            _execCommand(doc, command, nodeName || defaultNodeName, className);
+            return;
+          } 
       }
-      _selectionWrap(composer, blockElement);
+
+      
     },
 
     state: function(composer, command, nodeName, className, classRegExp) {
