@@ -1987,9 +1987,12 @@ wysihtml5.dom.parse = (function() {
         if (!method) {
           continue;
         }
-        newAttributeValue = method(_getAttribute(oldNode, attributeName));
-        if (typeof(newAttributeValue) === "string") {
-          attributes[attributeName] = newAttributeValue;
+        oldAttribute = _getAttribute(oldNode, attributeName);
+        if (oldAttribute) {
+          newAttributeValue = method(oldAttribute);
+          if (typeof(newAttributeValue) === "string") {
+            attributes[attributeName] = newAttributeValue;
+          }
         }
       }
     }
@@ -5077,7 +5080,7 @@ wysihtml5.commands.bold = {
   function _addClass(element, className, classRegExp) {
     if (element.className) {
       _removeClass(element, classRegExp);
-      element.className += " " + className;
+      element.className = wysihtml5.lang.string(element.className + " " + className).trim();
     } else {
       element.className = className;
     }
