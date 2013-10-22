@@ -1993,7 +1993,7 @@ wysihtml5.dom.parse = (function() {
           continue;
         }
         oldAttribute = _getAttribute(oldNode, attributeName);
-        if (oldAttribute) {
+        if (oldAttribute || (attributeName === "alt" && oldNode.nodeName == "IMG")) {
           newAttributeValue = method(oldAttribute);
           if (typeof(newAttributeValue) === "string") {
             attributes[attributeName] = newAttributeValue;
