@@ -19,7 +19,12 @@
   }
 
   function _removeClass(element, classRegExp) {
+    var ret = classRegExp.test(element.className);
     element.className = element.className.replace(classRegExp, "");
+    if (wysihtml5.lang.string(element.className).trim() == '') {
+        element.removeAttribute('class');
+    }
+    return ret;
   }
 
   /**
@@ -156,15 +161,21 @@
           blockElement    = this.state(composer, command, nodeName, className, classRegExp),
           useLineBreaks   = composer.config.useLineBreaks,
           defaultNodeName = useLineBreaks ? "DIV" : "P",
-          selectedNode;
+          selectedNode, classRemoveAction;
 
       nodeName = typeof(nodeName) === "string" ? nodeName.toUpperCase() : nodeName;
       
       if (blockElement) {
         composer.selection.executeAndRestoreSimple(function() {
           if (classRegExp) {
-            _removeClass(blockElement, classRegExp);
+            classRemoveAction = _removeClass(blockElement, classRegExp);
           }
+          
+          if (classRemoveAction && nodeName === null && blockElement.nodeName != defaultNodeName) {
+            // dont rename or remove element when just setting block formating class
+            return;
+          }
+          
           var hasClasses = _hasClasses(blockElement);
           if (!hasClasses && (useLineBreaks || nodeName === "P")) {
             // Insert a line break afterwards and beforewards when there are siblings

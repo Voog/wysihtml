@@ -107,6 +107,11 @@ if (wysihtml5.browser.supported()) {
         editor.composer.commands.exec('justifyRight');
         equal(editableElement.innerHTML.toLowerCase(), '<h1>once upon a time</h1>there was an unformated text<br>spanning many lines.', "heading alignment removed sucessfully");
         
+        editor.composer.commands.exec('justifyRight');
+        editor.composer.commands.exec('formatBlock', "p");
+        editor.composer.commands.exec('justifyRight');
+        equal(editableElement.innerHTML.toLowerCase(), '<p>once upon a time</p>there was an unformated text<br>spanning many lines.', "heading alignment removed sucessfully");
+        
         start();
       });
     });
