@@ -22,7 +22,7 @@ if (wysihtml5.browser.supported()) {
   });
   
   
-// bold
+// bold, italic, underline
   asyncTest("Basic formating tests", function() {
      expect(10);
     var that = this,
@@ -67,5 +67,48 @@ if (wysihtml5.browser.supported()) {
       start();
     });
   });
+  
+// formatblock (alignment, headings, paragraph, pre, blockquote)
+    asyncTest("Format block", function() {
+       expect(7);
+      var that = this,
+          editor = new wysihtml5.Editor(this.editableArea),
+          text = "once upon a time<br>there was an unformated text<br>spanning many lines.";
+        
+      editor.on("load", function() {
+        var editableElement   = that.editableArea;
+        editor.setValue(text, true);
+        editor.composer.selection.selectNode(editor.editableElement);
+        editor.composer.commands.exec('justifyRight');
+        equal(editableElement.innerHTML.toLowerCase(), '<div class="wysiwyg-text-align-right">' + text + '</div>', "Text corectly wrapped in one aligning div");
+    
+        editor.composer.commands.exec('justifyRight');
+        equal(editableElement.innerHTML.toLowerCase(), text, "Aligning div correctly removed");
+        
+        editor.composer.selection.selectNode(editor.editableElement);
+        editor.composer.selection.getSelection().collapseToStart();
+        
+        editor.composer.commands.exec('justifyRight');
+        equal(editableElement.innerHTML.toLowerCase(), '<div class="wysiwyg-text-align-right">once upon a time</div>there was an unformated text<br>spanning many lines.', "Only first line correctly wrapped in aligning div");
+        
+        var node = editor.editableElement.querySelectorAll('.wysiwyg-text-align-right');
+        editor.composer.selection.selectNode(node[0].childNodes[0]);
+        editor.composer.commands.exec('justifyLeft');
+        equal(editableElement.innerHTML.toLowerCase(), '<div class="wysiwyg-text-align-left">once upon a time</div>there was an unformated text<br>spanning many lines.', "First line wrapper class changed correctly");
+        
+        editor.composer.commands.exec('formatBlock', "h1");
+        equal(editableElement.innerHTML.toLowerCase(), '<h1 class="wysiwyg-text-align-left">once upon a time</h1>there was an unformated text<br>spanning many lines.', "Alignment div changed to heading ok");
+        
+        editor.composer.commands.exec('formatBlock', "h1");
+        equal(editableElement.innerHTML.toLowerCase(), '<div class="wysiwyg-text-align-left">once upon a time</div>there was an unformated text<br>spanning many lines.', "heading back to div ok");
+        
+        editor.composer.commands.exec('justifyRight');
+        editor.composer.commands.exec('formatBlock', "h1");
+        editor.composer.commands.exec('justifyRight');
+        equal(editableElement.innerHTML.toLowerCase(), '<h1>once upon a time</h1>there was an unformated text<br>spanning many lines.', "heading alignment removed sucessfully");
+        
+        start();
+      });
+    });
   
 }
