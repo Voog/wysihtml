@@ -176,7 +176,10 @@ wysihtml5.quirks.handleEmbeds = (function() {
         
         handleMaskMouseOut: function(event) {
           if (!this.resizer) {
-            this.removeMask();
+            var that = this;
+            setTimeout(function() {
+              that.removeMask();
+            },0);
           }
         },
         
