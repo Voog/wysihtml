@@ -100,14 +100,43 @@ wysihtml5.quirks.handleEmbeds = (function() {
         },
         
         makeMask: function() {
-            var that = this;
-                this.mask = this.editable.ownerDocument.createElement('img');   
-                this.mask.src = maskData;
-
-            this.mask.title = "";
+            var that = this,
+                ie9bug = ~navigator.userAgent.indexOf("MSIE 9.");
             
-            this.mask.setAttribute("data-tracker", this.trackerID);
-            
+             // ie9 fails to handle iframes itself but does not allow to overlay normal element also
+             // I wish http://theie9countdown.com/ had an rss feed to subscribe to. So i would know when to remove this madness
+             if (ie9bug) {
+               
+               this.mask = this.editable.ownerDocument.createElement('iframe');
+               this.mask.style.background = "tranparent";
+               this.mask.setAttribute("allowTransparency", "true");
+               this.mask.setAttribute("scrolling", "no");
+               this.mask.setAttribute("frameborder", "0");
+               this.mask.style.background = "transparent";
+               this.mask.style.margin = "-10px 0 0 -10px";
+               this.mask.style.padding = "10px";
+               
+               this.mask.onload = function() {  
+                 dom.observe(that.mask.contentWindow, "click", that.startResizeMode, that);
+                 dom.observe(that.mask.contentWindow, "mousemove", function(event) {
+                   var pos = dom.offset(that.activeElement);
+                   var ev = that.mask.ownerDocument.createEvent ("MouseEvent");
+                   ev.initMouseEvent('mousemove', true, true, that.mask.ownerDocument.defaultView, 0, 0, 0, event.clientX + pos.left, event.clientY + pos.top, false, false, false, false, 0, null);
+                   that.mask.ownerDocument.dispatchEvent(ev);
+                 }, that);
+                 if (that.maskKeypressHandler) {
+                      that.maskKeypressHandler.stop();
+                 }
+                 that.maskKeypressHandler = dom.observe(that.mask.contentWindow.document, "keydown", that.handleKeyDown, that); 
+               };
+               
+             } else {
+               this.mask = this.editable.ownerDocument.createElement('img');
+               this.mask.src = maskData;
+               this.mask.title = "";
+               this.mask.setAttribute("data-tracker", this.trackerID);
+             }
+             
             // TODO: instead of this check find a way to add custom data in safari without preventing drag start on mask (will prevent filicker if this works)            
             if (!wysihtml5.browser.hasDragstartSetdataIssue()) {
                 dom.observe(this.mask, "dragstart", function(event) {
@@ -122,7 +151,6 @@ wysihtml5.quirks.handleEmbeds = (function() {
                 }, this);
             }
             
-           
             dom.observe(this.mask, "dragend", function(event) {
                 if (this.transferKey == "text") {
                     this.endResizeMode();
@@ -140,15 +168,31 @@ wysihtml5.quirks.handleEmbeds = (function() {
             }, this);
             
             dom.addClass(this.mask, "wysihtml5-temp");
-            dom.observe(this.mask, "mouseout", this.removeMask, this); 
-            dom.observe(this.mask, "click", this.startResizeMode, this);
+            dom.observe(this.mask, "mouseout", this.handleMaskMouseOut, this); 
+            if (!ie9bug) {
+              dom.observe(this.mask, "click", this.startResizeMode, this);
+            }
+        },
+        
+        handleMaskMouseOut: function(event) {
+          if (!this.resizer) {
+            this.removeMask();
+          }
         },
         
         startResizeMode: function(event) {
             var that = this;
             if (this.activeElement) {
+                
                 this.endResizeMode();
-                this.resizer = wysihtml5.quirks.resize(this.activeElement, this.handleResize, this);
+                if (!this.mask.parentNode) {
+                  this.addMask(this.activeElement);
+                }
+                this.resizer = wysihtml5.quirks.resize(this.activeElement, this.handleResize, {
+                  min_width: 15,
+                  min_height: 15
+                }, this);
+                
                 setTimeout(function() {
                     if (that.sideclickHandler) {
                         that.sideclickHandler.stop();
@@ -175,6 +219,7 @@ wysihtml5.quirks.handleEmbeds = (function() {
                 this.endResizeMode();
                 this.sideclickHandler.stop();
                 this.sideclickHandler = null;
+                this.removeMask();
             }
         },
         

@@ -501,7 +501,15 @@ var wysihtml5ParserRules = {
             "unwrap": 1
         },
         "embed": {
-            "remove": 1
+          "check_attributes": {
+            "src": "all",
+            "type": "all",
+            "width": "all",
+            "height": "all",
+            "allowscriptaccess": "all",
+            "allowfullscreen": "all"
+          }
+          
         },
         "hgroup": {
             "unwrap": 1

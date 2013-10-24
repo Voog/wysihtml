@@ -1,12 +1,19 @@
-wysihtml5.quirks.resize = function(element, handleResize, context) {
+wysihtml5.quirks.resize = function(element, handleResize, options, context) {
+  var defaults = {
+    min_width: 0,
+    min_height: 0
+  };
   
-  var dom = wysihtml5.dom,
+  var settings = wysihtml5.lang.object(defaults).merge(options).get(),
+      dom = wysihtml5.dom,
       doc = element.ownerDocument,
       body = doc.body,
       resizeBoxes = [],
       directions = [1,1],
       moveHandlers = [],
-      startObserver, startX, startY, startW, startH; 
+      startObserver, startX, startY, startW, startH;
+  
+      
   
   var start = function(event) {
       positionBoxes();
@@ -48,12 +55,12 @@ wysihtml5.quirks.resize = function(element, handleResize, context) {
           width = startW + dX,
           height = startH + dY;
           
-      if (width < 0) {
-          width = 0;
+      if (width < settings.min_width) {
+          width = settings.min_width;
       }
       
-      if (height < 0) {
-          height = 0;
+      if (height < settings.min_height) {
+          height = settings.min_height;
       }
       
       element.style.width = width + 'px';
