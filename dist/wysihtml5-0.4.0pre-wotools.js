@@ -543,6 +543,11 @@ wysihtml5.browser = (function() {
       return "getSelection" in window && "modify" in window.getSelection();
     },
     
+    // Returns if there is a way for setting selection to expand a line
+    supportsSelectLine: function () {
+        return (this.supportsSelectionModify() || document.selection) ? true : false;
+    },
+    
     /**
      * Opera needs a white space after a <br> in order to position the caret correctly
      */
@@ -1987,9 +1992,12 @@ wysihtml5.dom.parse = (function() {
         if (!method) {
           continue;
         }
-        newAttributeValue = method(_getAttribute(oldNode, attributeName));
-        if (typeof(newAttributeValue) === "string") {
-          attributes[attributeName] = newAttributeValue;
+        oldAttribute = _getAttribute(oldNode, attributeName);
+        if (oldAttribute || (attributeName === "alt" && oldNode.nodeName == "IMG")) {
+          newAttributeValue = method(oldAttribute);
+          if (typeof(newAttributeValue) === "string") {
+            attributes[attributeName] = newAttributeValue;
+          }
         }
       }
     }
@@ -4288,7 +4296,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
     _selectLine_W3C: function() {
       var win       = this.doc.defaultView,
           selection = win.getSelection();
-      selection.modify("extend", "left", "lineboundary");
+      selection.modify("move", "left", "lineboundary");
       selection.modify("extend", "right", "lineboundary");
     },
 
@@ -5077,14 +5085,19 @@ wysihtml5.commands.bold = {
   function _addClass(element, className, classRegExp) {
     if (element.className) {
       _removeClass(element, classRegExp);
-      element.className += " " + className;
+      element.className = wysihtml5.lang.string(element.className + " " + className).trim();
     } else {
       element.className = className;
     }
   }
 
   function _removeClass(element, classRegExp) {
+    var ret = classRegExp.test(element.className);
     element.className = element.className.replace(classRegExp, "");
+    if (wysihtml5.lang.string(element.className).trim() == '') {
+        element.removeAttribute('class');
+    }
+    return ret;
   }
 
   /**
@@ -5201,8 +5214,10 @@ wysihtml5.commands.bold = {
     }
   }
 
-  function _selectLineAndWrap(composer, element) {
-    composer.selection.selectLine();
+  function _selectionWrap(composer, element) {
+    if (composer.selection.isCollapsed()) {
+        composer.selection.selectLine();
+    }
     composer.selection.surround(element);
     _removeLineBreakBeforeAndAfter(element);
     _removeLastChildIfLineBreak(element);
@@ -5219,15 +5234,21 @@ wysihtml5.commands.bold = {
           blockElement    = this.state(composer, command, nodeName, className, classRegExp),
           useLineBreaks   = composer.config.useLineBreaks,
           defaultNodeName = useLineBreaks ? "DIV" : "P",
-          selectedNode;
+          selectedNode, classRemoveAction;
 
       nodeName = typeof(nodeName) === "string" ? nodeName.toUpperCase() : nodeName;
       
       if (blockElement) {
         composer.selection.executeAndRestoreSimple(function() {
           if (classRegExp) {
-            _removeClass(blockElement, classRegExp);
+            classRemoveAction = _removeClass(blockElement, classRegExp);
           }
+          
+          if (classRemoveAction && nodeName === null && blockElement.nodeName != defaultNodeName) {
+            // dont rename or remove element when just setting block formating class
+            return;
+          }
+          
           var hasClasses = _hasClasses(blockElement);
           if (!hasClasses && (useLineBreaks || nodeName === "P")) {
             // Insert a line break afterwards and beforewards when there are siblings
@@ -5267,16 +5288,23 @@ wysihtml5.commands.bold = {
         }
       }
 
-      if (composer.commands.support(command)) {
-        _execCommand(doc, command, nodeName || defaultNodeName, className);
-        return;
+      if (wysihtml5.browser.supportsSelectLine()) {
+          blockElement = doc.createElement(nodeName || defaultNodeName);
+          if (className) {
+            blockElement.className = className;
+          }
+          _selectionWrap(composer, blockElement);
+      } else {
+          // Falling back to native command for Opera up to 12 mostly
+          // Native command does not create elements from selecton boundaries.
+          // Not quite user expected behaviour
+          if (composer.commands.support(command)) {
+            _execCommand(doc, command, nodeName || defaultNodeName, className);
+            return;
+          } 
       }
 
-      blockElement = doc.createElement(nodeName || defaultNodeName);
-      if (className) {
-        blockElement.className = className;
-      }
-      _selectLineAndWrap(composer, blockElement);
+      
     },
 
     state: function(composer, command, nodeName, className, classRegExp) {
