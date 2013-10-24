@@ -70,7 +70,7 @@ if (wysihtml5.browser.supported()) {
   
 // formatblock (alignment, headings, paragraph, pre, blockquote)
     asyncTest("Format block", function() {
-       expect(7);
+       expect(8);
       var that = this,
           editor = new wysihtml5.Editor(this.editableArea),
           text = "once upon a time<br>there was an unformated text<br>spanning many lines.";
