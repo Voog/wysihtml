@@ -4171,6 +4171,7 @@ wysihtml5.quirks.handleEmbeds = (function() {
              // ie9 fails to handle iframes itself but does not allow to overlay normal element also
              // I wish http://theie9countdown.com/ had an rss feed to subscribe to. So i would know when to remove this madness
              if (ie9bug) {
+               
                this.mask = this.editable.ownerDocument.createElement('iframe');
                this.mask.style.background = "tranparent";
                this.mask.setAttribute("allowTransparency", "true");
@@ -4193,6 +4194,7 @@ wysihtml5.quirks.handleEmbeds = (function() {
                  }
                  that.maskKeypressHandler = dom.observe(that.mask.contentWindow.document, "keydown", that.handleKeyDown, that); 
                };
+               
              } else {
                this.mask = this.editable.ownerDocument.createElement('img');
                this.mask.src = maskData;
@@ -4239,7 +4241,10 @@ wysihtml5.quirks.handleEmbeds = (function() {
         
         handleMaskMouseOut: function(event) {
           if (!this.resizer) {
-            this.removeMask();
+            var that = this;
+            setTimeout(function() {
+              that.removeMask();
+            },0);
           }
         },
         
@@ -5928,6 +5933,10 @@ wysihtml5.commands.bold = {
   };
 })(wysihtml5);wysihtml5.commands.insertHTML = {
   exec: function(composer, command, html) {
+    console.log('sdfgasdfasdf');
+    if (html.source) {
+      html = html.source;
+    }
     if (composer.commands.support(command)) {
       composer.doc.execCommand(command, false, html);
     } else {

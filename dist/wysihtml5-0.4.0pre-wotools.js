@@ -271,10 +271,12 @@ wysihtml5.browser = (function() {
       testElement = document.createElement("div"),
       // Browser sniffing is unfortunately needed since some behaviors are impossible to feature detect
       isIE        = userAgent.indexOf("MSIE")         !== -1 && userAgent.indexOf("Opera") === -1,
+      lteIE8      = (window.attachEvent && !window.addEventListener) ? true : false,
       isGecko     = userAgent.indexOf("Gecko")        !== -1 && userAgent.indexOf("KHTML") === -1,
       isWebKit    = userAgent.indexOf("AppleWebKit/") !== -1,
       isChrome    = userAgent.indexOf("Chrome/")      !== -1,
-      isOpera     = userAgent.indexOf("Opera/")       !== -1;
+      isOpera     = userAgent.indexOf("Opera/")       !== -1,
+      isSafari    = userAgent.indexOf("Safari") !== -1 && userAgent.indexOf("Chrome") == -1;
   
   function iosVersion(userAgent) {
     return +((/ipad|iphone|ipod/.test(userAgent) && userAgent.match(/ os (\d+).+? like mac os x/)) || [undefined, 0])[1];
@@ -588,6 +590,19 @@ wysihtml5.browser = (function() {
       return isIE;
     },
     
+    /* In IE iframes and objects come on top of absolutely positioned divs */
+    /* TODO: If possible substitute with feature detection */
+    hasIframesPenetratingContentIssue: function () {
+        return lteIE8;
+    },
+    
+    /* Safari at least up to 6 breaks draggable on native functions if dataTransfer setdata is used */
+    /* TODO: If possible substitute with feature detection */
+    /* TODO: test in safari 7 too. maybe fixed */
+    hasDragstartSetdataIssue: function () {
+        return isSafari;
+    },
+    
     hasUndoInContextMenu: function() {
       return isGecko || isChrome || isOpera;
     },
@@ -635,14 +650,26 @@ wysihtml5.browser = (function() {
      *    // => true
      */
     contains: function(needle) {
-      if (arr.indexOf) {
-        return arr.indexOf(needle) !== -1;
-      } else {
-        for (var i=0, length=arr.length; i<length; i++) {
-          if (arr[i] === needle) { return true; }
+        return wysihtml5.lang.array(arr).indexOf(needle) !== -1;
+    },
+    
+    /**
+     * Check whether a given object exists in an array and return index
+     * If no elelemt found returns -1
+     *
+     * @example
+     *    wysihtml5.lang.array([1, 2]).indexOf(2);
+     *    // => 1
+     */
+    indexOf: function(needle) {
+        if (arr.indexOf) {
+          return arr.indexOf(needle);
+        } else {
+          for (var i=0, length=arr.length; i<length; i++) {
+            if (arr[i] === needle) { return i; }
+          }
+          return -1;
         }
-        return false;
-      }
     },
     
     /**
@@ -1235,17 +1262,19 @@ wysihtml5.dom.copyAttributes = function(attributesToCopy) {
  *    wysihtml5.dom.delegate(document.body, "a", "click", function() {
  *      // foo
  *    });
+ *
+ * As an option when contenxt is given handler will be called with "this" as context instead of target
  */
 (function(wysihtml5) {
   
-  wysihtml5.dom.delegate = function(container, selector, eventName, handler) {
+  wysihtml5.dom.delegate = function(container, selector, eventName, handler, context) {
     return wysihtml5.dom.observe(container, eventName, function(event) {
       var target    = event.target,
           match     = wysihtml5.lang.array(container.querySelectorAll(selector));
       
       while (target && target !== container) {
         if (match.contains(target)) {
-          handler.call(target, event);
+          handler.call((context) ? context : target, event);
           break;
         }
         target = target.parentNode;
@@ -1571,7 +1600,7 @@ wysihtml5.dom.insert = function(elementToInsert) {
  * @example
  *    wysihtml5.dom.observe(iframe.contentWindow.document.body, ["focus", "blur"], function() { ... });
  */
-wysihtml5.dom.observe = function(element, eventNames, handler) {
+wysihtml5.dom.observe = function(element, eventNames, handler, context) {
   eventNames = typeof(eventNames) === "string" ? [eventNames] : eventNames;
   
   var handlerWrapper,
@@ -1582,7 +1611,10 @@ wysihtml5.dom.observe = function(element, eventNames, handler) {
   for (; i<length; i++) {
     eventName = eventNames[i];
     if (element.addEventListener) {
-      element.addEventListener(eventName, handler, false);
+      handlerWrapper = (context) ? function(event) {
+        handler.call(context, event);
+      } : handler;
+      element.addEventListener(eventName, handlerWrapper, false);
     } else {
       handlerWrapper = function(event) {
         if (!("target" in event)) {
@@ -1594,7 +1626,7 @@ wysihtml5.dom.observe = function(element, eventNames, handler) {
         event.stopPropagation = event.stopPropagation || function() {
           this.cancelBubble = true;
         };
-        handler.call(element, event);
+        handler.call((context) ? context : element, event);
       };
       element.attachEvent("on" + eventName, handlerWrapper);
     }
@@ -1608,7 +1640,7 @@ wysihtml5.dom.observe = function(element, eventNames, handler) {
       for (; i<length; i++) {
         eventName = eventNames[i];
         if (element.removeEventListener) {
-          element.removeEventListener(eventName, handler, false);
+          element.removeEventListener(eventName, handlerWrapper, false);
         } else {
           element.detachEvent("on" + eventName, handlerWrapper);
         }
@@ -2172,6 +2204,12 @@ wysihtml5.dom.parse = (function() {
       return function(attributeValue) {
         attributeValue = (attributeValue || "").replace(REG_EXP, "");
         return attributeValue || null;
+      };
+    })(),
+    
+    all: (function() {
+      return function(attributeValue) {
+        return attributeValue;
       };
     })()
   };
@@ -6833,9 +6871,14 @@ wysihtml5.views.View = Base.extend(
       }, 0);
     });
     
-
+    // Observe table cells for custom selection
     if (this.config.handleTables) {
         this.tableSelection = wysihtml5.quirks.tableCellsSelection(element, that.parent);
+    }
+    
+    // Observe embed objects and iframes for resize and drag drop functions
+    if (this.config.handleEmbeds && !wysihtml5.browser.hasIframesPenetratingContentIssue()) {
+        this.embedObjects = new wysihtml5.quirks.handleEmbeds(element, that.parent);
     }
 
     // --------- Focus & blur logic ---------
@@ -6859,10 +6902,19 @@ wysihtml5.views.View = Base.extend(
       that.parent.fire("unset_placeholder");
     });
 
-    dom.observe(element, pasteEvents, function() {
-      setTimeout(function() {
-        that.parent.fire("paste").fire("paste:composer");
-      }, 0);
+    dom.observe(element, pasteEvents, function(event) {
+      if (that.embedObjects &&
+          that.embedObjects.trackerID &&
+          event.dataTransfer &&
+          event.dataTransfer.getData(that.embedObjects.transferKey) &&
+          event.dataTransfer.getData(that.embedObjects.transferKey) == that.embedObjects.trackerID
+      ) {
+      } else {
+          setTimeout(function() {
+            that.parent.fire("paste").fire("paste:composer");
+            if (that.embedObjects) { that.embedObjects.refresh(); }
+          }, 0);
+      }
     });
 
     // --------- neword event ---------
@@ -6881,7 +6933,7 @@ wysihtml5.views.View = Base.extend(
     if (!browser.canSelectImagesInContentEditable()) {
       dom.observe(element, "mousedown", function(event) {
         var target = event.target;
-        if (target.nodeName === "IMG") {
+        if (target.nodeName === "IMG" && !dom.hasClass(target, 'wysihtml5-temp')) {
           that.selection.selectNode(target);
         }
       });
@@ -7205,6 +7257,8 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
     autoLink:             true,
     // Includes table editing events and cell selection tracking 
     handleTables:         true,
+    // Includes objects, embeds and iframes resize and drag drop functions
+    handleEmbeds:         true,
     // Object which includes parser rules to apply when html gets inserted via copy & paste
     // See parser_rules/*.js for examples
     parserRules:          { tags: { br: {}, span: {}, div: {}, p: {} }, classes: {} },
