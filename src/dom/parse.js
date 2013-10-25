@@ -67,7 +67,8 @@ wysihtml5.dom.parse = (function() {
       DEFAULT_NODE_NAME   = "span",
       WHITE_SPACE_REG_EXP = /\s+/,
       defaultRules        = { tags: {}, classes: {} },
-      currentRules        = {};
+      currentRules        = {},
+      UNEDITABLE_CONTAINER_CLASS = "wysihtml5-uneditable-container";
   
   /**
    * Iterates over all childs of the element, recreates them, appends them into a document fragment
@@ -116,6 +117,10 @@ wysihtml5.dom.parse = (function() {
         fragment,
         newNode,
         newChild;
+        
+    if (oldNodeType === 1 && wysihtml5.dom.hasClass(oldNode, UNEDITABLE_CONTAINER_CLASS)) {
+        return oldNode;
+    }    
     
     newNode = method && method(oldNode);
     
