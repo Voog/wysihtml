@@ -301,70 +301,80 @@
     },
 
     applyToRange: function(range) {
-        var textNodes = range.getNodes([wysihtml5.TEXT_NODE]);
-        if (!textNodes.length) {
-          try {
-            var node = this.createContainer(range.endContainer.ownerDocument);
-            range.surroundContents(node);
-            this.selectNode(range, node);
-            return;
-          } catch(e) {}
-        }
+        var textNodes;
         
-        range.splitBoundaries();
-        textNodes = range.getNodes([wysihtml5.TEXT_NODE]);
-        
-        if (textNodes.length) {
-          var textNode;
-
-          for (var i = 0, len = textNodes.length; i < len; ++i) {
-            textNode = textNodes[i];
-            if (!this.getAncestorWithClass(textNode)) {
-              this.applyToTextNode(textNode);
+        for (var ri = 0, rimax = range.length; ri < rimax; ri++) {
+            textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
+            if (!textNodes.length) {
+              try {
+                var node = this.createContainer(range.endContainer.ownerDocument);
+                range[ri].surroundContents(node);
+                this.selectNode(range[ri], node);
+                return;
+              } catch(e) {}
             }
-          }
+        
+            range[ri].splitBoundaries();
+            textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
+        
+            if (textNodes.length) {
+              var textNode;
+
+              for (var i = 0, len = textNodes.length; i < len; ++i) {
+                textNode = textNodes[i];
+                if (!this.getAncestorWithClass(textNode)) {
+                  this.applyToTextNode(textNode);
+                }
+              }
           
-          range.setStart(textNodes[0], 0);
-          textNode = textNodes[textNodes.length - 1];
-          range.setEnd(textNode, textNode.length);
+              range[ri].setStart(textNodes[0], 0);
+              textNode = textNodes[textNodes.length - 1];
+              range[ri].setEnd(textNode, textNode.length);
           
-          if (this.normalize) {
-            this.postApply(textNodes, range);
-          }
+              if (this.normalize) {
+                this.postApply(textNodes, range[ri]);
+              }
+            }
+            
         }
     },
 
     undoToRange: function(range) {
-      var textNodes = range.getNodes([wysihtml5.TEXT_NODE]), textNode, ancestorWithClass;
-      if (textNodes.length) {
-        range.splitBoundaries();
-        textNodes = range.getNodes([wysihtml5.TEXT_NODE]);
-      } else {
-        var doc = range.endContainer.ownerDocument,
-            node = doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
-        range.insertNode(node);
-        range.selectNode(node);
-        textNodes = [node];
-      }
+      var textNodes;
       
-      for (var i = 0, len = textNodes.length; i < len; ++i) {
-        textNode = textNodes[i];
-        ancestorWithClass = this.getAncestorWithClass(textNode);
-        if (ancestorWithClass) {
-          this.undoToTextNode(textNode, range, ancestorWithClass);
-        }
-      }
+      for (var ri = 0, rimax = range.length; ri < rimax; ri++) {    
+        
+          var textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]), textNode, ancestorWithClass;
+          if (textNodes.length) {
+            range[ri].splitBoundaries();
+            textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
+          } else {
+            var doc = range[ri].endContainer.ownerDocument,
+                node = doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
+            range[ri].insertNode(node);
+            range[ri].selectNode(node);
+            textNodes = [node];
+          }
       
-      if (len == 1) {
-        this.selectNode(range, textNodes[0]);
-      } else {
-        range.setStart(textNodes[0], 0);
-        textNode = textNodes[textNodes.length - 1];
-        range.setEnd(textNode, textNode.length);
+          for (var i = 0, len = textNodes.length; i < len; ++i) {
+            textNode = textNodes[i];
+            ancestorWithClass = this.getAncestorWithClass(textNode);
+            if (ancestorWithClass) {
+              this.undoToTextNode(textNode, range[ri], ancestorWithClass);
+            }
+          }
+      
+          if (len == 1) {
+            this.selectNode(range[ri], textNodes[0]);
+          } else {
+            range[ri].setStart(textNodes[0], 0);
+            textNode = textNodes[textNodes.length - 1];
+            range[ri].setEnd(textNode, textNode.length);
 
-        if (this.normalize) {
-          this.postApply(textNodes, range);
-        }
+            if (this.normalize) {
+              this.postApply(textNodes, range[ri]);
+            }
+          }
       }
     },
     
@@ -400,22 +410,28 @@
 
     isAppliedToRange: function(range) {
       var ancestors = [],
-          ancestor,
-          textNodes = range.getNodes([wysihtml5.TEXT_NODE]);
-      if (!textNodes.length) {
-        ancestor = this.getAncestorWithClass(range.startContainer);
-        return ancestor ? [ancestor] : false;
+          ancestor, textNodes;
+      
+      for (var ri = 0, rimax = range.length; ri < rimax; ri++) {
+          
+          textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
+          if (!textNodes.length) {
+            ancestor = this.getAncestorWithClass(range[ri].startContainer);
+            return ancestor ? [ancestor] : false;
+          }
+      
+          for (var i = 0, len = textNodes.length, selectedText; i < len; ++i) {
+            selectedText = this.getTextSelectedByRange(textNodes[i], range[ri]);
+            ancestor = this.getAncestorWithClass(textNodes[i]);
+            if (selectedText != "" && !ancestor) {
+              return false;
+            } else {
+              ancestors.push(ancestor);
+            }
+          }
       }
       
-      for (var i = 0, len = textNodes.length, selectedText; i < len; ++i) {
-        selectedText = this.getTextSelectedByRange(textNodes[i], range);
-        ancestor = this.getAncestorWithClass(textNodes[i]);
-        if (selectedText != "" && !ancestor) {
-          return false;
-        } else {
-          ancestors.push(ancestor);
-        }
-      }
+      
       return ancestors;
     },
 

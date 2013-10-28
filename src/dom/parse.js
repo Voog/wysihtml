@@ -68,21 +68,25 @@ wysihtml5.dom.parse = (function() {
       WHITE_SPACE_REG_EXP = /\s+/,
       defaultRules        = { tags: {}, classes: {} },
       currentRules        = {},
-      UNEDITABLE_CONTAINER_CLASS = "wysihtml5-uneditable-container";
+      uneditableClass     = false;
   
   /**
    * Iterates over all childs of the element, recreates them, appends them into a document fragment
    * which later replaces the entire body content
    */
-  function parse(elementOrHtml, rules, context, cleanUp) {
-    wysihtml5.lang.object(currentRules).merge(defaultRules).merge(rules).get();
+   function parse(elementOrHtml, config) {
+    wysihtml5.lang.object(currentRules).merge(defaultRules).merge(config.rules).get();
     
-    context           = context || elementOrHtml.ownerDocument || document;
-    var fragment      = context.createDocumentFragment(),
+    var context       = config.context || elementOrHtml.ownerDocument || document,
+        fragment      = context.createDocumentFragment(),
         isString      = typeof(elementOrHtml) === "string",
         element,
         newNode,
         firstChild;
+    
+    if (config.uneditableClass) {
+      uneditableClass = config.uneditableClass;
+    }
     
     if (isString) {
       element = wysihtml5.dom.getAsDom(elementOrHtml, context);
@@ -92,7 +96,7 @@ wysihtml5.dom.parse = (function() {
     
     while (element.firstChild) {
       firstChild = element.firstChild;
-      newNode = _convert(firstChild, cleanUp);
+      newNode = _convert(firstChild, config.cleanUp);
       element.removeChild(firstChild);
       if (newNode) {
         fragment.appendChild(newNode);
@@ -118,7 +122,7 @@ wysihtml5.dom.parse = (function() {
         newNode,
         newChild;
         
-    if (oldNodeType === 1 && wysihtml5.dom.hasClass(oldNode, UNEDITABLE_CONTAINER_CLASS)) {
+    if (uneditableClass && oldNodeType === 1 && wysihtml5.dom.hasClass(oldNode, uneditableClass)) {
         return oldNode;
     }    
     

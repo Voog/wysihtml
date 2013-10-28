@@ -67,7 +67,10 @@
     cleanUp:              true,
     // Whether to use div instead of secure iframe
     contentEditableMode: false,
-    xingAlert: false
+    xingAlert: false,
+    // Classname of container that editor should not touch and pass through
+    // Pass false to disable 
+    uneditableContainerClassname: "wysihtml5-uneditable-container"
   };
   
   wysihtml5.Editor = wysihtml5.lang.Dispatcher.extend(
@@ -179,7 +182,12 @@
     
     parse: function(htmlOrElement) {
       var parseContext = (this.config.contentEditableMode) ? document : this.composer.sandbox.getDocument();
-      var returnValue = this.config.parser(htmlOrElement, this.config.parserRules, parseContext, this.config.cleanUp);
+      var returnValue = this.config.parser(htmlOrElement, {
+        "rules": this.config.parserRules,
+        "cleanUp": this.config.cleanUp,
+        "context": parseContext,
+        "uneditableClass": this.config.uneditableContainerClassname
+      });
       if (typeof(htmlOrElement) === "object") {
         wysihtml5.quirks.redraw(htmlOrElement);
       }

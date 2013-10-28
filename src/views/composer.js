@@ -174,7 +174,7 @@
       }
       
       // Make sure our selection handler is ready
-      this.selection = new wysihtml5.Selection(this.parent, this.element);
+      this.selection = new wysihtml5.Selection(this.parent, this.element, this.config.uneditableContainerClassname);
       
       // Make sure commands dispatcher is ready
       this.commands  = new wysihtml5.Commands(this.parent);

@@ -20,7 +20,7 @@
   
   wysihtml5.Selection = Base.extend(
     /** @scope wysihtml5.Selection.prototype */ {
-    constructor: function(editor, contain) {
+    constructor: function(editor, contain, unselectableClass) {
       // Make sure that our external range library is initialized
       window.rangy.init();
       
@@ -28,6 +28,7 @@
       this.composer = editor.composer;
       this.doc      = this.composer.doc;
       this.contain = contain;
+      this.unselectableClass = unselectableClass || false;
     },
     
     /**
@@ -447,11 +448,58 @@
         
     },
     
-    getRange: function() {
+    getRangex: function() {
       var selection = this.getSelection(),
           range = selection && selection.rangeCount && selection.getRangeAt(0);
-      this.fixRangeOverflow(range);
+      this.fixRangeOverflow(range);    
+      
       return range;
+    },
+    
+    // returns an array of ranges that belong only to this editable
+    // needed as uneditable block in contenteditabel can split range into pieces
+    getRange: function()  {
+      var ranges = [],
+          r = this.getRangex(),
+          tmpRanges;
+          
+      ranges.push(r);
+          
+          
+      if (this.unselectableClass && this.contain && r) {
+          var allUneditables = this.contain.querySelectorAll('.' + this.unselectableClass),
+              deepUneditables = this.contain.querySelectorAll('.' + this.unselectableClass + ' .' + this.unselectableClass),
+              uneditables = wysihtml5.lang.array(allUneditables).without(deepUneditables),
+              tmpRange;
+              
+          if (uneditables.length > 0) {
+            for (var i = 0, imax = uneditables.length; i < imax; i++) {
+              tmpRanges = [];
+              for (var j = 0, jmax = ranges.length; j < jmax; j++) {
+                switch (ranges[j].compareNode(uneditables[i])) {
+                  case 2: 
+                    // all selection inside uneditable. remove
+                  break;
+                  case 3:
+                    //section begins before and ends after uneditable. spilt
+                    tmpRange = ranges[j].cloneRange();
+                    ranges[j].setEndBefore(uneditables[i]);
+                    tmpRange.setStartAfter(uneditables[i]);
+                    
+                    tmpRanges.push(ranges[j]);
+                    tmpRanges.push(tmpRange);
+                  break;
+                  default:
+                    // in all other cases uneditable does not touch selection. dont modify
+                    tmpRanges.push(ranges[j]);
+                }
+                ranges = tmpRanges;
+              }
+            }
+          }
+      }
+      
+      return ranges;
     },
 
     getSelection: function() {
