@@ -56,12 +56,25 @@
   
   wysihtml5.commands.formatInline = {
     exec: function(composer, command, tagName, className, classRegExp) {
-      var range = composer.selection.getRange();
+      var range = composer.selection.getRange(),
+          ownRanges = composer.selection.getOwnRanges(),
+          sNode = range.startContainer,
+          sOffset = range.startOffset,
+          eNode = range.endContainer,
+          eOffset = range.endOffset;
+          
       if (!range) {
         return false;
       }
       composer.selection.getSelection().removeAllRanges();
-      _getApplier(tagName, className, classRegExp).toggleRange(range);
+      _getApplier(tagName, className, classRegExp).toggleRange(ownRanges);
+
+      if (ownRanges.length > 1) {
+        // satart and end can get shifted after modifications
+        range.setStart(sNode, sOffset);
+        range.setEnd(eNode, eOffset);
+      }
+      
       composer.selection.setSelection(range);
     },
     
@@ -84,7 +97,7 @@
     state: function(composer, command, tagName, className, classRegExp) {
       var doc           = composer.doc,
           aliasTagName  = ALIAS_MAPPING[tagName] || tagName,
-          range;
+          ownRanges;
 
       // Check whether the document contains a node with the desired tagName
       if (!wysihtml5.dom.hasElementWithTagName(doc, tagName) &&
@@ -97,12 +110,13 @@
          return false;
       }
 
-      range = composer.selection.getRange();
-      if (!range) {
+      ownRanges = composer.selection.getOwnRanges();
+      
+      if (ownRanges.length == 0) {
         return false;
       }
 
-      return _getApplier(tagName, className, classRegExp).isAppliedToRange(range);
+      return _getApplier(tagName, className, classRegExp).isAppliedToRange(ownRanges);
     }
   };
 })(wysihtml5);

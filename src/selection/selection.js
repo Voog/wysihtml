@@ -448,7 +448,7 @@
         
     },
     
-    getRangex: function() {
+    getRange: function() {
       var selection = this.getSelection(),
           range = selection && selection.rangeCount && selection.getRangeAt(0);
       this.fixRangeOverflow(range);    
@@ -458,13 +458,12 @@
     
     // returns an array of ranges that belong only to this editable
     // needed as uneditable block in contenteditabel can split range into pieces
-    getRange: function()  {
+    getOwnRanges: function()  {
       var ranges = [],
-          r = this.getRangex(),
+          r = this.getRange(),
           tmpRanges;
           
-      ranges.push(r);
-          
+      if (r) { ranges.push(r); } 
           
       if (this.unselectableClass && this.contain && r) {
           var allUneditables = this.contain.querySelectorAll('.' + this.unselectableClass),
@@ -483,10 +482,11 @@
                   case 3:
                     //section begins before and ends after uneditable. spilt
                     tmpRange = ranges[j].cloneRange();
-                    ranges[j].setEndBefore(uneditables[i]);
-                    tmpRange.setStartAfter(uneditables[i]);
+                    tmpRange.setEndBefore(uneditables[i]);
+                    tmpRanges.push(tmpRange);
                     
-                    tmpRanges.push(ranges[j]);
+                    tmpRange = ranges[j].cloneRange();
+                    tmpRange.setStartAfter(uneditables[i]);
                     tmpRanges.push(tmpRange);
                   break;
                   default:

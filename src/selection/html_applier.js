@@ -303,7 +303,7 @@
     applyToRange: function(range) {
         var textNodes;
         
-        for (var ri = 0, rimax = range.length; ri < rimax; ri++) {
+        for (var ri = range.length; ri--;) {    
             textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
             if (!textNodes.length) {
               try {
@@ -340,11 +340,10 @@
     },
 
     undoToRange: function(range) {
-      var textNodes;
+      var textNodes, textNode, textNode, ancestorWithClass;
       
-      for (var ri = 0, rimax = range.length; ri < rimax; ri++) {    
-        
-          var textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]), textNode, ancestorWithClass;
+      for (var ri = range.length; ri--;) {
+          textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
           if (textNodes.length) {
             range[ri].splitBoundaries();
             textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
@@ -412,8 +411,7 @@
       var ancestors = [],
           ancestor, textNodes;
       
-      for (var ri = 0, rimax = range.length; ri < rimax; ri++) {
-          
+      for (var ri = range.length; ri--;) {
           textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
           if (!textNodes.length) {
             ancestor = this.getAncestorWithClass(range[ri].startContainer);
