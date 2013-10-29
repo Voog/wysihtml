@@ -8,14 +8,26 @@ wysihtml5.lang.array = function(arr) {
      *    // => true
      */
     contains: function(needle) {
-      if (arr.indexOf) {
-        return arr.indexOf(needle) !== -1;
-      } else {
-        for (var i=0, length=arr.length; i<length; i++) {
-          if (arr[i] === needle) { return true; }
+        return wysihtml5.lang.array(arr).indexOf(needle) !== -1;
+    },
+     
+    /**
+     * Check whether a given object exists in an array and return index
+     * If no elelemt found returns -1
+     *
+     * @example
+     *    wysihtml5.lang.array([1, 2]).indexOf(2);
+     *    // => 1
+     */
+    indexOf: function(needle) {
+        if (arr.indexOf) {
+          return arr.indexOf(needle);
+        } else {
+          for (var i=0, length=arr.length; i<length; i++) {
+            if (arr[i] === needle) { return i; }
+          }
+          return -1;
         }
-        return false;
-      }
     },
     
     /**

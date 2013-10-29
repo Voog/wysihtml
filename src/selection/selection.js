@@ -147,7 +147,19 @@
         return range ? range.commonAncestorContainer : this.doc.body;
       }
     },
+    
+    getSelectedOwnNodes: function(controlRange) {
+      var selection,
+          ranges = this.getOwnRanges(),
+          ownNodes = [];
+          
+      for (var i = 0, maxi = ranges.length; i < maxi; i++) {
+          ownNodes.push(ranges[i].commonAncestorContainer || this.doc.body);
+      }
+      return ownNodes;
+    },
 
+    // TODO: has problems in chrome 12. investigate block level and uneditable area inbetween
     executeAndRestore: function(method, restoreScrollPosition) {
       var body                  = this.doc.body,
           oldScrollTop          = restoreScrollPosition && body.scrollTop,
@@ -298,21 +310,29 @@
      *
      * @param {Object} node The node to surround the selected elements with
      */
-    surround: function(node) {
-      var range = this.getRange();
-      if (!range) {
+    surround: function(nodeOptions) {
+      var ranges = this.getOwnRanges(),
+          node;
+      if (ranges.length == 0) {
         return;
       }
-
-      try {
-        // This only works when the range boundaries are not overlapping other elements
-        range.surroundContents(node);
-        this.selectNode(node);
-      } catch(e) {
-        // fallback
-        node.appendChild(range.extractContents());
-        range.insertNode(node);
+      
+      for (var i = ranges.length; i--;) {
+        node = this.doc.createElement(nodeOptions.nodeName);
+        if (nodeOptions.className) {
+          node.className = className;
+        }
+        try {
+          // This only works when the range boundaries are not overlapping other elements
+          ranges[i].surroundContents(node);
+          this.selectNode(node);
+        } catch(e) {
+          // fallback
+          node.appendChild(ranges[i].extractContents());
+          ranges[i].insertNode(node);
+        }
       }
+      
     },
 
     /**
@@ -456,8 +476,9 @@
       return range;
     },
     
-    // returns an array of ranges that belong only to this editable
-    // needed as uneditable block in contenteditabel can split range into pieces
+    // Returns an array of ranges that belong only to this editable
+    // Needed as uneditable block in contenteditabel can split range into pieces
+    // If manipulating content reverse loop is usually needed as manipulation can shift subsequent ranges
     getOwnRanges: function()  {
       var ranges = [],
           r = this.getRange(),

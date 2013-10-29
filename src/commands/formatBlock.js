@@ -119,36 +119,45 @@
    * Execute native query command
    * and if necessary modify the inserted node's className
    */
-  function _execCommand(doc, command, nodeName, className) {
-    if (className) {
-      var eventListener = dom.observe(doc, "DOMNodeInserted", function(event) {
-        var target = event.target,
-            displayStyle;
-        if (target.nodeType !== wysihtml5.ELEMENT_NODE) {
-          return;
-        }
-        displayStyle = dom.getStyle("display").from(target);
-        if (displayStyle.substr(0, 6) !== "inline") {
-          // Make sure that only block elements receive the given class
-          target.className += " " + className;
-        }
-      });
-    }
-    doc.execCommand(command, false, nodeName);
+  function _execCommand(doc, composer, command, nodeName, className) {
+    var ranges = composer.selection.getOwnRanges();
+    for (var i = ranges.length; i--;){
+      composer.selection.getSelection().removeAllRanges();
+      composer.selection.setSelection(ranges[i]);
+      if (className) {
+        var eventListener = dom.observe(doc, "DOMNodeInserted", function(event) {
+          var target = event.target,
+              displayStyle;
+          if (target.nodeType !== wysihtml5.ELEMENT_NODE) {
+            return;
+          }
+          displayStyle = dom.getStyle("display").from(target);
+          if (displayStyle.substr(0, 6) !== "inline") {
+            // Make sure that only block elements receive the given class
+            target.className += " " + className;
+          }
+        });
+      }
+      doc.execCommand(command, false, nodeName);
     
-    if (eventListener) {
-      eventListener.stop();
+      if (eventListener) {
+        eventListener.stop();
+      }
     }
   }
 
-  function _selectionWrap(composer, element) {
+  function _selectionWrap(composer, options/*element*/) {
     if (composer.selection.isCollapsed()) {
         composer.selection.selectLine();
     }
-    composer.selection.surround(element);
-    _removeLineBreakBeforeAndAfter(element);
-    _removeLastChildIfLineBreak(element);
-    composer.selection.selectNode(element, wysihtml5.browser.displaysCaretInEmptyContentEditableCorrectly());
+    
+    composer.selection.surround(options);
+    
+    //_removeLineBreakBeforeAndAfter(element);
+    //_removeLastChildIfLineBreak(element);
+    
+    // rethink restoring selection
+    //composer.selection.selectNode(element, wysihtml5.browser.displaysCaretInEmptyContentEditableCorrectly());
   }
 
   function _hasClasses(element) {
@@ -158,75 +167,84 @@
   wysihtml5.commands.formatBlock = {
     exec: function(composer, command, nodeName, className, classRegExp) {
       var doc             = composer.doc,
-          blockElement    = this.state(composer, command, nodeName, className, classRegExp),
+          blockElements    = this.state(composer, command, nodeName, className, classRegExp),
           useLineBreaks   = composer.config.useLineBreaks,
           defaultNodeName = useLineBreaks ? "DIV" : "P",
-          selectedNode, classRemoveAction;
+          selectedNodes, classRemoveAction, blockRenameFound;
 
       nodeName = typeof(nodeName) === "string" ? nodeName.toUpperCase() : nodeName;
       
-      if (blockElement) {
+      if (blockElements.length) {
         composer.selection.executeAndRestoreSimple(function() {
-          if (classRegExp) {
-            classRemoveAction = _removeClass(blockElement, classRegExp);
-          }
-          
-          if (classRemoveAction && nodeName === null && blockElement.nodeName != defaultNodeName) {
-            // dont rename or remove element when just setting block formating class
-            return;
-          }
-          
-          var hasClasses = _hasClasses(blockElement);
-          if (!hasClasses && (useLineBreaks || nodeName === "P")) {
-            // Insert a line break afterwards and beforewards when there are siblings
-            // that are not of type line break or block element
-            _addLineBreakBeforeAndAfter(blockElement);
-            dom.replaceWithChildNodes(blockElement);
-          } else {
-            // Make sure that styling is kept by renaming the element to a <div> or <p> and copying over the class name
-            dom.renameElement(blockElement, nodeName === "P" ? "DIV" : defaultNodeName);
+          for (var b = blockElements.length; b--;) {
+            if (classRegExp) {
+              classRemoveAction = _removeClass(blockElements[b], classRegExp);
+            }
+        
+            if (classRemoveAction && nodeName === null && blockElements[b].nodeName != defaultNodeName) {
+              // dont rename or remove element when just setting block formating class
+              return;
+            }
+            
+            var hasClasses = _hasClasses(blockElements[b]);
+            
+            if (!hasClasses && (useLineBreaks || nodeName === "P")) {
+              // Insert a line break afterwards and beforewards when there are siblings
+              // that are not of type line break or block element
+              _addLineBreakBeforeAndAfter(blockElements[b]);
+              dom.replaceWithChildNodes(blockElements[b]);
+            } else {
+              // Make sure that styling is kept by renaming the element to a <div> or <p> and copying over the class name
+              dom.renameElement(blockElements[b], nodeName === "P" ? "DIV" : defaultNodeName);
+            }
           }
         });
+        
         return;
       }
-
+      
       // Find similiar block element and rename it (<h2 class="foo"></h2>  =>  <h1 class="foo"></h1>)
       if (nodeName === null || wysihtml5.lang.array(BLOCK_ELEMENTS_GROUP).contains(nodeName)) {
-        selectedNode = composer.selection.getSelectedNode();
-        
-        blockElement = dom.getParentElement(selectedNode, {
-          nodeName: BLOCK_ELEMENTS_GROUP
+        selectedNodes = composer.selection.getSelectedOwnNodes();
+        composer.selection.executeAndRestoreSimple(function() {
+          for (var n = selectedNodes.length; n--;) {
+            blockElement = dom.getParentElement(selectedNodes[n], {
+              nodeName: BLOCK_ELEMENTS_GROUP
+            });
+            if (blockElement == composer.element) {
+                blockElement = null;
+            }
+            if (blockElement) {
+                // Rename current block element to new block element and add class
+                if (nodeName) {
+                  blockElement = dom.renameElement(blockElement, nodeName);
+                }
+                if (className) {
+                  _addClass(blockElement, className, classRegExp);
+                }
+            
+              blockRenameFound = true;
+            }
+          }
+          
         });
-        if (blockElement == composer.element) {
-            blockElement = null;
-        }
         
-        if (blockElement) {
-          composer.selection.executeAndRestore(function() {
-            // Rename current block element to new block element and add class
-            if (nodeName) {
-              blockElement = dom.renameElement(blockElement, nodeName);
-            }
-            if (className) {
-              _addClass(blockElement, className, classRegExp);
-            }
-          });
+        if (blockRenameFound) {
           return;
         }
       }
 
       if (wysihtml5.browser.supportsSelectLine()) {
-          blockElement = doc.createElement(nodeName || defaultNodeName);
-          if (className) {
-            blockElement.className = className;
-          }
-          _selectionWrap(composer, blockElement);
+          _selectionWrap(composer, {
+            "nodeName": (nodeName || defaultNodeName),
+            "className": className || null
+          });
       } else {
           // Falling back to native command for Opera up to 12 mostly
           // Native command does not create elements from selecton boundaries.
           // Not quite user expected behaviour
           if (composer.commands.support(command)) {
-            _execCommand(doc, command, nodeName || defaultNodeName, className);
+            _execCommand(doc, composer, command, nodeName || defaultNodeName, className);
             return;
           } 
       }
@@ -235,13 +253,26 @@
     },
 
     state: function(composer, command, nodeName, className, classRegExp) {
+      var nodes = composer.selection.getSelectedOwnNodes(),
+          parents = [],
+          parent;
+          
       nodeName = typeof(nodeName) === "string" ? nodeName.toUpperCase() : nodeName;
-      var selectedNode = composer.selection.getSelectedNode();
-      return dom.getParentElement(selectedNode, {
-        nodeName:     nodeName,
-        className:    className,
-        classRegExp:  classRegExp
-      });
+      
+      //var selectedNode = composer.selection.getSelectedNode();
+      for (var i = 0, maxi = nodes.length; i < maxi; i++) {
+        parent = dom.getParentElement(nodes[i], {
+          nodeName:     nodeName,
+          className:    className,
+          classRegExp:  classRegExp
+        });
+        if (parent && wysihtml5.lang.array(parents).indexOf(parent) == -1) {
+          parents.push(parent);
+        }
+      }
+      return parents;
     }
+    
+    
   };
 })(wysihtml5);

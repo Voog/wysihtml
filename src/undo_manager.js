@@ -82,7 +82,9 @@
       // The last element being inserted will be immediately be removed again by a exexCommand("undo")
       //  => When the second element appears in the dom tree then we know the user clicked "redo" in the context menu
       //  => When the first element disappears from the dom tree then we know the user clicked "undo" in the context menu
-      if (wysihtml5.browser.hasUndoInContextMenu()) {
+      
+      // TODO: unexpected behaviour. Tends to undo on contextmenu showing in chrome on newly inserted blocks
+      /*if (wysihtml5.browser.hasUndoInContextMenu()) {
         var interval, observed, cleanUp = function() {
           cleanTempElements(doc);
           clearInterval(interval);
@@ -118,7 +120,7 @@
             dom.observe(doc, ["mousedown", "paste", "cut", "copy"], cleanUp);
           }
         });
-      }
+      }*/
       
       this.editor
         .on("newword:composer", function() {
