@@ -205,7 +205,7 @@
       
       // Find similiar block element and rename it (<h2 class="foo"></h2>  =>  <h1 class="foo"></h1>)
       if (nodeName === null || wysihtml5.lang.array(BLOCK_ELEMENTS_GROUP).contains(nodeName)) {
-        selectedNodes = composer.selection.getSelectedOwnNodes();
+        selectedNodes = composer.selection.findNodesInSelection(BLOCK_ELEMENTS_GROUP).concat(composer.selection.getSelectedOwnNodes());
         composer.selection.executeAndRestoreSimple(function() {
           for (var n = selectedNodes.length; n--;) {
             blockElement = dom.getParentElement(selectedNodes[n], {

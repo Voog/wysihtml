@@ -158,6 +158,18 @@
       }
       return ownNodes;
     },
+    
+    findNodesInSelection: function(nodeTypes) {
+      var ranges = this.getOwnRanges(),
+          nodes = [], curNodes;
+      for (var i = 0, maxi = ranges.length; i < maxi; i++) {
+        curNodes = ranges[i].getNodes([1], function(node) {
+            return wysihtml5.lang.array(nodeTypes).contains(node.nodeName);
+        });
+        nodes = nodes.concat(curNodes);
+      }
+      return nodes;
+    },
 
     // TODO: has problems in chrome 12. investigate block level and uneditable area inbetween
     executeAndRestore: function(method, restoreScrollPosition) {
