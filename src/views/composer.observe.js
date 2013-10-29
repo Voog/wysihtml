@@ -150,6 +150,18 @@
         that.commands.exec(command);
         event.preventDefault();
       }
+      if (keyCode == 8) {
+        if (that.selection.isCollapsed()) {
+          var beforeUneditable = that.selection.caretIsBeforeUneditable();
+          if (beforeUneditable) {
+            event.preventDefault();
+            that.selection.setBefore(beforeUneditable);
+          }
+        } else if (that.selection.containsUneditable()) {
+          event.preventDefault();
+          that.selection.deleteContents();
+        }
+      }
     });
 
     // --------- Make sure that when pressing backspace/delete on selected images deletes the image and it's anchor ---------

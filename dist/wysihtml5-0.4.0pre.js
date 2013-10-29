@@ -4127,6 +4127,58 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       }
       return nodes;
     },
+    
+    containsUneditable: function() {
+      var uneditables = this.getOwnUneditables(),
+          selection = this.getSelection();
+      
+      for (var i = 0, maxi = uneditables.length; i < maxi; i++) {
+        if (selection.containsNode(uneditables[i])) {
+          return true;
+        }
+      }
+      
+      return false;
+    },
+    
+    deleteContents: function()  {
+      var ranges = this.getOwnRanges();
+      for (var i = ranges.length; i--;) {
+        ranges[i].deleteContents();
+      }
+      this.setSelection(ranges[0]);
+    },
+    
+    _getPreviousNode: function(node) {
+      var ret = node.previousSibling,
+          parent;
+      if (!ret && node !== this.contain) {
+        parent = node.parentNode;
+        if (parent !== this.contain) {
+          ret = this._getPreviousNode(parent);
+        }
+      }
+      return ret;
+    },
+    
+    caretIsBeforeUneditable: function() {
+      var selection = this.getSelection(),
+          node = selection.anchorNode,
+          offset = selection.anchorOffset;
+          
+      if (offset === 0) {
+        var prevNode = this._getPreviousNode(node);
+        if (prevNode) {
+          var uneditables = this.getOwnUneditables();
+          for (var i = 0, maxi = uneditables.length; i < maxi; i++) {
+            if (prevNode === uneditables[i]) {
+              return uneditables[i];
+            }
+          }
+        }
+      } 
+      return false;
+    },
 
     // TODO: has problems in chrome 12. investigate block level and uneditable area inbetween
     executeAndRestore: function(method, restoreScrollPosition) {
@@ -4445,6 +4497,13 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       return range;
     },
     
+    getOwnUneditables: function() {
+      var allUneditables = this.contain.querySelectorAll('.' + this.unselectableClass),
+          deepUneditables = this.contain.querySelectorAll('.' + this.unselectableClass + ' .' + this.unselectableClass);
+          
+      return wysihtml5.lang.array(allUneditables).without(deepUneditables);
+    },
+    
     // Returns an array of ranges that belong only to this editable
     // Needed as uneditable block in contenteditabel can split range into pieces
     // If manipulating content reverse loop is usually needed as manipulation can shift subsequent ranges
@@ -4456,9 +4515,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       if (r) { ranges.push(r); } 
           
       if (this.unselectableClass && this.contain && r) {
-          var allUneditables = this.contain.querySelectorAll('.' + this.unselectableClass),
-              deepUneditables = this.contain.querySelectorAll('.' + this.unselectableClass + ' .' + this.unselectableClass),
-              uneditables = wysihtml5.lang.array(allUneditables).without(deepUneditables),
+          var uneditables = this.getOwnUneditables(),
               tmpRange;
               
           if (uneditables.length > 0) {
@@ -7125,6 +7182,18 @@ wysihtml5.views.View = Base.extend(
       if ((event.ctrlKey || event.metaKey) && !event.altKey && command) {
         that.commands.exec(command);
         event.preventDefault();
+      }
+      if (keyCode == 8) {
+        if (that.selection.isCollapsed()) {
+          var beforeUneditable = that.selection.caretIsBeforeUneditable();
+          if (beforeUneditable) {
+            event.preventDefault();
+            that.selection.setBefore(beforeUneditable);
+          }
+        } else if (that.selection.containsUneditable()) {
+          event.preventDefault();
+          that.selection.deleteContents();
+        }
       }
     });
 
