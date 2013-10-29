@@ -270,6 +270,9 @@
           parents.push(parent);
         }
       }
+      if (parents.length == 0) {
+        return false;
+      }
       return parents;
     }
     
