@@ -386,13 +386,14 @@
      */
     surround: function(nodeOptions) {
       var ranges = this.getOwnRanges(),
-          node;
+          node, nodes = [];
       if (ranges.length == 0) {
         return;
       }
       
       for (var i = ranges.length; i--;) {
         node = this.doc.createElement(nodeOptions.nodeName);
+        nodes.push(node);
         if (nodeOptions.className) {
           node.className = nodeOptions.className;
         }
@@ -406,6 +407,7 @@
           ranges[i].insertNode(node);
         }
       }
+      return nodes;
     },
     
     deblockAndSurround: function(nodeOptions) {
@@ -634,7 +636,6 @@
             }
           }
       }
-      
       return ranges;
     },
 

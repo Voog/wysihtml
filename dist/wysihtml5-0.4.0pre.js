@@ -4344,13 +4344,14 @@ wysihtml5.quirks.ensureProperClearing = (function() {
      */
     surround: function(nodeOptions) {
       var ranges = this.getOwnRanges(),
-          node;
+          node, nodes = [];
       if (ranges.length == 0) {
         return;
       }
       
       for (var i = ranges.length; i--;) {
         node = this.doc.createElement(nodeOptions.nodeName);
+        nodes.push(node);
         if (nodeOptions.className) {
           node.className = nodeOptions.className;
         }
@@ -4364,6 +4365,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
           ranges[i].insertNode(node);
         }
       }
+      return nodes;
     },
     
     deblockAndSurround: function(nodeOptions) {
@@ -4592,7 +4594,6 @@ wysihtml5.quirks.ensureProperClearing = (function() {
             }
           }
       }
-      
       return ranges;
     },
 
@@ -5444,10 +5445,11 @@ wysihtml5.commands.bold = {
         composer.selection.selectLine();
     }
     
-    composer.selection.surround(options);
-    
-    //_removeLineBreakBeforeAndAfter(element);
-    //_removeLastChildIfLineBreak(element);
+    var surroundedNodes = composer.selection.surround(options);
+    for (var i = 0, imax = surroundedNodes.length; i < imax; i++) {
+      _removeLineBreakBeforeAndAfter(surroundedNodes[i]);
+      _removeLastChildIfLineBreak(surroundedNodes[i]);
+    }
     
     // rethink restoring selection
     //composer.selection.selectNode(element, wysihtml5.browser.displaysCaretInEmptyContentEditableCorrectly());
@@ -5914,7 +5916,7 @@ wysihtml5.commands.bold = {
       if (tempElement) {
         isEmpty = tempElement.innerHTML === "" || tempElement.innerHTML === wysihtml5.INVISIBLE_SPACE || tempElement.innerHTML === "<br>";
         composer.selection.executeAndRestore(function() {
-          list = wysihtml5.dom.convertToList(tempElement, "ul");
+          list = wysihtml5.dom.convertToList(tempElement, "ul", composer.parent.config.uneditableContainerClassname);
         });
         if (isEmpty) {
           composer.selection.selectNode(list.querySelector("li"), true);
@@ -7244,26 +7246,22 @@ wysihtml5.views.View = Base.extend(
           if (beforeUneditable) {
             event.preventDefault();
             
+            // merge node with previous node from uneditable
             var prevNode = that.selection.getPreviousNode(beforeUneditable),
                 curNode = that.selection.getSelectedNode();
             
-            if (curNode.nodeType !== 1) {
-              curNode = curNode.parentNode;
-            } 
+            if (curNode.nodeType !== 1) { curNode = curNode.parentNode; } 
             var first = curNode.firstChild;
             
             if (prevNode) {
               while (curNode.firstChild) {
-                console.log(curNode.firstChild);
                 prevNode.appendChild(curNode.firstChild);
               }
               if (curNode.parentNode) {
                 curNode.parentNode.removeChild(curNode);
               }
               that.selection.setBefore(first);
-            } 
-            
-            //that.selection.setBefore(beforeUneditable); 
+            }
             
           }
         } else if (that.selection.containsUneditable()) {

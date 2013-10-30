@@ -1,8 +1,13 @@
 if (wysihtml5.browser.supported()) {
 
   module("wysihtml5.dom.parse", {
-    sanitize: function(html, rules, context, cleanUp) {
-      return wysihtml5.dom.parse(html, rules, context, cleanUp);
+    sanitize: function(html, rules, context, cleanUp, uneditableClass) {
+      return wysihtml5.dom.parse(html, {
+        "rules": rules,
+        "cleanUp": cleanUp,
+        "context": context,
+        "uneditableClass": uneditableClass
+      });
     },
 
     equal: function(actual, expected, message) {

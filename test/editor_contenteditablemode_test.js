@@ -266,13 +266,13 @@ if (wysihtml5.browser.supported()) {
     
     var editor = new wysihtml5.Editor(this.editableArea, {
       parserRules: parserRules,
-      parser:      function(html, rules, context) {
+      parser:      function(html, config) {
         if (typeof html !== "string") {
             html = html.innerHTML;
             ok(true, "Custom parser is run element upon initiation");
         }
         equal(html.toLowerCase(), input, "HTML passed into parser is equal to the one which just got inserted");
-        equal(rules, parserRules, "Rules passed into parser are equal to those given to the editor");
+        equal(config.rules, parserRules, "Rules passed into parser are equal to those given to the editor");
         return html.replace(/\<script\>.*?\<\/script\>/gi, "");
       }
     });
@@ -320,9 +320,11 @@ if (wysihtml5.browser.supported()) {
           
       editor.on("load", function() {
           editor.setValue("foobar", true);
-          editor.composer.selection.selectNode(document.body);
+          editor.composer.selection.selectNode(that.editableArea);
           equal(that.editableArea.innerHTML, "foobar", "Content was not bold before");
+          window.e = editor;
           editor.composer.commands.exec('bold');
+          
           ok(wysihtml5.dom.getStyle("font-weight").from(that.editableArea.children[0]) == 700 || wysihtml5.dom.getStyle("font-weight").from(that.editableArea.children[0]) == "bold", "First child has style bold");
           ok(wysihtml5.dom.getStyle("font-weight").from(that.editableArea) == 400 || wysihtml5.dom.getStyle("font-weight").from(that.editableArea) == "normal", "Editable element itself is not bold");
           start();

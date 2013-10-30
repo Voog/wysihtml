@@ -151,10 +151,11 @@
         composer.selection.selectLine();
     }
     
-    composer.selection.surround(options);
-    
-    //_removeLineBreakBeforeAndAfter(element);
-    //_removeLastChildIfLineBreak(element);
+    var surroundedNodes = composer.selection.surround(options);
+    for (var i = 0, imax = surroundedNodes.length; i < imax; i++) {
+      _removeLineBreakBeforeAndAfter(surroundedNodes[i]);
+      _removeLastChildIfLineBreak(surroundedNodes[i]);
+    }
     
     // rethink restoring selection
     //composer.selection.selectNode(element, wysihtml5.browser.displaysCaretInEmptyContentEditableCorrectly());
