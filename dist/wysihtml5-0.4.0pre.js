@@ -1072,7 +1072,7 @@ wysihtml5.dom.convertToList = (function() {
     return doc.createElement(type);
   }
   
-  function convertToList(element, listType) {
+  function convertToList(element, listType, uneditableClass) {
     if (element.nodeName === "UL" || element.nodeName === "OL" || element.nodeName === "MENU") {
       // Already a list
       return element;
@@ -1113,7 +1113,8 @@ wysihtml5.dom.convertToList = (function() {
       isBlockElement    = wysihtml5.dom.getStyle("display").from(childNode) === "block";
       isLineBreak       = childNode.nodeName === "BR";
       
-      if (isBlockElement) {
+      // consider uneditable as an inline element
+      if (isBlockElement && (!uneditableClass || !wysihtml5.dom.hasClass(childNode, uneditableClass))) {
         // Append blockElement to current <li> if empty, otherwise create a new one
         currentListItem = currentListItem.firstChild ? _createListItem(doc, list) : currentListItem;
         currentListItem.appendChild(childNode);
@@ -4152,13 +4153,18 @@ wysihtml5.quirks.ensureProperClearing = (function() {
     _getPreviousNode: function(node) {
       var ret = node.previousSibling,
           parent;
-      if (!ret && node !== this.contain) {
+      
+      // do not count empty textnodes as previus nodes
+      if (ret && ret.nodeType === 3 && (/^\s*$/).test(ret.textContent)) {
+        ret = this._getPreviousNode(ret);
+      } else if (!ret && node !== this.contain) {
         parent = node.parentNode;
         if (parent !== this.contain) {
           ret = this._getPreviousNode(parent);
         }
       }
-      return ret;
+      
+      return (node !== this.contain) ? ret : false;
     },
     
     caretIsBeforeUneditable: function() {
@@ -4168,6 +4174,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
           
       if (offset === 0) {
         var prevNode = this._getPreviousNode(node);
+        console.log(prevNode);
         if (prevNode) {
           var uneditables = this.getOwnUneditables();
           for (var i = 0, maxi = uneditables.length; i < maxi; i++) {
@@ -4341,7 +4348,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       for (var i = ranges.length; i--;) {
         node = this.doc.createElement(nodeOptions.nodeName);
         if (nodeOptions.className) {
-          node.className = className;
+          node.className = nodeOptions.className;
         }
         try {
           // This only works when the range boundaries are not overlapping other elements
@@ -4353,7 +4360,43 @@ wysihtml5.quirks.ensureProperClearing = (function() {
           ranges[i].insertNode(node);
         }
       }
+    },
+    
+    deblockAndSurround: function(nodeOptions) {
+      var tempElement = this.doc.createElement('div'),
+          range = rangy.createRange(this.doc),
+          tempDivElements,
+          tempElements,
+          firstChild;
+          
+      tempElement.className = nodeOptions.className;
       
+      this.composer.commands.exec("formatBlock", nodeOptions.nodeName, nodeOptions.className);
+      tempDivElements = this.contain.querySelectorAll("." + nodeOptions.className);
+      if (tempDivElements[0]) {
+        tempDivElements[0].parentNode.insertBefore(tempElement, tempDivElements[0]);
+      
+        range.setStartBefore(tempDivElements[0]);
+        range.setEndAfter(tempDivElements[tempDivElements.length - 1]);
+        tempElements = range.extractContents();
+      
+        while (tempElements.firstChild) {  
+          firstChild = tempElements.firstChild;
+          if (firstChild.nodeType == 1 && wysihtml5.dom.hasClass(firstChild, nodeOptions.className)) {
+            while (firstChild.firstChild) {
+              tempElement.appendChild(firstChild.firstChild);
+            }
+            if (firstChild.nodeName !== "BR") { tempElement.appendChild(this.doc.createElement('br')); }
+            tempElements.removeChild(firstChild);
+          } else {
+            tempElement.appendChild(firstChild);
+          }
+        }
+      } else {
+        tempElement = null;
+      }
+      
+      return tempElement;
     },
 
     /**
@@ -5807,14 +5850,18 @@ wysihtml5.commands.bold = {
       });
     } else {
       // Create list
-      composer.commands.exec("formatBlock", "div", tempClassName);
-      tempElement = doc.querySelector("." + tempClassName);
-      isEmpty = tempElement.innerHTML === "" || tempElement.innerHTML === wysihtml5.INVISIBLE_SPACE || tempElement.innerHTML === "<br>";
-      composer.selection.executeAndRestore(function() {
-        list = wysihtml5.dom.convertToList(tempElement, "ol");
+      tempElement = composer.selection.deblockAndSurround({
+        "nodeName": "div",
+        "className": tempClassName
       });
-      if (isEmpty) {
-        composer.selection.selectNode(list.querySelector("li"), true);
+      if (tempElement) {
+        isEmpty = tempElement.innerHTML === "" || tempElement.innerHTML === wysihtml5.INVISIBLE_SPACE || tempElement.innerHTML === "<br>";
+        composer.selection.executeAndRestore(function() {
+          list = wysihtml5.dom.convertToList(tempElement, "ol", composer.parent.config.uneditableContainerClassname);
+        });
+        if (isEmpty) {
+          composer.selection.selectNode(list.querySelector("li"), true);
+        }
       }
     }
   },
@@ -5856,14 +5903,18 @@ wysihtml5.commands.bold = {
       });
     } else {
       // Create list
-      composer.commands.exec("formatBlock", "div", tempClassName);
-      tempElement = doc.querySelector("." + tempClassName);
-      isEmpty = tempElement.innerHTML === "" || tempElement.innerHTML === wysihtml5.INVISIBLE_SPACE || tempElement.innerHTML === "<br>";
-      composer.selection.executeAndRestore(function() {
-        list = wysihtml5.dom.convertToList(tempElement, "ul");
+      tempElement = composer.selection.deblockAndSurround({
+        "nodeName": "div",
+        "className": tempClassName
       });
-      if (isEmpty) {
-        composer.selection.selectNode(list.querySelector("li"), true);
+      if (tempElement) {
+        isEmpty = tempElement.innerHTML === "" || tempElement.innerHTML === wysihtml5.INVISIBLE_SPACE || tempElement.innerHTML === "<br>";
+        composer.selection.executeAndRestore(function() {
+          list = wysihtml5.dom.convertToList(tempElement, "ul");
+        });
+        if (isEmpty) {
+          composer.selection.selectNode(list.querySelector("li"), true);
+        }
       }
     }
   },

@@ -31,14 +31,18 @@ wysihtml5.commands.insertOrderedList = {
       });
     } else {
       // Create list
-      composer.commands.exec("formatBlock", "div", tempClassName);
-      tempElement = doc.querySelector("." + tempClassName);
-      isEmpty = tempElement.innerHTML === "" || tempElement.innerHTML === wysihtml5.INVISIBLE_SPACE || tempElement.innerHTML === "<br>";
-      composer.selection.executeAndRestore(function() {
-        list = wysihtml5.dom.convertToList(tempElement, "ol");
+      tempElement = composer.selection.deblockAndSurround({
+        "nodeName": "div",
+        "className": tempClassName
       });
-      if (isEmpty) {
-        composer.selection.selectNode(list.querySelector("li"), true);
+      if (tempElement) {
+        isEmpty = tempElement.innerHTML === "" || tempElement.innerHTML === wysihtml5.INVISIBLE_SPACE || tempElement.innerHTML === "<br>";
+        composer.selection.executeAndRestore(function() {
+          list = wysihtml5.dom.convertToList(tempElement, "ol", composer.parent.config.uneditableContainerClassname);
+        });
+        if (isEmpty) {
+          composer.selection.selectNode(list.querySelector("li"), true);
+        }
       }
     }
   },

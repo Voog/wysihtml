@@ -35,7 +35,7 @@ wysihtml5.dom.convertToList = (function() {
     return doc.createElement(type);
   }
   
-  function convertToList(element, listType) {
+  function convertToList(element, listType, uneditableClass) {
     if (element.nodeName === "UL" || element.nodeName === "OL" || element.nodeName === "MENU") {
       // Already a list
       return element;
@@ -76,7 +76,8 @@ wysihtml5.dom.convertToList = (function() {
       isBlockElement    = wysihtml5.dom.getStyle("display").from(childNode) === "block";
       isLineBreak       = childNode.nodeName === "BR";
       
-      if (isBlockElement) {
+      // consider uneditable as an inline element
+      if (isBlockElement && (!uneditableClass || !wysihtml5.dom.hasClass(childNode, uneditableClass))) {
         // Append blockElement to current <li> if empty, otherwise create a new one
         currentListItem = currentListItem.firstChild ? _createListItem(doc, list) : currentListItem;
         currentListItem.appendChild(childNode);

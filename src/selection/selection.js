@@ -195,13 +195,18 @@
     _getPreviousNode: function(node) {
       var ret = node.previousSibling,
           parent;
-      if (!ret && node !== this.contain) {
+      
+      // do not count empty textnodes as previus nodes
+      if (ret && ret.nodeType === 3 && (/^\s*$/).test(ret.textContent)) {
+        ret = this._getPreviousNode(ret);
+      } else if (!ret && node !== this.contain) {
         parent = node.parentNode;
         if (parent !== this.contain) {
           ret = this._getPreviousNode(parent);
         }
       }
-      return ret;
+      
+      return (node !== this.contain) ? ret : false;
     },
     
     caretIsBeforeUneditable: function() {
@@ -384,7 +389,7 @@
       for (var i = ranges.length; i--;) {
         node = this.doc.createElement(nodeOptions.nodeName);
         if (nodeOptions.className) {
-          node.className = className;
+          node.className = nodeOptions.className;
         }
         try {
           // This only works when the range boundaries are not overlapping other elements
@@ -396,7 +401,43 @@
           ranges[i].insertNode(node);
         }
       }
+    },
+    
+    deblockAndSurround: function(nodeOptions) {
+      var tempElement = this.doc.createElement('div'),
+          range = rangy.createRange(this.doc),
+          tempDivElements,
+          tempElements,
+          firstChild;
+          
+      tempElement.className = nodeOptions.className;
       
+      this.composer.commands.exec("formatBlock", nodeOptions.nodeName, nodeOptions.className);
+      tempDivElements = this.contain.querySelectorAll("." + nodeOptions.className);
+      if (tempDivElements[0]) {
+        tempDivElements[0].parentNode.insertBefore(tempElement, tempDivElements[0]);
+      
+        range.setStartBefore(tempDivElements[0]);
+        range.setEndAfter(tempDivElements[tempDivElements.length - 1]);
+        tempElements = range.extractContents();
+      
+        while (tempElements.firstChild) {  
+          firstChild = tempElements.firstChild;
+          if (firstChild.nodeType == 1 && wysihtml5.dom.hasClass(firstChild, nodeOptions.className)) {
+            while (firstChild.firstChild) {
+              tempElement.appendChild(firstChild.firstChild);
+            }
+            if (firstChild.nodeName !== "BR") { tempElement.appendChild(this.doc.createElement('br')); }
+            tempElements.removeChild(firstChild);
+          } else {
+            tempElement.appendChild(firstChild);
+          }
+        }
+      } else {
+        tempElement = null;
+      }
+      
+      return tempElement;
     },
 
     /**
