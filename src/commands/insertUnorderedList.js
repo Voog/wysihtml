@@ -38,7 +38,7 @@ wysihtml5.commands.insertUnorderedList = {
       if (tempElement) {
         isEmpty = tempElement.innerHTML === "" || tempElement.innerHTML === wysihtml5.INVISIBLE_SPACE || tempElement.innerHTML === "<br>";
         composer.selection.executeAndRestore(function() {
-          list = wysihtml5.dom.convertToList(tempElement, "ul");
+          list = wysihtml5.dom.convertToList(tempElement, "ul", composer.parent.config.uneditableContainerClassname);
         });
         if (isEmpty) {
           composer.selection.selectNode(list.querySelector("li"), true);

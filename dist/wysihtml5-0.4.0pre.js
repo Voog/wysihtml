@@ -4150,17 +4150,22 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       this.setSelection(ranges[0]);
     },
     
-    _getPreviousNode: function(node) {
+    getPreviousNode: function(node) {
+      if (!node) {
+        var selection = this.getSelection();
+        node = selection.anchorNode;
+      }
+      
       var ret = node.previousSibling,
           parent;
-      
+          
       // do not count empty textnodes as previus nodes
       if (ret && ret.nodeType === 3 && (/^\s*$/).test(ret.textContent)) {
-        ret = this._getPreviousNode(ret);
+        ret = this.getPreviousNode(ret);
       } else if (!ret && node !== this.contain) {
         parent = node.parentNode;
         if (parent !== this.contain) {
-          ret = this._getPreviousNode(parent);
+          ret = this.getPreviousNode(parent);
         }
       }
       
@@ -4173,8 +4178,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
           offset = selection.anchorOffset;
           
       if (offset === 0) {
-        var prevNode = this._getPreviousNode(node);
-        console.log(prevNode);
+        var prevNode = this.getPreviousNode(node);
         if (prevNode) {
           var uneditables = this.getOwnUneditables();
           for (var i = 0, maxi = uneditables.length; i < maxi; i++) {
@@ -7239,7 +7243,28 @@ wysihtml5.views.View = Base.extend(
           var beforeUneditable = that.selection.caretIsBeforeUneditable();
           if (beforeUneditable) {
             event.preventDefault();
-            that.selection.setBefore(beforeUneditable);
+            
+            var prevNode = that.selection.getPreviousNode(beforeUneditable),
+                curNode = that.selection.getSelectedNode();
+            
+            if (curNode.nodeType !== 1) {
+              curNode = curNode.parentNode;
+            } 
+            var first = curNode.firstChild;
+            
+            if (prevNode) {
+              while (curNode.firstChild) {
+                console.log(curNode.firstChild);
+                prevNode.appendChild(curNode.firstChild);
+              }
+              if (curNode.parentNode) {
+                curNode.parentNode.removeChild(curNode);
+              }
+              that.selection.setBefore(first);
+            } 
+            
+            //that.selection.setBefore(beforeUneditable); 
+            
           }
         } else if (that.selection.containsUneditable()) {
           event.preventDefault();

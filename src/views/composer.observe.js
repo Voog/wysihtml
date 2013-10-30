@@ -155,7 +155,24 @@
           var beforeUneditable = that.selection.caretIsBeforeUneditable();
           if (beforeUneditable) {
             event.preventDefault();
-            that.selection.setBefore(beforeUneditable);
+            
+            // merge node with previous node from uneditable
+            var prevNode = that.selection.getPreviousNode(beforeUneditable),
+                curNode = that.selection.getSelectedNode();
+            
+            if (curNode.nodeType !== 1) { curNode = curNode.parentNode; } 
+            var first = curNode.firstChild;
+            
+            if (prevNode) {
+              while (curNode.firstChild) {
+                prevNode.appendChild(curNode.firstChild);
+              }
+              if (curNode.parentNode) {
+                curNode.parentNode.removeChild(curNode);
+              }
+              that.selection.setBefore(first);
+            }
+            
           }
         } else if (that.selection.containsUneditable()) {
           event.preventDefault();
