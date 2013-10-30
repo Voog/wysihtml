@@ -7250,18 +7250,35 @@ wysihtml5.views.View = Base.extend(
             var prevNode = that.selection.getPreviousNode(beforeUneditable),
                 curNode = that.selection.getSelectedNode();
             
-            if (curNode.nodeType !== 1) { curNode = curNode.parentNode; } 
-            var first = curNode.firstChild;
+            if (curNode.nodeType !== 1 && curNode.parentNode !== element) { curNode = curNode.parentNode; } 
             
             if (prevNode) {
-              while (curNode.firstChild) {
-                prevNode.appendChild(curNode.firstChild);
+              if (curNode.nodeType == 1) {
+                var first = curNode.firstChild;
+                
+                if (prevNode.nodeType == 1) {
+                  while (curNode.firstChild) {
+                    prevNode.appendChild(curNode.firstChild);
+                  }
+                } else {
+                  while (curNode.firstChild) {
+                    beforeUneditable.parentNode.insertBefore(curNode.firstChild, beforeUneditable);
+                  }
+                }
+                if (curNode.parentNode) {
+                  curNode.parentNode.removeChild(curNode);
+                }
+                that.selection.setBefore(first);
+              } else {
+                if (prevNode.nodeType == 1) {
+                  prevNode.appendChild(curNode);
+                } else {
+                  beforeUneditable.parentNode.insertBefore(curNode, beforeUneditable);
+                }
+                that.selection.setBefore(curNode);
               }
-              if (curNode.parentNode) {
-                curNode.parentNode.removeChild(curNode);
-              }
-              that.selection.setBefore(first);
             }
+            
             
           }
         } else if (that.selection.containsUneditable()) {
