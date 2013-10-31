@@ -99,7 +99,11 @@
     if (!browser.canSelectImagesInContentEditable()) {
       dom.observe(element, "mousedown", function(event) {
         var target = event.target;
-        if (target.nodeName === "IMG") {
+        var allImages = element.querySelectorAll('img'),
+            notMyImages = element.querySelectorAll('.' + that.config.uneditableContainerClassname + ' img'),
+            myImages = wysihtml5.lang.array(allImages).without(notMyImages);
+            
+        if (target.nodeName === "IMG" && wysihtml5.lang.array(myImages).contains(target)) {
           that.selection.selectNode(target);
         }
       });
