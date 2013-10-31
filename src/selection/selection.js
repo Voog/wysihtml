@@ -192,7 +192,7 @@
       this.setSelection(ranges[0]);
     },
     
-    getPreviousNode: function(node) {
+    getPreviousNode: function(node, ignoreEmpty) {
       if (!node) {
         var selection = this.getSelection();
         node = selection.anchorNode;
@@ -201,13 +201,18 @@
       var ret = node.previousSibling,
           parent;
           
-      // do not count empty textnodes as previus nodes
+      
       if (ret && ret.nodeType === 3 && (/^\s*$/).test(ret.textContent)) {
-        ret = this.getPreviousNode(ret);
+        // do not count empty textnodes as previus nodes
+        ret = this.getPreviousNode(ret, ignoreEmpty);
+      } else if (ignoreEmpty && ret && ret.nodeType === 1 && (/^[\s(<br\/?>)]*$/).test(ret.innerHTML)) {
+        // Do not count empty nodes if param set.
+        // Contenteditable tends to bypass and delete these silently when deleting with caret
+        ret = this.getPreviousNode(ret, ignoreEmpty);
       } else if (!ret && node !== this.contain) {
         parent = node.parentNode;
         if (parent !== this.contain) {
-          ret = this.getPreviousNode(parent);
+            ret = this.getPreviousNode(parent, ignoreEmpty);
         }
       }
       
@@ -220,7 +225,7 @@
           offset = selection.anchorOffset;
           
       if (offset === 0) {
-        var prevNode = this.getPreviousNode(node);
+        var prevNode = this.getPreviousNode(node, true);
         if (prevNode) {
           var uneditables = this.getOwnUneditables();
           for (var i = 0, maxi = uneditables.length; i < maxi; i++) {

@@ -151,17 +151,17 @@
         event.preventDefault();
       }
       if (keyCode == 8) {
+        
         if (that.selection.isCollapsed()) {
           var beforeUneditable = that.selection.caretIsBeforeUneditable();
           if (beforeUneditable) {
             event.preventDefault();
             
             // merge node with previous node from uneditable
-            var prevNode = that.selection.getPreviousNode(beforeUneditable),
+            var prevNode = that.selection.getPreviousNode(beforeUneditable, true),
                 curNode = that.selection.getSelectedNode();
             
             if (curNode.nodeType !== 1 && curNode.parentNode !== element) { curNode = curNode.parentNode; } 
-            
             if (prevNode) {
               if (curNode.nodeType == 1) {
                 var first = curNode.firstChild;
@@ -195,6 +195,7 @@
           event.preventDefault();
           that.selection.deleteContents();
         }
+        
       }
     });
 
