@@ -188,8 +188,7 @@
                 that.selection.setBefore(curNode);
               }
             }
-            
-            
+
           }
         } else if (that.selection.containsUneditable()) {
           event.preventDefault();

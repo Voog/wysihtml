@@ -156,6 +156,23 @@
     max-width: 700px;
     margin: 40px;
   }
+  
+  .dragdrop-container {
+    outline: 2px dotted gray;
+  }
+  .editable .dragdrop-container.dragdrop-container-right {
+    float: right;
+    width: 50%;
+    margin-left: 2em;
+    margin-bottom: 1em;
+  }
+  
+  .editable .dragdrop-container.dragdrop-container-left {
+    float: left;
+    width: 50%;
+    margin-right: 2em;
+    margin-bottom: 1em;
+  }
 </style>
 
 <h1>wysihtml5 - Advanced Editor Example</h1>
@@ -235,7 +252,7 @@
     <p>Nullam egestas nisl augue, a fermentum quam laoreet at.</p>
     <p>Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.</p>
     
-    <div contentEditable="false" class="wysihtml5-uneditable-container dragdrop-container" style="width: 200px; height: 200px; padding: 10px; border: 2px dotted gray;">
+    <div contentEditable="false" class="wysihtml5-uneditable-container dragdrop-container" style="padding: 10px;">
       Aenean ut nulla orci. Praesent id mollis massa. Fusce interdum eleifend bibendum. Nulla luctus nisl sit amet sapien sodales ornare. Duis blandit, purus eu egestas pretium, nisi augue aliquet quam, non suscipit diam velit eu enim. Suspendisse vulputate nibh et porta eleifend. Pellentesque rhoncus hendrerit quam. Ut sit amet ligula ac tortor porta ullamcorper.</p>
     </div>
     <p></p>
@@ -404,5 +421,5 @@ var editors = [];
     editors.push(e);*/
   });
   
-  //$('.dragdrop-container').editorContainer();
+  $('.dragdrop-container').editorContainer();
 </script>
