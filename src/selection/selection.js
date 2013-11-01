@@ -614,9 +614,15 @@
     },
     
     getOwnUneditables: function() {
-      var allUneditables = this.contain.querySelectorAll('.' + this.unselectableClass),
-          deepUneditables = this.contain.querySelectorAll('.' + this.unselectableClass + ' .' + this.unselectableClass);
-          
+      var allUneditables = this.contain.getElementsByClassName(this.unselectableClass),
+          deepUneditables = [];
+      
+      for(var i = allUneditables.length; i--;) {
+          deepUneditables = deepUneditables.concat(
+              Array.prototype.slice.call(allUneditables[i].getElementsByClassName(this.unselectableClass))
+          );
+      }
+      
       return wysihtml5.lang.array(allUneditables).without(deepUneditables);
     },
     
