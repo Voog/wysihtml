@@ -4156,14 +4156,24 @@ wysihtml5.quirks.ensureProperClearing = (function() {
         node = selection.anchorNode;
       }
       
+      if (node === this.contain) {
+          return false;
+      }
+      
       var ret = node.previousSibling,
           parent;
+    
+      if (ret === this.contain) {
+          return false;
+      }
           
-      
-      if (ret && ret.nodeType === 3 && (/^\s*$/).test(ret.textContent)) {
+      if (ret && ret.nodeType !== 3 && ret.nodeType !== 1) {
+         // do not count comments and other node types
+         ret = this.getPreviousNode(ret, ignoreEmpty);
+      } else if (ret && ret.nodeType === 3 && (/^\s*$/).test(ret.textContent)) {
         // do not count empty textnodes as previus nodes
         ret = this.getPreviousNode(ret, ignoreEmpty);
-      } else if (ignoreEmpty && ret && ret.nodeType === 1 && (/^[\s(<br\/?>)]*$/).test(ret.innerHTML)) {
+      } else if (ignoreEmpty && ret && ret.nodeType === 1 && !wysihtml5.lang.array(["BR", "HR", "IMG"]).contains(ret.nodeName) && (/^[\s]*$/).test(ret.innerHTML)) {
         // Do not count empty nodes if param set.
         // Contenteditable tends to bypass and delete these silently when deleting with caret
         ret = this.getPreviousNode(ret, ignoreEmpty);
@@ -4174,7 +4184,17 @@ wysihtml5.quirks.ensureProperClearing = (function() {
         }
       }
       
-      return (node !== this.contain) ? ret : false;
+      return (ret !== this.contain) ? ret : false;
+    },
+    
+    
+    
+    caretIsInTheBeginnig: function() {
+        var selection = this.getSelection(),
+            node = selection.anchorNode,
+            offset = selection.anchorOffset;
+            
+        return (offset === 0 && !this.getPreviousNode(node, true));
     },
     
     caretIsBeforeUneditable: function() {
@@ -4351,7 +4371,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       var ranges = this.getOwnRanges(),
           node, nodes = [];
       if (ranges.length == 0) {
-        return;
+        return nodes;
       }
       
       for (var i = ranges.length; i--;) {
@@ -4552,9 +4572,15 @@ wysihtml5.quirks.ensureProperClearing = (function() {
     },
     
     getOwnUneditables: function() {
-      var allUneditables = this.contain.querySelectorAll('.' + this.unselectableClass),
-          deepUneditables = this.contain.querySelectorAll('.' + this.unselectableClass + ' .' + this.unselectableClass);
-          
+      var allUneditables = this.contain.getElementsByClassName(this.unselectableClass),
+          deepUneditables = [];
+      
+      for(var i = allUneditables.length; i--;) {
+          deepUneditables = deepUneditables.concat(
+              Array.prototype.slice.call(allUneditables[i].getElementsByClassName(this.unselectableClass))
+          );
+      }
+      
       return wysihtml5.lang.array(allUneditables).without(deepUneditables);
     },
     
@@ -5445,7 +5471,7 @@ wysihtml5.commands.bold = {
     }
   }
 
-  function _selectionWrap(composer, options/*element*/) {
+  function _selectionWrap(composer, options) {
     if (composer.selection.isCollapsed()) {
         composer.selection.selectLine();
     }
@@ -7252,39 +7278,44 @@ wysihtml5.views.View = Base.extend(
       if (keyCode == 8) {
         
         if (that.selection.isCollapsed()) {
-          var beforeUneditable = that.selection.caretIsBeforeUneditable();
-          if (beforeUneditable) {
+          if (that.selection.caretIsInTheBeginnig()) {
             event.preventDefault();
+          } else {
+            var beforeUneditable = that.selection.caretIsBeforeUneditable();
+            if (beforeUneditable) {
+              event.preventDefault();
+              
+              // TODO: take the how to delete around uneditable out of here
+              // merge node with previous node from uneditable
+              var prevNode = that.selection.getPreviousNode(beforeUneditable, true),
+                  curNode = that.selection.getSelectedNode();
             
-            // merge node with previous node from uneditable
-            var prevNode = that.selection.getPreviousNode(beforeUneditable, true),
-                curNode = that.selection.getSelectedNode();
-            
-            if (curNode.nodeType !== 1 && curNode.parentNode !== element) { curNode = curNode.parentNode; } 
-            if (prevNode) {
-              if (curNode.nodeType == 1) {
-                var first = curNode.firstChild;
+              if (curNode.nodeType !== 1 && curNode.parentNode !== element) { curNode = curNode.parentNode; } 
+              if (prevNode) {
+                if (curNode.nodeType == 1) {
+                  var first = curNode.firstChild;
                 
-                if (prevNode.nodeType == 1) {
-                  while (curNode.firstChild) {
-                    prevNode.appendChild(curNode.firstChild);
+                  if (prevNode.nodeType == 1) {
+                    while (curNode.firstChild) {
+                      prevNode.appendChild(curNode.firstChild);
+                    }
+                  } else {
+                    while (curNode.firstChild) {
+                      beforeUneditable.parentNode.insertBefore(curNode.firstChild, beforeUneditable);
+                    }
                   }
-                } else {
-                  while (curNode.firstChild) {
-                    beforeUneditable.parentNode.insertBefore(curNode.firstChild, beforeUneditable);
+                  if (curNode.parentNode) {
+                    curNode.parentNode.removeChild(curNode);
                   }
-                }
-                if (curNode.parentNode) {
-                  curNode.parentNode.removeChild(curNode);
-                }
-                that.selection.setBefore(first);
-              } else {
-                if (prevNode.nodeType == 1) {
-                  prevNode.appendChild(curNode);
+                  that.selection.setBefore(first);
                 } else {
-                  beforeUneditable.parentNode.insertBefore(curNode, beforeUneditable);
+                  if (prevNode.nodeType == 1) {
+                    prevNode.appendChild(curNode);
+                  } else {
+                    beforeUneditable.parentNode.insertBefore(curNode, beforeUneditable);
+                  }
+                  that.selection.setBefore(curNode);
                 }
-                that.selection.setBefore(curNode);
               }
             }
 
