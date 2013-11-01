@@ -198,14 +198,24 @@
         node = selection.anchorNode;
       }
       
+      if (node === this.contain) {
+          return false;
+      }
+      
       var ret = node.previousSibling,
           parent;
+    
+      if (ret === this.contain) {
+          return false;
+      }
           
-      
-      if (ret && ret.nodeType === 3 && (/^\s*$/).test(ret.textContent)) {
+      if (ret && ret.nodeType !== 3 && ret.nodeType !== 1) {
+         // do not count comments and other node types
+         ret = this.getPreviousNode(ret, ignoreEmpty);
+      } else if (ret && ret.nodeType === 3 && (/^\s*$/).test(ret.textContent)) {
         // do not count empty textnodes as previus nodes
         ret = this.getPreviousNode(ret, ignoreEmpty);
-      } else if (ignoreEmpty && ret && ret.nodeType === 1 && (/^[\s(<br\/?>)]*$/).test(ret.innerHTML)) {
+      } else if (ignoreEmpty && ret && ret.nodeType === 1 && !wysihtml5.lang.array(["BR", "HR", "IMG"]).contains(ret.nodeName) && (/^[\s]*$/).test(ret.innerHTML)) {
         // Do not count empty nodes if param set.
         // Contenteditable tends to bypass and delete these silently when deleting with caret
         ret = this.getPreviousNode(ret, ignoreEmpty);
@@ -216,7 +226,17 @@
         }
       }
       
-      return (node !== this.contain) ? ret : false;
+      return (ret !== this.contain) ? ret : false;
+    },
+    
+    
+    
+    caretIsInTheBeginnig: function() {
+        var selection = this.getSelection(),
+            node = selection.anchorNode,
+            offset = selection.anchorOffset;
+            
+        return (offset === 0 && !this.getPreviousNode(node, true));
     },
     
     caretIsBeforeUneditable: function() {
