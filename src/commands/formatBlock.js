@@ -146,7 +146,7 @@
     }
   }
 
-  function _selectionWrap(composer, options/*element*/) {
+  function _selectionWrap(composer, options) {
     if (composer.selection.isCollapsed()) {
         composer.selection.selectLine();
     }

@@ -393,7 +393,7 @@
       var ranges = this.getOwnRanges(),
           node, nodes = [];
       if (ranges.length == 0) {
-        return;
+        return nodes;
       }
       
       for (var i = ranges.length; i--;) {
