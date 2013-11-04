@@ -3723,7 +3723,24 @@ wysihtml5.dom.getAttribute = function(node, attributeName) {
     
     
 })(wysihtml5);
-/**
+// does a selector query on element or array of elements
+
+wysihtml5.dom.query = function(elements, query) {
+    var ret = [],
+        q;
+    
+    if (elements.nodeType) {
+        elements = [elements];
+    }
+        
+    for (var e = 0, len = elements.length; e < len; e++) {
+        q = elements[e].querySelectorAll(query);
+        if (q) {
+            for(var i = q.length; i--; ret.unshift(q[i]));
+        }
+    }
+    return ret; 
+};/**
  * Fix most common html formatting misbehaviors of browsers implementation when inserting
  * content via copy & paste contentEditable
  *
@@ -4572,14 +4589,8 @@ wysihtml5.quirks.ensureProperClearing = (function() {
     },
     
     getOwnUneditables: function() {
-      var allUneditables = this.contain.getElementsByClassName(this.unselectableClass),
-          deepUneditables = [];
-      
-      for(var i = allUneditables.length; i--;) {
-          deepUneditables = deepUneditables.concat(
-              Array.prototype.slice.call(allUneditables[i].getElementsByClassName(this.unselectableClass))
-          );
-      }
+      var allUneditables = dom.query(this.contain, '.' + this.unselectableClass),
+          deepUneditables = dom.query(allUneditables, '.' + this.unselectableClass);
       
       return wysihtml5.lang.array(allUneditables).without(deepUneditables);
     },
@@ -4597,28 +4608,29 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       if (this.unselectableClass && this.contain && r) {
           var uneditables = this.getOwnUneditables(),
               tmpRange;
-              
           if (uneditables.length > 0) {
             for (var i = 0, imax = uneditables.length; i < imax; i++) {
               tmpRanges = [];
               for (var j = 0, jmax = ranges.length; j < jmax; j++) {
-                switch (ranges[j].compareNode(uneditables[i])) {
-                  case 2: 
-                    // all selection inside uneditable. remove
-                  break;
-                  case 3:
-                    //section begins before and ends after uneditable. spilt
-                    tmpRange = ranges[j].cloneRange();
-                    tmpRange.setEndBefore(uneditables[i]);
-                    tmpRanges.push(tmpRange);
+                if (ranges[j]) {
+                  switch (ranges[j].compareNode(uneditables[i])) {
+                    case 2: 
+                      // all selection inside uneditable. remove
+                    break;
+                    case 3:
+                      //section begins before and ends after uneditable. spilt
+                      tmpRange = ranges[j].cloneRange();
+                      tmpRange.setEndBefore(uneditables[i]);
+                      tmpRanges.push(tmpRange);
                     
-                    tmpRange = ranges[j].cloneRange();
-                    tmpRange.setStartAfter(uneditables[i]);
-                    tmpRanges.push(tmpRange);
-                  break;
-                  default:
-                    // in all other cases uneditable does not touch selection. dont modify
-                    tmpRanges.push(ranges[j]);
+                      tmpRange = ranges[j].cloneRange();
+                      tmpRange.setStartAfter(uneditables[i]);
+                      tmpRanges.push(tmpRange);
+                    break;
+                    default:
+                      // in all other cases uneditable does not touch selection. dont modify
+                      tmpRanges.push(ranges[j]);
+                  }
                 }
                 ranges = tmpRanges;
               }
