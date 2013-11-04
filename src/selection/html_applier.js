@@ -24,6 +24,7 @@
     if (!el.getAttribute || !el.getAttribute('style')) {
       return false;
     }
+    var matchingStyles = el.getAttribute('style').match(regExp);
     return  (el.getAttribute('style').match(regExp)) ? true : false;
   }
   
@@ -48,6 +49,12 @@
   function removeClass(el, regExp) {
     if (el.className) {
       el.className = el.className.replace(regExp, "");
+    }
+  }
+  
+  function removeStyle(el, regExp) {
+    if (el.getAttribute('style')) {
+      el.setAttribute('style', el.getAttribute('style').replace(regExp, ""));
     }
   }
   
@@ -311,27 +318,51 @@
       return rangy.dom.arrayContains(this.tagNames, el.tagName.toLowerCase()) && wysihtml5.lang.string(el.className).trim() == this.cssClass;
     },
 
-    undoToTextNode: function(textNode, range, ancestorWithClass) {
-      if (!range.containsNode(ancestorWithClass)) {
-        // Split out the portion of the ancestor from which we can remove the CSS class
-        var ancestorRange = range.cloneRange();
-        ancestorRange.selectNode(ancestorWithClass);
+    undoToTextNode: function(textNode, range, ancestorWithClass, ancestorWithStyle) {
+      if (ancestorWithClass) {
+        if (!range.containsNode(ancestorWithClass)) {
+          // Split out the portion of the ancestor from which we can remove the CSS class
+          var ancestorRange = range.cloneRange();
+          ancestorRange.selectNode(ancestorWithClass);
 
-        if (ancestorRange.isPointInRange(range.endContainer, range.endOffset) && isSplitPoint(range.endContainer, range.endOffset)) {
-          splitNodeAt(ancestorWithClass, range.endContainer, range.endOffset);
-          range.setEndAfter(ancestorWithClass);
+          if (ancestorRange.isPointInRange(range.endContainer, range.endOffset) && isSplitPoint(range.endContainer, range.endOffset)) {
+            splitNodeAt(ancestorWithClass, range.endContainer, range.endOffset);
+            range.setEndAfter(ancestorWithClass);
+          }
+          if (ancestorRange.isPointInRange(range.startContainer, range.startOffset) && isSplitPoint(range.startContainer, range.startOffset)) {
+            ancestorWithClass = splitNodeAt(ancestorWithClass, range.startContainer, range.startOffset);
+          }
         }
-        if (ancestorRange.isPointInRange(range.startContainer, range.startOffset) && isSplitPoint(range.startContainer, range.startOffset)) {
-          ancestorWithClass = splitNodeAt(ancestorWithClass, range.startContainer, range.startOffset);
+      
+        if (this.similarClassRegExp) {
+          removeClass(ancestorWithClass, this.similarClassRegExp);
+        }
+        if (this.isRemovable(ancestorWithClass)) {
+          replaceWithOwnChildren(ancestorWithClass);
+        }
+      }
+      if (ancestorWithStyle) {
+        if (!range.containsNode(ancestorWithStyle)) {
+          var ancestorRange = range.cloneRange();
+          ancestorRange.selectNode(ancestorWithStyle);
+
+          if (ancestorRange.isPointInRange(range.endContainer, range.endOffset) && isSplitPoint(range.endContainer, range.endOffset)) {
+            splitNodeAt(ancestorWithStyle, range.endContainer, range.endOffset);
+            range.setEndAfter(ancestorWithStyle);
+          }
+          if (ancestorRange.isPointInRange(range.startContainer, range.startOffset) && isSplitPoint(range.startContainer, range.startOffset)) {
+            ancestorWithStyle = splitNodeAt(ancestorWithStyle, range.startContainer, range.startOffset);
+          }
+        }
+        
+        if (this.similarStyleRegExp) {
+          removeStyle(ancestorWithStyle, this.similarStyleRegExp);
+        }
+        if (this.isRemovable(ancestorWithStyle)) {
+          replaceWithOwnChildren(ancestorWithStyle);
         }
       }
       
-      if (this.similarClassRegExp) {
-        removeClass(ancestorWithClass, this.similarClassRegExp);
-      }
-      if (this.isRemovable(ancestorWithClass)) {
-        replaceWithOwnChildren(ancestorWithClass);
-      }
     },
 
     applyToRange: function(range) {
@@ -374,40 +405,46 @@
     },
 
     undoToRange: function(range) {
-      var textNodes, textNode, ancestorWithClass;
+      var textNodes, textNode, ancestorWithClass, ancestorWithStyle;
       
       for (var ri = range.length; ri--;) {
+        
+        textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
+        if (textNodes.length) {
+          range[ri].splitBoundaries();
           textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
-          if (textNodes.length) {
-            range[ri].splitBoundaries();
-            textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
-          } else {
-            var doc = range[ri].endContainer.ownerDocument,
-                node = doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
-            range[ri].insertNode(node);
-            range[ri].selectNode(node);
-            textNodes = [node];
+        } else {
+          var doc = range[ri].endContainer.ownerDocument,
+              node = doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
+          range[ri].insertNode(node);
+          range[ri].selectNode(node);
+          textNodes = [node];
+        }
+    
+        for (var i = 0, len = textNodes.length; i < len; ++i) {
+          textNode = textNodes[i];
+          ancestorWithClass = this.getAncestorWithClass(textNode);
+          ancestorWithStyle = this.getAncestorWithStyle(textNode);
+          if (ancestorWithClass) {
+            this.undoToTextNode(textNode, range[ri], ancestorWithClass);
           }
-      
-          for (var i = 0, len = textNodes.length; i < len; ++i) {
-            textNode = textNodes[i];
-            ancestorWithClass = this.getAncestorWithClass(textNode);
-            if (ancestorWithClass) {
-              this.undoToTextNode(textNode, range[ri], ancestorWithClass);
-            }
+          if (ancestorWithStyle) {
+            this.undoToTextNode(textNode, range[ri], false, ancestorWithStyle);
           }
-      
-          if (len == 1) {
-            this.selectNode(range[ri], textNodes[0]);
-          } else {
-            range[ri].setStart(textNodes[0], 0);
-            textNode = textNodes[textNodes.length - 1];
-            range[ri].setEnd(textNode, textNode.length);
+        }
+    
+        if (len == 1) {
+          this.selectNode(range[ri], textNodes[0]);
+        } else {
+          range[ri].setStart(textNodes[0], 0);
+          textNode = textNodes[textNodes.length - 1];
+          range[ri].setEnd(textNode, textNode.length);
 
-            if (this.normalize) {
-              this.postApply(textNodes, range[ri]);
-            }
+          if (this.normalize) {
+            this.postApply(textNodes, range[ri]);
           }
+        }
+          
       }
     },
     

@@ -332,7 +332,6 @@ wysihtml5.dom.parse = (function() {
     if(rule && rule.keep_styles) {
       for (s in rule.keep_styles) {
         if (rule.keep_styles.hasOwnProperty(s)) {
-          console.log(s);
           if (s == "float") {
             // IE compability
             if (oldNode.style.styleFloat) {
