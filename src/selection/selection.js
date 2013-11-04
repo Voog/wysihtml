@@ -614,14 +614,8 @@
     },
     
     getOwnUneditables: function() {
-      var allUneditables = this.contain.getElementsByClassName(this.unselectableClass),
-          deepUneditables = [];
-      
-      for(var i = allUneditables.length; i--;) {
-          deepUneditables = deepUneditables.concat(
-              Array.prototype.slice.call(allUneditables[i].getElementsByClassName(this.unselectableClass))
-          );
-      }
+      var allUneditables = dom.query(this.contain, '.' + this.unselectableClass),
+          deepUneditables = dom.query(allUneditables, '.' + this.unselectableClass);
       
       return wysihtml5.lang.array(allUneditables).without(deepUneditables);
     },
