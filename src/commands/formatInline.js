@@ -46,16 +46,19 @@
     return alias ? [tagName.toLowerCase(), alias.toLowerCase()] : [tagName.toLowerCase()];
   }
   
-  function _getApplier(tagName, className, classRegExp) {
+  function _getApplier(tagName, className, classRegExp, cssStyle, styleRegExp) {
     var identifier = tagName + ":" + className;
+    if (cssStyle) {
+      identifier += ":" + cssStyle
+    }
     if (!htmlApplier[identifier]) {
-      htmlApplier[identifier] = new wysihtml5.selection.HTMLApplier(_getTagNames(tagName), className, classRegExp, true);
+      htmlApplier[identifier] = new wysihtml5.selection.HTMLApplier(_getTagNames(tagName), className, classRegExp, true, cssStyle, styleRegExp);
     }
     return htmlApplier[identifier];
   }
   
   wysihtml5.commands.formatInline = {
-    exec: function(composer, command, tagName, className, classRegExp) {
+    exec: function(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp) {
       var range = composer.selection.getRange(),
           ownRanges = composer.selection.getOwnRanges(),
           sNode = range.startContainer,
@@ -67,7 +70,7 @@
         return false;
       }
       composer.selection.getSelection().removeAllRanges();
-      _getApplier(tagName, className, classRegExp).toggleRange(ownRanges);
+      _getApplier(tagName, className, classRegExp, cssStyle, styleRegExp).toggleRange(ownRanges);
 
       if (ownRanges.length > 1) {
         // satart and end can get shifted after modifications
@@ -81,20 +84,20 @@
     // Executes so that if collapsed caret is in a state and executing that state it should unformat that state
     // It is achieved by selecting the entire state element before executing.
     // This works on built in contenteditable inline format commands
-    execWithToggle: function(composer, command, tagName, className, classRegExp) {
+    execWithToggle: function(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp) {
         var that = this;
-        if (this.state(composer, command, tagName, className, classRegExp) && composer.selection.isCollapsed()) {
+        if (this.state(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp) && composer.selection.isCollapsed()) {
             var state_element = that.state(composer, command, tagName, className, classRegExp)[0];
             composer.selection.executeAndRestoreSimple(function() {
                 composer.selection.selectNode(state_element);
-                wysihtml5.commands.formatInline.exec(composer, command, tagName, className, classRegExp);
+                wysihtml5.commands.formatInline.exec(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp);
             });
         } else {
-            wysihtml5.commands.formatInline.exec(composer, command, tagName, className, classRegExp);
+            wysihtml5.commands.formatInline.exec(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp);
         }
     },
 
-    state: function(composer, command, tagName, className, classRegExp) {
+    state: function(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp) {
       var doc           = composer.doc,
           aliasTagName  = ALIAS_MAPPING[tagName] || tagName,
           ownRanges;
@@ -115,8 +118,8 @@
       if (ownRanges.length == 0) {
         return false;
       }
-
-      return _getApplier(tagName, className, classRegExp).isAppliedToRange(ownRanges);
+      
+      return _getApplier(tagName, className, classRegExp, cssStyle, styleRegExp).isAppliedToRange(ownRanges);
     }
   };
 })(wysihtml5);

@@ -232,6 +232,7 @@ wysihtml5.dom.parse = (function() {
       }
       
       // tests if type condition is met or node should be removed/unwrapped
+      
       if (rule.one_of_type && !_testTypes(oldNode, currentRules, rule.one_of_type)) {
         return (rule.remove_action && rule.remove_action == "unwrap") ? false : null;
       }
@@ -277,7 +278,7 @@ wysihtml5.dom.parse = (function() {
   function _testType(oldNode, definition) {
       
     var nodeClasses = oldNode.getAttribute("class"),
-        nodeStyles =  oldNode.style,
+        nodeStyles =  oldNode.getAttribute("style"),
         classesLength, s, s_corrected, a, attr, currentClass, styleProp;
         
     // test for classes, if one found return true
@@ -293,24 +294,23 @@ wysihtml5.dom.parse = (function() {
     
     // test for styles, if one found return true
     if (nodeStyles && definition.styles) {
+      
+      nodeStyles = nodeStyles.split(';');
       for (s in definition.styles) {
         if (definition.styles.hasOwnProperty(s)) {
-          
-          // fix browser inconsitencies here
-          s_corrected = s;
-          if (s == "float") {
-            if (nodeStyles.styleFloat) { s_corrected = "styleFloat"; }
-            if (nodeStyles.cssFloat) { s_corrected = "cssFloat"; }
-          }
-          
-          if (nodeStyles[s_corrected]) {
-            if (array_contains(definition.styles[s], nodeStyles[s_corrected])) {
-              return true;
+          for (var sp = nodeStyles.length; sp--;) {
+            styleProp = nodeStyles[sp].split(':');
+            
+            if (styleProp[0].replace(/\s/g, '').toLowerCase() === s) {
+              if (definition.styles[s] === true || styleProp[1].replace(/\s/g, '').toLowerCase() === definition.styles[s]) {
+                return true;
+              }
             }
           }
         }
       }
     }
+    
     // test for attributes in general against regex match
     if (definition.attrs) {
         for (a in definition.attrs) {
@@ -332,6 +332,7 @@ wysihtml5.dom.parse = (function() {
     if(rule && rule.keep_styles) {
       for (s in rule.keep_styles) {
         if (rule.keep_styles.hasOwnProperty(s)) {
+          console.log(s);
           if (s == "float") {
             // IE compability
             if (oldNode.style.styleFloat) {

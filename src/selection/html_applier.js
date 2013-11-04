@@ -19,6 +19,22 @@
     var matchingClassNames = el.className.match(regExp) || [];
     return matchingClassNames[matchingClassNames.length - 1] === cssClass;
   }
+  
+  function hasStyleAttr(el, regExp) {
+    if (!el.getAttribute || !el.getAttribute('style')) {
+      return false;
+    }
+    return  (el.getAttribute('style').match(regExp)) ? true : false;
+  }
+  
+  function addStyle(el, cssStyle, regExp) {
+    if (el.getAttibute('style')) {
+      removeStyle(el, regExp);
+      el.setAttibute('style', cssStyle + ";" + el.getAttibute('style'));
+    } else {
+      el.setAttibute('style', cssStyle);
+    }
+  } 
 
   function addClass(el, cssClass, regExp) {
     if (el.className) {
@@ -149,10 +165,12 @@
     }
   };
 
-  function HTMLApplier(tagNames, cssClass, similarClassRegExp, normalize) {
+  function HTMLApplier(tagNames, cssClass, similarClassRegExp, normalize, cssStyle, similarStyleRegExp) {
     this.tagNames = tagNames || [defaultTagName];
-    this.cssClass = cssClass || "";
+    this.cssClass = cssClass || (cssClass === false) ? false : "";
     this.similarClassRegExp = similarClassRegExp;
+    this.cssStyle = cssStyle || "";
+    this.similarStyleRegExp = similarStyleRegExp;
     this.normalize = normalize;
     this.applyToAnyTagName = false;
   }
@@ -161,8 +179,21 @@
     getAncestorWithClass: function(node) {
       var cssClassMatch;
       while (node) {
-        cssClassMatch = this.cssClass ? hasClass(node, this.cssClass, this.similarClassRegExp) : true;
+        cssClassMatch = this.cssClass ? hasClass(node, this.cssClass, this.similarClassRegExp) : (this.cssClass === false) ? false : true;
         if (node.nodeType == wysihtml5.ELEMENT_NODE && rangy.dom.arrayContains(this.tagNames, node.tagName.toLowerCase()) && cssClassMatch) {
+          return node;
+        }
+        node = node.parentNode;
+      }
+      return false;
+    },
+    
+    // returns parents of node with given style attribute
+    getAncestorWithStyle: function(node) {
+      var cssStyleMatch;
+      while (node) {
+        cssStyleMatch = this.cssStyle ? hasStyleAttr(node, this.similarStyleRegExp) : true;
+        if (node.nodeType == wysihtml5.ELEMENT_NODE && rangy.dom.arrayContains(this.tagNames, node.tagName.toLowerCase()) && cssStyleMatch) {
           return node;
         }
         node = node.parentNode;
@@ -257,6 +288,9 @@
       if (this.cssClass) {
         el.className = this.cssClass;
       }
+      if (this.cssStyle) {
+        el.setAttribute('style', this.cssStyle);
+      }
       return el;
     },
 
@@ -340,7 +374,7 @@
     },
 
     undoToRange: function(range) {
-      var textNodes, textNode, textNode, ancestorWithClass;
+      var textNodes, textNode, ancestorWithClass;
       
       for (var ri = range.length; ri--;) {
           textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
@@ -409,24 +443,32 @@
 
     isAppliedToRange: function(range) {
       var ancestors = [],
-          ancestor, textNodes;
+          ancestor, styleAncestor, textNodes;
       
       for (var ri = range.length; ri--;) {
+        
           textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
           if (!textNodes.length) {
             ancestor = this.getAncestorWithClass(range[ri].startContainer);
+            if (!ancestor) {
+              ancestor = this.getAncestorWithStyle(range[ri].startContainer);
+            }
             return ancestor ? [ancestor] : false;
           }
       
           for (var i = 0, len = textNodes.length, selectedText; i < len; ++i) {
             selectedText = this.getTextSelectedByRange(textNodes[i], range[ri]);
             ancestor = this.getAncestorWithClass(textNodes[i]);
+            if (!ancestor) {
+              ancestor = this.getAncestorWithStyle(textNodes[i]);
+            }
             if (selectedText != "" && !ancestor) {
               return false;
             } else {
               ancestors.push(ancestor);
             }
           }
+          
       }
       
       
