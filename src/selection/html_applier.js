@@ -186,7 +186,7 @@
     getAncestorWithClass: function(node) {
       var cssClassMatch;
       while (node) {
-        cssClassMatch = this.cssClass ? hasClass(node, this.cssClass, this.similarClassRegExp) : (this.cssClass === false) ? false : true;
+        cssClassMatch = this.cssClass ? hasClass(node, this.cssClass, this.similarClassRegExp) : (this.cssStyle !== "") ? false : true;
         if (node.nodeType == wysihtml5.ELEMENT_NODE && rangy.dom.arrayContains(this.tagNames, node.tagName.toLowerCase()) && cssClassMatch) {
           return node;
         }
@@ -199,7 +199,7 @@
     getAncestorWithStyle: function(node) {
       var cssStyleMatch;
       while (node) {
-        cssStyleMatch = this.cssStyle ? hasStyleAttr(node, this.similarStyleRegExp) : true;
+        cssStyleMatch = this.cssStyle ? hasStyleAttr(node, this.similarStyleRegExp) : false;
         if (node.nodeType == wysihtml5.ELEMENT_NODE && rangy.dom.arrayContains(this.tagNames, node.tagName.toLowerCase()) && cssStyleMatch) {
           return node;
         }
@@ -319,50 +319,34 @@
     },
 
     undoToTextNode: function(textNode, range, ancestorWithClass, ancestorWithStyle) {
-      if (ancestorWithClass) {
-        if (!range.containsNode(ancestorWithClass)) {
-          // Split out the portion of the ancestor from which we can remove the CSS class
-          var ancestorRange = range.cloneRange();
-          ancestorRange.selectNode(ancestorWithClass);
-
-          if (ancestorRange.isPointInRange(range.endContainer, range.endOffset) && isSplitPoint(range.endContainer, range.endOffset)) {
-            splitNodeAt(ancestorWithClass, range.endContainer, range.endOffset);
-            range.setEndAfter(ancestorWithClass);
-          }
-          if (ancestorRange.isPointInRange(range.startContainer, range.startOffset) && isSplitPoint(range.startContainer, range.startOffset)) {
-            ancestorWithClass = splitNodeAt(ancestorWithClass, range.startContainer, range.startOffset);
-          }
-        }
+      var styleMode = (ancestorWithClass) ? false : true,
+          ancestor = ancestorWithClass || ancestorWithStyle;
       
-        if (this.similarClassRegExp) {
-          removeClass(ancestorWithClass, this.similarClassRegExp);
+      if (!range.containsNode(ancestor)) {
+        // Split out the portion of the ancestor from which we can remove the CSS class
+        var ancestorRange = range.cloneRange();
+            ancestorRange.selectNode(ancestor);
+ 
+        if (ancestorRange.isPointInRange(range.endContainer, range.endOffset) && isSplitPoint(range.endContainer, range.endOffset)) {
+            splitNodeAt(ancestor, range.endContainer, range.endOffset);
+            range.setEndAfter(ancestor);
         }
-        if (this.isRemovable(ancestorWithClass)) {
-          replaceWithOwnChildren(ancestorWithClass);
-        }
-      }
-      if (ancestorWithStyle) {
-        if (!range.containsNode(ancestorWithStyle)) {
-          var ancestorRange = range.cloneRange();
-          ancestorRange.selectNode(ancestorWithStyle);
-
-          if (ancestorRange.isPointInRange(range.endContainer, range.endOffset) && isSplitPoint(range.endContainer, range.endOffset)) {
-            splitNodeAt(ancestorWithStyle, range.endContainer, range.endOffset);
-            range.setEndAfter(ancestorWithStyle);
-          }
-          if (ancestorRange.isPointInRange(range.startContainer, range.startOffset) && isSplitPoint(range.startContainer, range.startOffset)) {
-            ancestorWithStyle = splitNodeAt(ancestorWithStyle, range.startContainer, range.startOffset);
-          }
-        }
-        
-        if (this.similarStyleRegExp) {
-          removeStyle(ancestorWithStyle, this.similarStyleRegExp);
-        }
-        if (this.isRemovable(ancestorWithStyle)) {
-          replaceWithOwnChildren(ancestorWithStyle);
+        if (ancestorRange.isPointInRange(range.startContainer, range.startOffset) && isSplitPoint(range.startContainer, range.startOffset)) {
+            ancestor = splitNodeAt(ancestor, range.startContainer, range.startOffset);
         }
       }
       
+      if (!styleMode && this.similarClassRegExp) {
+        removeClass(ancestor, this.similarClassRegExp);
+      }
+      
+      if (styleMode && this.similarStyleRegExp) {
+        removeStyle(ancestor, this.similarStyleRegExp);
+      }
+      
+      if (this.isRemovable(ancestor)) {
+        replaceWithOwnChildren(ancestor);
+      }
     },
 
     applyToRange: function(range) {
