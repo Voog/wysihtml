@@ -29,11 +29,12 @@
   }
   
   function addStyle(el, cssStyle, regExp) {
-    if (el.getAttibute('style')) {
+    
+    if (el.getAttribute('style')) {
       removeStyle(el, regExp);
-      el.setAttibute('style', cssStyle + ";" + el.getAttibute('style'));
+      el.setAttribute('style', cssStyle + ";" + el.getAttribute('style'));
     } else {
-      el.setAttibute('style', cssStyle);
+      el.setAttribute('style', cssStyle);
     }
   } 
 
@@ -57,6 +58,21 @@
       el.setAttribute('style', el.getAttribute('style').replace(regExp, ""));
     }
   }
+  
+  function removeOrChangeStyle(el, style, regExp) {
+    var exactRegex = new RegExp("(^|\\s|;)" + style.replace(/\s/gi, '').replace(/([\(\)])/gi, "\\$1").toLowerCase()),
+        elStyle = el.getAttribute('style');
+        
+    if (elStyle && exactRegex.test(elStyle.replace(/\s/gi, '').toLowerCase())) {
+      // adding same style value on property again removes style
+      removeStyle(el, regExp);
+      return "remove";
+    } else {
+      // adding new style value changes value
+      addStyle(el, style, regExp);
+      return "change";
+    }
+  };
   
   function hasSameClasses(el1, el2) {
     return el1.className.replace(REG_EXP_WHITE_SPACE, " ") == el2.className.replace(REG_EXP_WHITE_SPACE, " ");
@@ -320,7 +336,8 @@
 
     undoToTextNode: function(textNode, range, ancestorWithClass, ancestorWithStyle) {
       var styleMode = (ancestorWithClass) ? false : true,
-          ancestor = ancestorWithClass || ancestorWithStyle;
+          ancestor = ancestorWithClass || ancestorWithStyle,
+          styleChanged = false;
       
       if (!range.containsNode(ancestor)) {
         // Split out the portion of the ancestor from which we can remove the CSS class
@@ -341,10 +358,10 @@
       }
       
       if (styleMode && this.similarStyleRegExp) {
-        removeStyle(ancestor, this.similarStyleRegExp);
+        styleChanged = (removeOrChangeStyle(ancestor, this.cssStyle, this.similarStyleRegExp) === "change");
       }
       
-      if (this.isRemovable(ancestor)) {
+      if (this.isRemovable(ancestor) && !styleChanged) {
         replaceWithOwnChildren(ancestor);
       }
     },
