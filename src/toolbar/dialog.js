@@ -107,6 +107,7 @@
           fields  = this.container.querySelectorAll(SELECTOR_FIELDS),
           length  = fields.length,
           i       = 0;
+          
       for (; i<length; i++) {
         data[fields[i].getAttribute(ATTRIBUTE_FIELDS)] = fields[i].value;
       }

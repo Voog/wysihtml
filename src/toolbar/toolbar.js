@@ -267,6 +267,7 @@
             dom.addClass(command.group, CLASS_NAME_COMMAND_ACTIVE);
           }
           if (command.dialog) {
+            
             if (typeof(state) === "object") {
               command.dialog.show(state);
             } else {

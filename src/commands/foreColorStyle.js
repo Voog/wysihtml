@@ -8,7 +8,9 @@
   
   wysihtml5.commands.foreColorStyle = {
     exec: function(composer, command, color) {
-      wysihtml5.commands.formatInline.execWithToggle(composer, command, "span", false, false, "color:" + color, REG_EXP);
+      var colString = "rgb(" + parseInt(color.red) + ',' + parseInt(color.green) + ',' + parseInt(color.blue) + ')';
+       
+      wysihtml5.commands.formatInline.execWithToggle(composer, command, "span", false, false, "color:" + colString, REG_EXP);
     },
 
     state: function(composer, command, color) {
