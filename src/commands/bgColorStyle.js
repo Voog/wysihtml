@@ -4,17 +4,17 @@
  * Instead we set a css class
  */
 (function(wysihtml5) {
-  var REG_EXP = /(^|\s|;)color\s*\:\s*((#[0-9a-f]{3}([0-9a-f]{3})?)|(rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}(\s*,\s*\d{1,3}\s*)?\)))\s*;?/i;
+  var REG_EXP = /(^|\s|;)background-color\s*\:\s*((#[0-9a-f]{3}([0-9a-f]{3})?)|(rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}(\s*,\s*\d{1,3}\s*)?\)))\s*;?/i;
   
-  wysihtml5.commands.foreColorStyle = {
+  wysihtml5.commands.bgColorStyle = {
     exec: function(composer, command, color) {
       var colString = "rgb(" + parseInt(color.red) + ',' + parseInt(color.green) + ',' + parseInt(color.blue) + ')';
        
-      wysihtml5.commands.formatInline.execWithToggle(composer, command, "span", false, false, "color:" + colString, REG_EXP);
+      wysihtml5.commands.formatInline.execWithToggle(composer, command, "span", false, false, "background-color:" + colString, REG_EXP);
     },
 
     state: function(composer, command) {
-      return wysihtml5.commands.formatInline.state(composer, command, "span", false, false, "color", REG_EXP);
+      return wysihtml5.commands.formatInline.state(composer, command, "span", false, false, "background-color", REG_EXP);
     },
     
     stateValue: function(composer, command) {
@@ -29,7 +29,7 @@
       }
       
       if (st) {
-        colorStr = st.style.color;
+        colorStr = st.style.backgroundColor;
         if (colorStr) {
           if (colorStr) {
             if (RGBA_REGEX.test(colorStr)) {

@@ -100,7 +100,8 @@ var wysihtml5ParserRules = {
         
         "text_color_object": {
           "styles": {
-            "color": true
+            "color": true,
+            "background-color": true
           }
         },
         
@@ -434,7 +435,8 @@ var wysihtml5ParserRules = {
                 "text_color_object": 1
             },
             "keep_styles": {
-                "color": 1
+                "color": 1,
+                "background-color": 1
             },
             "remove_action": "unwrap"
         },
