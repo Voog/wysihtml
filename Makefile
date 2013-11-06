@@ -1,7 +1,7 @@
 VERSION = $(shell cat version.txt)
 
-JS_OUTPUT = "dist/wysihtml5-${VERSION}.js"
-JS_OUTPUT_WOTOOLS = "dist/wysihtml5-${VERSION}-wotools.js"
+JS_OUTPUT = "dist/wysihtml5x-${VERSION}.js"
+JS_OUTPUT_WOTOOLS = "dist/wysihtml5x-${VERSION}-wotools.js"
 
 OPEN = $(shell which xdg-open || which gnome-open || which open)
 
