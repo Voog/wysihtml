@@ -13,8 +13,46 @@
       wysihtml5.commands.formatInline.execWithToggle(composer, command, "span", false, false, "color:" + colString, REG_EXP);
     },
 
-    state: function(composer, command, color) {
-      return wysihtml5.commands.formatInline.state(composer, command, "span", false, false, "color:" + color, REG_EXP);
+    state: function(composer, command) {
+      return wysihtml5.commands.formatInline.state(composer, command, "span", false, false, false, REG_EXP);
+    },
+    
+    stateValue: function(composer, command) {
+      var st = this.state(composer, command),
+          colorStr, colorMatch,
+          RGBA_REGEX     = /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\)/i,
+          HEX6_REGEX     = /^#([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])/i,
+          HEX3_REGEX     = /^#([0-9a-f])([0-9a-f])([0-9a-f])/i;
+      
+      if (st && wysihtml5.lang.object(st).isArray()) {
+        st = st[0];
+      }
+      
+      if (st) {
+        colorStr = st.style.color;
+        if (colorStr) {
+          if (colorStr) {
+            if (RGBA_REGEX.test(colorStr)) {
+              colorMatch = colorStr.match(RGBA_REGEX);
+              return colorMatch.slice(1);
+              
+            } else if (HEX6_REGEX.test(colorStr)) {
+              colorMatch = colorStr.match(HEX6_REGEX);
+              return [parseInt(colorMatch[1], 16),
+                      parseInt(colorMatch[2], 16),
+                      parseInt(colorMatch[3], 16)];
+                      
+            } else if (HEX3_REGEX.test(colorStr)) {
+              colorMatch = colorStr.match(HEX3_REGEX);
+              return [(parseInt(colorMatch[1], 16) * 16) + parseInt(colorMatch[1], 16),
+                      (parseInt(colorMatch[2], 16) * 16) + parseInt(colorMatch[2], 16),
+                      (parseInt(colorMatch[3], 16) * 16) + parseInt(colorMatch[3], 16)];
+            }
+          }
+        }
+      }
+      return false;
     }
+    
   };
 })(wysihtml5);

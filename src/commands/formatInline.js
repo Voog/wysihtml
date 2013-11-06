@@ -59,24 +59,20 @@
   
   wysihtml5.commands.formatInline = {
     exec: function(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp) {
-      var range = composer.selection.getRange(),
-          ownRanges = composer.selection.getOwnRanges(),
-          sNode = range.startContainer,
-          sOffset = range.startOffset,
-          eNode = range.endContainer,
-          eOffset = range.endOffset;
-          
-      if (!range) {
+      var range = composer.selection.createRange();
+          ownRanges = composer.selection.getOwnRanges();
+      
+      if (!ownRanges || ownRanges.length == 0) {
         return false;
       }
       composer.selection.getSelection().removeAllRanges();
       _getApplier(tagName, className, classRegExp, cssStyle, styleRegExp).toggleRange(ownRanges);
 
-      if (ownRanges.length > 1) {
-        // satart and end can get shifted after modifications
-        range.setStart(sNode, sOffset);
-        range.setEnd(eNode, eOffset);
-      }
+      range.setStart(ownRanges[0].startContainer,  ownRanges[0].startOffset);
+      range.setEnd(
+        ownRanges[ownRanges.length - 1].endContainer,
+        ownRanges[ownRanges.length - 1].endOffset
+      );
       
       composer.selection.setSelection(range);
     },

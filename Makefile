@@ -54,6 +54,7 @@ JS_FILES = src/wysihtml5.js \
   src/commands/createLink.js \
   src/commands/fontSize.js \
   src/commands/foreColor.js \
+  src/commands/foreColorStyle.js \
   src/commands/formatBlock.js \
   src/commands/formatInline.js \
   src/commands/insertHTML.js \
@@ -135,6 +136,7 @@ JS_FILES_WOTOOLS = src/wysihtml5.js \
   src/commands/createLink.js \
   src/commands/fontSize.js \
   src/commands/foreColor.js \
+  src/commands/foreColorStyle.js \
   src/commands/formatBlock.js \
   src/commands/formatInline.js \
   src/commands/insertHTML.js \

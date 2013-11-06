@@ -1868,6 +1868,7 @@ wysihtml5.dom.parse = (function() {
       }
       
       // tests if type condition is met or node should be removed/unwrapped
+      
       if (rule.one_of_type && !_testTypes(oldNode, currentRules, rule.one_of_type)) {
         return (rule.remove_action && rule.remove_action == "unwrap") ? false : null;
       }
@@ -1913,7 +1914,7 @@ wysihtml5.dom.parse = (function() {
   function _testType(oldNode, definition) {
       
     var nodeClasses = oldNode.getAttribute("class"),
-        nodeStyles =  oldNode.style,
+        nodeStyles =  oldNode.getAttribute("style"),
         classesLength, s, s_corrected, a, attr, currentClass, styleProp;
         
     // test for classes, if one found return true
@@ -1929,24 +1930,23 @@ wysihtml5.dom.parse = (function() {
     
     // test for styles, if one found return true
     if (nodeStyles && definition.styles) {
+      
+      nodeStyles = nodeStyles.split(';');
       for (s in definition.styles) {
         if (definition.styles.hasOwnProperty(s)) {
-          
-          // fix browser inconsitencies here
-          s_corrected = s;
-          if (s == "float") {
-            if (nodeStyles.styleFloat) { s_corrected = "styleFloat"; }
-            if (nodeStyles.cssFloat) { s_corrected = "cssFloat"; }
-          }
-          
-          if (nodeStyles[s_corrected]) {
-            if (array_contains(definition.styles[s], nodeStyles[s_corrected])) {
-              return true;
+          for (var sp = nodeStyles.length; sp--;) {
+            styleProp = nodeStyles[sp].split(':');
+            
+            if (styleProp[0].replace(/\s/g, '').toLowerCase() === s) {
+              if (definition.styles[s] === true || styleProp[1].replace(/\s/g, '').toLowerCase() === definition.styles[s]) {
+                return true;
+              }
             }
           }
         }
       }
     }
+    
     // test for attributes in general against regex match
     if (definition.attrs) {
         for (a in definition.attrs) {
@@ -4650,6 +4650,10 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       return selection.setSingleRange(range);
     },
     
+    createRange: function() {
+      return rangy.createRange(this.doc);
+    },
+    
     isCollapsed: function() {
         return this.getSelection().isCollapsed;
     }
@@ -4678,6 +4682,24 @@ wysihtml5.quirks.ensureProperClearing = (function() {
     var matchingClassNames = el.className.match(regExp) || [];
     return matchingClassNames[matchingClassNames.length - 1] === cssClass;
   }
+  
+  function hasStyleAttr(el, regExp) {
+    if (!el.getAttribute || !el.getAttribute('style')) {
+      return false;
+    }
+    var matchingStyles = el.getAttribute('style').match(regExp);
+    return  (el.getAttribute('style').match(regExp)) ? true : false;
+  }
+  
+  function addStyle(el, cssStyle, regExp) {
+    
+    if (el.getAttribute('style')) {
+      removeStyle(el, regExp);
+      el.setAttribute('style', cssStyle + ";" + el.getAttribute('style'));
+    } else {
+      el.setAttribute('style', cssStyle);
+    }
+  } 
 
   function addClass(el, cssClass, regExp) {
     if (el.className) {
@@ -4693,6 +4715,27 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       el.className = el.className.replace(regExp, "");
     }
   }
+  
+  function removeStyle(el, regExp) {
+    if (el.getAttribute('style')) {
+      el.setAttribute('style', el.getAttribute('style').replace(regExp, ""));
+    }
+  }
+  
+  function removeOrChangeStyle(el, style, regExp) {
+    var exactRegex = new RegExp("(^|\\s|;)" + style.replace(/\s/gi, '').replace(/([\(\)])/gi, "\\$1").toLowerCase()),
+        elStyle = el.getAttribute('style');
+        
+    if (elStyle && exactRegex.test(elStyle.replace(/\s/gi, '').toLowerCase())) {
+      // adding same style value on property again removes style
+      removeStyle(el, regExp);
+      return "remove";
+    } else {
+      // adding new style value changes value
+      addStyle(el, style, regExp);
+      return "change";
+    }
+  };
   
   function hasSameClasses(el1, el2) {
     return el1.className.replace(REG_EXP_WHITE_SPACE, " ") == el2.className.replace(REG_EXP_WHITE_SPACE, " ");
@@ -4808,10 +4851,12 @@ wysihtml5.quirks.ensureProperClearing = (function() {
     }
   };
 
-  function HTMLApplier(tagNames, cssClass, similarClassRegExp, normalize) {
+  function HTMLApplier(tagNames, cssClass, similarClassRegExp, normalize, cssStyle, similarStyleRegExp) {
     this.tagNames = tagNames || [defaultTagName];
-    this.cssClass = cssClass || "";
+    this.cssClass = cssClass || (cssClass === false) ? false : "";
     this.similarClassRegExp = similarClassRegExp;
+    this.cssStyle = cssStyle || "";
+    this.similarStyleRegExp = similarStyleRegExp;
     this.normalize = normalize;
     this.applyToAnyTagName = false;
   }
@@ -4820,8 +4865,21 @@ wysihtml5.quirks.ensureProperClearing = (function() {
     getAncestorWithClass: function(node) {
       var cssClassMatch;
       while (node) {
-        cssClassMatch = this.cssClass ? hasClass(node, this.cssClass, this.similarClassRegExp) : true;
+        cssClassMatch = this.cssClass ? hasClass(node, this.cssClass, this.similarClassRegExp) : (this.cssStyle !== "") ? false : true;
         if (node.nodeType == wysihtml5.ELEMENT_NODE && rangy.dom.arrayContains(this.tagNames, node.tagName.toLowerCase()) && cssClassMatch) {
+          return node;
+        }
+        node = node.parentNode;
+      }
+      return false;
+    },
+    
+    // returns parents of node with given style attribute
+    getAncestorWithStyle: function(node) {
+      var cssStyleMatch;
+      while (node) {
+        cssStyleMatch = this.cssStyle ? hasStyleAttr(node, this.similarStyleRegExp) : false;
+        if (node.nodeType == wysihtml5.ELEMENT_NODE && rangy.dom.arrayContains(this.tagNames, node.tagName.toLowerCase()) && cssStyleMatch) {
           return node;
         }
         node = node.parentNode;
@@ -4916,6 +4974,9 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       if (this.cssClass) {
         el.className = this.cssClass;
       }
+      if (this.cssStyle) {
+        el.setAttribute('style', this.cssStyle);
+      }
       return el;
     },
 
@@ -4936,26 +4997,35 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       return rangy.dom.arrayContains(this.tagNames, el.tagName.toLowerCase()) && wysihtml5.lang.string(el.className).trim() == this.cssClass;
     },
 
-    undoToTextNode: function(textNode, range, ancestorWithClass) {
-      if (!range.containsNode(ancestorWithClass)) {
+    undoToTextNode: function(textNode, range, ancestorWithClass, ancestorWithStyle) {
+      var styleMode = (ancestorWithClass) ? false : true,
+          ancestor = ancestorWithClass || ancestorWithStyle,
+          styleChanged = false;
+      
+      if (!range.containsNode(ancestor)) {
         // Split out the portion of the ancestor from which we can remove the CSS class
         var ancestorRange = range.cloneRange();
-        ancestorRange.selectNode(ancestorWithClass);
-
+            ancestorRange.selectNode(ancestor);
+ 
         if (ancestorRange.isPointInRange(range.endContainer, range.endOffset) && isSplitPoint(range.endContainer, range.endOffset)) {
-          splitNodeAt(ancestorWithClass, range.endContainer, range.endOffset);
-          range.setEndAfter(ancestorWithClass);
+            splitNodeAt(ancestor, range.endContainer, range.endOffset);
+            range.setEndAfter(ancestor);
         }
         if (ancestorRange.isPointInRange(range.startContainer, range.startOffset) && isSplitPoint(range.startContainer, range.startOffset)) {
-          ancestorWithClass = splitNodeAt(ancestorWithClass, range.startContainer, range.startOffset);
+            ancestor = splitNodeAt(ancestor, range.startContainer, range.startOffset);
         }
       }
       
-      if (this.similarClassRegExp) {
-        removeClass(ancestorWithClass, this.similarClassRegExp);
+      if (!styleMode && this.similarClassRegExp) {
+        removeClass(ancestor, this.similarClassRegExp);
       }
-      if (this.isRemovable(ancestorWithClass)) {
-        replaceWithOwnChildren(ancestorWithClass);
+      
+      if (styleMode && this.similarStyleRegExp) {
+        styleChanged = (removeOrChangeStyle(ancestor, this.cssStyle, this.similarStyleRegExp) === "change");
+      }
+      
+      if (this.isRemovable(ancestor) && !styleChanged) {
+        replaceWithOwnChildren(ancestor);
       }
     },
 
@@ -4999,40 +5069,46 @@ wysihtml5.quirks.ensureProperClearing = (function() {
     },
 
     undoToRange: function(range) {
-      var textNodes, textNode, textNode, ancestorWithClass;
+      var textNodes, textNode, ancestorWithClass, ancestorWithStyle;
       
       for (var ri = range.length; ri--;) {
+        
+        textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
+        if (textNodes.length) {
+          range[ri].splitBoundaries();
           textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
-          if (textNodes.length) {
-            range[ri].splitBoundaries();
-            textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
-          } else {
-            var doc = range[ri].endContainer.ownerDocument,
-                node = doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
-            range[ri].insertNode(node);
-            range[ri].selectNode(node);
-            textNodes = [node];
+        } else {
+          var doc = range[ri].endContainer.ownerDocument,
+              node = doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
+          range[ri].insertNode(node);
+          range[ri].selectNode(node);
+          textNodes = [node];
+        }
+    
+        for (var i = 0, len = textNodes.length; i < len; ++i) {
+          textNode = textNodes[i];
+          ancestorWithClass = this.getAncestorWithClass(textNode);
+          ancestorWithStyle = this.getAncestorWithStyle(textNode);
+          if (ancestorWithClass) {
+            this.undoToTextNode(textNode, range[ri], ancestorWithClass);
           }
-      
-          for (var i = 0, len = textNodes.length; i < len; ++i) {
-            textNode = textNodes[i];
-            ancestorWithClass = this.getAncestorWithClass(textNode);
-            if (ancestorWithClass) {
-              this.undoToTextNode(textNode, range[ri], ancestorWithClass);
-            }
+          if (ancestorWithStyle) {
+            this.undoToTextNode(textNode, range[ri], false, ancestorWithStyle);
           }
-      
-          if (len == 1) {
-            this.selectNode(range[ri], textNodes[0]);
-          } else {
-            range[ri].setStart(textNodes[0], 0);
-            textNode = textNodes[textNodes.length - 1];
-            range[ri].setEnd(textNode, textNode.length);
+        }
+    
+        if (len == 1) {
+          this.selectNode(range[ri], textNodes[0]);
+        } else {
+          range[ri].setStart(textNodes[0], 0);
+          textNode = textNodes[textNodes.length - 1];
+          range[ri].setEnd(textNode, textNode.length);
 
-            if (this.normalize) {
-              this.postApply(textNodes, range[ri]);
-            }
+          if (this.normalize) {
+            this.postApply(textNodes, range[ri]);
           }
+        }
+          
       }
     },
     
@@ -5068,28 +5144,31 @@ wysihtml5.quirks.ensureProperClearing = (function() {
 
     isAppliedToRange: function(range) {
       var ancestors = [],
-          ancestor, textNodes;
+          ancestor, styleAncestor, textNodes;
       
       for (var ri = range.length; ri--;) {
-          textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
-          if (!textNodes.length) {
-            ancestor = this.getAncestorWithClass(range[ri].startContainer);
-            return ancestor ? [ancestor] : false;
+        textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
+        if (!textNodes.length) {
+          ancestor = this.getAncestorWithClass(range[ri].startContainer);
+          if (!ancestor) {
+            ancestor = this.getAncestorWithStyle(range[ri].startContainer);
           }
-      
-          for (var i = 0, len = textNodes.length, selectedText; i < len; ++i) {
-            selectedText = this.getTextSelectedByRange(textNodes[i], range[ri]);
-            ancestor = this.getAncestorWithClass(textNodes[i]);
-            if (selectedText != "" && !ancestor) {
-              return false;
-            } else {
-              ancestors.push(ancestor);
-            }
+          return ancestor ? [ancestor] : false;
+        }
+    
+        for (var i = 0, len = textNodes.length, selectedText; i < len; ++i) {
+          selectedText = this.getTextSelectedByRange(textNodes[i], range[ri]);
+          ancestor = this.getAncestorWithClass(textNodes[i]);
+          if (!ancestor) {
+            ancestor = this.getAncestorWithStyle(textNodes[i]);
           }
+          if (!(selectedText != "" && !ancestor)) {
+            ancestors.push(ancestor);
+          }
+        }
       }
       
-      
-      return ancestors;
+      return (ancestors.length) ? ancestors : false;
     },
 
     toggleRange: function(range) {
@@ -5183,7 +5262,20 @@ wysihtml5.Commands = Base.extend(
         return false;
       }
     }
-  }
+  },
+  
+  /* Get command state parsed value if command has stateValue parsing function */
+  stateValue: function(command) {
+    var obj     = wysihtml5.commands[command],
+        args    = wysihtml5.lang.array(arguments).get(),
+        method  = obj && obj.stateValue;
+    if (method) {
+      args.unshift(this.composer);
+      return method.apply(obj, args);
+    } else {
+      return false;
+    }
+  } 
 });
 wysihtml5.commands.bold = {
   exec: function(composer, command) {
@@ -5334,6 +5426,63 @@ wysihtml5.commands.bold = {
     state: function(composer, command, color) {
       return wysihtml5.commands.formatInline.state(composer, command, "span", "wysiwyg-color-" + color, REG_EXP);
     }
+  };
+})(wysihtml5);/**
+ * document.execCommand("foreColor") will create either inline styles (firefox, chrome) or use font tags
+ * which we don't want
+ * Instead we set a css class
+ */
+(function(wysihtml5) {
+  var REG_EXP = /(^|\s|;)color\s*\:\s*((#[0-9a-f]{3}([0-9a-f]{3})?)|(rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}(\s*,\s*\d{1,3}\s*)?\)))\s*;?/i;
+  
+  wysihtml5.commands.foreColorStyle = {
+    exec: function(composer, command, color) {
+      var colString = "rgb(" + parseInt(color.red) + ',' + parseInt(color.green) + ',' + parseInt(color.blue) + ')';
+       
+      wysihtml5.commands.formatInline.execWithToggle(composer, command, "span", false, false, "color:" + colString, REG_EXP);
+    },
+
+    state: function(composer, command) {
+      return wysihtml5.commands.formatInline.state(composer, command, "span", false, false, false, REG_EXP);
+    },
+    
+    stateValue: function(composer, command) {
+      var st = this.state(composer, command),
+          colorStr, colorMatch,
+          RGBA_REGEX     = /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\)/i,
+          HEX6_REGEX     = /^#([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])/i,
+          HEX3_REGEX     = /^#([0-9a-f])([0-9a-f])([0-9a-f])/i;
+      
+      if (st && wysihtml5.lang.object(st).isArray()) {
+        st = st[0];
+      }
+      
+      if (st) {
+        colorStr = st.style.color;
+        if (colorStr) {
+          if (colorStr) {
+            if (RGBA_REGEX.test(colorStr)) {
+              colorMatch = colorStr.match(RGBA_REGEX);
+              return colorMatch.slice(1);
+              
+            } else if (HEX6_REGEX.test(colorStr)) {
+              colorMatch = colorStr.match(HEX6_REGEX);
+              return [parseInt(colorMatch[1], 16),
+                      parseInt(colorMatch[2], 16),
+                      parseInt(colorMatch[3], 16)];
+                      
+            } else if (HEX3_REGEX.test(colorStr)) {
+              colorMatch = colorStr.match(HEX3_REGEX);
+              return [(parseInt(colorMatch[1], 16) * 16) + parseInt(colorMatch[1], 16),
+                      (parseInt(colorMatch[2], 16) * 16) + parseInt(colorMatch[2], 16),
+                      (parseInt(colorMatch[3], 16) * 16) + parseInt(colorMatch[3], 16)];
+            }
+          }
+        }
+      }
+      return false;
+    }
+    
   };
 })(wysihtml5);(function(wysihtml5) {
   var dom                     = wysihtml5.dom,
@@ -5664,34 +5813,33 @@ wysihtml5.commands.bold = {
     return alias ? [tagName.toLowerCase(), alias.toLowerCase()] : [tagName.toLowerCase()];
   }
   
-  function _getApplier(tagName, className, classRegExp) {
+  function _getApplier(tagName, className, classRegExp, cssStyle, styleRegExp) {
     var identifier = tagName + ":" + className;
+    if (cssStyle) {
+      identifier += ":" + cssStyle
+    }
     if (!htmlApplier[identifier]) {
-      htmlApplier[identifier] = new wysihtml5.selection.HTMLApplier(_getTagNames(tagName), className, classRegExp, true);
+      htmlApplier[identifier] = new wysihtml5.selection.HTMLApplier(_getTagNames(tagName), className, classRegExp, true, cssStyle, styleRegExp);
     }
     return htmlApplier[identifier];
   }
   
   wysihtml5.commands.formatInline = {
-    exec: function(composer, command, tagName, className, classRegExp) {
-      var range = composer.selection.getRange(),
-          ownRanges = composer.selection.getOwnRanges(),
-          sNode = range.startContainer,
-          sOffset = range.startOffset,
-          eNode = range.endContainer,
-          eOffset = range.endOffset;
-          
-      if (!range) {
+    exec: function(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp) {
+      var range = composer.selection.createRange();
+          ownRanges = composer.selection.getOwnRanges();
+      
+      if (!ownRanges || ownRanges.length == 0) {
         return false;
       }
       composer.selection.getSelection().removeAllRanges();
-      _getApplier(tagName, className, classRegExp).toggleRange(ownRanges);
+      _getApplier(tagName, className, classRegExp, cssStyle, styleRegExp).toggleRange(ownRanges);
 
-      if (ownRanges.length > 1) {
-        // satart and end can get shifted after modifications
-        range.setStart(sNode, sOffset);
-        range.setEnd(eNode, eOffset);
-      }
+      range.setStart(ownRanges[0].startContainer,  ownRanges[0].startOffset);
+      range.setEnd(
+        ownRanges[ownRanges.length - 1].endContainer,
+        ownRanges[ownRanges.length - 1].endOffset
+      );
       
       composer.selection.setSelection(range);
     },
@@ -5699,20 +5847,20 @@ wysihtml5.commands.bold = {
     // Executes so that if collapsed caret is in a state and executing that state it should unformat that state
     // It is achieved by selecting the entire state element before executing.
     // This works on built in contenteditable inline format commands
-    execWithToggle: function(composer, command, tagName, className, classRegExp) {
+    execWithToggle: function(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp) {
         var that = this;
-        if (this.state(composer, command, tagName, className, classRegExp) && composer.selection.isCollapsed()) {
+        if (this.state(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp) && composer.selection.isCollapsed()) {
             var state_element = that.state(composer, command, tagName, className, classRegExp)[0];
             composer.selection.executeAndRestoreSimple(function() {
                 composer.selection.selectNode(state_element);
-                wysihtml5.commands.formatInline.exec(composer, command, tagName, className, classRegExp);
+                wysihtml5.commands.formatInline.exec(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp);
             });
         } else {
-            wysihtml5.commands.formatInline.exec(composer, command, tagName, className, classRegExp);
+            wysihtml5.commands.formatInline.exec(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp);
         }
     },
 
-    state: function(composer, command, tagName, className, classRegExp) {
+    state: function(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp) {
       var doc           = composer.doc,
           aliasTagName  = ALIAS_MAPPING[tagName] || tagName,
           ownRanges;
@@ -5733,8 +5881,8 @@ wysihtml5.commands.bold = {
       if (ownRanges.length == 0) {
         return false;
       }
-
-      return _getApplier(tagName, className, classRegExp).isAppliedToRange(ownRanges);
+      
+      return _getApplier(tagName, className, classRegExp, cssStyle, styleRegExp).isAppliedToRange(ownRanges);
     }
   };
 })(wysihtml5);wysihtml5.commands.insertHTML = {
@@ -7158,7 +7306,7 @@ wysihtml5.views.View = Base.extend(
         element             = this.element,
         focusBlurElement    = (browser.supportsEventsInIframeCorrectly() || this.sandbox.getContentEditable) ? element : this.sandbox.getWindow(),
         pasteEvents         = ["drop", "paste"],
-        interactionEvents   = ["drop", "paste", "mouseup", "focus", "blur", "keyup"];
+        interactionEvents   = ["drop", "paste", "mouseup", "focus", "keyup"];
 
     // --------- destroy:composer event ---------
     dom.observe(container, "DOMNodeRemoved", function() {
@@ -7672,6 +7820,7 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
           fields  = this.container.querySelectorAll(SELECTOR_FIELDS),
           length  = fields.length,
           i       = 0;
+          
       for (; i<length; i++) {
         data[fields[i].getAttribute(ATTRIBUTE_FIELDS)] = fields[i].value;
       }
@@ -8076,6 +8225,7 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
     },
 
     _updateLinkStates: function() {
+      
       var commandMapping    = this.commandMapping,
           actionMapping     = this.actionMapping,
           i,
@@ -8096,19 +8246,11 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
           }
         } else {
           state = this.composer.commands.state(command.name, command.value);
-          if (wysihtml5.lang.object(state).isArray()) {
-            // Grab first and only object/element in state array, otherwise convert state into boolean
-            // to avoid showing a dialog for multiple selected elements which may have different attributes
-            // eg. when two links with different href are selected, the state will be an array consisting of both link elements
-            // but the dialog interface can only update one
-            state = state.length === 1 ? state[0] : true;
-          }
           dom.removeClass(command.link, CLASS_NAME_COMMAND_DISABLED);
           if (command.group) {
             dom.removeClass(command.group, CLASS_NAME_COMMAND_DISABLED);
           }
         }
-
         if (command.state === state) {
           continue;
         }
@@ -8120,7 +8262,16 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
             dom.addClass(command.group, CLASS_NAME_COMMAND_ACTIVE);
           }
           if (command.dialog) {
-            if (typeof(state) === "object") {
+            if (typeof(state) === "object" || wysihtml5.lang.object(state).isArray()) {
+              
+              if (!command.dialog.multiselect && wysihtml5.lang.object(state).isArray()) {
+                // Grab first and only object/element in state array, otherwise convert state into boolean
+                // to avoid showing a dialog for multiple selected elements which may have different attributes
+                // eg. when two links with different href are selected, the state will be an array consisting of both link elements
+                // but the dialog interface can only update one
+                state = state.length === 1 ? state[0] : true;
+                command.state = state;
+              }
               command.dialog.show(state);
             } else {
               command.dialog.hide();

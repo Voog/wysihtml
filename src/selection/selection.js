@@ -675,6 +675,10 @@
       return selection.setSingleRange(range);
     },
     
+    createRange: function() {
+      return rangy.createRange(this.doc);
+    },
+    
     isCollapsed: function() {
         return this.getSelection().isCollapsed;
     }

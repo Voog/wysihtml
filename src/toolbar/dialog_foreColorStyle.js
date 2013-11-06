@@ -4,6 +4,7 @@
       ATTRIBUTE_FIELDS        = "data-wysihtml5-dialog-field";
   
   wysihtml5.toolbar.Dialog_foreColorStyle = wysihtml5.toolbar.Dialog.extend({
+    multiselect: true,
     
     _serialize: function() {
       var data    = {},
@@ -25,7 +26,8 @@
           fields         = this.container.querySelectorAll(SELECTOR_FIELDS),
           length         = fields.length,
           i              = 0,
-          colorStr       = (this.elementToChange) ? this.elementToChange.style.color : null,
+          firstElement   = (this.elementToChange) ? ((wysihtml5.lang.object(this.elementToChange).isArray()) ? this.elementToChange[0] : this.elementToChange) : null,
+          colorStr       = (firstElement) ? firstElement.style.color : null,
           color, colorMatch,
           RGBA_REGEX     = /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\)/i,
           HEX6_REGEX     = /^#([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])/i,
@@ -45,8 +47,8 @@
           colorMatch = colorStr.match(HEX3_REGEX);
           color = [];
           color[0] = (parseInt(colorMatch[1], 16) * 16) + parseInt(colorMatch[1], 16);
-          color[1] = (parseInt(colorMatch[1], 16) * 16) + parseInt(colorMatch[1], 16);
-          color[2] = (parseInt(colorMatch[1], 16) * 16) + parseInt(colorMatch[1], 16);
+          color[1] = (parseInt(colorMatch[2], 16) * 16) + parseInt(colorMatch[2], 16);
+          color[2] = (parseInt(colorMatch[3], 16) * 16) + parseInt(colorMatch[3], 16);
         }
       }
       

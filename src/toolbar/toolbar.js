@@ -223,6 +223,7 @@
     },
 
     _updateLinkStates: function() {
+      
       var commandMapping    = this.commandMapping,
           actionMapping     = this.actionMapping,
           i,
@@ -243,19 +244,11 @@
           }
         } else {
           state = this.composer.commands.state(command.name, command.value);
-          if (wysihtml5.lang.object(state).isArray()) {
-            // Grab first and only object/element in state array, otherwise convert state into boolean
-            // to avoid showing a dialog for multiple selected elements which may have different attributes
-            // eg. when two links with different href are selected, the state will be an array consisting of both link elements
-            // but the dialog interface can only update one
-            state = state.length === 1 ? state[0] : true;
-          }
           dom.removeClass(command.link, CLASS_NAME_COMMAND_DISABLED);
           if (command.group) {
             dom.removeClass(command.group, CLASS_NAME_COMMAND_DISABLED);
           }
         }
-
         if (command.state === state) {
           continue;
         }
@@ -267,8 +260,16 @@
             dom.addClass(command.group, CLASS_NAME_COMMAND_ACTIVE);
           }
           if (command.dialog) {
-            
-            if (typeof(state) === "object") {
+            if (typeof(state) === "object" || wysihtml5.lang.object(state).isArray()) {
+              
+              if (!command.dialog.multiselect && wysihtml5.lang.object(state).isArray()) {
+                // Grab first and only object/element in state array, otherwise convert state into boolean
+                // to avoid showing a dialog for multiple selected elements which may have different attributes
+                // eg. when two links with different href are selected, the state will be an array consisting of both link elements
+                // but the dialog interface can only update one
+                state = state.length === 1 ? state[0] : true;
+                command.state = state;
+              }
               command.dialog.show(state);
             } else {
               command.dialog.hide();

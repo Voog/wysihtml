@@ -484,33 +484,28 @@
           ancestor, styleAncestor, textNodes;
       
       for (var ri = range.length; ri--;) {
-        
-          textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
-          if (!textNodes.length) {
-            ancestor = this.getAncestorWithClass(range[ri].startContainer);
-            if (!ancestor) {
-              ancestor = this.getAncestorWithStyle(range[ri].startContainer);
-            }
-            return ancestor ? [ancestor] : false;
+        textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
+        if (!textNodes.length) {
+          ancestor = this.getAncestorWithClass(range[ri].startContainer);
+          if (!ancestor) {
+            ancestor = this.getAncestorWithStyle(range[ri].startContainer);
           }
-      
-          for (var i = 0, len = textNodes.length, selectedText; i < len; ++i) {
-            selectedText = this.getTextSelectedByRange(textNodes[i], range[ri]);
-            ancestor = this.getAncestorWithClass(textNodes[i]);
-            if (!ancestor) {
-              ancestor = this.getAncestorWithStyle(textNodes[i]);
-            }
-            if (selectedText != "" && !ancestor) {
-              return false;
-            } else {
-              ancestors.push(ancestor);
-            }
+          return ancestor ? [ancestor] : false;
+        }
+    
+        for (var i = 0, len = textNodes.length, selectedText; i < len; ++i) {
+          selectedText = this.getTextSelectedByRange(textNodes[i], range[ri]);
+          ancestor = this.getAncestorWithClass(textNodes[i]);
+          if (!ancestor) {
+            ancestor = this.getAncestorWithStyle(textNodes[i]);
           }
-          
+          if (!(selectedText != "" && !ancestor)) {
+            ancestors.push(ancestor);
+          }
+        }
       }
       
-      
-      return ancestors;
+      return (ancestors.length) ? ancestors : false;
     },
 
     toggleRange: function(range) {

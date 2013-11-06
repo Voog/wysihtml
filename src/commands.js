@@ -78,5 +78,18 @@ wysihtml5.Commands = Base.extend(
         return false;
       }
     }
-  }
+  },
+  
+  /* Get command state parsed value if command has stateValue parsing function */
+  stateValue: function(command) {
+    var obj     = wysihtml5.commands[command],
+        args    = wysihtml5.lang.array(arguments).get(),
+        method  = obj && obj.stateValue;
+    if (method) {
+      args.unshift(this.composer);
+      return method.apply(obj, args);
+    } else {
+      return false;
+    }
+  } 
 });
