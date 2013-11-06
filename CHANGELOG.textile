@@ -1,3 +1,13 @@
+*wysihtml5x 0.4.0* (Nov 6, 2013)
+* Support for contenteditable without iframe sandbox when initiated on div instead of textarea
+* Table creation and handling commands added
+* Improved parser with options to: unwrap tag instead of remove, keep defined styles, complex object type definitions for allowing elements.
+* Ability to add uneditable area inside editor text flow (useful when building modules like video tools, advanced image editor etc.)
+* Improved formatblock handling
+* Ability for user to remove formating with only collapsed caret. (without having to select exactly whole text)
+* Minor performance fixes
+* Ability to use inline styles if needed
+
 *wysihtml5 0.3.0* (May 18, 2012)
 
 * Support for query command groups in toolbar

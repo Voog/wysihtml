@@ -1,8 +1,9 @@
 /**
- * @license wysihtml5 v@VERSION
- * https://github.com/xing/wysihtml5
+ * @license wysihtml5x v@VERSION
+ * https://github.com/Edicy/wysihtml5
  *
  * Author: Christopher Blum (https://github.com/tiff)
+ * Secondary author of extended features: Oliver Pulges (https://github.com/pulges)
  *
  * Copyright (C) 2012 XING AG
  * Licensed under the MIT license (MIT)

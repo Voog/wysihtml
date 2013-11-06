@@ -1,6 +1,6 @@
 h1. wysihtml5x 0.4.0
 
-wysihtml5x is an extended and less strict approach on xing/wysihtml5 pen source rich text editor based on HTML5 technology.
+wysihtml5x is an extended and less strict approach on xing/wysihtml5 open source rich text editor based on HTML5 technology.
 The code is completely library agnostic: No jQuery, Prototype or similar is required.
 
 *This project was initiated and is supported by the "XING AG":https://www.xing.com*. Thanks!
@@ -9,7 +9,7 @@ h2. Features
 
 * Auto linking of urls as-you-type
 * Generates valid and semantic HTML5 markup (no <code><font></code>)
-* Uses class-names instead of inline styles
+* Can use class-names instead of inline styles
 * Unifies line-break handling across browsers (hitting enter will create <code><br></code> instead of <code><p></code> or <code><div></code>)
 * Auto-parses content inserted via copy & paste (from Word, Powerpoint, PDF, other web pages, ...)
 * Converts invalid or unknown html tags into valid/similar tags
@@ -22,7 +22,7 @@ Extended features not present in xing/wysihtml5 0.4.0pre
 * Can be used without iframe sandbox when initiated on div instead of textarea
 * Blocking of image drag drop in editable is removed
 * Table insertion management and cell merging commands
-* Improved parses with options to: unwrap tag instead of remove, keep defined styles, complex object type definitions for allowing elements.
+* Improved parser with options to: unwrap tag instead of remove, keep defined styles, complex object type definitions for allowing elements.
 * Ability to add uneditable area inside editor text flow (useful when building modules like video tools, advanced image editor etc.)
 * Improved formatblock handling
 * Ability for user to remove formating with only collapsed caret. (without having to select exactly whole text)
