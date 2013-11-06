@@ -127,7 +127,7 @@
     outline: 1px solid green;
   }
   
-  .toolbar .color-btn {
+  .toolbar .color-btn, .toolbar .bg-color-btn {
     height: 1.7em;
     width: 1.7em;
     text-align: center;
@@ -137,7 +137,7 @@
     color: white;
   }
   
-  .toolbar .color-btn.active {
+  .toolbar .color-btn.active, .toolbar .bg-color-btn.active  {
     border: 2px solid #333;
   }
   
@@ -156,6 +156,13 @@
         <a class="color-btn" style="background-color: rgb(255,0,0)" data-value="255,0,0">R</a>
         <a class="color-btn" style="background-color: rgb(0,255,0)" data-value="0,255,0">G</a>
         <a class="color-btn" style="background-color: rgb(0,0,255)" data-value="0,0,255">B</a>
+      </span>
+      
+      <a id="bgcolorbtn" class="editor-btn">BG color</a>
+      <span style="display:none" id="bgColorBtns">
+        <a class="bg-color-btn" style="background-color: rgb(255,128,128)" data-value="255,128,128">R</a>
+        <a class="bg-color-btn" style="background-color: rgb(128,255,128)" data-value="128,255,128">G</a>
+        <a class="bg-color-btn" style="background-color: rgb(128,128,255)" data-value="128,128,255">B</a>
       </span>
       
       <span style="display:none" id="tableBtns">
@@ -265,6 +272,21 @@
         $('#colorBtns').hide();
       }
       
+      if (composer.commands.state('bgColorStyle')) {
+        $('#bgcolorbtn').addClass('active');
+        value = composer.commands.stateValue('bgColorStyle');
+        $('.bg-color-btn.active').removeClass('active');
+        if (value) {
+          $('.bg-color-btn[data-value="'+ value.join(',') +'"]').addClass('active');
+        }
+        
+        $('#bgColorBtns').show();
+        
+      } else {
+        $('#bgcolorbtn').removeClass('active');
+        $('#bgColorBtns').hide();
+      }
+      
     }
     
 // Listen to events and update menu
@@ -354,6 +376,23 @@
         "blue": val[2],
       });
       updateStates();
-    })
+    });
+    
+    $('#bgcolorbtn').click(function(event) {
+      event.preventDefault();
+      $('#bgColorBtns').show();
+    });
+    
+    $('.bg-color-btn').mousedown(function(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      var val = $(this).data("value").split(',');
+      composer.commands.exec("bgColorStyle", {
+        "red": val[0],
+        "green": val[1],
+        "blue": val[2],
+      });
+      updateStates();
+    });
     
 </script>
