@@ -170,13 +170,19 @@ wysihtml5.dom.parse = (function() {
     // Cleanup senseless <span> elements
     if (cleanUp &&
         newNode.nodeName.toLowerCase() === DEFAULT_NODE_NAME &&
-        (!newNode.childNodes.length || !newNode.attributes.length)) {
+        (!newNode.childNodes.length ||
+         ((/^\s*$/gi).test(newNode.innerHTML) && oldNode.className !== "_wysihtml5-temp-placeholder") ||
+         !newNode.attributes.length)
+        ) {
       fragment = newNode.ownerDocument.createDocumentFragment();
       while (newNode.firstChild) {
         fragment.appendChild(newNode.firstChild);
       }
       return fragment;
     }
+    
+    
+    
     return newNode;
   }
   
