@@ -4854,7 +4854,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
 
   function HTMLApplier(tagNames, cssClass, similarClassRegExp, normalize, cssStyle, similarStyleRegExp) {
     this.tagNames = tagNames || [defaultTagName];
-    this.cssClass = cssClass || (cssClass === false) ? false : "";
+    this.cssClass = cssClass || ((cssClass === false) ? false : "");
     this.similarClassRegExp = similarClassRegExp;
     this.cssStyle = cssStyle || "";
     this.similarStyleRegExp = similarStyleRegExp;
@@ -4984,6 +4984,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
     applyToTextNode: function(textNode) {
       var parent = textNode.parentNode;
       if (parent.childNodes.length == 1 && rangy.dom.arrayContains(this.tagNames, parent.tagName.toLowerCase())) {
+        
         if (this.cssClass) {
           addClass(parent, this.cssClass, this.similarClassRegExp);
         }

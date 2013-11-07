@@ -185,15 +185,16 @@
 
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
 
-<script src="../parser_rules/advanced.js"></script>
-<script src="../dist/wysihtml5-0.4.0pre.js"></script>
+<script src="../parser_rules/advanced_unwrap.js"></script>
+<script src="../dist/wysihtml5x-0.4.0.js"></script>
 <script>
 var editors = [];
  
   $('.ewrapper').each(function(idx, wrapper) {
     var e = new wysihtml5.Editor($(wrapper).find('.editable').get(0), {
       toolbar:        $(wrapper).find('.toolbar').get(0),
-      parserRules:    wysihtml5ParserRules
+      parserRules:    wysihtml5ParserRules,
+      stylesheets:  "css/stylesheet.css"
       //showToolbarAfterInit: false
     });
     editors.push(e);
