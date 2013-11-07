@@ -254,6 +254,12 @@ wysihtml5.dom.parse = (function() {
   
   function _testTypes(oldNode, rules, types) {
     var definition, type;
+    
+    // do not interfere with placeholder span or pasting caret position is not maintained
+    if (oldNode.nodeName === "SPAN" && oldNode.className === "_wysihtml5-temp-placeholder") {
+      return true;
+    }
+    
     for (type in types) {
       if (types.hasOwnProperty(type) && rules.type_definitions && rules.type_definitions[type]) {
         definition = rules.type_definitions[type];
