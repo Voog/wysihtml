@@ -4,11 +4,11 @@
     <meta content="IE=Edge,chrome=1" http-equiv="X-UA-Compatible">
     <meta charset="utf-8">
     <meta name="description" content="Open source rich text editor based on HTML5 and the progressive-enhancement approach. Uses a sophisticated security concept and aims to generate fully valid HTML5 markup by preventing unmaintainable tag soups and inline styles.">
-    <meta property="og:image" content="http://xing.github.com/wysihtml5/img/og_image.png">
+    <meta property="og:image" content="http://edicy.github.com/wysihtml5/img/og_image.png">
     <title>wysihtml5 - A better approach to rich text editing</title>
     
     <script src="parser_rules/advanced.js" ></script>
-    <script src="dist/wysihtml5-0.3.0.js" ></script>
+    <script src="dist/wysihtml5x-0.4.0.js" ></script>
     <!--[if lt IE 9]>
       <script src='http://html5shiv.googlecode.com/svn/trunk/html5.js'></script>
     <![endif]-->
@@ -17,8 +17,8 @@
     <link rel="stylesheet" href="css/stylesheet.css">
   </head>
   <body>
-    <a href="http://github.com/xing/wysihtml5" class="fork"><img src="https://a248.e.akamai.net/camo.github.com/abad93f42020b733148435e2cd92ce15c542d320/687474703a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f677265656e5f3030373230302e706e67" alt="Fork me on GitHub"></a>
-    <p class="get-started"><strong>Get started:</strong> <a href="https://github.com/xing/wysihtml5/zipball/0.3.0" target="_blank">Download</a> the latest version and read the <a href="https://github.com/xing/wysihtml5/wiki/Getting-Started" target="_blank">introduction</a></p>
+    <a href="https://github.com/edicy/wysihtml5" class="fork"><img src="https://a248.e.akamai.net/camo.github.com/abad93f42020b733148435e2cd92ce15c542d320/687474703a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f677265656e5f3030373230302e706e67" alt="Fork me on GitHub"></a>
+    <p class="get-started"><strong>Get started:</strong> <a href="https://github.com/Edicy/wysihtml5/archive/0.4.0-beta1.zip" target="_blank">Download</a> the latest version and read the <a href="https://github.com/edicy/wysihtml5/wiki/Getting-Started" target="_blank">introduction</a></p>
     <div id="wysihtml5-editor-toolbar">
       <header>
         <ul class="commands">
@@ -66,9 +66,8 @@
     
     <section>
       <textarea id="wysihtml5-editor" spellcheck="false" wrap="off" autofocus placeholder="Enter something ...">
-<h1>WYSIHTML5 - A better approach to rich text editing</h1>
-<p>wysihtml5 is an <span class="wysiwyg-color-green"><a href="https://github.com/xing/wysihtml5">open source</a></span> rich text editor based on HTML5 technology and the progressive-enhancement approach.
-It uses a sophisticated security concept and aims to generate fully valid HTML5 markup by preventing unmaintainable tag soups and inline styles.</p>
+<h1>WYSIHTML5x - A better approach to rich text editing</h1>
+<p>wysihtml5x is an extended approach on xing/wysihtml5 <span class="wysiwyg-color-green"><a href="https://github.com/edicy/wysihtml5">open source</a></span> rich text editor based on HTML5 technology and the progressive-enhancement approach.</p>
 <h2>Features</h2>
 <ul>
   <li>It's fast and lightweight (smaller than TinyMCE, Aloha, ...)</li>
@@ -80,14 +79,27 @@ It uses a sophisticated security concept and aims to generate fully valid HTML5 
   <li>Speech-input for Chrome</li>
   <li>No jQuery required</li>
 </ul>
+
+<h2>Extended features not present in xing/wysihtml5 0.4.0pre</h2>
+<ul>
+  <li>Can be used without iframe sandbox when initiated on div instead of textarea</li>
+  <li>Blocking of image drag drop in editable is removed</li>
+  <li>Table insertion management and cell merging commands</li>
+  <li>Improved parser with options to: unwrap tag instead of remove, keep defined styles, complex object type definitions for allowing elements.</li>
+  <li>Ability to add uneditable area inside editor text flow (useful when building modules like video tools, advanced image editor etc.)</li>
+  <li>Improved formatblock handling</li>
+  <li>Ability for user to remove formating with only collapsed caret. (without having to select exactly whole text)</li>
+  <li>Improved speed</li>
+</ul>
+
 <h2>Browser Support</h2>
 <ul>
-  <li><img src="http://xing.github.com/wysihtml5/img/icn_firefox.png" width="24" height="24"> Firefox 3.5+</li>
-  <li><img src="http://xing.github.com/wysihtml5/img/icn_chrome.png" width="24" height="24"> Chrome</li>
-  <li><img src="http://xing.github.com/wysihtml5/img/icn_internet_explorer.png" width="24" height="24"> IE 8+</li>
-  <li><img src="http://xing.github.com/wysihtml5/img/icn_safari.png" width="24" height="24"> Safari 4+</li>
-  <li><img src="http://xing.github.com/wysihtml5/img/icn_ios.png" width="24" height="24"> Safari on iOS 5+</li>
-  <li><img src="http://xing.github.com/wysihtml5/img/icn_opera.png" width="24" height="24"> Opera 11+</li>
+  <li><img src="http://edicy.github.com/wysihtml5/img/icn_firefox.png" width="24" height="24"> Firefox 3.5+</li>
+  <li><img src="http://edicy.github.com/wysihtml5/img/icn_chrome.png" width="24" height="24"> Chrome</li>
+  <li><img src="http://edicy.github.com/wysihtml5/img/icn_internet_explorer.png" width="24" height="24"> IE 8+</li>
+  <li><img src="http://edicy.github.com/wysihtml5/img/icn_safari.png" width="24" height="24"> Safari 4+</li>
+  <li><img src="http://edicy.github.com/wysihtml5/img/icn_ios.png" width="24" height="24"> Safari on iOS 5+</li>
+  <li><img src="http://edicy.github.com/wysihtml5/img/icn_opera.png" width="24" height="24"> Opera 11+</li>
   <li><strong>Graceful degradation:</strong> Unsupported browsers will get a <i>&amp;lt;textarea&amp;gt;</i></li>
 </ul>
       </textarea>
