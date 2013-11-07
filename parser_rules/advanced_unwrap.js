@@ -436,7 +436,7 @@ var wysihtml5ParserRules = {
             },
             "keep_styles": {
                 "color": 1,
-                "background-color": 1
+                "backgroundColor": 1
             },
             "remove_action": "unwrap"
         },
