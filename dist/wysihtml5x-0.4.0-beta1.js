@@ -1,5 +1,5 @@
 /**
- * @license wysihtml5x v0.4.0
+ * @license wysihtml5x v0.4.0-beta1
  * https://github.com/Edicy/wysihtml5
  *
  * Author: Christopher Blum (https://github.com/tiff)
@@ -10,7 +10,7 @@
  *
  */
 var wysihtml5 = {
-  version: "0.4.0",
+  version: "0.4.0-beta1",
   
   // namespaces
   commands:   {},
