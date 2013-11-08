@@ -29,10 +29,14 @@
   }
   
   function addStyle(el, cssStyle, regExp) {
-    
     if (el.getAttribute('style')) {
       removeStyle(el, regExp);
-      el.setAttribute('style', cssStyle + ";" + el.getAttribute('style'));
+      if (el.getAttribute('style') && !/\s+/.test(el.getAttribute('style'))) {
+        el.setAttribute('style', cssStyle + ";" + el.getAttribute('style'));
+      } else {
+        
+        el.setAttribute('style', cssStyle);
+      }
     } else {
       el.setAttribute('style', cssStyle);
     }
@@ -54,13 +58,25 @@
   }
   
   function removeStyle(el, regExp) {
+    var s,
+        s2 = [];
     if (el.getAttribute('style')) {
-      el.setAttribute('style', el.getAttribute('style').replace(regExp, ""));
+      s = el.getAttribute('style').split(';');
+      for (var i = s.length; i--;) {
+        if (!s[i].match(regExp) && !/\s/.test(s[i])) {
+          s2.push(s[i]);
+        }
+      }
+      if (s2.length) {
+        el.setAttribute('style', s2.join(';'));
+      } else {
+        el.removeAttribute('style');
+      }
     }
   }
   
   function removeOrChangeStyle(el, style, regExp) {
-    var exactRegex = new RegExp("(^|\\s|;)" + style.replace(/\s/gi, '').replace(/([\(\)])/gi, "\\$1").toLowerCase()),
+    var exactRegex = new RegExp("(^|\\s|;)" + style.replace(/\s/gi, '').replace(/([\(\)])/gi, "\\$1").toLowerCase(), "gi"),
         elStyle = el.getAttribute('style');
         
     if (elStyle && exactRegex.test(elStyle.replace(/\s/gi, '').toLowerCase())) {

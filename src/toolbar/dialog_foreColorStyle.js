@@ -27,54 +27,31 @@
           length         = fields.length,
           i              = 0,
           firstElement   = (this.elementToChange) ? ((wysihtml5.lang.object(this.elementToChange).isArray()) ? this.elementToChange[0] : this.elementToChange) : null,
-          colorStr       = (firstElement) ? firstElement.style.color : null,
-          color, colorMatch,
-          RGBA_REGEX     = /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\)/i,
-          HEX6_REGEX     = /^#([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])/i,
-          HEX3_REGEX     = /^#([0-9a-f])([0-9a-f])([0-9a-f])/i;
-      
-      if (colorStr) {
-        if (RGBA_REGEX.test(colorStr)) {
-          colorMatch = colorStr.match(RGBA_REGEX);
-          color = colorMatch.slice(1);
-        } else if (HEX6_REGEX.test(colorStr)) {
-          colorMatch = colorStr.match(HEX6_REGEX);
-          color = [];
-          color[0] = parseInt(colorMatch[1], 16);
-          color[1] = parseInt(colorMatch[2], 16);
-          color[2] = parseInt(colorMatch[3], 16);
-        } else if (HEX3_REGEX.test(colorStr)) {
-          colorMatch = colorStr.match(HEX3_REGEX);
-          color = [];
-          color[0] = (parseInt(colorMatch[1], 16) * 16) + parseInt(colorMatch[1], 16);
-          color[1] = (parseInt(colorMatch[2], 16) * 16) + parseInt(colorMatch[2], 16);
-          color[2] = (parseInt(colorMatch[3], 16) * 16) + parseInt(colorMatch[3], 16);
-        }
-      }
-      
-      if (color) {
-        for (; i<length; i++) {
-          field = fields[i];
-
-          // Never change elements where the user is currently typing in
-          if (field === focusedElement) {
-            continue;
-          }
-
-          // Don't update hidden fields3
-          if (avoidHiddenFields && field.type === "hidden") {
-            continue;
-          }
+          colorStr       = (firstElement) ? firstElement.getAttribute('style') : null,
+          color          = (colorStr) ? wysihtml5.quirks.parseColorStyleStr(colorStr, "color") : null;
         
-          fieldName = field.getAttribute(ATTRIBUTE_FIELDS);
-          switch (fieldName) {
-            case 'red': field.value = color[0]; break;
-            case 'green': field.value = color[1]; break;
-            case 'blue': field.value = color[2]; break;
+      for (; i<length; i++) {
+        field = fields[i];
+        // Never change elements where the user is currently typing in
+        if (field === focusedElement) {
+          continue;
+        }
+        // Don't update hidden fields3
+        if (avoidHiddenFields && field.type === "hidden") {
+          continue;
+        }
+        if (field.getAttribute(ATTRIBUTE_FIELDS) === "color") {
+          if (color) {
+            if (color[3] && color[3] != 1) {
+              field.value = "rgba(" + color[0] + "," + color[1] + "," + color[2] + "," + color[3] + ");";
+            } else {
+              field.value = "rgb(" + color[0] + "," + color[1] + "," + color[2] + ");";
+            }
+          } else {
+            field.value = "rgb(0,0,0);";
           }
         }
       }
-      
     }
 
   });
