@@ -47,6 +47,7 @@ JS_FILES = src/wysihtml5.js \
   src/quirks/get_correct_inner_html.js \
   src/quirks/redraw.js \
   src/quirks/table_cells_selection.js\
+  src/quirks/parse_color_style.js\
   src/selection/selection.js \
   src/selection/html_applier.js \
   src/commands.js \
@@ -131,6 +132,7 @@ JS_FILES_WOTOOLS = src/wysihtml5.js \
   src/quirks/get_correct_inner_html.js \
   src/quirks/redraw.js \
   src/quirks/table_cells_selection.js\
+  src/quirks/parse_color_style.js\
   src/selection/selection.js \
   src/selection/html_applier.js \
   src/commands.js \

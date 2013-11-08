@@ -153,16 +153,16 @@
       
       <a id="colorbtn" class="editor-btn">color</a>
       <span style="display:none" id="colorBtns">
-        <a class="color-btn" style="background-color: rgb(255,0,0)" data-value="255,0,0">R</a>
-        <a class="color-btn" style="background-color: rgb(0,255,0)" data-value="0,255,0">G</a>
-        <a class="color-btn" style="background-color: rgb(0,0,255)" data-value="0,0,255">B</a>
+        <a class="color-btn" style="background-color: rgb(255,0,0)" data-value="rgb(255,0,0)">R</a>
+        <a class="color-btn" style="background-color: rgb(0,255,0)" data-value="rgb(0,255,0)">G</a>
+        <a class="color-btn" style="background-color: rgb(0,0,255)" data-value="rgb(0,0,255)">B</a>
       </span>
       
       <a id="bgcolorbtn" class="editor-btn">BG color</a>
       <span style="display:none" id="bgColorBtns">
-        <a class="bg-color-btn" style="background-color: rgb(255,128,128)" data-value="255,128,128">R</a>
-        <a class="bg-color-btn" style="background-color: rgb(128,255,128)" data-value="128,255,128">G</a>
-        <a class="bg-color-btn" style="background-color: rgb(128,128,255)" data-value="128,128,255">B</a>
+        <a class="bg-color-btn" style="background-color: rgb(255,128,128)" data-value="rgb(255,128,128)">R</a>
+        <a class="bg-color-btn" style="background-color: rgb(128,255,128)" data-value="rgb(128,255,128)">G</a>
+        <a class="bg-color-btn" style="background-color: rgb(128,128,255)" data-value="rgb(128,128,255)">B</a>
       </span>
       
       <span style="display:none" id="tableBtns">
@@ -259,10 +259,9 @@
       if (composer.commands.state('foreColorStyle')) {
         $('#colorbtn').addClass('active');
         value = composer.commands.stateValue('foreColorStyle');
-        
         $('.color-btn.active').removeClass('active');
         if (value) {
-          $('.color-btn[data-value="'+ value.join(',') +'"]').addClass('active');
+          $('.color-btn[data-value="'+ value +'"]').addClass('active');
         }
         
         $('#colorBtns').show();
@@ -277,7 +276,7 @@
         value = composer.commands.stateValue('bgColorStyle');
         $('.bg-color-btn.active').removeClass('active');
         if (value) {
-          $('.bg-color-btn[data-value="'+ value.join(',') +'"]').addClass('active');
+          $('.bg-color-btn[data-value="'+ value +'"]').addClass('active');
         }
         
         $('#bgColorBtns').show();
@@ -369,12 +368,8 @@
     $('.color-btn').mousedown(function(event) {
       event.preventDefault();
       event.stopPropagation();
-      var val = $(this).data("value").split(',');
-      composer.commands.exec("foreColorStyle", {
-        "red": val[0],
-        "green": val[1],
-        "blue": val[2],
-      });
+      var val = $(this).data("value");
+      composer.commands.exec("foreColorStyle", val);
       updateStates();
     });
     
@@ -386,12 +381,8 @@
     $('.bg-color-btn').mousedown(function(event) {
       event.preventDefault();
       event.stopPropagation();
-      var val = $(this).data("value").split(',');
-      composer.commands.exec("bgColorStyle", {
-        "red": val[0],
-        "green": val[1],
-        "blue": val[2],
-      });
+      var val = $(this).data("value");
+      composer.commands.exec("bgColorStyle", val);
       updateStates();
     });
     

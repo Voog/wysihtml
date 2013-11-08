@@ -45,7 +45,6 @@
   };
   
   wysihtml5.quirks.unParseColorStyleStr = function(val, props) {
-    console.log(val);
     if (props) {
       if (props == "hex") {
         return (val[0].toString(16).toUpperCase()) + (val[1].toString(16).toUpperCase()) + (val[2].toString(16).toUpperCase());
