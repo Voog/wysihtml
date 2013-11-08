@@ -24,7 +24,7 @@
       return wysihtml5.commands.formatInline.state(composer, command, "span", false, false, "color", REG_EXP);
     },
     
-    stateValue: function(composer, command) {
+    stateValue: function(composer, command, props) {
       var st = this.state(composer, command),
           colorStr;
           
@@ -36,7 +36,8 @@
         colorStr = st.getAttribute('style');
         if (colorStr) {
           if (colorStr) {
-            return wysihtml5.quirks.parseColorStyleStr(colorStr, "color");
+            val = wysihtml5.quirks.parseColorStyleStr(colorStr, "color");
+            return wysihtml5.quirks.unParseColorStyleStr(val, props);
           }
         }
       }

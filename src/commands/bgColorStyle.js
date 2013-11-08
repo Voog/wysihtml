@@ -24,9 +24,10 @@
       return wysihtml5.commands.formatInline.state(composer, command, "span", false, false, "background-color", REG_EXP);
     },
     
-    stateValue: function(composer, command) {
+    stateValue: function(composer, command, props) {
       var st = this.state(composer, command),
-          colorStr;
+          colorStr, 
+          val = false;
           
       if (st && wysihtml5.lang.object(st).isArray()) {
         st = st[0];
@@ -36,7 +37,8 @@
         colorStr = st.getAttribute('style');
         if (colorStr) {
           if (colorStr) {
-            return wysihtml5.quirks.parseColorStyleStr(colorStr, "background-color");
+            val = wysihtml5.quirks.parseColorStyleStr(colorStr, "background-color");
+            return wysihtml5.quirks.unParseColorStyleStr(val, props);
           }
         }
       }
