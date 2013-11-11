@@ -698,6 +698,30 @@ wysihtml5.browser = (function() {
         newArray.push(arr[i]);
       }
       return newArray;
+    },
+    
+    /**
+     * Creates a new array with the results of calling a provided function on every element in this array.
+     * optionally this can be provided as second argument
+     *
+     * @example
+     *    var childNodes = wysihtml5.lang.array([1,2,3,4]).map(function (value, index, array) {
+            return value * 2;
+     *    });
+     *    // => [2,4,6,8]
+     */
+    map: function(callback, thisArg) {
+      if (Array.prototype.map) {
+        return arr.map(callback, thisArg);
+      } else {
+        var len = arr.length >>> 0,
+            A = new Array(len),
+            i = 0;
+        for (; i < len; i++) {
+           A[i] = callback.call(thisArg, arr[i], i, arr);
+        }
+        return A;
+      }
     }
   };
 };wysihtml5.lang.Dispatcher = Base.extend(
@@ -3985,67 +4009,71 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       RGB_REGEX     = /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)/i,
       HEX6_REGEX     = /^#([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])/i,
       HEX3_REGEX     = /^#([0-9a-f])([0-9a-f])([0-9a-f])/i;
-
-  wysihtml5.quirks.parseColorStyleStr = function(stylesStr, paramName) {
-    var str;
-    var paramRegex = new RegExp("(^|\\s|;)" + paramName + "\\s*:\\s*[^;$]+" , "gi");
-        params = stylesStr.match(paramRegex);
-    if (params) {    
-      for (var i = params.length; i--;) {
-        params[i] = wysihtml5.lang.string(params[i].split(':')[1]).trim();
-      } 
-      str = params[params.length-1];
+      
+  wysihtml5.quirks.styleParser = {
     
-      if (RGBA_REGEX.test(str)) {
-        colorMatch = str.match(RGBA_REGEX);
-        return [parseInt(colorMatch[1], 10),
-                parseInt(colorMatch[2], 10),
-                parseInt(colorMatch[3], 10),
-                parseInt(colorMatch[4], 10)];
-      } else if (RGB_REGEX.test(str)) {
-        colorMatch = str.match(RGB_REGEX);
-        return [parseInt(colorMatch[1], 10),
-                parseInt(colorMatch[2], 10),
-                parseInt(colorMatch[3], 10),
-                1];
-      } else if (HEX6_REGEX.test(str)) {
-        colorMatch = str.match(HEX6_REGEX);
-        return [parseInt(colorMatch[1], 16),
-                parseInt(colorMatch[2], 16),
-                parseInt(colorMatch[3], 16),
-                1];
-              
-      } else if (HEX3_REGEX.test(str)) {
-        colorMatch = str.match(HEX3_REGEX);
-        return [(parseInt(colorMatch[1], 16) * 16) + parseInt(colorMatch[1], 16),
-                (parseInt(colorMatch[2], 16) * 16) + parseInt(colorMatch[2], 16),
-                (parseInt(colorMatch[3], 16) * 16) + parseInt(colorMatch[3], 16),
-                1];
+    parseColor: function(stylesStr, paramName) {
+      var paramRegex = new RegExp("(^|\\s|;)" + paramName + "\\s*:\\s*[^;$]+" , "gi"),
+          params = stylesStr.match(paramRegex),
+          radix = 10,
+          str, colorMatch;
+          
+      if (params) {    
+        for (var i = params.length; i--;) {
+          params[i] = wysihtml5.lang.string(params[i].split(':')[1]).trim();
+        } 
+        str = params[params.length-1];
+        
+        if (RGBA_REGEX.test(str)) {
+          colorMatch = str.match(RGBA_REGEX);
+        } else if (RGB_REGEX.test(str)) {
+          colorMatch = str.match(RGB_REGEX);
+        } else if (HEX6_REGEX.test(str)) {
+          colorMatch = str.match(HEX6_REGEX);
+          radix = 16;
+        } else if (HEX3_REGEX.test(str)) {
+          colorMatch = str.match(HEX3_REGEX);
+          colorMatch.shift();
+          colorMatch.push(1);
+          return wysihtml5.lang.array(colorMatch).map(function(d, idx) {
+            return (idx < 3) ? (parseInt(d, 16) * 16) + parseInt(d, 16): parseFloat(d);
+          });
+        }
+        
+        if (colorMatch) {
+          colorMatch.shift();
+          if (!colorMatch[3]) {
+            colorMatch.push(1);
+          }
+          return wysihtml5.lang.array(colorMatch).map(function(d, idx) {
+            return (idx < 3) ? parseInt(d, radix): parseFloat(d);
+          });
+        }
       }
-    }
-    return false;
-  };
+      return false;
+    },
   
-  wysihtml5.quirks.unParseColorStyleStr = function(val, props) {
-    if (props) {
-      if (props == "hex") {
-        return (val[0].toString(16).toUpperCase()) + (val[1].toString(16).toUpperCase()) + (val[2].toString(16).toUpperCase());
-      } else if (props == "hash") {
-        return "#" + (val[0].toString(16).toUpperCase()) + (val[1].toString(16).toUpperCase()) + (val[2].toString(16).toUpperCase());
-      } else if (props == "rgb") {
-        return "rgb(" + val[0] + "," + val[1] + "," + val[2] + ")";
-      } else if (props == "rgba") {
+    unparseColor: function(val, props) {
+      if (props) {
+        if (props == "hex") {
+          return (val[0].toString(16).toUpperCase()) + (val[1].toString(16).toUpperCase()) + (val[2].toString(16).toUpperCase());
+        } else if (props == "hash") {
+          return "#" + (val[0].toString(16).toUpperCase()) + (val[1].toString(16).toUpperCase()) + (val[2].toString(16).toUpperCase());
+        } else if (props == "rgb") {
+          return "rgb(" + val[0] + "," + val[1] + "," + val[2] + ")";
+        } else if (props == "rgba") {
+          return "rgba(" + val[0] + "," + val[1] + "," + val[2] + "," + val[3] + ")";
+        } else if (props == "csv") {
+          return  val[0] + "," + val[1] + "," + val[2] + "," + val[3];
+        }
+      }
+      
+      if (val[3] && val[3] !== 1) {
         return "rgba(" + val[0] + "," + val[1] + "," + val[2] + "," + val[3] + ")";
-      } else if (props == "csv") {
-        return  val[0] + "," + val[1] + "," + val[2] + "," + val[3];
+      } else {
+        return "rgb(" + val[0] + "," + val[1] + "," + val[2] + ")";
       }
     }
-    
-    if (val[3] && val[3] !== 1) {
-      return "rgba(" + val[0] + "," + val[1] + "," + val[2] + "," + val[3] + ")";
-    } else {
-      return "rgb(" + val[0] + "," + val[1] + "," + val[2] + ")";
-    } 
   };
   
 })(wysihtml5);/**
@@ -4769,7 +4797,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
   function addStyle(el, cssStyle, regExp) {
     if (el.getAttribute('style')) {
       removeStyle(el, regExp);
-      if (el.getAttribute('style') && !/\s+/.test(el.getAttribute('style'))) {
+      if (el.getAttribute('style') && !(/\s+/).test(el.getAttribute('style'))) {
         el.setAttribute('style', cssStyle + ";" + el.getAttribute('style'));
       } else {
         
@@ -4801,7 +4829,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
     if (el.getAttribute('style')) {
       s = el.getAttribute('style').split(';');
       for (var i = s.length; i--;) {
-        if (!s[i].match(regExp) && !/\s/.test(s[i])) {
+        if (!s[i].match(regExp) && !(/\s/).test(s[i])) {
           s2.push(s[i]);
         }
       }
@@ -4813,13 +4841,40 @@ wysihtml5.quirks.ensureProperClearing = (function() {
     }
   }
   
-  function removeOrChangeStyle(el, style, regExp) {
-    var exactRegex = new RegExp("(^|\\s|;)" + style.replace(/\s/gi, '').replace(/([\(\)])/gi, "\\$1").toLowerCase(), "gi"),
+  function getMatchingStyleRegexp(el, style) {
+    var regexes = [],
+        sSplit = style.split(';'),
         elStyle = el.getAttribute('style');
+    
+    if (elStyle) {
+      elStyle = elStyle.replace(/\s/gi, '').toLowerCase();    
+      regexes.push(new RegExp("(^|\\s|;)" + style.replace(/\s/gi, '').replace(/([\(\)])/gi, "\\$1").toLowerCase().replace(";", ";?"), "gi"));
+    
+      for (var i = sSplit.length; i-- > 0;) {
+        if (!(/^\s*$/).test(sSplit[i])) {
+          regexes.push(new RegExp("(^|\\s|;)" + sSplit[i].replace(/\s/gi, '').replace(/([\(\)])/gi, "\\$1").toLowerCase().replace(";", ";?"), "gi"));
+        }
+      }
+      for (var j = 0, jmax = regexes.length; j < jmax; j++) {
+        if (elStyle.match(regexes[j])) {
+          return regexes[j];
+        }
+      }
+    }
+    
+    return false;
+  };
+  
+  function removeOrChangeStyle(el, style, regExp) {
+    
+    var exactRegex = getMatchingStyleRegexp(el, style);
+    
+    /*new RegExp("(^|\\s|;)" + style.replace(/\s/gi, '').replace(/([\(\)])/gi, "\\$1").toLowerCase().replace(";", ";?"), "gi"),
+        elStyle = el.getAttribute('style');*/
         
-    if (elStyle && exactRegex.test(elStyle.replace(/\s/gi, '').toLowerCase())) {
+    if (exactRegex) {
       // adding same style value on property again removes style
-      removeStyle(el, regExp);
+      removeStyle(el, exactRegex);
       return "remove";
     } else {
       // adding new style value changes value
@@ -5123,12 +5178,12 @@ wysihtml5.quirks.ensureProperClearing = (function() {
 
     applyToRange: function(range) {
         var textNodes;
-        
         for (var ri = range.length; ri--;) {    
             textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
+            
             if (!textNodes.length) {
               try {
-                var node = this.createContainer(range.endContainer.ownerDocument);
+                var node = this.createContainer(range[ri].endContainer.ownerDocument);
                 range[ri].surroundContents(node);
                 this.selectNode(range[ri], node);
                 return;
@@ -5137,7 +5192,6 @@ wysihtml5.quirks.ensureProperClearing = (function() {
         
             range[ri].splitBoundaries();
             textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
-        
             if (textNodes.length) {
               var textNode;
 
@@ -5529,7 +5583,7 @@ wysihtml5.commands.bold = {
   
   wysihtml5.commands.foreColorStyle = {
     exec: function(composer, command, color) {
-      var colorVals  = wysihtml5.quirks.parseColorStyleStr((typeof(color) == "object") ? "color:" + color.color : "color:" + color, "color"),
+      var colorVals  = wysihtml5.quirks.styleParser.parseColor((typeof(color) == "object") ? "color:" + color.color : "color:" + color, "color"),
           colString;
       
       if (colorVals) {
@@ -5557,8 +5611,8 @@ wysihtml5.commands.bold = {
         colorStr = st.getAttribute('style');
         if (colorStr) {
           if (colorStr) {
-            val = wysihtml5.quirks.parseColorStyleStr(colorStr, "color");
-            return wysihtml5.quirks.unParseColorStyleStr(val, props);
+            val = wysihtml5.quirks.styleParser.parseColor(colorStr, "color");
+            return wysihtml5.quirks.styleParser.unparseColor(val, props);
           }
         }
       }
@@ -5576,7 +5630,7 @@ wysihtml5.commands.bold = {
   
   wysihtml5.commands.bgColorStyle = {
     exec: function(composer, command, color) {
-      var colorVals  = wysihtml5.quirks.parseColorStyleStr((typeof(color) == "object") ? "background-color:" + color.color : "background-color:" + color, "background-color"),
+      var colorVals  = wysihtml5.quirks.styleParser.parseColor((typeof(color) == "object") ? "background-color:" + color.color : "background-color:" + color, "background-color"),
           colString;
       
       if (colorVals) {
@@ -5605,8 +5659,8 @@ wysihtml5.commands.bold = {
         colorStr = st.getAttribute('style');
         if (colorStr) {
           if (colorStr) {
-            val = wysihtml5.quirks.parseColorStyleStr(colorStr, "background-color");
-            return wysihtml5.quirks.unParseColorStyleStr(val, props);
+            val = wysihtml5.quirks.styleParser.parseColor(colorStr, "background-color");
+            return wysihtml5.quirks.styleParser.unparseColor(val, props);
           }
         }
       }
@@ -8480,7 +8534,7 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
           i              = 0,
           firstElement   = (this.elementToChange) ? ((wysihtml5.lang.object(this.elementToChange).isArray()) ? this.elementToChange[0] : this.elementToChange) : null,
           colorStr       = (firstElement) ? firstElement.getAttribute('style') : null,
-          color          = (colorStr) ? wysihtml5.quirks.parseColorStyleStr(colorStr, "color") : null;
+          color          = (colorStr) ? wysihtml5.quirks.styleParser.parseColor(colorStr, "color") : null;
         
       for (; i<length; i++) {
         field = fields[i];
