@@ -8,7 +8,7 @@
   
   wysihtml5.commands.bgColorStyle = {
     exec: function(composer, command, color) {
-      var colorVals  = wysihtml5.quirks.parseColorStyleStr((typeof(color) == "object") ? "background-color:" + color.color : "background-color:" + color, "background-color"),
+      var colorVals  = wysihtml5.quirks.styleParser.parseColor((typeof(color) == "object") ? "background-color:" + color.color : "background-color:" + color, "background-color"),
           colString;
       
       if (colorVals) {
@@ -37,8 +37,8 @@
         colorStr = st.getAttribute('style');
         if (colorStr) {
           if (colorStr) {
-            val = wysihtml5.quirks.parseColorStyleStr(colorStr, "background-color");
-            return wysihtml5.quirks.unParseColorStyleStr(val, props);
+            val = wysihtml5.quirks.styleParser.parseColor(colorStr, "background-color");
+            return wysihtml5.quirks.styleParser.unparseColor(val, props);
           }
         }
       }

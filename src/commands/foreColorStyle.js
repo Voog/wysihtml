@@ -8,7 +8,7 @@
   
   wysihtml5.commands.foreColorStyle = {
     exec: function(composer, command, color) {
-      var colorVals  = wysihtml5.quirks.parseColorStyleStr((typeof(color) == "object") ? "color:" + color.color : "color:" + color, "color"),
+      var colorVals  = wysihtml5.quirks.styleParser.parseColor((typeof(color) == "object") ? "color:" + color.color : "color:" + color, "color"),
           colString;
       
       if (colorVals) {
@@ -36,8 +36,8 @@
         colorStr = st.getAttribute('style');
         if (colorStr) {
           if (colorStr) {
-            val = wysihtml5.quirks.parseColorStyleStr(colorStr, "color");
-            return wysihtml5.quirks.unParseColorStyleStr(val, props);
+            val = wysihtml5.quirks.styleParser.parseColor(colorStr, "color");
+            return wysihtml5.quirks.styleParser.unparseColor(val, props);
           }
         }
       }

@@ -28,7 +28,7 @@
           i              = 0,
           firstElement   = (this.elementToChange) ? ((wysihtml5.lang.object(this.elementToChange).isArray()) ? this.elementToChange[0] : this.elementToChange) : null,
           colorStr       = (firstElement) ? firstElement.getAttribute('style') : null,
-          color          = (colorStr) ? wysihtml5.quirks.parseColorStyleStr(colorStr, "color") : null;
+          color          = (colorStr) ? wysihtml5.quirks.styleParser.parseColor(colorStr, "color") : null;
         
       for (; i<length; i++) {
         field = fields[i];

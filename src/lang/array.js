@@ -65,6 +65,30 @@ wysihtml5.lang.array = function(arr) {
         newArray.push(arr[i]);
       }
       return newArray;
+    },
+    
+    /**
+     * Creates a new array with the results of calling a provided function on every element in this array.
+     * optionally this can be provided as second argument
+     *
+     * @example
+     *    var childNodes = wysihtml5.lang.array([1,2,3,4]).map(function (value, index, array) {
+            return value * 2;
+     *    });
+     *    // => [2,4,6,8]
+     */
+    map: function(callback, thisArg) {
+      if (Array.prototype.map) {
+        return arr.map(callback, thisArg);
+      } else {
+        var len = arr.length >>> 0,
+            A = new Array(len),
+            i = 0;
+        for (; i < len; i++) {
+           A[i] = callback.call(thisArg, arr[i], i, arr);
+        }
+        return A;
+      }
     }
   };
 };
