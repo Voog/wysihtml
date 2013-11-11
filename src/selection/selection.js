@@ -268,8 +268,8 @@
           range                 = this.getRange(this.doc),
           caretPlaceholder,
           newCaretPlaceholder,
-          nextSibling,
-          node,
+          nextSibling, prevSibling,
+          node, node2, range2,
           newRange;
       
       // Nothing selected, execute and say goodbye
@@ -281,8 +281,24 @@
       if (wysihtml5.browser.hasInsertNodeIssue()) {
         this.doc.execCommand("insertHTML", false, placeholderHtml);
       } else {
+        
+        if (!range.collapsed) {
+          range2 = range.cloneRange();
+          node2 = range2.createContextualFragment(placeholderHtml);
+          range2.collapse(false);
+          range2.insertNode(node2);
+          range2.detach();
+        }
+        
         node = range.createContextualFragment(placeholderHtml);
         range.insertNode(node);
+        
+        if (node2) {
+          caretPlaceholder = this.contain.querySelectorAll("." + className);
+          range.setStartAfter(caretPlaceholder[0]);
+          range.setEndBefore(caretPlaceholder[caretPlaceholder.length -1]);
+        }
+        this.setSelection(range);
       }
       
       // Make sure that a potential error doesn't cause our placeholder element to be left as a placeholder
@@ -292,10 +308,14 @@
         setTimeout(function() { throw e; }, 0);
       }
       
-      caretPlaceholder = this.doc.querySelector("." + className);
-      if (caretPlaceholder) {
+      caretPlaceholder = this.contain.querySelectorAll("." + className);
+      if (caretPlaceholder && caretPlaceholder.length) {
+        
         newRange = rangy.createRange(this.doc);
-        nextSibling = caretPlaceholder.nextSibling;
+        nextSibling = caretPlaceholder[0].nextSibling;
+        if (caretPlaceholder.length > 1) {
+          prevSibling = caretPlaceholder[caretPlaceholder.length -1].previousSibling;
+        }
         // Opera is so fucked up when you wanna set focus before a <br>
         if (wysihtml5.browser.hasInsertNodeIssue() && nextSibling && nextSibling.nodeName === "BR") {
           newCaretPlaceholder = this.doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
@@ -303,13 +323,23 @@
           newRange.setStartBefore(newCaretPlaceholder);
           newRange.setEndBefore(newCaretPlaceholder);
         } else {
-          newRange.selectNode(caretPlaceholder);
-          newRange.deleteContents();
+          newRange.setStartAfter(caretPlaceholder[0]);
+          if (caretPlaceholder.length > 1) {
+            newRange.setEndBefore(caretPlaceholder[caretPlaceholder.length -1]);
+          } else {
+            newRange.setEndAfter(caretPlaceholder[0]);
+          }
+          //newRange.deleteContents();
+        }
+        for (var i = caretPlaceholder.length; i--;) {
+          caretPlaceholder[i].parentNode.removeChild(caretPlaceholder[i]);
         }
         this.setSelection(newRange);
+        
+        
       } else {
         // fallback for when all hell breaks loose
-        body.focus();
+        this.contain.focus();
       }
 
       if (restoreScrollPosition) {

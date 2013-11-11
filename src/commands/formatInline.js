@@ -89,7 +89,10 @@
                 wysihtml5.commands.formatInline.exec(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp);
             });
         } else {
+          composer.selection.executeAndRestore(function() {
             wysihtml5.commands.formatInline.exec(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp);
+            composer.cleanUp();
+          });
         }
     },
 
