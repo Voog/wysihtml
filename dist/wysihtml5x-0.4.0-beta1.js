@@ -1891,6 +1891,12 @@ wysihtml5.dom.parse = (function() {
   
   function _testTypes(oldNode, rules, types) {
     var definition, type;
+    
+    // do not interfere with placeholder span or pasting caret position is not maintained
+    if (oldNode.nodeName === "SPAN" && oldNode.className === "_wysihtml5-temp-placeholder") {
+      return true;
+    }
+    
     for (type in types) {
       if (types.hasOwnProperty(type) && rules.type_definitions && rules.type_definitions[type]) {
         definition = rules.type_definitions[type];
@@ -3974,7 +3980,75 @@ wysihtml5.quirks.ensureProperClearing = (function() {
 
 })();
 
-/**
+(function(wysihtml5) {
+  var RGBA_REGEX     = /^rgba\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*([\d\.]+)\s*\)/i,
+      RGB_REGEX     = /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)/i,
+      HEX6_REGEX     = /^#([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])/i,
+      HEX3_REGEX     = /^#([0-9a-f])([0-9a-f])([0-9a-f])/i;
+
+  wysihtml5.quirks.parseColorStyleStr = function(stylesStr, paramName) {
+    var str;
+    var paramRegex = new RegExp("(^|\\s|;)" + paramName + "\\s*:\\s*[^;$]+" , "gi");
+        params = stylesStr.match(paramRegex);
+    if (params) {    
+      for (var i = params.length; i--;) {
+        params[i] = wysihtml5.lang.string(params[i].split(':')[1]).trim();
+      } 
+      str = params[params.length-1];
+    
+      if (RGBA_REGEX.test(str)) {
+        colorMatch = str.match(RGBA_REGEX);
+        return [parseInt(colorMatch[1], 10),
+                parseInt(colorMatch[2], 10),
+                parseInt(colorMatch[3], 10),
+                parseInt(colorMatch[4], 10)];
+      } else if (RGB_REGEX.test(str)) {
+        colorMatch = str.match(RGB_REGEX);
+        return [parseInt(colorMatch[1], 10),
+                parseInt(colorMatch[2], 10),
+                parseInt(colorMatch[3], 10),
+                1];
+      } else if (HEX6_REGEX.test(str)) {
+        colorMatch = str.match(HEX6_REGEX);
+        return [parseInt(colorMatch[1], 16),
+                parseInt(colorMatch[2], 16),
+                parseInt(colorMatch[3], 16),
+                1];
+              
+      } else if (HEX3_REGEX.test(str)) {
+        colorMatch = str.match(HEX3_REGEX);
+        return [(parseInt(colorMatch[1], 16) * 16) + parseInt(colorMatch[1], 16),
+                (parseInt(colorMatch[2], 16) * 16) + parseInt(colorMatch[2], 16),
+                (parseInt(colorMatch[3], 16) * 16) + parseInt(colorMatch[3], 16),
+                1];
+      }
+    }
+    return false;
+  };
+  
+  wysihtml5.quirks.unParseColorStyleStr = function(val, props) {
+    if (props) {
+      if (props == "hex") {
+        return (val[0].toString(16).toUpperCase()) + (val[1].toString(16).toUpperCase()) + (val[2].toString(16).toUpperCase());
+      } else if (props == "hash") {
+        return "#" + (val[0].toString(16).toUpperCase()) + (val[1].toString(16).toUpperCase()) + (val[2].toString(16).toUpperCase());
+      } else if (props == "rgb") {
+        return "rgb(" + val[0] + "," + val[1] + "," + val[2] + ")";
+      } else if (props == "rgba") {
+        return "rgba(" + val[0] + "," + val[1] + "," + val[2] + "," + val[3] + ")";
+      } else if (props == "csv") {
+        return  val[0] + "," + val[1] + "," + val[2] + "," + val[3];
+      }
+    }
+    
+    if (val[3] && val[3] !== 1) {
+      return "rgba(" + val[0] + "," + val[1] + "," + val[2] + "," + val[3] + ")";
+    } else {
+      return "rgb(" + val[0] + "," + val[1] + "," + val[2] + ")";
+    } 
+  };
+  
+})(wysihtml5);/**
  * Selection API
  *
  * @example
@@ -4693,10 +4767,14 @@ wysihtml5.quirks.ensureProperClearing = (function() {
   }
   
   function addStyle(el, cssStyle, regExp) {
-    
     if (el.getAttribute('style')) {
       removeStyle(el, regExp);
-      el.setAttribute('style', cssStyle + ";" + el.getAttribute('style'));
+      if (el.getAttribute('style') && !/\s+/.test(el.getAttribute('style'))) {
+        el.setAttribute('style', cssStyle + ";" + el.getAttribute('style'));
+      } else {
+        
+        el.setAttribute('style', cssStyle);
+      }
     } else {
       el.setAttribute('style', cssStyle);
     }
@@ -4718,13 +4796,25 @@ wysihtml5.quirks.ensureProperClearing = (function() {
   }
   
   function removeStyle(el, regExp) {
+    var s,
+        s2 = [];
     if (el.getAttribute('style')) {
-      el.setAttribute('style', el.getAttribute('style').replace(regExp, ""));
+      s = el.getAttribute('style').split(';');
+      for (var i = s.length; i--;) {
+        if (!s[i].match(regExp) && !/\s/.test(s[i])) {
+          s2.push(s[i]);
+        }
+      }
+      if (s2.length) {
+        el.setAttribute('style', s2.join(';'));
+      } else {
+        el.removeAttribute('style');
+      }
     }
   }
   
   function removeOrChangeStyle(el, style, regExp) {
-    var exactRegex = new RegExp("(^|\\s|;)" + style.replace(/\s/gi, '').replace(/([\(\)])/gi, "\\$1").toLowerCase()),
+    var exactRegex = new RegExp("(^|\\s|;)" + style.replace(/\s/gi, '').replace(/([\(\)])/gi, "\\$1").toLowerCase(), "gi"),
         elStyle = el.getAttribute('style');
         
     if (elStyle && exactRegex.test(elStyle.replace(/\s/gi, '').toLowerCase())) {
@@ -5435,50 +5525,40 @@ wysihtml5.commands.bold = {
  * Instead we set a css class
  */
 (function(wysihtml5) {
-  var REG_EXP = /(^|\s|;)color\s*\:\s*((#[0-9a-f]{3}([0-9a-f]{3})?)|(rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}(\s*,\s*\d{1,3}\s*)?\)))\s*;?/i;
+  var REG_EXP = /(\s|^)color\s*:\s*[^;\s]+;?/gi;
   
   wysihtml5.commands.foreColorStyle = {
     exec: function(composer, command, color) {
-      var colString = "rgb(" + parseInt(color.red) + ',' + parseInt(color.green) + ',' + parseInt(color.blue) + ')';
-       
-      wysihtml5.commands.formatInline.execWithToggle(composer, command, "span", false, false, "color:" + colString, REG_EXP);
+      var colorVals  = wysihtml5.quirks.parseColorStyleStr((typeof(color) == "object") ? "color:" + color.color : "color:" + color, "color"),
+          colString;
+      
+      if (colorVals) {
+        colString = "color: rgb(" + colorVals[0] + ',' + colorVals[1] + ',' + colorVals[2] + ');';
+        if (colorVals[3] !== 1) {
+          colString += "color: rgba(" + colorVals[0] + ',' + colorVals[1] + ',' + colorVals[2] + ',' + colorVals[3] + ');';
+        }
+        wysihtml5.commands.formatInline.execWithToggle(composer, command, "span", false, false, colString, REG_EXP);
+      }
     },
 
     state: function(composer, command) {
       return wysihtml5.commands.formatInline.state(composer, command, "span", false, false, "color", REG_EXP);
     },
     
-    stateValue: function(composer, command) {
+    stateValue: function(composer, command, props) {
       var st = this.state(composer, command),
-          colorStr, colorMatch,
-          RGBA_REGEX     = /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\)/i,
-          HEX6_REGEX     = /^#([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])/i,
-          HEX3_REGEX     = /^#([0-9a-f])([0-9a-f])([0-9a-f])/i;
-      
+          colorStr;
+          
       if (st && wysihtml5.lang.object(st).isArray()) {
         st = st[0];
       }
       
       if (st) {
-        colorStr = st.style.color;
+        colorStr = st.getAttribute('style');
         if (colorStr) {
           if (colorStr) {
-            if (RGBA_REGEX.test(colorStr)) {
-              colorMatch = colorStr.match(RGBA_REGEX);
-              return colorMatch.slice(1);
-              
-            } else if (HEX6_REGEX.test(colorStr)) {
-              colorMatch = colorStr.match(HEX6_REGEX);
-              return [parseInt(colorMatch[1], 16),
-                      parseInt(colorMatch[2], 16),
-                      parseInt(colorMatch[3], 16)];
-                      
-            } else if (HEX3_REGEX.test(colorStr)) {
-              colorMatch = colorStr.match(HEX3_REGEX);
-              return [(parseInt(colorMatch[1], 16) * 16) + parseInt(colorMatch[1], 16),
-                      (parseInt(colorMatch[2], 16) * 16) + parseInt(colorMatch[2], 16),
-                      (parseInt(colorMatch[3], 16) * 16) + parseInt(colorMatch[3], 16)];
-            }
+            val = wysihtml5.quirks.parseColorStyleStr(colorStr, "color");
+            return wysihtml5.quirks.unParseColorStyleStr(val, props);
           }
         }
       }
@@ -5492,50 +5572,41 @@ wysihtml5.commands.bold = {
  * Instead we set a css class
  */
 (function(wysihtml5) {
-  var REG_EXP = /(^|\s|;)background-color\s*\:\s*((#[0-9a-f]{3}([0-9a-f]{3})?)|(rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}(\s*,\s*\d{1,3}\s*)?\)))\s*;?/i;
+  var REG_EXP = /(\s|^)background-color\s*:\s*[^;\s]+;?/gi;
   
   wysihtml5.commands.bgColorStyle = {
     exec: function(composer, command, color) {
-      var colString = "rgb(" + parseInt(color.red) + ',' + parseInt(color.green) + ',' + parseInt(color.blue) + ')';
-       
-      wysihtml5.commands.formatInline.execWithToggle(composer, command, "span", false, false, "background-color:" + colString, REG_EXP);
+      var colorVals  = wysihtml5.quirks.parseColorStyleStr((typeof(color) == "object") ? "background-color:" + color.color : "background-color:" + color, "background-color"),
+          colString;
+      
+      if (colorVals) {
+        colString = "background-color: rgb(" + colorVals[0] + ',' + colorVals[1] + ',' + colorVals[2] + ');';
+        if (colorVals[3] !== 1) {
+          colString += "background-color: rgba(" + colorVals[0] + ',' + colorVals[1] + ',' + colorVals[2] + ',' + colorVals[3] + ');';
+        }
+        wysihtml5.commands.formatInline.execWithToggle(composer, command, "span", false, false, colString, REG_EXP);
+      }
     },
-
+    
     state: function(composer, command) {
       return wysihtml5.commands.formatInline.state(composer, command, "span", false, false, "background-color", REG_EXP);
     },
     
-    stateValue: function(composer, command) {
+    stateValue: function(composer, command, props) {
       var st = this.state(composer, command),
-          colorStr, colorMatch,
-          RGBA_REGEX     = /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\)/i,
-          HEX6_REGEX     = /^#([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])/i,
-          HEX3_REGEX     = /^#([0-9a-f])([0-9a-f])([0-9a-f])/i;
-      
+          colorStr, 
+          val = false;
+          
       if (st && wysihtml5.lang.object(st).isArray()) {
         st = st[0];
       }
       
       if (st) {
-        colorStr = st.style.backgroundColor;
+        colorStr = st.getAttribute('style');
         if (colorStr) {
           if (colorStr) {
-            if (RGBA_REGEX.test(colorStr)) {
-              colorMatch = colorStr.match(RGBA_REGEX);
-              return colorMatch.slice(1);
-              
-            } else if (HEX6_REGEX.test(colorStr)) {
-              colorMatch = colorStr.match(HEX6_REGEX);
-              return [parseInt(colorMatch[1], 16),
-                      parseInt(colorMatch[2], 16),
-                      parseInt(colorMatch[3], 16)];
-                      
-            } else if (HEX3_REGEX.test(colorStr)) {
-              colorMatch = colorStr.match(HEX3_REGEX);
-              return [(parseInt(colorMatch[1], 16) * 16) + parseInt(colorMatch[1], 16),
-                      (parseInt(colorMatch[2], 16) * 16) + parseInt(colorMatch[2], 16),
-                      (parseInt(colorMatch[3], 16) * 16) + parseInt(colorMatch[3], 16)];
-            }
+            val = wysihtml5.quirks.parseColorStyleStr(colorStr, "background-color");
+            return wysihtml5.quirks.unParseColorStyleStr(val, props);
           }
         }
       }
@@ -8408,54 +8479,31 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
           length         = fields.length,
           i              = 0,
           firstElement   = (this.elementToChange) ? ((wysihtml5.lang.object(this.elementToChange).isArray()) ? this.elementToChange[0] : this.elementToChange) : null,
-          colorStr       = (firstElement) ? firstElement.style.color : null,
-          color, colorMatch,
-          RGBA_REGEX     = /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\)/i,
-          HEX6_REGEX     = /^#([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])/i,
-          HEX3_REGEX     = /^#([0-9a-f])([0-9a-f])([0-9a-f])/i;
-      
-      if (colorStr) {
-        if (RGBA_REGEX.test(colorStr)) {
-          colorMatch = colorStr.match(RGBA_REGEX);
-          color = colorMatch.slice(1);
-        } else if (HEX6_REGEX.test(colorStr)) {
-          colorMatch = colorStr.match(HEX6_REGEX);
-          color = [];
-          color[0] = parseInt(colorMatch[1], 16);
-          color[1] = parseInt(colorMatch[2], 16);
-          color[2] = parseInt(colorMatch[3], 16);
-        } else if (HEX3_REGEX.test(colorStr)) {
-          colorMatch = colorStr.match(HEX3_REGEX);
-          color = [];
-          color[0] = (parseInt(colorMatch[1], 16) * 16) + parseInt(colorMatch[1], 16);
-          color[1] = (parseInt(colorMatch[2], 16) * 16) + parseInt(colorMatch[2], 16);
-          color[2] = (parseInt(colorMatch[3], 16) * 16) + parseInt(colorMatch[3], 16);
-        }
-      }
-      
-      if (color) {
-        for (; i<length; i++) {
-          field = fields[i];
-
-          // Never change elements where the user is currently typing in
-          if (field === focusedElement) {
-            continue;
-          }
-
-          // Don't update hidden fields3
-          if (avoidHiddenFields && field.type === "hidden") {
-            continue;
-          }
+          colorStr       = (firstElement) ? firstElement.getAttribute('style') : null,
+          color          = (colorStr) ? wysihtml5.quirks.parseColorStyleStr(colorStr, "color") : null;
         
-          fieldName = field.getAttribute(ATTRIBUTE_FIELDS);
-          switch (fieldName) {
-            case 'red': field.value = color[0]; break;
-            case 'green': field.value = color[1]; break;
-            case 'blue': field.value = color[2]; break;
+      for (; i<length; i++) {
+        field = fields[i];
+        // Never change elements where the user is currently typing in
+        if (field === focusedElement) {
+          continue;
+        }
+        // Don't update hidden fields3
+        if (avoidHiddenFields && field.type === "hidden") {
+          continue;
+        }
+        if (field.getAttribute(ATTRIBUTE_FIELDS) === "color") {
+          if (color) {
+            if (color[3] && color[3] != 1) {
+              field.value = "rgba(" + color[0] + "," + color[1] + "," + color[2] + "," + color[3] + ");";
+            } else {
+              field.value = "rgb(" + color[0] + "," + color[1] + "," + color[2] + ");";
+            }
+          } else {
+            field.value = "rgb(0,0,0);";
           }
         }
       }
-      
     }
 
   });
@@ -8500,7 +8548,7 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
     style:                true,
     // Id of the toolbar element, pass falsey value if you don't want any toolbar logic
     toolbar:              undef,
-    // Wether toolbar is displayed after init by script automatically.
+    // Whether toolbar is displayed after init by script automatically.
     // Can be set to false if toolobar is set to display only on editable area focus
     showToolbarAfterInit: true,
     // Whether urls, entered by the user should automatically become clickable-links
