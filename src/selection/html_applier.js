@@ -76,7 +76,7 @@
   }
   
   function removeOrChangeStyle(el, style, regExp) {
-    var exactRegex = new RegExp("(^|\\s|;)" + style.replace(/\s/gi, '').replace(/([\(\)])/gi, "\\$1").toLowerCase(), "gi"),
+    var exactRegex = new RegExp("(^|\\s|;)" + style.replace(/\s/gi, '').replace(/([\(\)])/gi, "\\$1").toLowerCase().replace(";", ";?"), "gi"),
         elStyle = el.getAttribute('style');
         
     if (elStyle && exactRegex.test(elStyle.replace(/\s/gi, '').toLowerCase())) {
