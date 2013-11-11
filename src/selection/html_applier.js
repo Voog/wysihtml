@@ -31,7 +31,7 @@
   function addStyle(el, cssStyle, regExp) {
     if (el.getAttribute('style')) {
       removeStyle(el, regExp);
-      if (el.getAttribute('style') && !/\s+/.test(el.getAttribute('style'))) {
+      if (el.getAttribute('style') && !(/\s+/).test(el.getAttribute('style'))) {
         el.setAttribute('style', cssStyle + ";" + el.getAttribute('style'));
       } else {
         
@@ -63,7 +63,7 @@
     if (el.getAttribute('style')) {
       s = el.getAttribute('style').split(';');
       for (var i = s.length; i--;) {
-        if (!s[i].match(regExp) && !/\s/.test(s[i])) {
+        if (!s[i].match(regExp) && !(/\s/).test(s[i])) {
           s2.push(s[i]);
         }
       }
@@ -75,13 +75,40 @@
     }
   }
   
-  function removeOrChangeStyle(el, style, regExp) {
-    var exactRegex = new RegExp("(^|\\s|;)" + style.replace(/\s/gi, '').replace(/([\(\)])/gi, "\\$1").toLowerCase().replace(";", ";?"), "gi"),
+  function getMatchingStyleRegexp(el, style) {
+    var regexes = [],
+        sSplit = style.split(';'),
         elStyle = el.getAttribute('style');
+    
+    if (elStyle) {
+      elStyle = elStyle.replace(/\s/gi, '').toLowerCase();    
+      regexes.push(new RegExp("(^|\\s|;)" + style.replace(/\s/gi, '').replace(/([\(\)])/gi, "\\$1").toLowerCase().replace(";", ";?"), "gi"));
+    
+      for (var i = sSplit.length; i-- > 0;) {
+        if (!(/^\s*$/).test(sSplit[i])) {
+          regexes.push(new RegExp("(^|\\s|;)" + sSplit[i].replace(/\s/gi, '').replace(/([\(\)])/gi, "\\$1").toLowerCase().replace(";", ";?"), "gi"));
+        }
+      }
+      for (var j = 0, jmax = regexes.length; j < jmax; j++) {
+        if (elStyle.match(regexes[j])) {
+          return regexes[j];
+        }
+      }
+    }
+    
+    return false;
+  };
+  
+  function removeOrChangeStyle(el, style, regExp) {
+    
+    var exactRegex = getMatchingStyleRegexp(el, style);
+    
+    /*new RegExp("(^|\\s|;)" + style.replace(/\s/gi, '').replace(/([\(\)])/gi, "\\$1").toLowerCase().replace(";", ";?"), "gi"),
+        elStyle = el.getAttribute('style');*/
         
-    if (elStyle && exactRegex.test(elStyle.replace(/\s/gi, '').toLowerCase())) {
+    if (exactRegex) {
       // adding same style value on property again removes style
-      removeStyle(el, regExp);
+      removeStyle(el, exactRegex);
       return "remove";
     } else {
       // adding new style value changes value
@@ -385,12 +412,12 @@
 
     applyToRange: function(range) {
         var textNodes;
-        
         for (var ri = range.length; ri--;) {    
             textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
+            
             if (!textNodes.length) {
               try {
-                var node = this.createContainer(range.endContainer.ownerDocument);
+                var node = this.createContainer(range[ri].endContainer.ownerDocument);
                 range[ri].surroundContents(node);
                 this.selectNode(range[ri], node);
                 return;
@@ -399,7 +426,6 @@
         
             range[ri].splitBoundaries();
             textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
-        
             if (textNodes.length) {
               var textNode;
 
