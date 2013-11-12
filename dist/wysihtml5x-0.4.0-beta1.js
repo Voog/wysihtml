@@ -4401,7 +4401,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
         if (caretPlaceholder.length > 1) {
           prevSibling = caretPlaceholder[caretPlaceholder.length -1].previousSibling;
         }
-        if (prevSibling) {
+        if (prevSibling && nextSibling) {
           newRange.setStartBefore(nextSibling);
           newRange.setEndAfter(prevSibling);
           
@@ -5083,7 +5083,10 @@ wysihtml5.quirks.ensureProperClearing = (function() {
 
       for (var i = 0, len = textNodes.length; i < len; ++i) {
         textNode = textNodes[i];
-        precedingTextNode = this.getAdjacentMergeableTextNode(textNode.parentNode, false);
+        precedingTextNode = null;
+        if (textNode && textNode.parentNode) {
+          precedingTextNode = this.getAdjacentMergeableTextNode(textNode.parentNode, false);
+        }
         if (precedingTextNode) {
           if (!currentMerge) {
             currentMerge = new Merge(precedingTextNode);
@@ -5102,17 +5105,17 @@ wysihtml5.quirks.ensureProperClearing = (function() {
           currentMerge = null;
         }
       }
-
       // Test whether the first node after the range needs merging
-      var nextTextNode = this.getAdjacentMergeableTextNode(lastNode.parentNode, true);
-      if (nextTextNode) {
-        if (!currentMerge) {
-          currentMerge = new Merge(lastNode);
-          merges.push(currentMerge);
+      if(lastNode && lastNode.parentNode) {
+        var nextTextNode = this.getAdjacentMergeableTextNode(lastNode.parentNode, true);
+        if (nextTextNode) {
+          if (!currentMerge) {
+            currentMerge = new Merge(lastNode);
+            merges.push(currentMerge);
+          }
+          currentMerge.textNodes.push(nextTextNode);
         }
-        currentMerge.textNodes.push(nextTextNode);
       }
-
       // Do the merges
       if (merges.length) {
         for (i = 0, len = merges.length; i < len; ++i) {
@@ -5254,42 +5257,44 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       var textNodes, textNode, ancestorWithClass, ancestorWithStyle;
       
       for (var ri = range.length; ri--;) {
-        
-        textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
-        if (textNodes.length) {
-          range[ri].splitBoundaries();
           textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
-        } else {
-          var doc = range[ri].endContainer.ownerDocument,
-              node = doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
-          range[ri].insertNode(node);
-          range[ri].selectNode(node);
-          textNodes = [node];
-        }
-    
-        for (var i = 0, len = textNodes.length; i < len; ++i) {
-          textNode = textNodes[i];
-          ancestorWithClass = this.getAncestorWithClass(textNode);
-          ancestorWithStyle = this.getAncestorWithStyle(textNode);
-          if (ancestorWithClass) {
-            this.undoToTextNode(textNode, range[ri], ancestorWithClass);
-          } else if (ancestorWithStyle) {
-            this.undoToTextNode(textNode, range[ri], false, ancestorWithStyle);
+          if (textNodes.length) {
+            range[ri].splitBoundaries();
+            textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
+          } else {
+            var doc = range[ri].endContainer.ownerDocument,
+                node = doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
+            range[ri].insertNode(node);
+            range[ri].selectNode(node);
+            textNodes = [node];
           }
-        }
-    
-        if (len == 1) {
-          this.selectNode(range[ri], textNodes[0]);
-        } else {
-          range[ri].setStart(textNodes[0], 0);
-          textNode = textNodes[textNodes.length - 1];
-          range[ri].setEnd(textNode, textNode.length);
-
-          if (this.normalize) {
-            this.postApply(textNodes, range[ri]);
-          }
-        }
           
+          
+          for (var i = 0, len = textNodes.length; i < len; ++i) {
+            if (range[ri].isValid()) {
+              textNode = textNodes[i];
+              ancestorWithClass = this.getAncestorWithClass(textNode);
+              ancestorWithStyle = this.getAncestorWithStyle(textNode);
+              if (ancestorWithClass) {
+                this.undoToTextNode(textNode, range[ri], ancestorWithClass);
+              } else if (ancestorWithStyle) {
+                this.undoToTextNode(textNode, range[ri], false, ancestorWithStyle);
+              }
+            }
+          }
+    
+          if (len == 1) {
+            this.selectNode(range[ri], textNodes[0]);
+          } else {
+            range[ri].setStart(textNodes[0], 0);
+            textNode = textNodes[textNodes.length - 1];
+            range[ri].setEnd(textNode, textNode.length);
+
+            if (this.normalize) {
+              this.postApply(textNodes, range[ri]);
+            }
+          }
+        
       }
     },
     
@@ -6053,13 +6058,11 @@ wysihtml5.commands.bold = {
       }
       composer.selection.getSelection().removeAllRanges();
       _getApplier(tagName, className, classRegExp, cssStyle, styleRegExp).toggleRange(ownRanges);
-
       range.setStart(ownRanges[0].startContainer,  ownRanges[0].startOffset);
       range.setEnd(
         ownRanges[ownRanges.length - 1].endContainer,
         ownRanges[ownRanges.length - 1].endOffset
       );
-      
       if (!dontRestoreSelect) {
         composer.selection.setSelection(range);
         composer.selection.executeAndRestore(function() {

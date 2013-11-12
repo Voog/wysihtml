@@ -1,4 +1,4 @@
-*wysihtml5x 0.4.0-beta1* (Nov 7, 2013)
+*wysihtml5x 0.4.0-beta2* (Nov 7, 2013)
 * Support for contenteditable without iframe sandbox when initiated on div instead of textarea
 * Table creation and handling commands added
 * Improved parser with options to: unwrap tag instead of remove, keep defined styles, complex object type definitions for allowing elements.
