@@ -309,7 +309,7 @@
         if (caretPlaceholder.length > 1) {
           prevSibling = caretPlaceholder[caretPlaceholder.length -1].previousSibling;
         }
-        if (prevSibling) {
+        if (prevSibling && nextSibling) {
           newRange.setStartBefore(nextSibling);
           newRange.setEndAfter(prevSibling);
           
