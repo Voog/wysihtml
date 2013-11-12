@@ -126,6 +126,9 @@
     while (el.firstChild) {
       parent.insertBefore(el.firstChild, el);
     }
+    if (parent.normalize) {
+      parent.normalize();
+    }
     parent.removeChild(el);
   }
 
@@ -280,7 +283,10 @@
 
       for (var i = 0, len = textNodes.length; i < len; ++i) {
         textNode = textNodes[i];
-        precedingTextNode = this.getAdjacentMergeableTextNode(textNode.parentNode, false);
+        precedingTextNode = null;
+        if (textNode && textNode.parentNode) {
+          precedingTextNode = this.getAdjacentMergeableTextNode(textNode.parentNode, false);
+        }
         if (precedingTextNode) {
           if (!currentMerge) {
             currentMerge = new Merge(precedingTextNode);
@@ -299,8 +305,8 @@
           currentMerge = null;
         }
       }
-
       // Test whether the first node after the range needs merging
+      
       var nextTextNode = this.getAdjacentMergeableTextNode(lastNode.parentNode, true);
       if (nextTextNode) {
         if (!currentMerge) {
@@ -309,7 +315,6 @@
         }
         currentMerge.textNodes.push(nextTextNode);
       }
-
       // Do the merges
       if (merges.length) {
         for (i = 0, len = merges.length; i < len; ++i) {
@@ -382,7 +387,6 @@
       var styleMode = (ancestorWithClass) ? false : true,
           ancestor = ancestorWithClass || ancestorWithStyle,
           styleChanged = false;
-      
       if (!range.containsNode(ancestor)) {
         // Split out the portion of the ancestor from which we can remove the CSS class
         var ancestorRange = range.cloneRange();
@@ -471,8 +475,7 @@
           ancestorWithStyle = this.getAncestorWithStyle(textNode);
           if (ancestorWithClass) {
             this.undoToTextNode(textNode, range[ri], ancestorWithClass);
-          }
-          if (ancestorWithStyle) {
+          } else if (ancestorWithStyle) {
             this.undoToTextNode(textNode, range[ri], false, ancestorWithStyle);
           }
         }

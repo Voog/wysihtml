@@ -1815,6 +1815,9 @@ wysihtml5.dom.parse = (function() {
                 fragment.appendChild(newChild);
               }
             }
+            if (fragment.normalize) {
+              fragment.normalize();
+            }
             return fragment;
         } else {
             return null;
@@ -1831,12 +1834,22 @@ wysihtml5.dom.parse = (function() {
     // Cleanup senseless <span> elements
     if (cleanUp &&
         newNode.nodeName.toLowerCase() === DEFAULT_NODE_NAME &&
-        (!newNode.childNodes.length || !newNode.attributes.length)) {
+        (!newNode.childNodes.length ||
+         ((/^\s*$/gi).test(newNode.innerHTML) && oldNode.className !== "_wysihtml5-temp-placeholder") ||
+         !newNode.attributes.length)
+        ) {
       fragment = newNode.ownerDocument.createDocumentFragment();
       while (newNode.firstChild) {
         fragment.appendChild(newNode.firstChild);
       }
+      if (fragment.normalize) {
+        fragment.normalize();
+      }
       return fragment;
+    }
+    
+    if (newNode.normalize) {
+      newNode.normalize();
     }
     return newNode;
   }
@@ -1910,6 +1923,7 @@ wysihtml5.dom.parse = (function() {
     _handleStyles(oldNode, newNode, rule);
     oldNode = null;
     
+    if (newNode.normalize) { newNode.normalize(); }
     return newNode;
   }
   
@@ -4346,8 +4360,8 @@ wysihtml5.quirks.ensureProperClearing = (function() {
           range                 = this.getRange(this.doc),
           caretPlaceholder,
           newCaretPlaceholder,
-          nextSibling,
-          node,
+          nextSibling, prevSibling,
+          node, node2, range2,
           newRange;
       
       // Nothing selected, execute and say goodbye
@@ -4356,12 +4370,22 @@ wysihtml5.quirks.ensureProperClearing = (function() {
         return;
       }
       
-      if (wysihtml5.browser.hasInsertNodeIssue()) {
-        this.doc.execCommand("insertHTML", false, placeholderHtml);
-      } else {
-        node = range.createContextualFragment(placeholderHtml);
-        range.insertNode(node);
+      if (!range.collapsed) {
+        range2 = range.cloneRange();
+        node2 = range2.createContextualFragment(placeholderHtml);
+        range2.collapse(false);
+        range2.insertNode(node2);
+        range2.detach();
       }
+      node = range.createContextualFragment(placeholderHtml);
+      range.insertNode(node);
+      
+      if (node2) {
+        caretPlaceholder = this.contain.querySelectorAll("." + className);
+        range.setStartBefore(caretPlaceholder[0]);
+        range.setEndAfter(caretPlaceholder[caretPlaceholder.length -1]);
+      }
+      this.setSelection(range);
       
       // Make sure that a potential error doesn't cause our placeholder element to be left as a placeholder
       try {
@@ -4369,25 +4393,35 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       } catch(e) {
         setTimeout(function() { throw e; }, 0);
       }
-      
-      caretPlaceholder = this.doc.querySelector("." + className);
-      if (caretPlaceholder) {
+      caretPlaceholder = this.contain.querySelectorAll("." + className);
+      if (caretPlaceholder && caretPlaceholder.length) {
+        
         newRange = rangy.createRange(this.doc);
-        nextSibling = caretPlaceholder.nextSibling;
-        // Opera is so fucked up when you wanna set focus before a <br>
-        if (wysihtml5.browser.hasInsertNodeIssue() && nextSibling && nextSibling.nodeName === "BR") {
-          newCaretPlaceholder = this.doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
-          dom.insert(newCaretPlaceholder).after(caretPlaceholder);
-          newRange.setStartBefore(newCaretPlaceholder);
-          newRange.setEndBefore(newCaretPlaceholder);
+        nextSibling = caretPlaceholder[0].nextSibling;
+        if (caretPlaceholder.length > 1) {
+          prevSibling = caretPlaceholder[caretPlaceholder.length -1].previousSibling;
+        }
+        if (prevSibling) {
+          newRange.setStartBefore(nextSibling);
+          newRange.setEndAfter(prevSibling);
+          
         } else {
-          newRange.selectNode(caretPlaceholder);
-          newRange.deleteContents();
+          newCaretPlaceholder = this.doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
+          dom.insert(newCaretPlaceholder).before(caretPlaceholder[0]);
+          newRange.setStartAfter(newCaretPlaceholder);
+          newRange.setEndAfter(newCaretPlaceholder);
         }
         this.setSelection(newRange);
+        for (var i = caretPlaceholder.length; i--;) {
+         caretPlaceholder[i].parentNode.removeChild(caretPlaceholder[i]);
+        }
+        
+        
+        
+        
       } else {
         // fallback for when all hell breaks loose
-        body.focus();
+        this.contain.focus();
       }
 
       if (restoreScrollPosition) {
@@ -4892,6 +4926,9 @@ wysihtml5.quirks.ensureProperClearing = (function() {
     while (el.firstChild) {
       parent.insertBefore(el.firstChild, el);
     }
+    if (parent.normalize) {
+      parent.normalize();
+    }
     parent.removeChild(el);
   }
 
@@ -5148,7 +5185,6 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       var styleMode = (ancestorWithClass) ? false : true,
           ancestor = ancestorWithClass || ancestorWithStyle,
           styleChanged = false;
-      
       if (!range.containsNode(ancestor)) {
         // Split out the portion of the ancestor from which we can remove the CSS class
         var ancestorRange = range.cloneRange();
@@ -5237,8 +5273,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
           ancestorWithStyle = this.getAncestorWithStyle(textNode);
           if (ancestorWithClass) {
             this.undoToTextNode(textNode, range[ri], ancestorWithClass);
-          }
-          if (ancestorWithStyle) {
+          } else if (ancestorWithStyle) {
             this.undoToTextNode(textNode, range[ri], false, ancestorWithStyle);
           }
         }
@@ -5828,7 +5863,7 @@ wysihtml5.commands.bold = {
     }
     
     // rethink restoring selection
-    //composer.selection.selectNode(element, wysihtml5.browser.displaysCaretInEmptyContentEditableCorrectly());
+    // composer.selection.selectNode(element, wysihtml5.browser.displaysCaretInEmptyContentEditableCorrectly());
   }
 
   function _hasClasses(element) {
@@ -6009,7 +6044,7 @@ wysihtml5.commands.bold = {
   }
   
   wysihtml5.commands.formatInline = {
-    exec: function(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp) {
+    exec: function(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp, dontRestoreSelect) {
       var range = composer.selection.createRange();
           ownRanges = composer.selection.getOwnRanges();
       
@@ -6025,23 +6060,31 @@ wysihtml5.commands.bold = {
         ownRanges[ownRanges.length - 1].endOffset
       );
       
-      composer.selection.setSelection(range);
+      if (!dontRestoreSelect) {
+        composer.selection.setSelection(range);
+        composer.selection.executeAndRestore(function() {
+          composer.cleanUp();
+        }, true, true);
+      } else {
+        composer.cleanUp();
+      }
     },
     
     // Executes so that if collapsed caret is in a state and executing that state it should unformat that state
     // It is achieved by selecting the entire state element before executing.
     // This works on built in contenteditable inline format commands
     execWithToggle: function(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp) {
-        var that = this;
-        if (this.state(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp) && composer.selection.isCollapsed()) {
-            var state_element = that.state(composer, command, tagName, className, classRegExp)[0];
-            composer.selection.executeAndRestoreSimple(function() {
-                composer.selection.selectNode(state_element);
-                wysihtml5.commands.formatInline.exec(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp);
-            });
-        } else {
-            wysihtml5.commands.formatInline.exec(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp);
-        }
+      var that = this;
+      if (this.state(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp) && composer.selection.isCollapsed()) {
+        var state_element = that.state(composer, command, tagName, className, classRegExp)[0];
+        composer.selection.executeAndRestoreSimple(function() {
+          var parent = state_element.parentNode;
+          composer.selection.selectNode(state_element, true);
+          wysihtml5.commands.formatInline.exec(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp, true);
+        });
+      } else {
+        wysihtml5.commands.formatInline.exec(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp);
+      }
     },
 
     state: function(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp) {
@@ -7210,12 +7253,13 @@ wysihtml5.views.View = Base.extend(
       
       // Under certain circumstances Chrome + Safari create nested <p> or <hX> tags after paste
       // Inserting an invisible white space in front of it fixes the issue
-      if (browser.createsNestedInvalidMarkupAfterPaste()) {
+      // This is too hacky and causes selection not to replace content on paste in chrome
+     /* if (browser.createsNestedInvalidMarkupAfterPaste()) {
         dom.observe(this.element, "paste", function(event) {
           var invisibleSpace = that.doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
           that.selection.insertNode(invisibleSpace);
         });
-      }
+      }*/
 
       
       dom.observe(this.element, "keydown", function(event) {

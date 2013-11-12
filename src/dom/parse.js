@@ -154,6 +154,9 @@ wysihtml5.dom.parse = (function() {
                 fragment.appendChild(newChild);
               }
             }
+            if (fragment.normalize) {
+              fragment.normalize();
+            }
             return fragment;
         } else {
             return null;
@@ -178,11 +181,15 @@ wysihtml5.dom.parse = (function() {
       while (newNode.firstChild) {
         fragment.appendChild(newNode.firstChild);
       }
+      if (fragment.normalize) {
+        fragment.normalize();
+      }
       return fragment;
     }
     
-    
-    
+    if (newNode.normalize) {
+      newNode.normalize();
+    }
     return newNode;
   }
   
@@ -255,6 +262,7 @@ wysihtml5.dom.parse = (function() {
     _handleStyles(oldNode, newNode, rule);
     oldNode = null;
     
+    if (newNode.normalize) { newNode.normalize(); }
     return newNode;
   }
   

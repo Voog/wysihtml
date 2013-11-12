@@ -58,7 +58,7 @@
   }
   
   wysihtml5.commands.formatInline = {
-    exec: function(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp) {
+    exec: function(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp, dontRestoreSelect) {
       var range = composer.selection.createRange();
           ownRanges = composer.selection.getOwnRanges();
       
@@ -67,33 +67,36 @@
       }
       composer.selection.getSelection().removeAllRanges();
       _getApplier(tagName, className, classRegExp, cssStyle, styleRegExp).toggleRange(ownRanges);
-
       range.setStart(ownRanges[0].startContainer,  ownRanges[0].startOffset);
       range.setEnd(
         ownRanges[ownRanges.length - 1].endContainer,
         ownRanges[ownRanges.length - 1].endOffset
       );
-      
-      composer.selection.setSelection(range);
+      if (!dontRestoreSelect) {
+        composer.selection.setSelection(range);
+        composer.selection.executeAndRestore(function() {
+          composer.cleanUp();
+        }, true, true);
+      } else {
+        composer.cleanUp();
+      }
     },
     
     // Executes so that if collapsed caret is in a state and executing that state it should unformat that state
     // It is achieved by selecting the entire state element before executing.
     // This works on built in contenteditable inline format commands
     execWithToggle: function(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp) {
-        var that = this;
-        if (this.state(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp) && composer.selection.isCollapsed()) {
-            var state_element = that.state(composer, command, tagName, className, classRegExp)[0];
-            composer.selection.executeAndRestoreSimple(function() {
-                composer.selection.selectNode(state_element);
-                wysihtml5.commands.formatInline.exec(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp);
-            });
-        } else {
-          composer.selection.executeAndRestore(function() {
-            wysihtml5.commands.formatInline.exec(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp);
-            composer.cleanUp();
-          });
-        }
+      var that = this;
+      if (this.state(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp) && composer.selection.isCollapsed()) {
+        var state_element = that.state(composer, command, tagName, className, classRegExp)[0];
+        composer.selection.executeAndRestoreSimple(function() {
+          var parent = state_element.parentNode;
+          composer.selection.selectNode(state_element, true);
+          wysihtml5.commands.formatInline.exec(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp, true);
+        });
+      } else {
+        wysihtml5.commands.formatInline.exec(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp);
+      }
     },
 
     state: function(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp) {

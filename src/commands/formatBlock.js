@@ -158,7 +158,7 @@
     }
     
     // rethink restoring selection
-    //composer.selection.selectNode(element, wysihtml5.browser.displaysCaretInEmptyContentEditableCorrectly());
+    // composer.selection.selectNode(element, wysihtml5.browser.displaysCaretInEmptyContentEditableCorrectly());
   }
 
   function _hasClasses(element) {

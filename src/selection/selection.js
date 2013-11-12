@@ -278,28 +278,22 @@
         return;
       }
       
-      if (wysihtml5.browser.hasInsertNodeIssue()) {
-        this.doc.execCommand("insertHTML", false, placeholderHtml);
-      } else {
-        
-        if (!range.collapsed) {
-          range2 = range.cloneRange();
-          node2 = range2.createContextualFragment(placeholderHtml);
-          range2.collapse(false);
-          range2.insertNode(node2);
-          range2.detach();
-        }
-        
-        node = range.createContextualFragment(placeholderHtml);
-        range.insertNode(node);
-        
-        if (node2) {
-          caretPlaceholder = this.contain.querySelectorAll("." + className);
-          range.setStartAfter(caretPlaceholder[0]);
-          range.setEndBefore(caretPlaceholder[caretPlaceholder.length -1]);
-        }
-        this.setSelection(range);
+      if (!range.collapsed) {
+        range2 = range.cloneRange();
+        node2 = range2.createContextualFragment(placeholderHtml);
+        range2.collapse(false);
+        range2.insertNode(node2);
+        range2.detach();
       }
+      node = range.createContextualFragment(placeholderHtml);
+      range.insertNode(node);
+      
+      if (node2) {
+        caretPlaceholder = this.contain.querySelectorAll("." + className);
+        range.setStartBefore(caretPlaceholder[0]);
+        range.setEndAfter(caretPlaceholder[caretPlaceholder.length -1]);
+      }
+      this.setSelection(range);
       
       // Make sure that a potential error doesn't cause our placeholder element to be left as a placeholder
       try {
@@ -307,7 +301,6 @@
       } catch(e) {
         setTimeout(function() { throw e; }, 0);
       }
-      
       caretPlaceholder = this.contain.querySelectorAll("." + className);
       if (caretPlaceholder && caretPlaceholder.length) {
         
@@ -316,25 +309,22 @@
         if (caretPlaceholder.length > 1) {
           prevSibling = caretPlaceholder[caretPlaceholder.length -1].previousSibling;
         }
-        // Opera is so fucked up when you wanna set focus before a <br>
-        if (wysihtml5.browser.hasInsertNodeIssue() && nextSibling && nextSibling.nodeName === "BR") {
-          newCaretPlaceholder = this.doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
-          dom.insert(newCaretPlaceholder).after(caretPlaceholder);
-          newRange.setStartBefore(newCaretPlaceholder);
-          newRange.setEndBefore(newCaretPlaceholder);
+        if (prevSibling) {
+          newRange.setStartBefore(nextSibling);
+          newRange.setEndAfter(prevSibling);
+          
         } else {
-          newRange.setStartAfter(caretPlaceholder[0]);
-          if (caretPlaceholder.length > 1) {
-            newRange.setEndBefore(caretPlaceholder[caretPlaceholder.length -1]);
-          } else {
-            newRange.setEndAfter(caretPlaceholder[0]);
-          }
-          //newRange.deleteContents();
-        }
-        for (var i = caretPlaceholder.length; i--;) {
-          caretPlaceholder[i].parentNode.removeChild(caretPlaceholder[i]);
+          newCaretPlaceholder = this.doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
+          dom.insert(newCaretPlaceholder).before(caretPlaceholder[0]);
+          newRange.setStartAfter(newCaretPlaceholder);
+          newRange.setEndAfter(newCaretPlaceholder);
         }
         this.setSelection(newRange);
+        for (var i = caretPlaceholder.length; i--;) {
+         caretPlaceholder[i].parentNode.removeChild(caretPlaceholder[i]);
+        }
+        
+        
         
         
       } else {
