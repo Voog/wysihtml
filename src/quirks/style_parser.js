@@ -1,13 +1,17 @@
 (function(wysihtml5) {
   var RGBA_REGEX     = /^rgba\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*([\d\.]+)\s*\)/i,
-      RGB_REGEX     = /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)/i,
+      RGB_REGEX      = /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)/i,
       HEX6_REGEX     = /^#([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])/i,
       HEX3_REGEX     = /^#([0-9a-f])([0-9a-f])([0-9a-f])/i;
+  
+  var param_REGX = function (p) {
+    return new RegExp("(^|\\s|;)" + p + "\\s*:\\s*[^;$]+" , "gi");
+  };
       
   wysihtml5.quirks.styleParser = {
     
     parseColor: function(stylesStr, paramName) {
-      var paramRegex = new RegExp("(^|\\s|;)" + paramName + "\\s*:\\s*[^;$]+" , "gi"),
+      var paramRegex = param_REGX(paramName),
           params = stylesStr.match(paramRegex),
           radix = 10,
           str, colorMatch;
@@ -67,6 +71,14 @@
       } else {
         return "rgb(" + val[0] + "," + val[1] + "," + val[2] + ")";
       }
+    },
+    
+    parseFontSize: function(stylesStr) {
+      var params = stylesStr.match(param_REGX('font-size'));
+      if (params) { 
+        return wysihtml5.lang.string(params[params.length - 1].split(':')[1]).trim();
+      }
+      return false;
     }
   };
   

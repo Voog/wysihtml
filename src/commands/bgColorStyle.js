@@ -1,8 +1,4 @@
-/**
- * document.execCommand("foreColor") will create either inline styles (firefox, chrome) or use font tags
- * which we don't want
- * Instead we set a css class
- */
+/* In case background adjustment to any color defined by user is preferred, we cannot use classes and must use inline styles. */
 (function(wysihtml5) {
   var REG_EXP = /(\s|^)background-color\s*:\s*[^;\s]+;?/gi;
   
@@ -36,10 +32,8 @@
       if (st) {
         colorStr = st.getAttribute('style');
         if (colorStr) {
-          if (colorStr) {
-            val = wysihtml5.quirks.styleParser.parseColor(colorStr, "background-color");
-            return wysihtml5.quirks.styleParser.unparseColor(val, props);
-          }
+          val = wysihtml5.quirks.styleParser.parseColor(colorStr, "background-color");
+          return wysihtml5.quirks.styleParser.unparseColor(val, props);
         }
       }
       return false;

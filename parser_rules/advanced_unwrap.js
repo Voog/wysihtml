@@ -105,6 +105,12 @@ var wysihtml5ParserRules = {
           }
         },
         
+        "text_fontsize_object": {
+          "styles": {
+            "font-size": true
+          }
+        },
+        
         "text_formatting_object": {
             "classes": {
                 "wysiwyg-color-aqua": 1,
@@ -432,11 +438,13 @@ var wysihtml5ParserRules = {
         "span": {
             "one_of_type": {
                 "text_formatting_object": 1,
-                "text_color_object": 1
+                "text_color_object": 1,
+                "text_fontsize_object": 1
             },
             "keep_styles": {
                 "color": 1,
-                "backgroundColor": 1
+                "backgroundColor": 1,
+                "fontSize": 1
             },
             "remove_action": "unwrap"
         },
