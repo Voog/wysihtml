@@ -147,6 +147,7 @@
 
 <div class="ewrapper">
   <div class="toolbar">
+    
     <div class="block">
       <a id="boldbtn" class="editor-btn">bold</a>
       <a id="italicbtn" class="editor-btn">italic</a>
@@ -185,7 +186,8 @@
         
         &nbsp;
         <a id="merge" class="editor-btn">[&nbsp;]</a>
-      </div>
+      </span>
+      
     </div>
   </div><!-- toolbar -->
   
@@ -319,7 +321,14 @@
     
 // Prevent buttons from deselecting selected text before action is performed
     $(".editor-btn").mousedown(function(event){
+      var b = composer.selection.getBookmark();
       event.preventDefault();
+      
+      // ie8 bug fix. mousedown does not prevent loosing focus
+      setTimeout(function() {
+        composer.selection.setBookmark(b);
+      }, 0);
+      
     });
     
 // commands binding
