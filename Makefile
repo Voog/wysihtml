@@ -54,6 +54,7 @@ JS_FILES = src/wysihtml5.js \
   src/commands/bold.js \
   src/commands/createLink.js \
   src/commands/fontSize.js \
+  src/commands/fontSizeStyle.js \
   src/commands/foreColor.js \
   src/commands/foreColorStyle.js \
   src/commands/bgColorStyle.js \
@@ -88,6 +89,7 @@ JS_FILES = src/wysihtml5.js \
   src/toolbar/toolbar.js \
   src/toolbar/dialog_createTable.js\
   src/toolbar/dialog_foreColorStyle.js\
+  src/toolbar/dialog_fontSizeStyle.js\
   src/editor.js
   
 JS_FILES_WOTOOLS = src/wysihtml5.js \
@@ -139,6 +141,7 @@ JS_FILES_WOTOOLS = src/wysihtml5.js \
   src/commands/bold.js \
   src/commands/createLink.js \
   src/commands/fontSize.js \
+  src/commands/fontSizeStyle.js \
   src/commands/foreColor.js \
   src/commands/foreColorStyle.js \
   src/commands/bgColorStyle.js \

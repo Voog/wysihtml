@@ -4020,14 +4020,18 @@ wysihtml5.quirks.ensureProperClearing = (function() {
 
 (function(wysihtml5) {
   var RGBA_REGEX     = /^rgba\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*([\d\.]+)\s*\)/i,
-      RGB_REGEX     = /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)/i,
+      RGB_REGEX      = /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)/i,
       HEX6_REGEX     = /^#([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])/i,
       HEX3_REGEX     = /^#([0-9a-f])([0-9a-f])([0-9a-f])/i;
+  
+  var param_REGX = function (p) {
+    return new RegExp("(^|\\s|;)" + p + "\\s*:\\s*[^;$]+" , "gi");
+  };
       
   wysihtml5.quirks.styleParser = {
     
     parseColor: function(stylesStr, paramName) {
-      var paramRegex = new RegExp("(^|\\s|;)" + paramName + "\\s*:\\s*[^;$]+" , "gi"),
+      var paramRegex = param_REGX(paramName),
           params = stylesStr.match(paramRegex),
           radix = 10,
           str, colorMatch;
@@ -4087,6 +4091,14 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       } else {
         return "rgb(" + val[0] + "," + val[1] + "," + val[2] + ")";
       }
+    },
+    
+    parseFontSize: function(stylesStr) {
+      var params = stylesStr.match(param_REGX('font-size'));
+      if (params) { 
+        return wysihtml5.lang.string(params[params.length - 1].split(':')[1]).trim();
+      }
+      return false;
     }
   };
   
@@ -5596,7 +5608,40 @@ wysihtml5.commands.bold = {
     }
   };
 })(wysihtml5);
-/**
+/* In case font size adjustment to any number defined by user is preferred, we cannot use classes and must use inline styles. */
+(function(wysihtml5) {
+  var REG_EXP = /(\s|^)font-size\s*:\s*[^;\s]+;?/gi;
+  
+  wysihtml5.commands.fontSizeStyle = {
+    exec: function(composer, command, size) {
+      size = (typeof(size) == "object") ? size.size : size;
+      if (!(/^\s*$/).test(size)) {
+        wysihtml5.commands.formatInline.execWithToggle(composer, command, "span", false, false, "font-size:" + size, REG_EXP);
+      }
+    },
+
+    state: function(composer, command, size) {
+      return wysihtml5.commands.formatInline.state(composer, command, "span", false, false, "font-size", REG_EXP);
+    },
+    
+    stateValue: function(composer, command) {
+      var st = this.state(composer, command),
+          styleStr, fontsizeMatches,
+          val = false;
+      
+      if (st && wysihtml5.lang.object(st).isArray()) {
+          st = st[0];
+      }
+      if (st) {
+        styleStr = st.getAttribute('style');
+        if (styleStr) {
+          return wysihtml5.quirks.styleParser.parseFontSize(styleStr);
+        }
+      }
+      return false;
+    }
+  };
+})(wysihtml5);/**
  * document.execCommand("foreColor") will create either inline styles (firefox, chrome) or use font tags
  * which we don't want
  * Instead we set a css class
@@ -5660,11 +5705,7 @@ wysihtml5.commands.bold = {
     }
     
   };
-})(wysihtml5);/**
- * document.execCommand("foreColor") will create either inline styles (firefox, chrome) or use font tags
- * which we don't want
- * Instead we set a css class
- */
+})(wysihtml5);/* In case background adjustment to any color defined by user is preferred, we cannot use classes and must use inline styles. */
 (function(wysihtml5) {
   var REG_EXP = /(\s|^)background-color\s*:\s*[^;\s]+;?/gi;
   
@@ -5698,10 +5739,8 @@ wysihtml5.commands.bold = {
       if (st) {
         colorStr = st.getAttribute('style');
         if (colorStr) {
-          if (colorStr) {
-            val = wysihtml5.quirks.styleParser.parseColor(colorStr, "background-color");
-            return wysihtml5.quirks.styleParser.unparseColor(val, props);
-          }
+          val = wysihtml5.quirks.styleParser.parseColor(colorStr, "background-color");
+          return wysihtml5.quirks.styleParser.unparseColor(val, props);
         }
       }
       return false;

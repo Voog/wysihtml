@@ -197,11 +197,16 @@
         <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="pre">pre</a>
         <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="blockquote">blockquote</a>
       </div>
+      
       <div class="block">
-        <a data-wysihtml5-command="fontSize" data-wysihtml5-command-value="x-small">x-small</a> 
-        <a data-wysihtml5-command="fontSize" data-wysihtml5-command-value="small">small</a> 
-        <a data-wysihtml5-command="fontSize" data-wysihtml5-command-value="large">large</a> 
+        <a data-wysihtml5-command="fontSizeStyle">Size</a>
+        <div data-wysihtml5-dialog="fontSizeStyle" style="display: none;">
+          Size:
+          <input type="text" data-wysihtml5-dialog-field="size" style="width: 60px;" value="" />
+          <a data-wysihtml5-dialog-action="save">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel">Cancel</a>
+        </div>
       </div>
+      
       <div class="block">
         <a data-wysihtml5-command="insertUnorderedList">&bull; List</a>
         <a data-wysihtml5-command="insertOrderedList">1. List</a>
@@ -309,10 +314,16 @@
         <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="p">p</a>
         <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="pre">pre</a>
       </div>
+      
       <div class="block">
-        <a data-wysihtml5-command="fontSize" data-wysihtml5-command-value="small">small</a> 
-        <a data-wysihtml5-command="fontSize" data-wysihtml5-command-value="large">large</a> 
+        <a data-wysihtml5-command="fontSizeStyle">Size</a>
+        <div data-wysihtml5-dialog="fontSizeStyle" style="display: none;">
+          Size:
+          <input type="text" data-wysihtml5-dialog-field="size" style="width: 60px;" value="" />
+          <a data-wysihtml5-dialog-action="save">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel">Cancel</a>
+        </div>
       </div>
+      
       <div class="block">
         <a data-wysihtml5-command="insertUnorderedList">&bull; List</a>
         <a data-wysihtml5-command="insertOrderedList">1. List</a>
@@ -426,7 +437,7 @@
 
 
 <script src="../parser_rules/advanced_unwrap.js"></script>
-<script src="../dist/wysihtml5x-0.4.0-beta1.js"></script>
+<script src="../dist/wysihtml5x-0.4.0-beta2.js"></script>
 
 <script>
 var editors = [];

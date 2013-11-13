@@ -165,6 +165,13 @@
         <a class="bg-color-btn" style="background-color: rgb(128,128,255)" data-value="rgb(128,128,255)">B</a>
       </span>
       
+      &nbsp;
+      <a id="fontSizeSmaller" class="editor-btn">-</a>
+      <input type="text" style="width: 30px; border: none; text-align: right;" id="fontSize"/>
+      <a id="fontSizeRemove" class="editor-btn">x</a>
+      <a id="fontSizeBigger" class="editor-btn">+</a>
+      &nbsp;
+      
       <span style="display:none" id="tableBtns">
         &nbsp;
         <a id="addRowAbove" class="editor-btn">+⋀</a>
@@ -224,7 +231,7 @@
 
 
 <script src="../parser_rules/advanced_unwrap.js"></script>
-<script src="../dist/wysihtml5x-0.4.0-beta1-wotools.js"></script>
+<script src="../dist/wysihtml5x-0.4.0-beta2-wotools.js"></script>
 <script>
      
     
@@ -284,6 +291,15 @@
       } else {
         $('#bgcolorbtn').removeClass('active');
         $('#bgColorBtns').hide();
+      }
+      
+      // font size state 
+      if (composer.commands.state('fontSizeStyle')) {
+        $('#fontSize').val(composer.commands.stateValue('fontSizeStyle'));
+        $('#fontSizeRemove').addClass('active');
+      } else {
+        $('#fontSize').val('');
+        $('#fontSizeRemove').removeClass('active');
       }
       
     }
@@ -384,6 +400,67 @@
       var val = $(this).data("value");
       composer.commands.exec("bgColorStyle", val);
       updateStates();
+    });
+    
+// font size actions  
+    var selBookmark = null;
+    $('#fontSize').mousedown(function() {
+      if (selBookmark == null) {
+        selBookmark = composer.selection.getBookmark();
+      }
+    });
+
+    $('#fontSize').change(function(){
+      if (selBookmark) {
+        setTimeout(function() {
+          composer.selection.setBookmark(selBookmark);
+          composer.commands.exec("fontSizeStyle", $('#fontSize').val());
+          selBookmark = null;
+        },0);
+      }
+    });
+
+    $('#fontSize').keydown(function(event) {
+      if (event.which == 13) {
+        event.preventDefault();
+        $('#fontSize').trigger('blur');
+      }
+    });
+
+    $('#fontSizeSmaller').click(function(event) {
+      event.preventDefault();
+      selBookmark = composer.selection.getBookmark();
+      var val = $('#fontSize').val(),
+          nr; 
+      if (val && !(/^\s*$/).test(val)) {
+        nr = parseInt(val, 10);
+        if (nr > 1) {
+          $('#fontSize').val(val.replace(/\d+/, nr -1)).trigger('change');
+          selBookmark = null;
+        }
+      } 
+    });
+
+    $('#fontSizeBigger').click(function(event) {
+      event.preventDefault();
+      selBookmark = composer.selection.getBookmark();
+      var val = $('#fontSize').val(),
+          nr; 
+      if (val && !(/^\s*$/).test(val)) {
+        nr = parseInt(val, 10);
+      $('#fontSize').val(val.replace(/\d+/, nr +1)).trigger('change');
+      selBookmark = null;
+      } 
+    });
+
+    // executing with same value removes size
+    $('#fontSizeRemove').click(function(event) {
+      event.preventDefault();
+      var val = composer.commands.stateValue('fontSizeStyle');
+      if (val) {
+        composer.commands.exec("fontSizeStyle", val);
+        selBookmark = null;
+      }
     });
     
 </script>
