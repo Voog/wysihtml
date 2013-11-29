@@ -600,25 +600,40 @@
     },
     
     fixRangeOverflow: function(range) {
-        
-        if (this.contain && range) {
-            var containment = range.compareNode(this.contain);
-            
-            if (containment !== 2) {
-                if (containment === 1) {
-                    range.setStartBefore(this.contain.firstChild);
-                }
-                if (containment === 0) {
-                    range.setEndAfter(this.contain.lastChild);
-                }
-                if (containment === 3) {
-                    range.setStartBefore(this.contain.firstChild);
-                    range.setEndAfter(this.contain.lastChild);
-                }
-                
-            }
+      if (this.contain && range) {
+        var containment = range.compareNode(this.contain);
+        if (containment !== 2) {
+          if (containment === 1) {
+            range.setStartBefore(this.contain.firstChild);
+          }
+          if (containment === 0) {
+            range.setEndAfter(this.contain.lastChild);
+          }
+          if (containment === 3) {
+            range.setStartBefore(this.contain.firstChild);
+            range.setEndAfter(this.contain.lastChild);
+          }
+        } else if (this._detectInlineRangeProblems(range)) {
+          var previousElementSibling = range.endContainer.previousElementSibling;
+          if (previousElementSibling) {
+            range.setEnd(previousElementSibling, this._endOffsetForNode(previousElementSibling));
+          }
         }
-        
+      }
+    },
+
+    _endOffsetForNode: function(node) {
+      var range = document.createRange()
+      range.selectNodeContents(node)
+      return range.endOffset;
+    },
+
+    _detectInlineRangeProblems: function(range) {
+      position = range.startContainer.compareDocumentPosition(range.endContainer);
+      return (
+        range.endOffset == 0 &&
+        position & Node.DOCUMENT_POSITION_FOLLOWING
+      );
     },
     
     getRange: function(dontFix) {
