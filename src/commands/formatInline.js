@@ -58,7 +58,7 @@
   }
   
   wysihtml5.commands.formatInline = {
-    exec: function(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp, dontRestoreSelect) {
+    exec: function(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp, dontRestoreSelect, noCleanup) {
       var range = composer.selection.createRange();
           ownRanges = composer.selection.getOwnRanges();
       
@@ -72,13 +72,15 @@
         ownRanges[ownRanges.length - 1].endContainer,
         ownRanges[ownRanges.length - 1].endOffset
       );
-      if (!dontRestoreSelect) {
-        composer.selection.setSelection(range);
-        composer.selection.executeAndRestore(function() {
+      if (!noCleanup) {
+        if (!dontRestoreSelect) {
+          composer.selection.setSelection(range);
+          composer.selection.executeAndRestore(function() {
+            composer.cleanUp();
+          }, true, true);
+        } else {
           composer.cleanUp();
-        }, true, true);
-      } else {
-        composer.cleanUp();
+        }
       }
     },
     

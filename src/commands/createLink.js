@@ -39,7 +39,7 @@
         textContent,
         whiteSpace,
         j;
-    wysihtml5.commands.formatInline.exec(composer, undef, NODE_NAME, tempClass, tempClassRegExp);
+    wysihtml5.commands.formatInline.exec(composer, undef, NODE_NAME, tempClass, tempClassRegExp, undef, undef, undef, true);
     anchors = doc.querySelectorAll(NODE_NAME + "." + tempClass);
     length  = anchors.length;
     for (; i<length; i++) {
@@ -63,6 +63,7 @@
         elementToSetCaretAfter = whiteSpace;
       }
     }
+    console.log(elementToSetCaretAfter);
     composer.selection.setAfter(elementToSetCaretAfter);
   }
   
