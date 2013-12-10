@@ -5531,7 +5531,7 @@ wysihtml5.commands.bold = {
         textContent,
         whiteSpace,
         j;
-    wysihtml5.commands.formatInline.exec(composer, undef, NODE_NAME, tempClass, tempClassRegExp);
+    wysihtml5.commands.formatInline.exec(composer, undef, NODE_NAME, tempClass, tempClassRegExp, undef, undef, undef, true);
     anchors = doc.querySelectorAll(NODE_NAME + "." + tempClass);
     length  = anchors.length;
     for (; i<length; i++) {
@@ -5555,6 +5555,7 @@ wysihtml5.commands.bold = {
         elementToSetCaretAfter = whiteSpace;
       }
     }
+    console.log(elementToSetCaretAfter);
     composer.selection.setAfter(elementToSetCaretAfter);
   }
   
@@ -6088,7 +6089,7 @@ wysihtml5.commands.bold = {
   }
   
   wysihtml5.commands.formatInline = {
-    exec: function(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp, dontRestoreSelect) {
+    exec: function(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp, dontRestoreSelect, noCleanup) {
       var range = composer.selection.createRange();
           ownRanges = composer.selection.getOwnRanges();
       
@@ -6102,13 +6103,15 @@ wysihtml5.commands.bold = {
         ownRanges[ownRanges.length - 1].endContainer,
         ownRanges[ownRanges.length - 1].endOffset
       );
-      if (!dontRestoreSelect) {
-        composer.selection.setSelection(range);
-        composer.selection.executeAndRestore(function() {
+      if (!noCleanup) {
+        if (!dontRestoreSelect) {
+          composer.selection.setSelection(range);
+          composer.selection.executeAndRestore(function() {
+            composer.cleanUp();
+          }, true, true);
+        } else {
           composer.cleanUp();
-        }, true, true);
-      } else {
-        composer.cleanUp();
+        }
       }
     },
     
