@@ -5555,7 +5555,6 @@ wysihtml5.commands.bold = {
         elementToSetCaretAfter = whiteSpace;
       }
     }
-    console.log(elementToSetCaretAfter);
     composer.selection.setAfter(elementToSetCaretAfter);
   }
   
