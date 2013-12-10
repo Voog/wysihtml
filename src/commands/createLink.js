@@ -63,7 +63,6 @@
         elementToSetCaretAfter = whiteSpace;
       }
     }
-    console.log(elementToSetCaretAfter);
     composer.selection.setAfter(elementToSetCaretAfter);
   }
   
