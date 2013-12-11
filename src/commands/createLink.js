@@ -58,7 +58,7 @@
       // Set new attributes
       for (var j in attributes) {
         if (attributes.hasOwnProperty(j)) {
-          anchor.setAttribute(j, attributes[j]);
+          anchors[a].setAttribute(j, attributes[j]);
         } 
       }
       
