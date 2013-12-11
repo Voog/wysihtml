@@ -26,8 +26,17 @@ if (wysihtml5.browser.supported()) {
   asyncTest("Basic formating tests", function() {
      expect(10);
     var that = this,
-        editor = new wysihtml5.Editor(this.editableArea),
-        text = "once upon a time there was an unformated text.";
+        text = "once upon a time there was an unformated text.",
+        parserRules = {
+          tags: {
+            b: true,
+            i: true,
+            u: true
+          }
+        },
+        editor = new wysihtml5.Editor(this.editableArea, {
+          parserRules: parserRules
+        });
         
     editor.on("load", function() {
       var editableElement   = that.editableArea;
@@ -115,5 +124,48 @@ if (wysihtml5.browser.supported()) {
         start();
       });
     });
+    
+// createLink/removeLink
+        asyncTest("Create/remove link", function() {
+           expect(4);
+           
+          var that = this,
+              editor = new wysihtml5.Editor(this.editableArea),
+              text = "text";
+        
+          editor.on("load", function() {
+            var editableElement   = that.editableArea;
+            editor.setValue(text, true);
+            editor.composer.selection.selectNode(editor.editableElement);
+            
+            // Create
+            editor.composer.commands.exec('createLink', {
+              "href": "http://test.com", "title": "test"
+            });
+            equal(editableElement.innerHTML.toLowerCase(), '<a href="http://test.com" title="test">' + text + '</a>', "Link added correctly");
+            
+            // Change
+            editor.composer.selection.selectNode(editor.editableElement);
+            editor.composer.commands.exec('createLink', {
+              "href": "http://changed.com"
+            });
+            equal(editableElement.innerHTML.toLowerCase(), '<a href="http://changed.com">' + text + '</a>', "Link attributes changed correctly when createLink is executed on existing link");
+            
+            //Remove
+            editor.composer.selection.selectNode(editor.editableElement);
+            editor.composer.commands.exec('removeLink');
+            equal(editableElement.innerHTML, text, "Link remove correctly");
+            
+            // Create with caret
+            editor.composer.selection.selectNode(editor.editableElement);
+            editor.composer.selection.getSelection().collapseToStart();
+            editor.composer.commands.exec('createLink', {
+              "href": "http://test.com", "title": "test"
+            });
+            equal(editableElement.innerHTML.toLowerCase(), '<a href="http://test.com" title="test">http://test.com/</a> ' + text + '', "Link with caret added correctly");
+            
+            start();
+          });
+        });
   
 }
