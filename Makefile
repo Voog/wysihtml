@@ -53,6 +53,7 @@ JS_FILES = src/wysihtml5.js \
   src/commands.js \
   src/commands/bold.js \
   src/commands/createLink.js \
+  src/commands/removeLink.js \
   src/commands/fontSize.js \
   src/commands/fontSizeStyle.js \
   src/commands/foreColor.js \
@@ -140,6 +141,7 @@ JS_FILES_WOTOOLS = src/wysihtml5.js \
   src/commands.js \
   src/commands/bold.js \
   src/commands/createLink.js \
+  src/commands/removeLink.js \
   src/commands/fontSize.js \
   src/commands/fontSizeStyle.js \
   src/commands/foreColor.js \
