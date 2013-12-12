@@ -1,7 +1,7 @@
 VERSION = $(shell cat version.txt)
 
-JS_OUTPUT = "dist/wysihtml5x-${VERSION}.js"
-JS_OUTPUT_WOTOOLS = "dist/wysihtml5x-${VERSION}-wotools.js"
+JS_OUTPUT = "dist/wysihtml5x-${VERSION}-toolbar.js"
+JS_OUTPUT_WOTOOLS = "dist/wysihtml5x-${VERSION}.js"
 
 OPEN = $(shell which xdg-open || which gnome-open || which open)
 
@@ -179,28 +179,27 @@ all: bundle minify
 
 bundle:
 	@@echo "Bundling..."
-	@@touch ${JS_OUTPUT}
-	@@rm ${JS_OUTPUT}
-	@@cat ${JS_FILES} >> ${JS_OUTPUT}
-	@@cat ${JS_OUTPUT} | sed "s/@VERSION/${VERSION}/" > "${JS_OUTPUT}.tmp"
-	@@mv "${JS_OUTPUT}.tmp" ${JS_OUTPUT}
-
-minify:
-	@@echo "Minifying... (this requires node.js)"
-	@@node build/minify.js ${JS_OUTPUT}
-	@@echo "Done."
-    
-wotoolbar:
-	@@echo "Bundling..."
 	@@touch ${JS_OUTPUT_WOTOOLS}
 	@@rm ${JS_OUTPUT_WOTOOLS}
 	@@cat ${JS_FILES_WOTOOLS} >> ${JS_OUTPUT_WOTOOLS}
 	@@cat ${JS_OUTPUT_WOTOOLS} | sed "s/@VERSION/${VERSION}/" > "${JS_OUTPUT}-wotools.tmp"
 	@@mv "${JS_OUTPUT}-wotools.tmp" ${JS_OUTPUT_WOTOOLS}
+
+minify:
 	@@echo "Minifying... (this requires node.js)"
 	@@node build/minify.js ${JS_OUTPUT_WOTOOLS}
 	@@echo "Done."
     
+toolbar:
+	@@echo "Bundling..."
+	@@touch ${JS_OUTPUT}
+	@@rm ${JS_OUTPUT}
+	@@cat ${JS_FILES} >> ${JS_OUTPUT}
+	@@cat ${JS_OUTPUT} | sed "s/@VERSION/${VERSION}/" > "${JS_OUTPUT}.tmp"
+	@@mv "${JS_OUTPUT}.tmp" ${JS_OUTPUT}
+	@@echo "Minifying... (this requires node.js)"
+	@@node build/minify.js ${JS_OUTPUT}
+	@@echo "Done."
 
 unittest:
 	@@${OPEN} test/index.html

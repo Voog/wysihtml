@@ -1,3 +1,8 @@
+*wysihtml5x 0.4.0* (Dec 12, 2013)
+* Changed syntax of background and foreground color with style commands
+* Anchor creting and removing logic changed
+* Default build is without internal toolbar functions and build with "-toolbar" suffix contains default toolbar functions
+
 *wysihtml5x 0.4.0-beta2* (Nov 7, 2013)
 * Support for contenteditable without iframe sandbox when initiated on div instead of textarea
 * Table creation and handling commands added
