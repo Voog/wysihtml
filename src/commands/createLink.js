@@ -24,7 +24,10 @@
       anchor = anchors[i];
       anchor.removeAttribute("class");
       for (j in attributes) {
-        anchor.setAttribute(j, attributes[j]);
+        // Do not set attribute "text" as it is meant for setting string value if created link has no textual data
+        if (j !== "text") {
+          anchor.setAttribute(j, attributes[j]);
+        }
       }
     }
 
