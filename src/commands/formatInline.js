@@ -49,7 +49,7 @@
   function _getApplier(tagName, className, classRegExp, cssStyle, styleRegExp) {
     var identifier = tagName + ":" + className;
     if (cssStyle) {
-      identifier += ":" + cssStyle
+      identifier += ":" + cssStyle;
     }
     if (!htmlApplier[identifier]) {
       htmlApplier[identifier] = new wysihtml5.selection.HTMLApplier(_getTagNames(tagName), className, classRegExp, true, cssStyle, styleRegExp);
@@ -94,7 +94,7 @@
         composer.selection.executeAndRestoreSimple(function() {
           var parent = state_element.parentNode;
           composer.selection.selectNode(state_element, true);
-          wysihtml5.commands.formatInline.exec(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp, true);
+          wysihtml5.commands.formatInline.exec(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp, true, true);
         });
       } else {
         wysihtml5.commands.formatInline.exec(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp);

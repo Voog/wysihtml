@@ -265,13 +265,13 @@
           oldScrollLeft         = restoreScrollPosition && body.scrollLeft,
           className             = "_wysihtml5-temp-placeholder",
           placeholderHtml       = '<span class="' + className + '">' + wysihtml5.INVISIBLE_SPACE + '</span>',
-          range                 = this.getRange(this.doc),
+          range                 = this.getRange(true),
           caretPlaceholder,
           newCaretPlaceholder,
           nextSibling, prevSibling,
           node, node2, range2,
           newRange;
-      
+          
       // Nothing selected, execute and say goodbye
       if (!range) {
         method(body, body);
@@ -285,6 +285,7 @@
         range2.insertNode(node2);
         range2.detach();
       }
+      
       node = range.createContextualFragment(placeholderHtml);
       range.insertNode(node);
       
@@ -303,7 +304,6 @@
       }
       caretPlaceholder = this.contain.querySelectorAll("." + className);
       if (caretPlaceholder && caretPlaceholder.length) {
-        
         newRange = rangy.createRange(this.doc);
         nextSibling = caretPlaceholder[0].nextSibling;
         if (caretPlaceholder.length > 1) {
@@ -312,7 +312,6 @@
         if (prevSibling && nextSibling) {
           newRange.setStartBefore(nextSibling);
           newRange.setEndAfter(prevSibling);
-          
         } else {
           newCaretPlaceholder = this.doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
           dom.insert(newCaretPlaceholder).before(caretPlaceholder[0]);
@@ -323,9 +322,6 @@
         for (var i = caretPlaceholder.length; i--;) {
          caretPlaceholder[i].parentNode.removeChild(caretPlaceholder[i]);
         }
-        
-        
-        
         
       } else {
         // fallback for when all hell breaks loose
@@ -625,10 +621,13 @@
         
     },
     
-    getRange: function() {
+    getRange: function(dontFix) {
       var selection = this.getSelection(),
           range = selection && selection.rangeCount && selection.getRangeAt(0);
-      this.fixRangeOverflow(range);    
+      
+      if (dontFix !== true) {
+        this.fixRangeOverflow(range);
+      }
       
       return range;
     },
