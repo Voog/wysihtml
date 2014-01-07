@@ -600,7 +600,7 @@
     },
     
     fixRangeOverflow: function(range) {
-      if (this.contain && range) {
+      if (this.contain && this.contain.firstChild && range) {
         var containment = range.compareNode(this.contain);
         if (containment !== 2) {
           if (containment === 1) {
