@@ -313,6 +313,9 @@ if (wysihtml5.browser.supported()) {
     });
   });
   
+  /* 
+  // TODO: needs logic rethink of terms and conditions
+
   asyncTest("If selection borders cross contenteditabel only editable gets modified", function() {
       expect(3);
       var that = this,
@@ -330,5 +333,6 @@ if (wysihtml5.browser.supported()) {
           start();
       });
   });
+  */
   
 }
