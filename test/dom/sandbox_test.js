@@ -55,6 +55,8 @@ asyncTest("Basic Test", function() {
     equal(typeof(sandbox.getWindow().onerror), "function", "window.onerror is set");
     
     start();
+  }, {
+    prefix: "wysihtml5"
   });
   
   sandbox.insertInto(document.body);
@@ -93,6 +95,8 @@ asyncTest("Security test #1", function() {
     ok(that.isUnset("window.postMessage", iframeWindow),    "window.openDatabase is unset");
     
     start();
+  },{
+    prefix: "wysihtml5"
   });
   
   sandbox.insertInto(document.body);
@@ -112,6 +116,8 @@ asyncTest("Security test #2", function() {
       
       start();
     }, 2000);
+  }, {
+    prefix: "wysihtml5"
   });
   
   sandbox.insertInto(document.body);
@@ -136,6 +142,8 @@ asyncTest("Check charset & doctype", function() {
       equal(that.getCharset(iframeDocument), that.getCharset(document), "Charset isn't overwritten");
       start();
     }, 500);
+  }, {
+    prefix: "wysihtml5"
   });
   
   sandbox.insertInto(document.body);
@@ -150,7 +158,8 @@ asyncTest("Check insertion of single stylesheet", function() {
     equal(doc.getElementsByTagName("link").length, 1, "Correct amount of stylesheets inserted into the dom tree");
     start();
   }, {
-    stylesheets: "https://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/themes/blitzer/jquery-ui.css"
+    stylesheets: "https://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/themes/blitzer/jquery-ui.css",
+    prefix: "wysihtml5"
   }).insertInto(document.body);
 });
 
@@ -166,7 +175,8 @@ asyncTest("Check insertion of multiple stylesheets", function() {
     stylesheets: [
       "https://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/themes/blitzer/jquery-ui.css",
       "https://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/themes/excite-bike/jquery-ui.css"
-    ]
+    ],
+    prefix: "wysihtml5"
   }).insertInto(document.body);
 });
 

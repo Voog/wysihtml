@@ -35,6 +35,8 @@
   var defaultConfig = {
     // Give the editor a name, the name will also be set as class name on the iframe and on the iframe's body 
     name:                 undef,
+    // Prefix of editor classes
+    prefix: "wysihtml5",
     // Whether the editor should look like the textarea (by adopting styles)
     style:                true,
     // Id of the toolbar element, pass falsey value if you don't want any toolbar logic
@@ -51,10 +53,6 @@
     parserRules:          { tags: { br: {}, span: {}, div: {}, p: {} }, classes: {} },
     // Parser method to use when the user inserts content via copy & paste
     parser:               wysihtml5.dom.parse,
-    // Class name which should be set on the contentEditable element in the created sandbox iframe, can be styled via the 'stylesheets' option
-    composerClassName:    "wysihtml5-editor",
-    // Class name to add to the body when the wysihtml5 editor is supported
-    bodyClassName:        "wysihtml5-supported",
     // By default wysihtml5 will insert a <br> for line breaks, set this to false to use <p>
     useLineBreaks:        true,
     // Array (or single string) of stylesheet urls to be loaded in the editor's iframe
@@ -67,12 +65,18 @@
     cleanUp:              true,
     // Whether to use div instead of secure iframe
     contentEditableMode: false,
-    xingAlert: false,
-    // Classname of container that editor should not touch and pass through
-    // Pass false to disable 
-    uneditableContainerClassname: "wysihtml5-uneditable-container"
+    xingAlert: false
   };
-  
+
+  // Class name which should be set on the contentEditable element in the created sandbox iframe, can be styled via the 'stylesheets' option
+  defaultConfig.composerClassName = defaultConfig.prefix + "-editor";
+  // Class name to add to the body when the wysihtml5 editor is supported
+  defaultConfig.bodyClassName = defaultConfig.prefix + "-supported";
+  // Classname of container that editor should not touch and pass through
+  // Pass false to disable 
+  defaultConfig.uneditableContainerClassname = defaultConfig.prefix + "-uneditable-container";
+
+
   wysihtml5.Editor = wysihtml5.lang.Dispatcher.extend(
     /** @scope wysihtml5.Editor.prototype */ {
     constructor: function(editableElement, config) {
@@ -186,7 +190,8 @@
         "rules": this.config.parserRules,
         "cleanUp": this.config.cleanUp,
         "context": parseContext,
-        "uneditableClass": this.config.uneditableContainerClassname
+        "uneditableClass": this.config.uneditableContainerClassname,
+        "prefix": this.config.prefix
       });
       if (typeof(htmlOrElement) === "object") {
         wysihtml5.quirks.redraw(htmlOrElement);

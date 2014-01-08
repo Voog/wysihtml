@@ -17,23 +17,23 @@
         this.callback = readyCallback || wysihtml5.EMPTY_FUNCTION;
         this.config   = wysihtml5.lang.object({}).merge(config).get();
         if (contentEditable) {
-            this.element = this._bindElement(contentEditable);
+            this.element = this._bindElement(contentEditable, this.config);
         } else {    
-            this.element = this._createElement();
+            this.element = this._createElement(this.config);
         }
       },
       
       // creates a new contenteditable and initiates it
-      _createElement: function() {
+      _createElement: function(config) {
         var element = doc.createElement("div");
-        element.className = "wysihtml5-sandbox";
+        element.className = config.prefix + "-sandbox";
         this._loadElement(element);
         return element;
       },
       
       // initiates an allready existent contenteditable
-      _bindElement: function(contentEditable) {
-        contentEditable.className = (contentEditable.className && contentEditable.className != '') ? contentEditable.className + " wysihtml5-sandbox" : "wysihtml5-sandbox";
+      _bindElement: function(contentEditable, config) {
+        contentEditable.className = (contentEditable.className && contentEditable.className != '') ? contentEditable.className + " " + config.prefix + "-sandbox" : config.prefix + "-sandbox";
         this._loadElement(contentEditable, true);
         return contentEditable;
       },

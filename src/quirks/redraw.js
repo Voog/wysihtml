@@ -7,6 +7,7 @@
  *    wysihtml5.quirks.redraw(document.body);
  */
 (function(wysihtml5) {
+  // TODO: figure out how config.prefix option should get here
   var CLASS_NAME = "wysihtml5-quirks-redraw";
   
   wysihtml5.quirks.redraw = function(element) {

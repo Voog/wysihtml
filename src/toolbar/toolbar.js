@@ -15,11 +15,11 @@
  *    </script>
  */
 (function(wysihtml5) {
-  var CLASS_NAME_COMMAND_DISABLED   = "wysihtml5-command-disabled",
-      CLASS_NAME_COMMANDS_DISABLED  = "wysihtml5-commands-disabled",
-      CLASS_NAME_COMMAND_ACTIVE     = "wysihtml5-command-active",
-      CLASS_NAME_ACTION_ACTIVE      = "wysihtml5-action-active",
-      dom                           = wysihtml5.dom;
+  var CLASS_NAME_COMMAND_DISABLED,
+      CLASS_NAME_COMMANDS_DISABLED,
+      CLASS_NAME_COMMAND_ACTIVE,
+      CLASS_NAME_ACTION_ACTIVE,
+      dom = wysihtml5.dom;
   
   wysihtml5.toolbar.Toolbar = Base.extend(
     /** @scope wysihtml5.toolbar.Toolbar.prototype */ {
@@ -27,6 +27,11 @@
       this.editor     = editor;
       this.container  = typeof(container) === "string" ? document.getElementById(container) : container;
       this.composer   = editor.composer;
+
+      CLASS_NAME_COMMAND_DISABLED   = this.editor.config.prefix + "-command-disabled";
+      CLASS_NAME_COMMANDS_DISABLED  = this.editor.config.prefix + "-commands-disabled";
+      CLASS_NAME_COMMAND_ACTIVE     = this.editor.config.prefix + "-command-active";
+      CLASS_NAME_ACTION_ACTIVE      = this.editor.config.prefix + "-action-active";
 
       this._getLinks("command");
       this._getLinks("action");
@@ -78,9 +83,9 @@
       
       if (dialogElement) {
         if (wysihtml5.toolbar["Dialog_" + command]) {
-            dialog = new wysihtml5.toolbar["Dialog_" + command](link, dialogElement);
+            dialog = new wysihtml5.toolbar["Dialog_" + command](link, dialogElement, this.editor.config.prefix);
         } else {
-            dialog = new wysihtml5.toolbar.Dialog(link, dialogElement);
+            dialog = new wysihtml5.toolbar.Dialog(link, dialogElement, this.editor.config.prefix);
         }
         
         dialog.on("show", function() {

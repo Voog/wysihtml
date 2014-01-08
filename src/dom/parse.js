@@ -96,7 +96,7 @@ wysihtml5.dom.parse = (function() {
     
     while (element.firstChild) {
       firstChild = element.firstChild;
-      newNode = _convert(firstChild, config.cleanUp);
+      newNode = _convert(firstChild, config.cleanUp, config);
       element.removeChild(firstChild);
       if (newNode) {
         fragment.appendChild(newNode);
@@ -112,7 +112,7 @@ wysihtml5.dom.parse = (function() {
     return isString ? wysihtml5.quirks.getCorrectInnerHTML(element) : element;
   }
   
-  function _convert(oldNode, cleanUp) {
+  function _convert(oldNode, cleanUp, config) {
     var oldNodeType     = oldNode.nodeType,
         oldChilds       = oldNode.childNodes,
         oldChildsLength = oldChilds.length,
@@ -126,7 +126,7 @@ wysihtml5.dom.parse = (function() {
         return oldNode;
     }    
     
-    newNode = method && method(oldNode);
+    newNode = method && method(oldNode, config);
     
     if (!newNode) {
         if (newNode === false) {
@@ -149,7 +149,7 @@ wysihtml5.dom.parse = (function() {
             
             
             for (i=0; i<oldChildsLength; i++) {
-              newChild = _convert(oldChilds[i], cleanUp);
+              newChild = _convert(oldChilds[i], cleanUp, config);
               if (newChild) {
                 fragment.appendChild(newChild);
               }
@@ -164,7 +164,7 @@ wysihtml5.dom.parse = (function() {
     }
     
     for (i=0; i<oldChildsLength; i++) {
-      newChild = _convert(oldChilds[i], cleanUp);
+      newChild = _convert(oldChilds[i], cleanUp, config);
       if (newChild) {
         newNode.appendChild(newChild);
       }
@@ -193,7 +193,7 @@ wysihtml5.dom.parse = (function() {
     return newNode;
   }
   
-  function _handleElement(oldNode) {
+  function _handleElement(oldNode, config) {
     var rule,
         newNode,
         tagRules    = currentRules.tags,
@@ -210,7 +210,7 @@ wysihtml5.dom.parse = (function() {
     }
     oldNode._wysihtml5 = 1;
     
-    if (oldNode.className === "wysihtml5-temp") {
+    if (oldNode.className === config.prefix + "-temp") {
       return null;
     }
     

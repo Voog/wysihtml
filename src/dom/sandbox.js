@@ -55,7 +55,7 @@
     constructor: function(readyCallback, config) {
       this.callback = readyCallback || wysihtml5.EMPTY_FUNCTION;
       this.config   = wysihtml5.lang.object({}).merge(config).get();
-      this.editableArea   = this._createIframe();
+      this.editableArea   = this._createIframe(this.config);
     },
     
     insertInto: function(element) {
@@ -106,10 +106,10 @@
      *  - IE doesn't fire the onload event when the content is inlined in the src attribute, therefore we rely
      *    on the onreadystatechange event
      */
-    _createIframe: function() {
+    _createIframe: function(config) {
       var that   = this,
           iframe = doc.createElement("iframe");
-      iframe.className = "wysihtml5-sandbox";
+      iframe.className = config.prefix + "-sandbox";
       wysihtml5.dom.setAttributes({
         "security":           "restricted",
         "allowtransparency":  "true",

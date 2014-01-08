@@ -124,10 +124,14 @@
         if (this.config.noTextarea) {
             this.sandbox = new dom.ContentEditableArea(function() {
                 that._create();
-            }, {}, this.editableArea);
+            }, {
+              prefix: this.config.prefix
+            }, this.editableArea);
         } else {
             this.sandbox = new dom.ContentEditableArea(function() {
                 that._create();
+            }, {
+              prefix: this.config.prefix
             });
             this.editableArea = this.sandbox.getContentEditable();
             dom.insert(this.editableArea).after(this.textarea.element);
@@ -137,11 +141,11 @@
 
     _initSandbox: function() {
       var that = this;
-      
       this.sandbox = new dom.Sandbox(function() {
         that._create();
       }, {
-        stylesheets:  this.config.stylesheets
+        stylesheets:  this.config.stylesheets,
+        prefix: that.config.prefix
       });
       this.editableArea  = this.sandbox.getIframe();
       

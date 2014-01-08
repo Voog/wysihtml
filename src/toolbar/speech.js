@@ -80,7 +80,7 @@
     });
     
     dom.observe(input, "click", function(event) {
-      if (dom.hasClass(link, "wysihtml5-command-disabled")) {
+      if (dom.hasClass(link, parent.editor.config.prefix + "-command-disabled")) {
         event.preventDefault();
       }
       

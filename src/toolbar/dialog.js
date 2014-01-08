@@ -21,7 +21,8 @@
  *    <script>
  *      var dialog = new wysihtml5.toolbar.Dialog(
  *        document.querySelector("[data-wysihtml5-command='insertImage']"),
- *        document.querySelector("[data-wysihtml5-dialog='insertImage']")
+ *        document.querySelector("[data-wysihtml5-dialog='insertImage']"),
+ *        "wysihtml5"
  *      );
  *      dialog.observe("save", function(attributes) {
  *        // do something
@@ -30,7 +31,7 @@
  */
 (function(wysihtml5) {
   var dom                     = wysihtml5.dom,
-      CLASS_NAME_OPENED       = "wysihtml5-command-dialog-opened",
+      CLASS_NAME_OPENED,
       SELECTOR_FORM_ELEMENTS  = "input, select, textarea",
       SELECTOR_FIELDS         = "[data-wysihtml5-dialog-field]",
       ATTRIBUTE_FIELDS        = "data-wysihtml5-dialog-field";
@@ -38,9 +39,11 @@
   
   wysihtml5.toolbar.Dialog = wysihtml5.lang.Dispatcher.extend(
     /** @scope wysihtml5.toolbar.Dialog.prototype */ {
-    constructor: function(link, container) {
+    constructor: function(link, container, classPrefix) {
       this.link       = link;
       this.container  = container;
+      this.classPrefix = classPrefix;
+      CLASS_NAME_OPENED = this.classPrefix + "-command-dialog-opened";
     },
 
     _observe: function() {
