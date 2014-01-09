@@ -564,6 +564,35 @@
                 }
             }
         },
+
+        getRowElementsByCell: function() {
+            var cells = [];
+            this.setTableMap();
+            this.idx = this.getMapIndex(this.cell);
+            if (this.idx !== false) {
+                var modRow = this.map[this.idx.row];
+                for (var cidx = 0, cmax = modRow.length; cidx < cmax; cidx++) {
+                    if (modRow[cidx].isReal) {
+                        cells.push(modRow[cidx].el);
+                    }
+                }
+            }
+            return cells;
+        },
+
+        getColumnElementsByCell: function() {
+            var cells = [];
+            this.setTableMap();
+            this.idx = this.getMapIndex(this.cell);
+            if (this.idx !== false) {
+                for (var ridx = 0, rmax = this.map.length; ridx < rmax; ridx++) {
+                    if (this.map[ridx][this.idx.col] && this.map[ridx][this.idx.col].isReal) {
+                        cells.push(this.map[ridx][this.idx.col].el);
+                    }
+                }
+            }
+            return cells;
+        },
         
         // Removes the row of selected cell
         removeRow: function() {
@@ -825,6 +854,16 @@
         findCell: function(table, idx) {
             var c = new TableModifyerByCell(null, table);
             return c.getElementAtIndex(idx);
+        },
+
+        findRowByCell: function(cell) {
+            var c = new TableModifyerByCell(cell);
+            return c.getRowElementsByCell();
+        },
+
+        findColumnByCell: function(cell) {
+            var c = new TableModifyerByCell(cell);
+            return c.getColumnElementsByCell();
         }
     };
     
