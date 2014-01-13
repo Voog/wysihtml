@@ -141,6 +141,8 @@ test("merge/unmerge", function() {
     cells[5].appendChild(txt3);
     
     // merge
+    equal(wysihtml5.dom.table.canMerge(cells[0], cells[9]), true , "canMerge returns true correctly for unmerged selection");
+
     wysihtml5.dom.table.mergeCellsBetween(cells[0], cells[9]);
     equal(this.getTable().querySelectorAll('td').length, nr_cells - 5, "Top left corner (6 cells) correctly merged");
     equal(this.getTable().querySelectorAll('td')[0].getAttribute('colspan'), 2, "Colspan attribute added correctly");
@@ -149,6 +151,8 @@ test("merge/unmerge", function() {
     equal(this.getTable().querySelectorAll('td')[0].innerHTML.replace(/\s\s+/g, ' ').replace(/\s+$/g, ''), "Cell texts merged" , "cell texts correctly merged");
     
     var cells_m1 = this.getTable().querySelectorAll('td');
+
+    equal(wysihtml5.dom.table.canMerge(cells_m1[0], cells_m1[1]), false , "canMerge returns false correctly for selection containing merged cells");
     
     wysihtml5.dom.table.mergeCellsBetween(cells_m1[cells_m1.length - 6], cells_m1[cells_m1.length - 1]);
     equal(this.getTable().querySelectorAll('td').length, nr_cells - 8, "Bottom right corner (4 cells) correctly merged");

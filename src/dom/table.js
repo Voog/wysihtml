@@ -329,7 +329,24 @@
             }
         },
         
-        canMerge: function() {
+        canMerge: function(to) {
+            this.to = to;
+            this.setTableMap();
+            this.idx_start = this.getMapIndex(this.cell);
+            this.idx_end = this.getMapIndex(this.to);
+            
+            // switch indexes if start is bigger than end
+            if (this.idx_start.row > this.idx_end.row || (this.idx_start.row == this.idx_end.row && this.idx_start.col > this.idx_end.col)) {
+                var temp_idx = this.idx_start;
+                this.idx_start = this.idx_end;
+                this.idx_end = temp_idx;
+            }
+            if (this.idx_start.col > this.idx_end.col) {
+                var temp_cidx = this.idx_start.col;
+                this.idx_start.col = this.idx_end.col;
+                this.idx_end.col = temp_cidx;
+            }
+
             for (var row = this.idx_start.row, maxr = this.idx_end.row; row <= maxr; row++) {
                 for (var col = this.idx_start.col, maxc = this.idx_end.col; col <= maxc; col++) {
                     if (this.map[row][col].isColspan || this.map[row][col].isRowspan) {
@@ -467,23 +484,7 @@
         // merges cells from start cell (defined in creating obj) to "to" cell
         merge: function(to) {
             if (this.rectify()) {
-                this.to = to;
-                this.setTableMap();
-                this.idx_start = this.getMapIndex(this.cell);
-                this.idx_end = this.getMapIndex(this.to);
-                
-                // switch indexes if start is bigger than end
-                if (this.idx_start.row > this.idx_end.row || (this.idx_start.row == this.idx_end.row && this.idx_start.col > this.idx_end.col)) {
-                    var temp_idx = this.idx_start;
-                    this.idx_start = this.idx_end;
-                    this.idx_end = temp_idx;
-                }
-                if (this.idx_start.col > this.idx_end.col) {
-                    var temp_cidx = this.idx_start.col;
-                    this.idx_start.col = this.idx_end.col;
-                    this.idx_end.col = temp_cidx;
-                }
-                if (this.canMerge()) {
+                if (this.canMerge(to)) {
                     var rowspan = this.idx_end.row - this.idx_start.row + 1,
                         colspan = this.idx_end.col - this.idx_start.col + 1;
                         
@@ -864,6 +865,11 @@
         findColumnByCell: function(cell) {
             var c = new TableModifyerByCell(cell);
             return c.getColumnElementsByCell();
+        },
+
+        canMerge: function(cell1, cell2) {
+            var c = new TableModifyerByCell(cell1);
+            return c.canMerge(cell2);
         }
     };
     
