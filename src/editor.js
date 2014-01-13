@@ -31,9 +31,9 @@
  */
 (function(wysihtml5) {
   var undef;
-  
+
   var defaultConfig = {
-    // Give the editor a name, the name will also be set as class name on the iframe and on the iframe's body 
+    // Give the editor a name, the name will also be set as class name on the iframe and on the iframe's body
     name:                 undef,
     // Whether the editor should look like the textarea (by adopting styles)
     style:                true,
@@ -44,7 +44,7 @@
     showToolbarAfterInit: true,
     // Whether urls, entered by the user should automatically become clickable-links
     autoLink:             true,
-    // Includes table editing events and cell selection tracking 
+    // Includes table editing events and cell selection tracking
     handleTables:         true,
     // Object which includes parser rules to apply when html gets inserted via copy & paste
     // See parser_rules/*.js for examples
@@ -69,17 +69,17 @@
     contentEditableMode: false,
     xingAlert: false,
     // Classname of container that editor should not touch and pass through
-    // Pass false to disable 
+    // Pass false to disable
     uneditableContainerClassname: "wysihtml5-uneditable-container"
   };
-  
+
   wysihtml5.Editor = wysihtml5.lang.Dispatcher.extend(
     /** @scope wysihtml5.Editor.prototype */ {
     constructor: function(editableElement, config) {
       this.editableElement  = typeof(editableElement) === "string" ? document.getElementById(editableElement) : editableElement;
       this.config           = wysihtml5.lang.object({}).merge(defaultConfig).merge(config).get();
       this._isCompatible    = wysihtml5.browser.supported();
-      
+
       if (this.editableElement.nodeName.toLowerCase() != "textarea") {
           this.config.contentEditableMode = true;
           this.config.noTextarea = true;
@@ -88,32 +88,32 @@
           this.textarea         = new wysihtml5.views.Textarea(this, this.editableElement, this.config);
           this.currentView      = this.textarea;
       }
-      
+
       // Sort out unsupported/unwanted browsers here
       if (!this._isCompatible || (!this.config.supportTouchDevices && wysihtml5.browser.isTouchDevice())) {
         var that = this;
         setTimeout(function() { that.fire("beforeload").fire("load"); }, 0);
         return;
       }
-      
+
       // Add class name to body, to indicate that the editor is supported
       wysihtml5.dom.addClass(document.body, this.config.bodyClassName);
-      
+
       this.composer = new wysihtml5.views.Composer(this, this.editableElement, this.config);
       this.currentView = this.composer;
-      
+
       if (typeof(this.config.parser) === "function") {
         this._initParser();
       }
-      
+
       this.on("beforeload", this.handleBeforeLoad);
-      
-      
+
+
       if (this.config.xingAlert) {
           try { console.log("Heya! This page is using wysihtml5 for rich text editing. Check out https://github.com/xing/wysihtml5");} catch(e) {}
       }
     },
-    
+
     handleBeforeLoad: function() {
         if (!this.config.noTextarea) {
             this.synchronizer = new wysihtml5.views.Synchronizer(this, this.textarea, this.composer);
@@ -122,7 +122,7 @@
           this.toolbar = new wysihtml5.toolbar.Toolbar(this, this.config.toolbar, this.config.showToolbarAfterInit);
         }
     },
-    
+
     isCompatible: function() {
       return this._isCompatible;
     },
@@ -138,15 +138,15 @@
 
     setValue: function(html, parse) {
       this.fire("unset_placeholder");
-      
+
       if (!html) {
         return this.clear();
       }
-      
+
       this.currentView.setValue(html, parse);
       return this;
     },
-    
+
     cleanUp: function() {
         this.currentView.cleanUp();
     },
@@ -163,7 +163,7 @@
       this.currentView.disable();
       return this;
     },
-    
+
     /**
      * Activate editor
      */
@@ -171,15 +171,15 @@
       this.currentView.enable();
       return this;
     },
-    
+
     isEmpty: function() {
       return this.currentView.isEmpty();
     },
-    
+
     hasPlaceholderSet: function() {
       return this.currentView.hasPlaceholderSet();
     },
-    
+
     parse: function(htmlOrElement) {
       var parseContext = (this.config.contentEditableMode) ? document : this.composer.sandbox.getDocument();
       var returnValue = this.config.parser(htmlOrElement, {
@@ -193,7 +193,7 @@
       }
       return returnValue;
     },
-    
+
     /**
      * Prepare html parser logic
      *  - Observes for paste and drop

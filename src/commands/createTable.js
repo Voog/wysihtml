@@ -13,9 +13,9 @@ wysihtml5.commands.createTable = {
           html += "</tbody></table>";
           composer.commands.exec("insertHTML", html);
           //composer.selection.insertHTML(html);
-      } 
-      
-      
+      }
+
+
   },
 
   state: function(composer, command) {

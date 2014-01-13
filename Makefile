@@ -92,7 +92,7 @@ JS_FILES = src/wysihtml5.js \
   src/toolbar/dialog_foreColorStyle.js\
   src/toolbar/dialog_fontSizeStyle.js\
   src/editor.js
-  
+
 JS_FILES_WOTOOLS = src/wysihtml5.js \
   lib/rangy/rangy-core.js \
   lib/base/base.js \
@@ -189,7 +189,7 @@ minify:
 	@@echo "Minifying... (this requires node.js)"
 	@@node build/minify.js ${JS_OUTPUT_WOTOOLS}
 	@@echo "Done."
-    
+
 toolbar:
 	@@echo "Bundling..."
 	@@touch ${JS_OUTPUT}

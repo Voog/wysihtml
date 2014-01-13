@@ -5,12 +5,12 @@ wysihtml5.commands.deleteTableCells = {
               idx = wysihtml5.dom.table.indexOf(tableSelect.start),
               selCell,
               table = composer.tableSelection.table;
-              
+
           wysihtml5.dom.table.removeCells(tableSelect.start, value);
           setTimeout(function() {
               // move selection to next or previous if not present
               selCell = wysihtml5.dom.table.findCell(table, idx);
-              
+
               if (!selCell){
                   if (value == "row") {
                       selCell = wysihtml5.dom.table.findCell(table, {
@@ -18,14 +18,14 @@ wysihtml5.commands.deleteTableCells = {
                           "col": idx.col
                       });
                   }
-              
+
                   if (value == "column") {
                       selCell = wysihtml5.dom.table.findCell(table, {
                           "row": idx.row,
                           "col": idx.col - 1
                       });
                   }
-              } 
+              }
               if (selCell) {
                   composer.tableSelection.select(selCell, selCell);
               }

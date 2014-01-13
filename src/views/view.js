@@ -11,7 +11,7 @@ wysihtml5.views.View = Base.extend(
         this._observeViewChange();
     }
   },
-  
+
   _observeViewChange: function() {
     var that = this;
     this.parent.on("beforeload", function() {
@@ -27,27 +27,27 @@ wysihtml5.views.View = Base.extend(
       });
     });
   },
-  
+
   focus: function() {
     if (this.element.ownerDocument.querySelector(":focus") === this.element) {
       return;
     }
-    
+
     try { this.element.focus(); } catch(e) {}
   },
-  
+
   hide: function() {
     this.element.style.display = "none";
   },
-  
+
   show: function() {
     this.element.style.display = "";
   },
-  
+
   disable: function() {
     this.element.setAttribute("disabled", "disabled");
   },
-  
+
   enable: function() {
     this.element.removeAttribute("disabled");
   }

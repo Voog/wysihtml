@@ -1,7 +1,7 @@
 (function(wysihtml5) {
   var dom       = wysihtml5.dom,
       browser   = wysihtml5.browser;
-  
+
   wysihtml5.views.Composer = wysihtml5.views.View.extend(
     /** @scope wysihtml5.views.Composer.prototype */ {
     name: "composer",
@@ -29,7 +29,7 @@
 
     getValue: function(parse) {
       var value = this.isEmpty() ? "" : wysihtml5.quirks.getCorrectInnerHTML(this.element);
-      
+
       if (parse) {
         value = this.parent.parse(value);
       }
@@ -41,21 +41,21 @@
       if (parse) {
         html = this.parent.parse(html);
       }
-      
+
       try {
         this.element.innerHTML = html;
       } catch (e) {
         this.element.innerText = html;
       }
     },
-    
+
     cleanUp: function() {
         this.parent.parse(this.element);
     },
 
     show: function() {
       this.editableArea.style.display = this._displayStyle || "";
-      
+
       if (!this.config.noTextarea && !this.textarea.element.disabled) {
         // Firefox needs this, otherwise contentEditable becomes uneditable
         this.disable();
@@ -88,9 +88,9 @@
       if (wysihtml5.browser.doesAsyncFocus() && this.hasPlaceholderSet()) {
         this.clear();
       }
-      
+
       this.base();
-      
+
       var lastChild = this.element.lastChild;
       if (setToEnd && lastChild && this.selection) {
         if (lastChild.nodeName === "BR") {
@@ -117,10 +117,10 @@
              innerHTML === "<p><br></p>" ||
              this.hasPlaceholderSet();
     },
-    
+
     _initContentEditableArea: function() {
         var that = this;
-        
+
         if (this.config.noTextarea) {
             this.sandbox = new dom.ContentEditableArea(function() {
                 that._create();
@@ -137,20 +137,20 @@
 
     _initSandbox: function() {
       var that = this;
-      
+
       this.sandbox = new dom.Sandbox(function() {
         that._create();
       }, {
         stylesheets:  this.config.stylesheets
       });
       this.editableArea  = this.sandbox.getIframe();
-      
+
       var textareaElement = this.textarea.element;
       dom.insert(this.editableArea).after(textareaElement);
-      
+
       this._createWysiwygFormField();
     },
-    
+
     // Creates hidden field which tells the server after submit, that the user used an wysiwyg editor
     _createWysiwygFormField: function() {
         if (this.textarea.element.form) {
@@ -172,40 +172,40 @@
       } else {
           this.cleanUp(); // cleans contenteditable on initiation as it may contain html
       }
-      
+
       // Make sure our selection handler is ready
       this.selection = new wysihtml5.Selection(this.parent, this.element, this.config.uneditableContainerClassname);
-      
+
       // Make sure commands dispatcher is ready
       this.commands  = new wysihtml5.Commands(this.parent);
-      
+
       if (!this.config.noTextarea) {
           dom.copyAttributes([
               "className", "spellcheck", "title", "lang", "dir", "accessKey"
           ]).from(this.textarea.element).to(this.element);
       }
-      
+
       dom.addClass(this.element, this.config.composerClassName);
-      // 
+      //
       // Make the editor look like the original textarea, by syncing styles
       if (this.config.style && !this.config.contentEditableMode) {
         this.style();
       }
-      
+
       this.observe();
-      
+
       var name = this.config.name;
       if (name) {
         dom.addClass(this.element, name);
         if (!this.config.contentEditableMode) { dom.addClass(this.editableArea, name); }
       }
-      
+
       this.enable();
-      
+
       if (!this.config.noTextarea && this.textarea.element.disabled) {
         this.disable();
       }
-      
+
       // Simulate html5 placeholder attribute on contentEditable element
       var placeholderText = typeof(this.config.placeholder) === "string"
         ? this.config.placeholder
@@ -213,34 +213,34 @@
       if (placeholderText) {
         dom.simulatePlaceholder(this.parent, this, placeholderText);
       }
-      
+
       // Make sure that the browser avoids using inline styles whenever possible
       this.commands.exec("styleWithCSS", false);
-      
+
       this._initAutoLinking();
       this._initObjectResizing();
       this._initUndoManager();
       this._initLineBreaking();
-      
+
       // Simulate html5 autofocus on contentEditable element
       // This doesn't work on IOS (5.1.1)
       if (!this.config.noTextarea && (this.textarea.element.hasAttribute("autofocus") || document.querySelector(":focus") == this.textarea.element) && !browser.isIos()) {
         setTimeout(function() { that.focus(true); }, 100);
       }
-      
+
       // IE sometimes leaves a single paragraph, which can't be removed by the user
       if (!browser.clearsContentEditableCorrectly()) {
         wysihtml5.quirks.ensureProperClearing(this);
       }
-      
+
       // Set up a sync that makes sure that textarea and editor have the same content
       if (this.initSync && this.config.sync) {
         this.initSync();
       }
-      
+
       // Okay hide the textarea, we are ready to go
       if (!this.config.noTextarea) { this.textarea.hide(); }
-      
+
       // Fire global (before-)load event
       this.parent.fire("beforeload").fire("load");
     },
@@ -267,7 +267,7 @@
             });
           }
         });
-        
+
         dom.observe(this.element, "blur", function() {
           dom.autoLink(that.element);
         });
@@ -321,7 +321,7 @@
 
     _initObjectResizing: function() {
       this.commands.exec("enableObjectResizing", true);
-      
+
       // IE sets inline styles after resizing objects
       // The following lines make sure that the width/height css properties
       // are copied over to the width/height attributes
@@ -329,17 +329,17 @@
         var properties        = ["width", "height"],
             propertiesLength  = properties.length,
             element           = this.element;
-        
+
         dom.observe(element, "resizeend", function(event) {
           var target = event.target || event.srcElement,
               style  = target.style,
               i      = 0,
               property;
-          
+
           if (target.nodeName !== "IMG") {
             return;
           }
-          
+
           for (; i<propertiesLength; i++) {
             property = properties[i];
             if (style[property]) {
@@ -347,22 +347,22 @@
               style[property] = "";
             }
           }
-          
+
           // After resizing IE sometimes forgets to remove the old resize handles
           wysihtml5.quirks.redraw(element);
         });
       }
     },
-    
+
     _initUndoManager: function() {
       this.undoManager = new wysihtml5.UndoManager(this.parent);
     },
-    
+
     _initLineBreaking: function() {
       var that                              = this,
           USE_NATIVE_LINE_BREAK_INSIDE_TAGS = ["LI", "P", "H1", "H2", "H3", "H4", "H5", "H6"],
           LIST_TAGS                         = ["UL", "OL", "MENU"];
-      
+
       function adjust(selectedNode) {
         var parentElement = dom.getParentElement(selectedNode, { nodeName: ["P", "DIV"] }, 2);
         if (parentElement) {
@@ -375,7 +375,7 @@
           });
         }
       }
-      
+
       if (!this.config.useLineBreaks) {
         dom.observe(this.element, ["focus", "keydown"], function() {
           if (that.isEmpty()) {
@@ -391,7 +391,7 @@
           }
         });
       }
-      
+
       // Under certain circumstances Chrome + Safari create nested <p> or <hX> tags after paste
       // Inserting an invisible white space in front of it fixes the issue
       // This is too hacky and causes selection not to replace content on paste in chrome
@@ -402,14 +402,14 @@
         });
       }*/
 
-      
+
       dom.observe(this.element, "keydown", function(event) {
         var keyCode = event.keyCode;
-        
+
         if (event.shiftKey) {
           return;
         }
-        
+
         if (keyCode !== wysihtml5.ENTER_KEY && keyCode !== wysihtml5.BACKSPACE_KEY) {
           return;
         }
@@ -419,7 +419,7 @@
             // Unwrap paragraph after leaving a list or a H1-6
             var selectedNode = that.selection.getSelectedNode(),
                 list;
-            
+
             if (blockElement.nodeName === "LI") {
               if (!selectedNode) {
                 return;
@@ -438,11 +438,11 @@
           }, 0);
           return;
         }
-        
+
         if (that.config.useLineBreaks && keyCode === wysihtml5.ENTER_KEY && !wysihtml5.browser.insertsLineBreaksOnReturn()) {
           event.preventDefault();
           that.commands.exec("insertLineBreak");
-          
+
         }
       });
     }

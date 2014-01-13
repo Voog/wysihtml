@@ -23,7 +23,7 @@ wysihtml5.dom.getAttribute = function(node, attributeName) {
     var outerHTML      = node.outerHTML.toLowerCase(),
         // TODO: This might not work for attributes without value: <input disabled>
         hasAttribute   = outerHTML.indexOf(" " + attributeName +  "=") != -1;
-    
+
     return hasAttribute ? node.getAttribute(attributeName) : null;
   } else{
     return node.getAttribute(attributeName);

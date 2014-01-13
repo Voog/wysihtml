@@ -17,7 +17,7 @@
         "73": "italic",   // I
         "85": "underline" // U
       };
-  
+
   wysihtml5.views.Composer.prototype.observe = function() {
     var that                = this,
         state               = this.getValue(),
@@ -42,15 +42,15 @@
           }
         }, 250);
     }
-    
+
     // --------- User interaction tracking --
-    
+
     dom.observe(focusBlurElement, interactionEvents, function() {
       setTimeout(function() {
         that.parent.fire("interaction").fire("interaction:composer");
       }, 0);
     });
-    
+
 
     if (this.config.handleTables) {
         this.tableSelection = wysihtml5.quirks.tableCellsSelection(element, that.parent);
@@ -102,13 +102,13 @@
         var allImages = element.querySelectorAll('img'),
             notMyImages = element.querySelectorAll('.' + that.config.uneditableContainerClassname + ' img'),
             myImages = wysihtml5.lang.array(allImages).without(notMyImages);
-            
+
         if (target.nodeName === "IMG" && wysihtml5.lang.array(myImages).contains(target)) {
           that.selection.selectNode(target);
         }
       });
     }
-    
+
     if (!browser.canSelectImagesInContentEditable()) {
         dom.observe(element, "drop", function(event) {
             // TODO: if I knew how to get dropped elements list from event I could limit it to only IMG element case
@@ -117,17 +117,17 @@
             }, 0);
         });
     }
-    
+
     if (browser.hasHistoryIssue() && browser.supportsSelectionModify()) {
       dom.observe(element, "keydown", function(event) {
         if (!event.metaKey && !event.ctrlKey) {
           return;
         }
-        
+
         var keyCode   = event.keyCode,
             win       = element.ownerDocument.defaultView,
             selection = win.getSelection();
-        
+
         if (keyCode === 37 || keyCode === 39) {
           if (keyCode === 37) {
             selection.modify("extend", "left", "lineboundary");
@@ -145,7 +145,7 @@
         }
       });
     }
-    
+
     // --------- Shortcut logic ---------
     dom.observe(element, "keydown", function(event) {
       var keyCode  = event.keyCode,
@@ -155,7 +155,7 @@
         event.preventDefault();
       }
       if (keyCode == 8) {
-        
+
         if (that.selection.isCollapsed()) {
           if (that.selection.caretIsInTheBeginnig()) {
             event.preventDefault();
@@ -163,17 +163,17 @@
             var beforeUneditable = that.selection.caretIsBeforeUneditable();
             if (beforeUneditable) {
               event.preventDefault();
-              
+
               // TODO: take the how to delete around uneditable out of here
               // merge node with previous node from uneditable
               var prevNode = that.selection.getPreviousNode(beforeUneditable, true),
                   curNode = that.selection.getSelectedNode();
-            
-              if (curNode.nodeType !== 1 && curNode.parentNode !== element) { curNode = curNode.parentNode; } 
+
+              if (curNode.nodeType !== 1 && curNode.parentNode !== element) { curNode = curNode.parentNode; }
               if (prevNode) {
                 if (curNode.nodeType == 1) {
                   var first = curNode.firstChild;
-                
+
                   if (prevNode.nodeType == 1) {
                     while (curNode.firstChild) {
                       prevNode.appendChild(curNode.firstChild);
@@ -203,7 +203,7 @@
           event.preventDefault();
           that.selection.deleteContents();
         }
-        
+
       }
     });
 
@@ -225,7 +225,7 @@
         event.preventDefault();
       }
     });
-    
+
     // --------- IE 8+9 focus the editor when the iframe is clicked (without actually firing the 'focus' event on the <body>) ---------
     if (!this.config.contentEditableMode && browser.hasIframeFocusIssue()) {
       dom.observe(this.iframe, "focus", function() {
@@ -242,13 +242,13 @@
         }, 0);
       });
     }
-    
+
     // --------- Show url in tooltip when hovering links or images ---------
     var titlePrefixes = {
       IMG: "Image: ",
       A:   "Link: "
     };
-    
+
     dom.observe(element, "mouseover", function(event) {
       var target   = event.target,
           nodeName = target.nodeName,

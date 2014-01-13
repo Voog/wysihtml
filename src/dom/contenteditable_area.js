@@ -1,10 +1,10 @@
 (function(wysihtml5) {
-  var doc = document;  
+  var doc = document;
   wysihtml5.dom.ContentEditableArea = Base.extend({
       getContentEditable: function() {
         return this.element;
       },
-      
+
       getWindow: function() {
         return this.element.ownerDocument.defaultView;
       },
@@ -12,17 +12,17 @@
       getDocument: function() {
         return this.element.ownerDocument;
       },
-      
+
       constructor: function(readyCallback, config, contentEditable) {
         this.callback = readyCallback || wysihtml5.EMPTY_FUNCTION;
         this.config   = wysihtml5.lang.object({}).merge(config).get();
         if (contentEditable) {
             this.element = this._bindElement(contentEditable);
-        } else {    
+        } else {
             this.element = this._createElement();
         }
       },
-      
+
       // creates a new contenteditable and initiates it
       _createElement: function() {
         var element = doc.createElement("div");
@@ -30,14 +30,14 @@
         this._loadElement(element);
         return element;
       },
-      
+
       // initiates an allready existent contenteditable
       _bindElement: function(contentEditable) {
         contentEditable.className = (contentEditable.className && contentEditable.className != '') ? contentEditable.className + " wysihtml5-sandbox" : "wysihtml5-sandbox";
         this._loadElement(contentEditable, true);
         return contentEditable;
       },
-      
+
       _loadElement: function(element, contentExists) {
           var that = this;
         if (!contentExists) {
@@ -60,10 +60,10 @@
         // Trigger the callback
         setTimeout(function() { that.callback(that); }, 0);
       },
-      
-      _getHtml: function(templateVars) {        
+
+      _getHtml: function(templateVars) {
         return '';
       }
-  
+
   });
 })(wysihtml5);

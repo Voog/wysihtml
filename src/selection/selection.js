@@ -6,7 +6,7 @@
  */
 (function(wysihtml5) {
   var dom = wysihtml5.dom;
-  
+
   function _getCumulativeOffsetTop(element) {
     var top = 0;
     if (element.parentNode) {
@@ -17,20 +17,20 @@
     }
     return top;
   }
-  
+
   wysihtml5.Selection = Base.extend(
     /** @scope wysihtml5.Selection.prototype */ {
     constructor: function(editor, contain, unselectableClass) {
       // Make sure that our external range library is initialized
       window.rangy.init();
-      
+
       this.editor   = editor;
       this.composer = editor.composer;
       this.doc      = this.composer.doc;
       this.contain = contain;
       this.unselectableClass = unselectableClass || false;
     },
-    
+
     /**
      * Get the current selection as a bookmark to be able to later restore it
      *
@@ -77,7 +77,7 @@
      */
     setAfter: function(node) {
       var range = rangy.createRange(this.doc);
-      
+
       range.setStartAfter(node);
       range.setEndAfter(node);
       return this.setSelection(range);
@@ -147,18 +147,18 @@
         return range ? range.commonAncestorContainer : this.doc.body;
       }
     },
-    
+
     getSelectedOwnNodes: function(controlRange) {
       var selection,
           ranges = this.getOwnRanges(),
           ownNodes = [];
-          
+
       for (var i = 0, maxi = ranges.length; i < maxi; i++) {
           ownNodes.push(ranges[i].commonAncestorContainer || this.doc.body);
       }
       return ownNodes;
     },
-    
+
     findNodesInSelection: function(nodeTypes) {
       var ranges = this.getOwnRanges(),
           nodes = [], curNodes;
@@ -170,20 +170,20 @@
       }
       return nodes;
     },
-    
+
     containsUneditable: function() {
       var uneditables = this.getOwnUneditables(),
           selection = this.getSelection();
-      
+
       for (var i = 0, maxi = uneditables.length; i < maxi; i++) {
         if (selection.containsNode(uneditables[i])) {
           return true;
         }
       }
-      
+
       return false;
     },
-    
+
     deleteContents: function()  {
       var ranges = this.getOwnRanges();
       for (var i = ranges.length; i--;) {
@@ -191,24 +191,24 @@
       }
       this.setSelection(ranges[0]);
     },
-    
+
     getPreviousNode: function(node, ignoreEmpty) {
       if (!node) {
         var selection = this.getSelection();
         node = selection.anchorNode;
       }
-      
+
       if (node === this.contain) {
           return false;
       }
-      
+
       var ret = node.previousSibling,
           parent;
-    
+
       if (ret === this.contain) {
           return false;
       }
-          
+
       if (ret && ret.nodeType !== 3 && ret.nodeType !== 1) {
          // do not count comments and other node types
          ret = this.getPreviousNode(ret, ignoreEmpty);
@@ -225,25 +225,25 @@
             ret = this.getPreviousNode(parent, ignoreEmpty);
         }
       }
-      
+
       return (ret !== this.contain) ? ret : false;
     },
-    
-    
-    
+
+
+
     caretIsInTheBeginnig: function() {
         var selection = this.getSelection(),
             node = selection.anchorNode,
             offset = selection.anchorOffset;
-            
+
         return (offset === 0 && !this.getPreviousNode(node, true));
     },
-    
+
     caretIsBeforeUneditable: function() {
       var selection = this.getSelection(),
           node = selection.anchorNode,
           offset = selection.anchorOffset;
-          
+
       if (offset === 0) {
         var prevNode = this.getPreviousNode(node, true);
         if (prevNode) {
@@ -254,7 +254,7 @@
             }
           }
         }
-      } 
+      }
       return false;
     },
 
@@ -271,13 +271,13 @@
           nextSibling, prevSibling,
           node, node2, range2,
           newRange;
-          
+
       // Nothing selected, execute and say goodbye
       if (!range) {
         method(body, body);
         return;
       }
-      
+
       if (!range.collapsed) {
         range2 = range.cloneRange();
         node2 = range2.createContextualFragment(placeholderHtml);
@@ -285,17 +285,17 @@
         range2.insertNode(node2);
         range2.detach();
       }
-      
+
       node = range.createContextualFragment(placeholderHtml);
       range.insertNode(node);
-      
+
       if (node2) {
         caretPlaceholder = this.contain.querySelectorAll("." + className);
         range.setStartBefore(caretPlaceholder[0]);
         range.setEndAfter(caretPlaceholder[caretPlaceholder.length -1]);
       }
       this.setSelection(range);
-      
+
       // Make sure that a potential error doesn't cause our placeholder element to be left as a placeholder
       try {
         method(range.startContainer, range.endContainer);
@@ -322,7 +322,7 @@
         for (var i = caretPlaceholder.length; i--;) {
          caretPlaceholder[i].parentNode.removeChild(caretPlaceholder[i]);
         }
-        
+
       } else {
         // fallback for when all hell breaks loose
         this.contain.focus();
@@ -381,13 +381,13 @@
       try { newRange.setEnd(rangeBackup.endContainer, rangeBackup.endOffset); } catch(e2) {}
       try { this.setSelection(newRange); } catch(e3) {}
     },
-    
+
     set: function(node, offset) {
       var newRange = rangy.createRange(this.doc);
       newRange.setStart(node, offset || 0);
       this.setSelection(newRange);
     },
-    
+
     /**
      * Insert html at the caret position and move the cursor after the inserted html
      *
@@ -399,7 +399,7 @@
       var range     = rangy.createRange(this.doc),
           node      = range.createContextualFragment(html),
           lastChild = node.lastChild;
-    
+
       this.insertNode(node);
       if (lastChild) {
         this.setAfter(lastChild);
@@ -431,7 +431,7 @@
       if (ranges.length == 0) {
         return nodes;
       }
-      
+
       for (var i = ranges.length; i--;) {
         node = this.doc.createElement(nodeOptions.nodeName);
         nodes.push(node);
@@ -450,26 +450,26 @@
       }
       return nodes;
     },
-    
+
     deblockAndSurround: function(nodeOptions) {
       var tempElement = this.doc.createElement('div'),
           range = rangy.createRange(this.doc),
           tempDivElements,
           tempElements,
           firstChild;
-          
+
       tempElement.className = nodeOptions.className;
-      
+
       this.composer.commands.exec("formatBlock", nodeOptions.nodeName, nodeOptions.className);
       tempDivElements = this.contain.querySelectorAll("." + nodeOptions.className);
       if (tempDivElements[0]) {
         tempDivElements[0].parentNode.insertBefore(tempElement, tempDivElements[0]);
-      
+
         range.setStartBefore(tempDivElements[0]);
         range.setEndAfter(tempDivElements[tempDivElements.length - 1]);
         tempElements = range.extractContents();
-      
-        while (tempElements.firstChild) {  
+
+        while (tempElements.firstChild) {
           firstChild = tempElements.firstChild;
           if (firstChild.nodeType == 1 && wysihtml5.dom.hasClass(firstChild, nodeOptions.className)) {
             while (firstChild.firstChild) {
@@ -484,7 +484,7 @@
       } else {
         tempElement = null;
       }
-      
+
       return tempElement;
     },
 
@@ -598,7 +598,7 @@
         return [];
       }
     },
-    
+
     fixRangeOverflow: function(range) {
       if (this.contain && this.contain.firstChild && range) {
         var containment = range.compareNode(this.contain);
@@ -635,25 +635,25 @@
         position & Node.DOCUMENT_POSITION_FOLLOWING
       );
     },
-    
+
     getRange: function(dontFix) {
       var selection = this.getSelection(),
           range = selection && selection.rangeCount && selection.getRangeAt(0);
-      
+
       if (dontFix !== true) {
         this.fixRangeOverflow(range);
       }
-      
+
       return range;
     },
-    
+
     getOwnUneditables: function() {
       var allUneditables = dom.query(this.contain, '.' + this.unselectableClass),
           deepUneditables = dom.query(allUneditables, '.' + this.unselectableClass);
-      
+
       return wysihtml5.lang.array(allUneditables).without(deepUneditables);
     },
-    
+
     // Returns an array of ranges that belong only to this editable
     // Needed as uneditable block in contenteditabel can split range into pieces
     // If manipulating content reverse loop is usually needed as manipulation can shift subsequent ranges
@@ -661,9 +661,9 @@
       var ranges = [],
           r = this.getRange(),
           tmpRanges;
-          
-      if (r) { ranges.push(r); } 
-          
+
+      if (r) { ranges.push(r); }
+
       if (this.unselectableClass && this.contain && r) {
           var uneditables = this.getOwnUneditables(),
               tmpRange;
@@ -673,7 +673,7 @@
               for (var j = 0, jmax = ranges.length; j < jmax; j++) {
                 if (ranges[j]) {
                   switch (ranges[j].compareNode(uneditables[i])) {
-                    case 2: 
+                    case 2:
                       // all selection inside uneditable. remove
                     break;
                     case 3:
@@ -681,7 +681,7 @@
                       tmpRange = ranges[j].cloneRange();
                       tmpRange.setEndBefore(uneditables[i]);
                       tmpRanges.push(tmpRange);
-                    
+
                       tmpRange = ranges[j].cloneRange();
                       tmpRange.setStartAfter(uneditables[i]);
                       tmpRanges.push(tmpRange);
@@ -708,15 +708,15 @@
           selection = rangy.getSelection(win);
       return selection.setSingleRange(range);
     },
-    
+
     createRange: function() {
       return rangy.createRange(this.doc);
     },
-    
+
     isCollapsed: function() {
         return this.getSelection().isCollapsed;
     }
-    
+
   });
-  
+
 })(wysihtml5);
