@@ -8,18 +8,18 @@
  */
 (function(wysihtml5, rangy) {
   var defaultTagName = "span";
-  
+
   var REG_EXP_WHITE_SPACE = /\s+/g;
-  
+
   function hasClass(el, cssClass, regExp) {
     if (!el.className) {
       return false;
     }
-    
+
     var matchingClassNames = el.className.match(regExp) || [];
     return matchingClassNames[matchingClassNames.length - 1] === cssClass;
   }
-  
+
   function hasStyleAttr(el, regExp) {
     if (!el.getAttribute || !el.getAttribute('style')) {
       return false;
@@ -27,20 +27,20 @@
     var matchingStyles = el.getAttribute('style').match(regExp);
     return  (el.getAttribute('style').match(regExp)) ? true : false;
   }
-  
+
   function addStyle(el, cssStyle, regExp) {
     if (el.getAttribute('style')) {
       removeStyle(el, regExp);
       if (el.getAttribute('style') && !(/\s+/).test(el.getAttribute('style'))) {
         el.setAttribute('style', cssStyle + ";" + el.getAttribute('style'));
       } else {
-        
+
         el.setAttribute('style', cssStyle);
       }
     } else {
       el.setAttribute('style', cssStyle);
     }
-  } 
+  }
 
   function addClass(el, cssClass, regExp) {
     if (el.className) {
@@ -56,7 +56,7 @@
       el.className = el.className.replace(regExp, "");
     }
   }
-  
+
   function removeStyle(el, regExp) {
     var s,
         s2 = [];
@@ -74,16 +74,16 @@
       }
     }
   }
-  
+
   function getMatchingStyleRegexp(el, style) {
     var regexes = [],
         sSplit = style.split(';'),
         elStyle = el.getAttribute('style');
-    
+
     if (elStyle) {
-      elStyle = elStyle.replace(/\s/gi, '').toLowerCase();    
+      elStyle = elStyle.replace(/\s/gi, '').toLowerCase();
       regexes.push(new RegExp("(^|\\s|;)" + style.replace(/\s/gi, '').replace(/([\(\)])/gi, "\\$1").toLowerCase().replace(";", ";?"), "gi"));
-    
+
       for (var i = sSplit.length; i-- > 0;) {
         if (!(/^\s*$/).test(sSplit[i])) {
           regexes.push(new RegExp("(^|\\s|;)" + sSplit[i].replace(/\s/gi, '').replace(/([\(\)])/gi, "\\$1").toLowerCase().replace(";", ";?"), "gi"));
@@ -95,17 +95,17 @@
         }
       }
     }
-    
+
     return false;
   };
-  
+
   function removeOrChangeStyle(el, style, regExp) {
-    
+
     var exactRegex = getMatchingStyleRegexp(el, style);
-    
+
     /*new RegExp("(^|\\s|;)" + style.replace(/\s/gi, '').replace(/([\(\)])/gi, "\\$1").toLowerCase().replace(";", ";?"), "gi"),
         elStyle = el.getAttribute('style');*/
-        
+
     if (exactRegex) {
       // adding same style value on property again removes style
       removeStyle(el, exactRegex);
@@ -116,7 +116,7 @@
       return "change";
     }
   };
-  
+
   function hasSameClasses(el1, el2) {
     return el1.className.replace(REG_EXP_WHITE_SPACE, " ") == el2.className.replace(REG_EXP_WHITE_SPACE, " ");
   }
@@ -192,7 +192,7 @@
     }
     return (descendantNode == node) ? newNode : splitNodeAt(node, newNode.parentNode, rangy.dom.getNodeIndex(newNode));
   }
-  
+
   function Merge(firstNode) {
     this.isElementMerge = (firstNode.nodeType == wysihtml5.ELEMENT_NODE);
     this.firstTextNode = this.isElementMerge ? firstNode.lastChild : firstNode;
@@ -256,7 +256,7 @@
       }
       return false;
     },
-    
+
     // returns parents of node with given style attribute
     getAncestorWithStyle: function(node) {
       var cssStyleMatch;
@@ -327,7 +327,7 @@
         range.setEnd(rangeEndNode, rangeEndOffset);
       }
     },
-    
+
     getAdjacentMergeableTextNode: function(node, forward) {
         var isTextNode = (node.nodeType == wysihtml5.TEXT_NODE);
         var el = isTextNode ? node.parentNode : node;
@@ -348,7 +348,7 @@
         }
         return null;
     },
-    
+
     areElementsMergeable: function(el1, el2) {
       return rangy.dom.arrayContains(this.tagNames, (el1.tagName || "").toLowerCase())
         && rangy.dom.arrayContains(this.tagNames, (el2.tagName || "").toLowerCase())
@@ -370,7 +370,7 @@
     applyToTextNode: function(textNode) {
       var parent = textNode.parentNode;
       if (parent.childNodes.length == 1 && rangy.dom.arrayContains(this.tagNames, parent.tagName.toLowerCase())) {
-        
+
         if (this.cssClass) {
           addClass(parent, this.cssClass, this.similarClassRegExp);
         }
@@ -393,7 +393,7 @@
         // Split out the portion of the ancestor from which we can remove the CSS class
         var ancestorRange = range.cloneRange();
             ancestorRange.selectNode(ancestor);
- 
+
         if (ancestorRange.isPointInRange(range.endContainer, range.endOffset) && isSplitPoint(range.endContainer, range.endOffset)) {
             splitNodeAt(ancestor, range.endContainer, range.endOffset);
             range.setEndAfter(ancestor);
@@ -402,15 +402,15 @@
             ancestor = splitNodeAt(ancestor, range.startContainer, range.startOffset);
         }
       }
-      
+
       if (!styleMode && this.similarClassRegExp) {
         removeClass(ancestor, this.similarClassRegExp);
       }
-      
+
       if (styleMode && this.similarStyleRegExp) {
         styleChanged = (removeOrChangeStyle(ancestor, this.cssStyle, this.similarStyleRegExp) === "change");
       }
-      
+
       if (this.isRemovable(ancestor) && !styleChanged) {
         replaceWithOwnChildren(ancestor);
       }
@@ -418,9 +418,9 @@
 
     applyToRange: function(range) {
         var textNodes;
-        for (var ri = range.length; ri--;) {    
+        for (var ri = range.length; ri--;) {
             textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
-            
+
             if (!textNodes.length) {
               try {
                 var node = this.createContainer(range[ri].endContainer.ownerDocument);
@@ -429,7 +429,7 @@
                 return;
               } catch(e) {}
             }
-        
+
             range[ri].splitBoundaries();
             textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
             if (textNodes.length) {
@@ -441,22 +441,22 @@
                   this.applyToTextNode(textNode);
                 }
               }
-          
+
               range[ri].setStart(textNodes[0], 0);
               textNode = textNodes[textNodes.length - 1];
               range[ri].setEnd(textNode, textNode.length);
-          
+
               if (this.normalize) {
                 this.postApply(textNodes, range[ri]);
               }
             }
-            
+
         }
     },
 
     undoToRange: function(range) {
       var textNodes, textNode, ancestorWithClass, ancestorWithStyle;
-      
+
       for (var ri = range.length; ri--;) {
           textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
           if (textNodes.length) {
@@ -469,8 +469,8 @@
             range[ri].selectNode(node);
             textNodes = [node];
           }
-          
-          
+
+
           for (var i = 0, len = textNodes.length; i < len; ++i) {
             if (range[ri].isValid()) {
               textNode = textNodes[i];
@@ -483,7 +483,7 @@
               }
             }
           }
-    
+
           if (len == 1) {
             this.selectNode(range[ri], textNodes[0]);
           } else {
@@ -495,10 +495,10 @@
               this.postApply(textNodes, range[ri]);
             }
           }
-        
+
       }
     },
-    
+
     selectNode: function(range, node) {
       var isElement       = node.nodeType === wysihtml5.ELEMENT_NODE,
           canHaveHTML     = "canHaveHTML" in node ? node.canHaveHTML : true,
@@ -517,7 +517,7 @@
         range.setEndAfter(node);
       }
     },
-    
+
     getTextSelectedByRange: function(textNode, range) {
       var textRange = range.cloneRange();
       textRange.selectNodeContents(textNode);
@@ -532,7 +532,7 @@
     isAppliedToRange: function(range) {
       var ancestors = [],
           ancestor, styleAncestor, textNodes;
-      
+
       for (var ri = range.length; ri--;) {
         textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
         if (!textNodes.length) {
@@ -542,7 +542,7 @@
           }
           return ancestor ? [ancestor] : false;
         }
-    
+
         for (var i = 0, len = textNodes.length, selectedText; i < len; ++i) {
           selectedText = this.getTextSelectedByRange(textNodes[i], range[ri]);
           ancestor = this.getAncestorWithClass(textNodes[i]);
@@ -554,7 +554,7 @@
           }
         }
       }
-      
+
       return (ancestors.length) ? ancestors : false;
     },
 
@@ -568,5 +568,5 @@
   };
 
   wysihtml5.selection.HTMLApplier = HTMLApplier;
-  
+
 })(wysihtml5, rangy);

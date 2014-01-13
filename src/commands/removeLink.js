@@ -1,6 +1,6 @@
 (function(wysihtml5) {
   var dom = wysihtml5.dom;
-  
+
   function _removeFormat(composer, anchors) {
     var length  = anchors.length,
         i       = 0,
@@ -22,16 +22,16 @@
       }
     }
   }
-  
+
   wysihtml5.commands.removeLink = {
     /*
      * If selection is a link, it removes the link and wraps it with a <code> element
      * The <code> element is needed to avoid auto linking
-     * 
+     *
      * @example
      *    wysihtml5.commands.createLink.exec(composer, "removeLink");
      */
-    
+
     exec: function(composer, command) {
       var anchors = this.state(composer, command);
       if (anchors) {
