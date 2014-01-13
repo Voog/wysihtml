@@ -1,0 +1,27 @@
+{
+  "name": "wysihtml5x",
+  "description": "wysihtml5x is an extended and less strict approach on xing/wysihtml5 open source rich text editor based on HTML5 technology.",
+  "author": {},
+  "version": "0.4.1",
+  "main": "dist/wysihtml5x.js",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:Edicy/wysihtml5.git"
+  },
+  "homepage": "https://github.com/Edicy/wysihtml5",
+  "keywords": [
+    "wysihtml5"
+  ],
+  "tags": [],
+  "dependencies": {},
+  "devDependencies": {
+    "grunt": "~0.4.1",
+    "grunt-contrib-clean": "~0.5.0",
+    "grunt-contrib-jshint": "~0.7.2",
+    "grunt-contrib-uglify": "~0.2.4",
+    "grunt-contrib-concat": "~0.3.0",
+    "grunt-contrib-copy": "~0.4.1"
+
+  },
+  "scripts": {}
+}
