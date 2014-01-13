@@ -8,19 +8,19 @@ wysihtml5.commands.insertOrderedList = {
         isEmpty,
         tempElement;
 
-    // do not count list elements outside of composer 
+    // do not count list elements outside of composer
     if (list && !composer.element.contains(list)) {
       list = null
     }
     if (otherList && !composer.element.contains(otherList)) {
       otherList = null
     }
-    
+
     if (!list && !otherList && composer.commands.support(command)) {
       doc.execCommand(command, false, null);
       return;
     }
-    
+
     if (list) {
       // Unwrap list
       // <ol><li>foo</li><li>bar</li></ol>
@@ -54,7 +54,7 @@ wysihtml5.commands.insertOrderedList = {
       }
     }
   },
-  
+
   state: function(composer) {
     var selectedNode = composer.selection.getSelectedNode(),
         node = wysihtml5.dom.getParentElement(selectedNode, { nodeName: "OL" });

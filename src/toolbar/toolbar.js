@@ -20,7 +20,7 @@
       CLASS_NAME_COMMAND_ACTIVE     = "wysihtml5-command-active",
       CLASS_NAME_ACTION_ACTIVE      = "wysihtml5-action-active",
       dom                           = wysihtml5.dom;
-  
+
   wysihtml5.toolbar.Toolbar = Base.extend(
     /** @scope wysihtml5.toolbar.Toolbar.prototype */ {
     constructor: function(editor, container, showOnInit) {
@@ -33,7 +33,7 @@
 
       this._observe();
       if (showOnInit) { this.show(); }
-      
+
       var speechInputLinks  = this.container.querySelectorAll("[data-wysihtml5-command=insertSpeech]"),
           length            = speechInputLinks.length,
           i                 = 0;
@@ -58,7 +58,7 @@
         value   = link.getAttribute("data-wysihtml5-" + type + "-value");
         group   = this.container.querySelector("[data-wysihtml5-" + type + "-group='" + name + "']");
         dialog  = this._getDialog(link, name);
-        
+
         mapping[name + ":" + value] = {
           link:   link,
           group:  group,
@@ -75,14 +75,14 @@
           dialogElement = this.container.querySelector("[data-wysihtml5-dialog='" + command + "']"),
           dialog,
           caretBookmark;
-      
+
       if (dialogElement) {
         if (wysihtml5.toolbar["Dialog_" + command]) {
             dialog = new wysihtml5.toolbar["Dialog_" + command](link, dialogElement);
         } else {
             dialog = new wysihtml5.toolbar.Dialog(link, dialogElement);
         }
-        
+
         dialog.on("show", function() {
           caretBookmark = that.composer.selection.getBookmark();
 
@@ -94,7 +94,7 @@
             that.composer.selection.setBookmark(caretBookmark);
           }
           that._execCommand(command, attributes);
-          
+
           that.editor.fire("save:dialog", { command: command, dialogContainer: dialogElement, commandLink: link });
         });
 
@@ -138,7 +138,7 @@
     execAction: function(action) {
       var editor = this.editor;
       if (action === "change_view") {
-        if (editor.textarea) { 
+        if (editor.textarea) {
             if (editor.currentView === editor.textarea) {
               editor.fire("change_view", "composer");
             } else {
@@ -158,7 +158,7 @@
           links     = this.commandLinks.concat(this.actionLinks),
           length    = links.length,
           i         = 0;
-      
+
       for (; i<length; i++) {
         // 'javascript:;' and unselectable=on Needed for IE, but done in all browsers to make sure that all get the same css applied
         // (you know, a:link { ... } doesn't match anchors with missing href attribute)
@@ -174,7 +174,7 @@
 
       // Needed for opera and chrome
       dom.delegate(container, "[data-wysihtml5-command], [data-wysihtml5-action]", "mousedown", function(event) { event.preventDefault(); });
-      
+
       dom.delegate(container, "[data-wysihtml5-command]", "click", function(event) {
         var link          = this,
             command       = link.getAttribute("data-wysihtml5-command"),
@@ -188,7 +188,7 @@
         that.execAction(action);
         event.preventDefault();
       });
-      
+
       editor.on("interaction:composer", function() {
           that._updateLinkStates();
       });
@@ -196,7 +196,7 @@
       editor.on("focus:composer", function() {
         that.bookmark = null;
       });
-      
+
       if (this.editor.config.handleTables) {
           editor.on("tableselect:composer", function() {
               that.container.querySelectorAll('[data-wysihtml5-hiddentools="table"]')[0].style.display = "";
@@ -223,7 +223,7 @@
     },
 
     _updateLinkStates: function() {
-      
+
       var commandMapping    = this.commandMapping,
           actionMapping     = this.actionMapping,
           i,
@@ -261,7 +261,7 @@
           }
           if (command.dialog) {
             if (typeof(state) === "object" || wysihtml5.lang.object(state).isArray()) {
-              
+
               if (!command.dialog.multiselect && wysihtml5.lang.object(state).isArray()) {
                 // Grab first and only object/element in state array, otherwise convert state into boolean
                 // to avoid showing a dialog for multiple selected elements which may have different attributes
@@ -285,10 +285,10 @@
           }
         }
       }
-      
+
       for (i in actionMapping) {
         action = actionMapping[i];
-        
+
         if (action.name === "change_view") {
           action.state = this.editor.currentView === this.editor.textarea;
           if (action.state) {
@@ -308,5 +308,5 @@
       this.container.style.display = "none";
     }
   });
-  
+
 })(wysihtml5);

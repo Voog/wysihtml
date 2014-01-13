@@ -4,7 +4,7 @@
       // when the caret is within a H1 and the H4 is invoked, the H1 should turn into H4
       // instead of creating a H4 within a H1 which would result in semantically invalid html
       BLOCK_ELEMENTS_GROUP    = ["H1", "H2", "H3", "H4", "H5", "H6", "P", "PRE", "BLOCKQUOTE", "DIV"];
-  
+
   /**
    * Remove similiar classes (based on classRegExp)
    * and add the desired class name
@@ -139,7 +139,7 @@
         });
       }
       doc.execCommand(command, false, nodeName);
-    
+
       if (eventListener) {
         eventListener.stop();
       }
@@ -150,13 +150,13 @@
     if (composer.selection.isCollapsed()) {
         composer.selection.selectLine();
     }
-    
+
     var surroundedNodes = composer.selection.surround(options);
     for (var i = 0, imax = surroundedNodes.length; i < imax; i++) {
       _removeLineBreakBeforeAndAfter(surroundedNodes[i]);
       _removeLastChildIfLineBreak(surroundedNodes[i]);
     }
-    
+
     // rethink restoring selection
     // composer.selection.selectNode(element, wysihtml5.browser.displaysCaretInEmptyContentEditableCorrectly());
   }
@@ -164,7 +164,7 @@
   function _hasClasses(element) {
     return !!wysihtml5.lang.string(element.className).trim();
   }
-  
+
   wysihtml5.commands.formatBlock = {
     exec: function(composer, command, nodeName, className, classRegExp) {
       var doc             = composer.doc,
@@ -174,21 +174,21 @@
           selectedNodes, classRemoveAction, blockRenameFound;
 
       nodeName = typeof(nodeName) === "string" ? nodeName.toUpperCase() : nodeName;
-      
+
       if (blockElements.length) {
         composer.selection.executeAndRestoreSimple(function() {
           for (var b = blockElements.length; b--;) {
             if (classRegExp) {
               classRemoveAction = _removeClass(blockElements[b], classRegExp);
             }
-        
+
             if (classRemoveAction && nodeName === null && blockElements[b].nodeName != defaultNodeName) {
               // dont rename or remove element when just setting block formating class
               return;
             }
-            
+
             var hasClasses = _hasClasses(blockElements[b]);
-            
+
             if (!hasClasses && (useLineBreaks || nodeName === "P")) {
               // Insert a line break afterwards and beforewards when there are siblings
               // that are not of type line break or block element
@@ -200,10 +200,10 @@
             }
           }
         });
-        
+
         return;
       }
-      
+
       // Find similiar block element and rename it (<h2 class="foo"></h2>  =>  <h1 class="foo"></h1>)
       if (nodeName === null || wysihtml5.lang.array(BLOCK_ELEMENTS_GROUP).contains(nodeName)) {
         selectedNodes = composer.selection.findNodesInSelection(BLOCK_ELEMENTS_GROUP).concat(composer.selection.getSelectedOwnNodes());
@@ -223,13 +223,13 @@
                 if (className) {
                   _addClass(blockElement, className, classRegExp);
                 }
-            
+
               blockRenameFound = true;
             }
           }
-          
+
         });
-        
+
         if (blockRenameFound) {
           return;
         }
@@ -247,19 +247,19 @@
           if (composer.commands.support(command)) {
             _execCommand(doc, composer, command, nodeName || defaultNodeName, className);
             return;
-          } 
+          }
       }
 
-      
+
     },
 
     state: function(composer, command, nodeName, className, classRegExp) {
       var nodes = composer.selection.getSelectedOwnNodes(),
           parents = [],
           parent;
-          
+
       nodeName = typeof(nodeName) === "string" ? nodeName.toUpperCase() : nodeName;
-      
+
       //var selectedNode = composer.selection.getSelectedNode();
       for (var i = 0, maxi = nodes.length; i < maxi; i++) {
         parent = dom.getParentElement(nodes[i], {
@@ -276,7 +276,7 @@
       }
       return parents;
     }
-    
-    
+
+
   };
 })(wysihtml5);

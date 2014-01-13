@@ -10,9 +10,9 @@ wysihtml5.quirks.tableCellsSelection = function(editable, editor) {
         selection_class = "wysiwyg-tmp-selected-cell",
         moveHandler = null,
         upHandler = null;
-        
+
     function init () {
-        
+
         dom.observe(editable, "mousedown", function(event) {
           var target   = event.target,
               nodeName = target.nodeName;
@@ -20,15 +20,15 @@ wysihtml5.quirks.tableCellsSelection = function(editable, editor) {
               handleSelectionMousedown(target);
           }
         });
-        
+
         return select;
     }
-    
+
     function handleSelectionMousedown (target) {
       select.start = target;
       select.end = target;
       select.table = dom.getParentElement(select.start, { nodeName: ["TABLE"] });
-      
+
       if (select.table) {
         removeCellSelections();
         dom.addClass(target, selection_class);
@@ -36,7 +36,7 @@ wysihtml5.quirks.tableCellsSelection = function(editable, editor) {
         upHandler = dom.observe(editable, "mouseup", handleMouseUp);
       }
     }
-    
+
     // remove all selection classes
     function removeCellSelections () {
         if (editable) {
@@ -48,18 +48,18 @@ wysihtml5.quirks.tableCellsSelection = function(editable, editor) {
             }
         }
     }
-    
+
     function addSelections (cells) {
       for (var i = 0; i < cells.length; i++) {
         dom.addClass(cells[i], selection_class);
       }
     }
-    
+
     function handleMouseMove (event) {
       var curTable = null,
           cell = dom.getParentElement(event.target, { nodeName: ["TD","TH"] }),
           selectedCells;
-          
+
       if (cell && select.table && select.start) {
         curTable =  dom.getParentElement(cell, { nodeName: ["TABLE"] });
         if (curTable && curTable === select.table) {
@@ -70,7 +70,7 @@ wysihtml5.quirks.tableCellsSelection = function(editable, editor) {
         }
       }
     }
-    
+
     function handleMouseUp (event) {
       moveHandler.stop();
       upHandler.stop();
@@ -79,7 +79,7 @@ wysihtml5.quirks.tableCellsSelection = function(editable, editor) {
         bindSideclick();
       },0);
     }
-    
+
     function bindSideclick () {
         var sideClickHandler = dom.observe(editable.ownerDocument, "click", function(event) {
           sideClickHandler.stop();
@@ -92,7 +92,7 @@ wysihtml5.quirks.tableCellsSelection = function(editable, editor) {
           }
         });
     }
-    
+
     function selectCells (start, end) {
         select.start = start;
         select.end = end;
@@ -102,7 +102,7 @@ wysihtml5.quirks.tableCellsSelection = function(editable, editor) {
         bindSideclick();
         editor.fire("tableselect").fire("tableselect:composer");
     }
-    
+
     return init();
 
 };

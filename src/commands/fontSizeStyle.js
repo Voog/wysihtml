@@ -1,7 +1,7 @@
 /* In case font size adjustment to any number defined by user is preferred, we cannot use classes and must use inline styles. */
 (function(wysihtml5) {
   var REG_EXP = /(\s|^)font-size\s*:\s*[^;\s]+;?/gi;
-  
+
   wysihtml5.commands.fontSizeStyle = {
     exec: function(composer, command, size) {
       size = (typeof(size) == "object") ? size.size : size;
@@ -13,12 +13,12 @@
     state: function(composer, command, size) {
       return wysihtml5.commands.formatInline.state(composer, command, "span", false, false, "font-size", REG_EXP);
     },
-    
+
     stateValue: function(composer, command) {
       var st = this.state(composer, command),
           styleStr, fontsizeMatches,
           val = false;
-      
+
       if (st && wysihtml5.lang.object(st).isArray()) {
           st = st[0];
       }

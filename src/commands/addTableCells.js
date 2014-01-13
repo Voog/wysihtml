@@ -1,7 +1,7 @@
 wysihtml5.commands.addTableCells = {
   exec: function(composer, command, value) {
       if (composer.tableSelection && composer.tableSelection.start && composer.tableSelection.end) {
-          
+
           // switches start and end if start is bigger than end (reverse selection)
           var tableSelect = wysihtml5.dom.table.orderSelectionEnds(composer.tableSelection.start, composer.tableSelection.end);
           if (value == "before" || value == "above") {

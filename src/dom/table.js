@@ -1,5 +1,5 @@
 (function(wysihtml5) {
-    
+
     var api = wysihtml5.dom;
 
     var MapCell = function(cell) {
@@ -24,7 +24,7 @@
             this.cell = this.table.querySelectorAll('th, td')[0];
         }
     };
-    
+
     function queryInList(list, query) {
         var ret = [],
             q;
@@ -36,15 +36,15 @@
         }
         return ret;
     }
-    
+
     function removeElement(el) {
         el.parentNode.removeChild(el);
     }
-    
+
     function insertAfter(referenceNode, newNode) {
         referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
     }
-    
+
     function nextNode(node, tag) {
         var element = node.nextSibling;
         while (element.nodeType !=1) {
@@ -57,12 +57,12 @@
     }
 
     TableModifyerByCell.prototype = {
-        
+
         addSpannedCellToMap: function(cell, map, r, c, cspan, rspan) {
             var spanCollect = [],
                 rmax = r + ((rspan) ? parseInt(rspan, 10) - 1 : 0),
                 cmax = c + ((cspan) ? parseInt(cspan, 10) - 1 : 0);
-        
+
             for (var rr = r; rr <= rmax; rr++) {
                 if (typeof map[rr] == "undefined") { map[rr] = []; }
                 for (var cc = c; cc <= cmax; cc++) {
@@ -75,12 +75,12 @@
                     map[rr][cc].lastRow = rr == rmax;
                     map[rr][cc].isReal = cc == c && rr == r;
                     map[rr][cc].spanCollection = spanCollect;
-        
+
                     spanCollect.push(map[rr][cc]);
                 }
             }
         },
-        
+
         setCellAsModified: function(cell) {
             cell.modified = true;
             if (cell.spanCollection.length > 0) {
@@ -91,7 +91,7 @@
         },
 
         setTableMap: function() {
-            var map = [];    
+            var map = [];
             var tableRows = this.getTableRows(),
                 ridx, row, cells, cidx, cell,
                 c,
@@ -106,7 +106,7 @@
                     cell = cells[cidx];
 
                     // If cell allready set means it is set by col or rowspan,
-                    // so increase cols index until free col is found 
+                    // so increase cols index until free col is found
                     while (typeof map[ridx][c] != "undefined") { c++; }
 
                     cspan = api.getAttribute(cell, 'colspan');
@@ -120,33 +120,33 @@
                         c++;
                     }
                 }
-            }    
+            }
             this.map = map;
             return map;
         },
-        
+
         getRowCells: function(row) {
             var inlineTables = this.table.querySelectorAll('table'),
                 inlineCells = (inlineTables) ? queryInList(inlineTables, 'th, td') : [],
                 allCells = row.querySelectorAll('th, td'),
                 tableCells = (inlineCells.length > 0) ? wysihtml5.lang.array(allCells).without(inlineCells) : allCells;
-    
+
             return tableCells;
         },
-        
+
         getTableRows: function() {
           var inlineTables = this.table.querySelectorAll('table'),
               inlineRows = (inlineTables) ? queryInList(inlineTables, 'tr') : [],
               allRows = this.table.querySelectorAll('tr'),
               tableRows = (inlineRows.length > 0) ? wysihtml5.lang.array(allRows).without(inlineRows) : allRows;
-  
+
           return tableRows;
         },
-        
+
         getMapIndex: function(cell) {
           var r_length = this.map.length,
               c_length = (this.map && this.map[0]) ? this.map[0].length : 0;
-              
+
           for (var r_idx = 0;r_idx < r_length; r_idx++) {
               for (var c_idx = 0;c_idx < c_length; c_idx++) {
                   if (this.map[r_idx][c_idx].el === cell) {
@@ -156,7 +156,7 @@
           }
           return false;
         },
-        
+
         getElementAtIndex: function(idx) {
             this.setTableMap();
             if (this.map[idx.row] && this.map[idx.row][idx.col] && this.map[idx.row][idx.col].el) {
@@ -164,13 +164,13 @@
             }
             return null;
         },
-        
+
         getMapElsTo: function(to_cell) {
             var els = [];
             this.setTableMap();
             this.idx_start = this.getMapIndex(this.cell);
             this.idx_end = this.getMapIndex(to_cell);
-            
+
             // switch indexes if start is bigger than end
             if (this.idx_start.row > this.idx_end.row || (this.idx_start.row == this.idx_end.row && this.idx_start.col > this.idx_end.col)) {
                 var temp_idx = this.idx_start;
@@ -182,7 +182,7 @@
                 this.idx_start.col = this.idx_end.col;
                 this.idx_end.col = temp_cidx;
             }
-            
+
             if (this.idx_start != null && this.idx_end != null) {
                 for (var row = this.idx_start.row, maxr = this.idx_end.row; row <= maxr; row++) {
                     for (var col = this.idx_start.col, maxc = this.idx_end.col; col <= maxc; col++) {
@@ -192,12 +192,12 @@
             }
             return els;
         },
-        
+
         orderSelectionEnds: function(secondcell) {
             this.setTableMap();
             this.idx_start = this.getMapIndex(this.cell);
             this.idx_end = this.getMapIndex(secondcell);
-            
+
             // switch indexes if start is bigger than end
             if (this.idx_start.row > this.idx_end.row || (this.idx_start.row == this.idx_end.row && this.idx_start.col > this.idx_end.col)) {
                 var temp_idx = this.idx_start;
@@ -209,20 +209,20 @@
                 this.idx_start.col = this.idx_end.col;
                 this.idx_end.col = temp_cidx;
             }
-            
+
             return {
                 "start": this.map[this.idx_start.row][this.idx_start.col].el,
                 "end": this.map[this.idx_end.row][this.idx_end.col].el
             };
         },
-        
+
         createCells: function(tag, nr, attrs) {
             var doc = this.table.ownerDocument,
                 frag = doc.createDocumentFragment(),
                 cell;
             for (var i = 0; i < nr; i++) {
                 cell = doc.createElement(tag);
-                
+
                 if (attrs) {
                     for (var attr in attrs) {
                         if (attrs.hasOwnProperty(attr)) {
@@ -230,15 +230,15 @@
                         }
                     }
                 }
-                
+
                 // add non breaking space
                 cell.appendChild(document.createTextNode("\u00a0"));
-                
+
                 frag.appendChild(cell);
             }
             return frag;
         },
-        
+
         // Returns next real cell (not part of spanned cell unless first) on row if selected index is not real. I no real cells -1 will be returned
         correctColIndexForUnreals: function(col, row) {
             var r = this.map[row],
@@ -250,11 +250,11 @@
             }
             return corrIdx;
         },
-        
+
         getLastNewCellOnRow: function(row, rowLimit) {
             var cells = this.getRowCells(row),
                 cell, idx;
-            
+
             for (var cidx = 0, cmax = cells.length; cidx < cmax; cidx++) {
                 cell = cells[cidx];
                 idx = this.getMapIndex(cell);
@@ -264,7 +264,7 @@
             }
             return null;
         },
-        
+
         removeEmptyTable: function() {
             var cells = this.table.querySelectorAll('td, th');
             if (!cells || cells.length == 0) {
@@ -274,7 +274,7 @@
                 return false;
             }
         },
-        
+
         // Splits merged cell on row to unique cells
         splitRowToCells: function(cell) {
             if (cell.isColspan) {
@@ -287,13 +287,13 @@
                 cell.el.removeAttribute('colspan');
             }
         },
-        
+
         getRealRowEl: function(force, idx) {
             var r = null,
                 c = null;
-                
+
             idx = idx || this.idx;
-            
+
             for (var cidx = 0, cmax = this.map[idx.row].length; cidx < cmax; cidx++) {
                 c = this.map[idx.row][cidx];
                 if (c.isReal) {
@@ -303,32 +303,32 @@
                     }
                 }
             }
-            
+
             if (r === null && force) {
                 r = api.getParentElement(this.map[idx.row][idx.col].el, { nodeName: ["TR"] }) || null;
             }
-            
+
             return r;
         },
-        
+
         injectRowAt: function(row, col, colspan, cType, c) {
             var r = this.getRealRowEl(false, {'row': row, 'col': col}),
                 new_cells = this.createCells(cType, colspan);
-                
+
             if (r) {
                 var n_cidx = this.correctColIndexForUnreals(col, row);
                 if (n_cidx >= 0) {
                     insertAfter(this.getRowCells(r)[n_cidx], new_cells);
                 } else {
                     r.insertBefore(new_cells, r.firstChild);
-                }  
+                }
             } else {
                 var rr = this.table.ownerDocument.createElement('tr');
                 rr.appendChild(new_cells);
                 insertAfter(api.getParentElement(c.el, { nodeName: ["TR"] }), rr);
             }
         },
-        
+
         canMerge: function() {
             for (var row = this.idx_start.row, maxr = this.idx_end.row; row <= maxr; row++) {
                 for (var col = this.idx_start.col, maxc = this.idx_end.col; col <= maxc; col++) {
@@ -339,10 +339,10 @@
             }
             return true;
         },
-        
+
         decreaseCellSpan: function(cell, span) {
             var nr = parseInt(api.getAttribute(cell.el, span), 10) - 1;
-            if (nr >= 1) { 
+            if (nr >= 1) {
                 cell.el.setAttribute(span, nr);
             } else {
                 cell.el.removeAttribute(span);
@@ -351,18 +351,18 @@
                 }
                 if (span == 'rowspan') {
                     cell.isRowspan = false;
-                }              
+                }
                 cell.firstCol = true;
                 cell.lastCol = true;
                 cell.firstRow = true;
                 cell.lastRow = true;
-                cell.isReal = true;            
+                cell.isReal = true;
             }
         },
-        
+
         removeSurplusLines: function() {
             var row, cell, ridx, rmax, cidx, cmax, allRowspan;
-            
+
             this.setTableMap();
             if (this.map) {
                 ridx = 0;
@@ -386,7 +386,7 @@
                         }
                     }
                 }
-                
+
                 // remove rows without cells
                 var tableRows = this.getTableRows();
                 ridx = 0;
@@ -399,21 +399,21 @@
                 }
             }
         },
-        
+
         fillMissingCells: function() {
             var r_max = 0,
                 c_max = 0,
                 prevcell = null;
-                
+
             this.setTableMap();
             if (this.map) {
-                
+
                 // find maximal dimensions of broken table
                 r_max = this.map.length;
                 for (var ridx = 0; ridx < r_max; ridx++) {
                     if (this.map[ridx].length > c_max) { c_max = this.map[ridx].length; }
                 }
-                
+
                 for (var row = 0; row < r_max; row++) {
                     for (var col = 0; col < c_max; col++) {
                         if (this.map[row] && !this.map[row][col]) {
@@ -426,10 +426,10 @@
                             }
                         }
                     }
-                }   
+                }
             }
         },
-        
+
         rectify: function() {
             if (!this.removeEmptyTable()) {
                 this.removeSurplusLines();
@@ -439,17 +439,17 @@
                 return false;
             }
         },
-        
+
         unmerge: function() {
             if (this.rectify()) {
                 this.setTableMap();
                 this.idx = this.getMapIndex(this.cell);
-                
+
                 if (this.idx) {
                     var thisCell = this.map[this.idx.row][this.idx.col],
                         colspan = (api.getAttribute(thisCell.el, "colspan")) ? parseInt(api.getAttribute(thisCell.el, "colspan"), 10) : 1,
                         cType = thisCell.el.tagName.toLowerCase();
-                    
+
                     if (thisCell.isRowspan) {
                         var rowspan = parseInt(api.getAttribute(thisCell.el, "rowspan"), 10);
                         if (rowspan > 1) {
@@ -463,7 +463,7 @@
                 }
             }
         },
-        
+
         // merges cells from start cell (defined in creating obj) to "to" cell
         merge: function(to) {
             if (this.rectify()) {
@@ -471,7 +471,7 @@
                 this.setTableMap();
                 this.idx_start = this.getMapIndex(this.cell);
                 this.idx_end = this.getMapIndex(this.to);
-                
+
                 // switch indexes if start is bigger than end
                 if (this.idx_start.row > this.idx_end.row || (this.idx_start.row == this.idx_end.row && this.idx_start.col > this.idx_end.col)) {
                     var temp_idx = this.idx_start;
@@ -486,15 +486,15 @@
                 if (this.canMerge()) {
                     var rowspan = this.idx_end.row - this.idx_start.row + 1,
                         colspan = this.idx_end.col - this.idx_start.col + 1;
-                        
+
                     for (var row = this.idx_start.row, maxr = this.idx_end.row; row <= maxr; row++) {
                         for (var col = this.idx_start.col, maxc = this.idx_end.col; col <= maxc; col++) {
-                            
+
                             if (row == this.idx_start.row && col == this.idx_start.col) {
-                                if (rowspan > 1) { 
+                                if (rowspan > 1) {
                                     this.map[row][col].el.setAttribute('rowspan', rowspan);
                                 }
-                                if (colspan > 1) { 
+                                if (colspan > 1) {
                                     this.map[row][col].el.setAttribute('colspan', colspan);
                                 }
                             } else {
@@ -514,16 +514,16 @@
                 }
             }
         },
-        
+
         // Decreases rowspan of a cell if it is done on first cell of rowspan row (real cell)
         // Cell is moved to next row (if it is real)
         collapseCellToNextRow: function(cell) {
             var cellIdx = this.getMapIndex(cell.el),
                 newRowIdx = cellIdx.row + 1,
                 newIdx = {'row': newRowIdx, 'col': cellIdx.col};
-                
+
             if (newRowIdx < this.map.length) {
-                
+
                 var row = this.getRealRowEl(false, newIdx);
                 if (row !== null) {
                     var n_cidx = this.correctColIndexForUnreals(newIdx.col, newIdx.row);
@@ -545,7 +545,7 @@
                 }
             }
         },
-        
+
         // Removes a cell when removing a row
         // If is rowspan cell then decreases the rowspan
         // and moves cell to next row if needed (is first cell of rowspan)
@@ -593,7 +593,7 @@
             }
             return cells;
         },
-        
+
         // Removes the row of selected cell
         removeRow: function() {
             var oldRow = api.getParentElement(this.cell, { nodeName: ["TR"] });
@@ -612,7 +612,7 @@
                 removeElement(oldRow);
             }
         },
-        
+
         removeColCell: function(cell) {
             if (cell.isColspan) {
                 if (parseInt(api.getAttribute(cell.el, 'colspan'), 10) > 2) {
@@ -624,7 +624,7 @@
                 removeElement(cell.el);
             }
         },
-        
+
         removeColumn: function() {
             this.setTableMap();
             this.idx = this.getMapIndex(this.cell);
@@ -637,7 +637,7 @@
                 }
             }
         },
-        
+
         // removes row or column by selected cell element
         remove: function(what) {
             if (this.rectify()) {
@@ -652,32 +652,32 @@
                 this.rectify();
             }
         },
-        
+
         addRow: function(where) {
             var doc = this.table.ownerDocument;
-            
+
             this.setTableMap();
             this.idx = this.getMapIndex(this.cell);
             if (where == "below" && api.getAttribute(this.cell, 'rowspan')) {
                 this.idx.row = this.idx.row + parseInt(api.getAttribute(this.cell, 'rowspan'), 10) - 1;
             }
-                
+
             if (this.idx !== false) {
                 var modRow = this.map[this.idx.row],
-                    newRow = doc.createElement('tr'); 
-                
+                    newRow = doc.createElement('tr');
+
                 for (var ridx = 0, rmax = modRow.length; ridx < rmax; ridx++) {
                     if (!modRow[ridx].modified) {
                         this.setCellAsModified(modRow[ridx]);
                         this.addRowCell(modRow[ridx], newRow, where);
                     }
                 }
-                
+
                 switch (where) {
-                    case 'below': 
+                    case 'below':
                         insertAfter(this.getRealRowEl(true), newRow);
                     break;
-                    case 'above': 
+                    case 'above':
                         var cr = api.getParentElement(this.map[this.idx.row][this.idx.col].el, { nodeName: ["TR"] });
                         if (cr) {
                             cr.parentNode.insertBefore(newRow, cr);
@@ -686,7 +686,7 @@
                 }
             }
         },
-        
+
         addRowCell: function(cell, row, where) {
             var colSpanAttr = (cell.isColspan) ? {"colspan" : api.getAttribute(cell.el, 'colspan')} : null;
             if (cell.isReal) {
@@ -700,10 +700,10 @@
                     row.appendChild(this.createCells('td', 1, colSpanAttr));
                 } else if (c.isRowspan) {
                     cell.el.attr('rowspan', parseInt(api.getAttribute(cell.el, 'rowspan'), 10) + 1);
-                } 
+                }
             }
         },
-        
+
         add: function(where) {
             if (this.rectify()) {
                 if (where == 'below' || where == 'above') {
@@ -714,24 +714,24 @@
                 }
             }
         },
-        
+
         addColCell: function (cell, ridx, where) {
             var doAdd,
                 cType = cell.el.tagName.toLowerCase();
-                    
+
             // defines add cell vs expand cell conditions
             // true means add
             switch (where) {
-                case "before": 
+                case "before":
                     doAdd = (!cell.isColspan || cell.firstCol);
                 break;
                 case "after":
                     doAdd = (!cell.isColspan || cell.lastCol || (cell.isColspan && c.el == this.cell));
                 break;
             }
-            
+
             if (doAdd){
-                // adds a cell before or after current cell element 
+                // adds a cell before or after current cell element
                 switch (where) {
                     case "before":
                         cell.el.parentNode.insertBefore(this.createCells(cType, 1), cell.el);
@@ -740,27 +740,27 @@
                         insertAfter(cell.el, this.createCells(cType, 1));
                     break;
                 }
-                
-                // handles if cell has rowspan 
+
+                // handles if cell has rowspan
                 if (cell.isRowspan) {
                     this.handleCellAddWithRowspan(cell, ridx+1, where);
                 }
-                
+
             } else {
                 // expands cell
                 cell.el.setAttribute('colspan',  parseInt(api.getAttribute(cell.el, 'colspan'), 10) + 1);
             }
         },
-        
+
         addColumn: function(where) {
             var row, modCell;
-            
+
             this.setTableMap();
             this.idx = this.getMapIndex(this.cell);
             if (where == "after" && api.getAttribute(this.cell, 'colspan')) {
               this.idx.col = this.idx.col + parseInt(api.getAttribute(this.cell, 'colspan'), 10) - 1;
             }
-                
+
             if (this.idx !== false) {
                 for (var ridx = 0, rmax = this.map.length; ridx < rmax; ridx++ ) {
                     row = this.map[ridx];
@@ -774,7 +774,7 @@
                 }
             }
         },
-        
+
         handleCellAddWithRowspan: function (cell, ridx, where) {
             var addRowsNr = parseInt(api.getAttribute(this.cell, 'rowspan'), 10) - 1,
                 crow = api.getParentElement(cell.el, { nodeName: ["TR"] }),
@@ -782,21 +782,21 @@
                 cidx, temp_r_cells,
                 doc = this.table.ownerDocument,
                 nrow;
-                
+
             for (var i = 0; i < addRowsNr; i++) {
                 cidx = this.correctColIndexForUnreals(this.idx.col, (ridx + i));
                 crow = nextNode(crow, 'tr');
                 if (crow) {
                     if (cidx > 0) {
                         switch (where) {
-                            case "before": 
+                            case "before":
                                 temp_r_cells = this.getRowCells(crow);
                                 if (cidx > 0 && this.map[ridx + i][this.idx.col].el != temp_r_cells[cidx] && cidx == temp_r_cells.length - 1) {
                                      insertAfter(temp_r_cells[cidx], this.createCells(cType, 1));
                                 } else {
                                     temp_r_cells[cidx].parentNode.insertBefore(this.createCells(cType, 1), temp_r_cells[cidx]);
                                 }
-                                    
+
                             break;
                             case "after":
                                 insertAfter(this.getRowCells(crow)[cidx], this.createCells(cType, 1));
@@ -813,44 +813,44 @@
             }
         }
     };
-    
+
     api.table = {
         getCellsBetween: function(cell1, cell2) {
             var c1 = new TableModifyerByCell(cell1);
             return c1.getMapElsTo(cell2);
         },
-        
+
         addCells: function(cell, where) {
             var c = new TableModifyerByCell(cell);
             c.add(where);
         },
-        
+
         removeCells: function(cell, what) {
             var c = new TableModifyerByCell(cell);
             c.remove(what);
         },
-        
+
         mergeCellsBetween: function(cell1, cell2) {
             var c1 = new TableModifyerByCell(cell1);
             c1.merge(cell2);
         },
-        
+
         unmergeCell: function(cell) {
             var c = new TableModifyerByCell(cell);
             c.unmerge();
         },
-        
+
         orderSelectionEnds: function(cell, cell2) {
             var c = new TableModifyerByCell(cell);
             return c.orderSelectionEnds(cell2);
         },
-        
+
         indexOf: function(cell) {
             var c = new TableModifyerByCell(cell);
             c.setTableMap();
             return c.getMapIndex(cell);
         },
-        
+
         findCell: function(table, idx) {
             var c = new TableModifyerByCell(null, table);
             return c.getElementAtIndex(idx);
@@ -866,7 +866,7 @@
             return c.getColumnElementsByCell();
         }
     };
-    
-    
-    
+
+
+
 })(wysihtml5);

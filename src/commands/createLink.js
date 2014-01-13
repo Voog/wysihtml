@@ -46,35 +46,35 @@
     }
     composer.selection.setAfter(elementToSetCaretAfter);
   }
-  
+
   // Changes attributes of links
   function _changeLinks(composer, anchors, attributes) {
     var oldAttrs;
     for (var a = anchors.length; a--;) {
-      
+
       // Remove all old attributes
       oldAttrs = anchors[a].attributes;
       for (var oa = oldAttrs.length; oa--;) {
         anchors[a].removeAttribute(oldAttrs.item(oa).name);
       }
-      
+
       // Set new attributes
       for (var j in attributes) {
         if (attributes.hasOwnProperty(j)) {
           anchors[a].setAttribute(j, attributes[j]);
-        } 
+        }
       }
-      
+
     }
   }
-  
+
   wysihtml5.commands.createLink = {
     /**
      * TODO: Use HTMLApplier or formatInline here
      *
      * Turns selection into a link
      * If selection is already a link, it just changes the attributes
-     * 
+     *
      * @example
      *    // either ...
      *    wysihtml5.commands.createLink.exec(composer, "createLink", "http://www.google.de");

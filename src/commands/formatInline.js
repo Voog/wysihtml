@@ -5,12 +5,12 @@
  *      abcdefg|
  *   output:
  *      abcdefg<b>|</b>
- *   
+ *
  *   #2 unformatted text selected:
  *      abc|deg|h
  *   output:
  *      abc<b>|deg|</b>h
- *   
+ *
  *   #3 unformatted text selected across boundaries:
  *      ab|c <span>defg|h</span>
  *   output:
@@ -40,12 +40,12 @@
         "i":      "em"
       },
       htmlApplier = {};
-  
+
   function _getTagNames(tagName) {
     var alias = ALIAS_MAPPING[tagName];
     return alias ? [tagName.toLowerCase(), alias.toLowerCase()] : [tagName.toLowerCase()];
   }
-  
+
   function _getApplier(tagName, className, classRegExp, cssStyle, styleRegExp) {
     var identifier = tagName + ":" + className;
     if (cssStyle) {
@@ -56,12 +56,12 @@
     }
     return htmlApplier[identifier];
   }
-  
+
   wysihtml5.commands.formatInline = {
     exec: function(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp, dontRestoreSelect, noCleanup) {
       var range = composer.selection.createRange();
           ownRanges = composer.selection.getOwnRanges();
-      
+
       if (!ownRanges || ownRanges.length == 0) {
         return false;
       }
@@ -83,7 +83,7 @@
         }
       }
     },
-    
+
     // Executes so that if collapsed caret is in a state and executing that state it should unformat that state
     // It is achieved by selecting the entire state element before executing.
     // This works on built in contenteditable inline format commands
@@ -118,11 +118,11 @@
       }
 
       ownRanges = composer.selection.getOwnRanges();
-      
+
       if (ownRanges.length == 0) {
         return false;
       }
-      
+
       return _getApplier(tagName, className, classRegExp, cssStyle, styleRegExp).isAppliedToRange(ownRanges);
     }
   };
