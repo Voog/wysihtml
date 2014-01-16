@@ -5,6 +5,7 @@ wysihtml5.quirks.tableCellsSelection = function(editable, editor) {
             table: null,
             start: null,
             end: null,
+            cells: null,
             select: selectCells
         },
         selection_class = "wysiwyg-tmp-selected-cell",
@@ -14,9 +15,8 @@ wysihtml5.quirks.tableCellsSelection = function(editable, editor) {
     function init () {
 
         dom.observe(editable, "mousedown", function(event) {
-          var target   = event.target,
-              nodeName = target.nodeName;
-          if (nodeName == "TD" || nodeName == "TH") {
+          var target = wysihtml5.dom.getParentElement(event.target, { nodeName: ["TD", "TH"] });
+          if (target) {
               handleSelectionMousedown(target);
           }
         });
@@ -27,6 +27,7 @@ wysihtml5.quirks.tableCellsSelection = function(editable, editor) {
     function handleSelectionMousedown (target) {
       select.start = target;
       select.end = target;
+      select.cells = [target];
       select.table = dom.getParentElement(select.start, { nodeName: ["TABLE"] });
 
       if (select.table) {
@@ -57,16 +58,18 @@ wysihtml5.quirks.tableCellsSelection = function(editable, editor) {
 
     function handleMouseMove (event) {
       var curTable = null,
-          cell = dom.getParentElement(event.target, { nodeName: ["TD","TH"] }),
-          selectedCells;
+          cell = dom.getParentElement(event.target, { nodeName: ["TD","TH"] });
 
       if (cell && select.table && select.start) {
         curTable =  dom.getParentElement(cell, { nodeName: ["TABLE"] });
         if (curTable && curTable === select.table) {
           removeCellSelections();
           select.end = cell;
-          selectedCells = dom.table.getCellsBetween(select.start, cell);
-          addSelections(selectedCells);
+          select.cells = dom.table.getCellsBetween(select.start, cell);
+          if (select.cells.length > 1) {
+            editor.composer.selection.deselect();
+          }
+          addSelections(select.cells);
         }
       }
     }

@@ -715,8 +715,12 @@
 
     isCollapsed: function() {
         return this.getSelection().isCollapsed;
-    }
+    },
 
+    deselect: function() {
+      var sel = this.getSelection();
+      sel && sel.removeAllRanges();
+    }
   });
 
 })(wysihtml5);
