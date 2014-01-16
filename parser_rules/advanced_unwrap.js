@@ -171,6 +171,7 @@ var wysihtml5ParserRules = {
      *                            - href:           allows something like "mailto:bert@foo.com", "http://google.com", "/foobar.jpg"
      *                            - alt:            strips unwanted characters. if the attribute is not set, then it gets set (to ensure valid and compatible HTML)
      *                            - numbers:  ensures that the attribute only contains numeric characters
+     *                            - any:            allows anything to pass 
      */
     "tags": {
         "tr": {
@@ -323,7 +324,9 @@ var wysihtml5ParserRules = {
         "td": {
             "check_attributes": {
                 "rowspan": "numbers",
-                "colspan": "numbers"
+                "colspan": "numbers",
+                "valign": "any",
+                "align": "any"
             },
             "add_class": {
                 "align": "align_text"
