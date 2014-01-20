@@ -131,8 +131,15 @@ wysihtml5.dom.parse = (function() {
     if (!newNode) {
         if (newNode === false) {
             // false defines that tag should be removed but contents should remain (unwrap)
-
             fragment = oldNode.ownerDocument.createDocumentFragment();
+
+            for (i = oldChildsLength; i--;) {
+              newChild = _convert(oldChilds[i], cleanUp);
+              if (newChild) {
+                fragment.insertBefore(newChild, fragment.firstChild);
+              }
+            }
+
             // TODO: try to minimize surplus spaces
             if (wysihtml5.lang.array([
                 "div", "pre", "p",
@@ -141,19 +148,13 @@ wysihtml5.dom.parse = (function() {
                 "dd", "dl",
                 "footer", "header", "section",
                 "h1", "h2", "h3", "h4", "h5", "h6"
-            ]).contains(oldNode.nodeName.toLowerCase()) && oldNode.parentNode.firstChild !== oldNode) {
-
-                // add space as first when unwraping non-textflow elements
-                fragment.appendChild(oldNode.ownerDocument.createTextNode(" "));
+            ]).contains(oldNode.nodeName.toLowerCase()) && oldNode.parentNode.lastChild !== oldNode) {
+                // add space at first when unwraping non-textflow elements
+                if (!oldNode.nextSibling || oldNode.nextSibling.nodeType !== 3 || !(/^\s/).test(oldNode.nextSibling.nodeValue)) {
+                  fragment.appendChild(oldNode.ownerDocument.createTextNode(" "));
+                }
             }
 
-
-            for (i=0; i<oldChildsLength; i++) {
-              newChild = _convert(oldChilds[i], cleanUp);
-              if (newChild) {
-                fragment.appendChild(newChild);
-              }
-            }
             if (fragment.normalize) {
               fragment.normalize();
             }
