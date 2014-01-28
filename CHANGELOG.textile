@@ -1,3 +1,10 @@
+*wysihtml5x 0.4.1* (Jan 28, 2014)
+* "createTable" command has one additional parameter "tableStyle" accepting CSS string
+* Selecting more than one table cell removes conflicting text selection
+* Table api has now canMerge function for checking if cell merging is allowed on cells selected
+* Method "any" added to Parser rules check_attributes enabling all attributes values to pass
+* Various bugs fixed
+
 *wysihtml5x 0.4.0* (Dec 12, 2013)
 * Changed syntax of background and foreground color with style commands
 * Anchor creting and removing logic changed
