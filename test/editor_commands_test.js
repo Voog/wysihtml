@@ -167,5 +167,38 @@ if (wysihtml5.browser.supported()) {
             start();
           });
         });
+
+  // create table
+    asyncTest("Create table", function() {
+       expect(1);
+      var that = this,
+          editor = new wysihtml5.Editor(this.editableArea),
+          text = "test";
+        
+      editor.on("load", function() {
+        var editableElement   = that.editableArea,
+            expectText = '<table style="width: 100%;">' +
+                           '<tbody>' +
+                              '<tr>' +
+                                '<td>&nbsp;</td>' +
+                                '<td>&nbsp;</td>' +
+                              '</tr>' +
+                              '<tr>' +
+                                '<td>&nbsp;</td>' +
+                                '<td>&nbsp;</td>' +
+                              '</tr>' +
+                            '</tbody>' +
+                          '</table>';
+        editor.setValue(text, true);
+        editor.composer.selection.selectNode(editor.editableElement);
+        editor.composer.commands.exec('createTable', {
+          cols: 2,
+          rows: 2,
+          tableStyle: "width: 100%;" 
+        });
+        equal(editableElement.innerHTML.toLowerCase(), expectText, "Text corectly wrapped in one aligning div");
+        start();
+      });
+    });
   
 }
