@@ -35,6 +35,7 @@ wysihtml5.quirks.tableCellsSelection = function(editable, editor) {
         dom.addClass(target, selection_class);
         moveHandler = dom.observe(editable, "mousemove", handleMouseMove);
         upHandler = dom.observe(editable, "mouseup", handleMouseUp);
+        editor.fire("tableselectstart").fire("tableselectstart:composer");
       }
     }
 
@@ -58,18 +59,23 @@ wysihtml5.quirks.tableCellsSelection = function(editable, editor) {
 
     function handleMouseMove (event) {
       var curTable = null,
-          cell = dom.getParentElement(event.target, { nodeName: ["TD","TH"] });
+          cell = dom.getParentElement(event.target, { nodeName: ["TD","TH"] }),
+          oldEnd;
 
       if (cell && select.table && select.start) {
         curTable =  dom.getParentElement(cell, { nodeName: ["TABLE"] });
         if (curTable && curTable === select.table) {
           removeCellSelections();
+          oldEnd = select.end;
           select.end = cell;
           select.cells = dom.table.getCellsBetween(select.start, cell);
           if (select.cells.length > 1) {
             editor.composer.selection.deselect();
           }
           addSelections(select.cells);
+          if (select.end !== oldEnd) {
+            editor.fire("tableselectchange").fire("tableselectchange:composer");
+          }
         }
       }
     }
