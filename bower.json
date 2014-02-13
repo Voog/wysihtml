@@ -1,5 +1,5 @@
 {
-  "name": "wysihtml5",
+  "name": "wysihtml5x",
   "version": "0.4.2",
   "main": [
     "dist/wysihtml5x-0.4.2.min.js",
@@ -9,7 +9,8 @@
   },
   "homepage": "https://github.com/Edicy/wysihtml5",
   "authors": [
-    "edicy"
+    "edicy",
+    "xing"
   ],
   "description": "Open source rich text editor based on HTML5 and the progressive-enhancement approach. Uses a sophisticated security concept and aims to generate fully valid HTML5 markup by preventing unmaintainable tag soups and inline styles.",
   "keywords": [
