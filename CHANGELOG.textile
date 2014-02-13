@@ -1,3 +1,8 @@
+*wysihtml5x 0.4.2* (Feb 13, 2014)
+* Adds cell selection events "tableselectstart", "tableselectchange"
+* Fixes configuration file issue of overriding link target attribute
+* Add bower support
+
 *wysihtml5x 0.4.1* (Jan 28, 2014)
 * "createTable" command has one additional parameter "tableStyle" accepting CSS string
 * Selecting more than one table cell removes conflicting text selection
