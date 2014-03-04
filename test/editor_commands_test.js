@@ -124,6 +124,28 @@ if (wysihtml5.browser.supported()) {
         start();
       });
     });
+
+// Format code
+  asyncTest("Format code", function() {
+       expect(2);
+      var that = this,
+          editor = new wysihtml5.Editor(this.editableArea),
+          text = "once upon a time there was an unformated text.";
+        
+      editor.on("load", function() {
+        var editableElement   = that.editableArea;
+        editor.setValue(text, true);
+
+        editor.composer.selection.selectNode(editor.editableElement);
+        editor.composer.commands.exec('formatCode', 'language-html');
+        equal(editableElement.innerHTML.toLowerCase(), '<pre><code class="language-html">' + text + '</code></pre>', "Text corectly wrapped in pre and code and classname addded");
+    
+        editor.composer.commands.exec('formatCode', 'language-html');
+        equal(editableElement.innerHTML.toLowerCase(), text, "Code block correctly removed");
+
+        start();
+      });
+    });
     
 // createLink/removeLink
         asyncTest("Create/remove link", function() {

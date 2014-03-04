@@ -60,6 +60,7 @@ JS_FILES = src/wysihtml5.js \
   src/commands/foreColorStyle.js \
   src/commands/bgColorStyle.js \
   src/commands/formatBlock.js \
+  src/commands/formatCode.js \
   src/commands/formatInline.js \
   src/commands/insertHTML.js \
   src/commands/insertImage.js \
@@ -148,6 +149,7 @@ JS_FILES_WOTOOLS = src/wysihtml5.js \
   src/commands/foreColorStyle.js \
   src/commands/bgColorStyle.js \
   src/commands/formatBlock.js \
+  src/commands/formatCode.js \
   src/commands/formatInline.js \
   src/commands/insertHTML.js \
   src/commands/insertImage.js \
