@@ -42,6 +42,7 @@ JS_FILES = src/wysihtml5.js \
   src/dom/get_attribute.js \
   src/dom/table.js \
   src/dom/query.js \
+  src/dom/compare_document_position.js \
   src/quirks/clean_pasted_html.js \
   src/quirks/ensure_proper_clearing.js \
   src/quirks/get_correct_inner_html.js \
@@ -131,6 +132,7 @@ JS_FILES_WOTOOLS = src/wysihtml5.js \
   src/dom/get_attribute.js \
   src/dom/table.js \
   src/dom/query.js \
+  src/dom/compare_document_position.js \
   src/quirks/clean_pasted_html.js \
   src/quirks/ensure_proper_clearing.js \
   src/quirks/get_correct_inner_html.js \

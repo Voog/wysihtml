@@ -1,3 +1,7 @@
+*wysihtml5x 0.4.3* (Mar 02, 2014)
+* Adds command "formatCode"
+* Fixes some IE8 mayor bugs
+
 *wysihtml5x 0.4.2* (Feb 13, 2014)
 * Adds cell selection events "tableselectstart", "tableselectchange"
 * Fixes configuration file issue of overriding link target attribute
