@@ -629,10 +629,10 @@
     },
 
     _detectInlineRangeProblems: function(range) {
-      position = range.startContainer.compareDocumentPosition(range.endContainer);
+      position = dom.compareDocumentPosition(range.startContainer, range.endContainer);
       return (
         range.endOffset == 0 &&
-        position & Node.DOCUMENT_POSITION_FOLLOWING
+        position & 4 //Node.DOCUMENT_POSITION_FOLLOWING
       );
     },
 
