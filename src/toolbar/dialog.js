@@ -155,7 +155,7 @@
         }
 
         fieldName = field.getAttribute(ATTRIBUTE_FIELDS);
-        newValue  = this.elementToChange ? (this.elementToChange.getAttribute(fieldName) || "") : field.defaultValue;
+        newValue  = (this.elementToChange && typeof(this.elementToChange) !== 'boolean') ? (this.elementToChange.getAttribute(fieldName) || "") : field.defaultValue;
         field.value = newValue;
       }
     },
