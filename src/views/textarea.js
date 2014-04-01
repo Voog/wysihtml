@@ -14,14 +14,14 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
 
   getValue: function(parse) {
     var value = this.isEmpty() ? "" : this.element.value;
-    if (parse) {
+    if (typeof(parse) === 'undefined' || parse === true) {
       value = this.parent.parse(value);
     }
     return value;
   },
 
   setValue: function(html, parse) {
-    if (parse) {
+    if (typeof(parse) === 'undefined' || parse === true) {
       html = this.parent.parse(html);
     }
     this.element.value = html;
