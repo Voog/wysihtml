@@ -258,6 +258,23 @@
       return false;
     },
 
+    // TODO: Figure out a method from following 3 that would work universally
+    executeAndRestoreRangy: function(method, restoreScrollPosition) {
+      var win = this.doc.defaultView || this.doc.parentWindow,
+          sel = rangy.saveSelection(win);
+
+      if (!sel) {
+        method();
+      } else {
+        try {
+          method();
+        } catch(e) {
+          setTimeout(function() { throw e; }, 0);
+        }
+      }
+      rangy.restoreSelection(sel);
+    },
+
     // TODO: has problems in chrome 12. investigate block level and uneditable area inbetween
     executeAndRestore: function(method, restoreScrollPosition) {
       var body                  = this.doc.body,

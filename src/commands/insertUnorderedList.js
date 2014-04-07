@@ -10,10 +10,10 @@ wysihtml5.commands.insertUnorderedList = {
 
     // do not count list elements outside of composer
     if (list && !composer.element.contains(list)) {
-      list = null
+      list = null;
     }
     if (otherList && !composer.element.contains(otherList)) {
-      otherList = null
+      otherList = null;
     }
 
     if (!list && !otherList && composer.commands.support(command)) {
@@ -39,19 +39,20 @@ wysihtml5.commands.insertUnorderedList = {
       });
     } else {
       // Create list
-      tempElement = composer.selection.deblockAndSurround({
-        "nodeName": "div",
-        "className": tempClassName
-      });
-      if (tempElement) {
-        isEmpty = tempElement.innerHTML === "" || tempElement.innerHTML === wysihtml5.INVISIBLE_SPACE || tempElement.innerHTML === "<br>";
-        composer.selection.executeAndRestore(function() {
-          list = wysihtml5.dom.convertToList(tempElement, "ul", composer.parent.config.uneditableContainerClassname);
+      composer.selection.executeAndRestoreRangy(function() {
+        tempElement = composer.selection.deblockAndSurround({
+          "nodeName": "div",
+          "className": tempClassName
         });
-        if (isEmpty) {
-          composer.selection.selectNode(list.querySelector("li"), true);
+        
+        if (tempElement) {
+          isEmpty = tempElement.innerHTML === "" || tempElement.innerHTML === wysihtml5.INVISIBLE_SPACE || tempElement.innerHTML === "<br>";
+          list = wysihtml5.dom.convertToList(tempElement, "ul", composer.parent.config.uneditableContainerClassname);
+          if (isEmpty) {
+            composer.selection.selectNode(list.querySelector("li"), true);
+          }
         }
-      }
+      });
     }
   },
 
