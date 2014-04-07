@@ -6,6 +6,7 @@ module.exports = function(grunt) {
   var base = [
     "src/wysihtml5.js",
     "lib/rangy/rangy-core.js",
+    "lib/rangy/rangy-selectionsaverestore.js",
     "lib/base/base.js",
     "src/browser.js",
     "src/lang/array.js",

@@ -120,7 +120,6 @@ if (wysihtml5.browser.supported()) {
         editor.composer.commands.exec('formatBlock', "p");
         editor.composer.commands.exec('justifyRight');
         equal(editableElement.innerHTML.toLowerCase(), '<p>once upon a time</p>there was an unformated text<br>spanning many lines.', "heading alignment removed sucessfully");
-        
         start();
       });
     });
@@ -216,11 +215,47 @@ if (wysihtml5.browser.supported()) {
         editor.composer.commands.exec('createTable', {
           cols: 2,
           rows: 2,
-          tableStyle: "width: 100%;" 
+          tableStyle: "width: 100%;"
         });
         equal(editableElement.innerHTML.toLowerCase(), expectText, "Text corectly wrapped in one aligning div");
         start();
       });
     });
+
+  // create table
+    asyncTest("Create lists", function() {
+      expect(4);
+      var that = this,
+          editor = new wysihtml5.Editor(this.editableArea),
+          text = "";
+        
+      editor.on("load", function() {
+        var editableElement   = that.editableArea,
+            expectText = '<ul><li>﻿</li></ul>',
+            expectTextWithContents = '<ul><li>text﻿</li></ul>',
+            expectOrdText = '<ol><li>﻿</li></ol>',
+            expectOrdTextWithContents = '<ol><li>text﻿</li></ol>';
+
+        editor.setValue(text, true);
+        editor.composer.selection.selectNode(editor.editableElement);
+        editor.composer.commands.exec('insertUnorderedList');
+        equal(editableElement.innerHTML.toLowerCase(), expectText, "Unordered list created");
+
+        editor.composer.commands.exec('insertHTML', 'text');
+        equal(editableElement.innerHTML.toLowerCase(), expectTextWithContents, "In unordered list placed caret correctly");
+
+        editor.setValue(text, true);
+        editor.composer.selection.selectNode(editor.editableElement);
+        editor.composer.commands.exec('insertOrderedList');
+        equal(editableElement.innerHTML.toLowerCase(), expectOrdText, "Ordered list created");
+
+        editor.composer.commands.exec('insertHTML', 'text');
+        equal(editableElement.innerHTML.toLowerCase(), expectOrdTextWithContents, "In ordered list placed caret correctly");
+
+        start();
+      });
+    });
+
+
   
 }
