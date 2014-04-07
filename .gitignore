@@ -2,3 +2,5 @@
 .idea
 .DS_Store
 .DS_Store?
+node_modules
+.tm_properties
