@@ -128,6 +128,24 @@ h;++d)b[d]=""+this._ranges[d];return b.join("")};g.collapse=function(b,d){q(this
 };g.selectAllChildren=function(b){q(this,b);var d=l.createRange(c.getDocument(b));d.selectNodeContents(b);this.removeAllRanges();this.addRange(d)};g.deleteFromDocument=function(){if(M&&V&&this.docSelection.type=="Control"){for(var b=this.docSelection.createRange(),d;b.length;){d=b.item(0);b.remove(d);d.parentNode.removeChild(d)}this.refresh()}else if(this.rangeCount){b=this.getAllRanges();this.removeAllRanges();d=0;for(var h=b.length;d<h;++d)b[d].deleteContents();this.addRange(b[h-1])}};g.getAllRanges=
 function(){return this._ranges.slice(0)};g.setSingleRange=function(b){this.setRanges([b])};g.containsNode=function(b,d){for(var h=0,D=this._ranges.length;h<D;++h)if(this._ranges[h].containsNode(b,d))return true;return false};g.toHtml=function(){var b="";if(this.rangeCount){b=k.getRangeDocument(this._ranges[0]).createElement("div");for(var d=0,h=this._ranges.length;d<h;++d)b.appendChild(this._ranges[d].cloneContents());b=b.innerHTML}return b};g.getName=function(){return"WrappedSelection"};g.inspect=
 function(){return v(this)};g.detach=function(){this.win=this.anchorNode=this.focusNode=this.win._rangySelection=null};x.inspect=v;l.Selection=x;l.selectionPrototype=g;l.addCreateMissingNativeApiListener(function(b){if(typeof b.getSelection=="undefined")b.getSelection=function(){return l.getSelection(this)};b=null})});;/*
+ Selection save and restore module for Rangy.
+ Saves and restores user selections using marker invisible elements in the DOM.
+
+ Part of Rangy, a cross-browser JavaScript range and selection library
+ http://code.google.com/p/rangy/
+
+ Depends on Rangy core.
+
+ Copyright 2012, Tim Down
+ Licensed under the MIT license.
+ Version: 1.2.3
+ Build date: 26 February 2012
+*/
+rangy.createModule("SaveRestore",function(h,m){function n(a,g){var e="selectionBoundary_"+ +new Date+"_"+(""+Math.random()).slice(2),c,f=p.getDocument(a.startContainer),d=a.cloneRange();d.collapse(g);c=f.createElement("span");c.id=e;c.style.lineHeight="0";c.style.display="none";c.className="rangySelectionBoundary";c.appendChild(f.createTextNode(q));d.insertNode(c);d.detach();return c}function o(a,g,e,c){if(a=(a||document).getElementById(e)){g[c?"setStartBefore":"setEndBefore"](a);a.parentNode.removeChild(a)}else m.warn("Marker element has been removed. Cannot restore selection.")}
+function r(a,g){return g.compareBoundaryPoints(a.START_TO_START,a)}function k(a,g){var e=(a||document).getElementById(g);e&&e.parentNode.removeChild(e)}h.requireModules(["DomUtil","DomRange","WrappedRange"]);var p=h.dom,q="\ufeff";h.saveSelection=function(a){a=a||window;var g=a.document;if(h.isSelectionValid(a)){var e=h.getSelection(a),c=e.getAllRanges(),f=[],d,j;c.sort(r);for(var b=0,i=c.length;b<i;++b){d=c[b];if(d.collapsed){j=n(d,false);f.push({markerId:j.id,collapsed:true})}else{j=n(d,false);
+d=n(d,true);f[b]={startMarkerId:d.id,endMarkerId:j.id,collapsed:false,backwards:c.length==1&&e.isBackwards()}}}for(b=i-1;b>=0;--b){d=c[b];if(d.collapsed)d.collapseBefore((g||document).getElementById(f[b].markerId));else{d.setEndBefore((g||document).getElementById(f[b].endMarkerId));d.setStartAfter((g||document).getElementById(f[b].startMarkerId))}}e.setRanges(c);return{win:a,doc:g,rangeInfos:f,restored:false}}else m.warn("Cannot save selection. This usually happens when the selection is collapsed and the selection document has lost focus.")};
+h.restoreSelection=function(a,g){if(!a.restored){for(var e=a.rangeInfos,c=h.getSelection(a.win),f=[],d=e.length,j=d-1,b,i;j>=0;--j){b=e[j];i=h.createRange(a.doc);if(b.collapsed)if(b=(a.doc||document).getElementById(b.markerId)){b.style.display="inline";var l=b.previousSibling;if(l&&l.nodeType==3){b.parentNode.removeChild(b);i.collapseToPoint(l,l.length)}else{i.collapseBefore(b);b.parentNode.removeChild(b)}}else m.warn("Marker element has been removed. Cannot restore selection.");else{o(a.doc,i,b.startMarkerId,
+true);o(a.doc,i,b.endMarkerId,false)}d==1&&i.normalizeBoundaries();f[j]=i}if(d==1&&g&&h.features.selectionHasExtend&&e[0].backwards){c.removeAllRanges();c.addRange(f[0],true)}else c.setRanges(f);a.restored=true}};h.removeMarkerElement=k;h.removeMarkers=function(a){for(var g=a.rangeInfos,e=0,c=g.length,f;e<c;++e){f=g[e];if(f.collapsed)k(a.doc,f.markerId);else{k(a.doc,f.startMarkerId);k(a.doc,f.endMarkerId)}}}});;/*
 	Base.js, version 1.1a
 	Copyright 2006-2010, Dean Edwards
 	License: http://www.opensource.org/licenses/mit-license.php
@@ -4508,6 +4526,23 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       return false;
     },
 
+    // TODO: Figure out a method from following 3 that would work universally
+    executeAndRestoreRangy: function(method, restoreScrollPosition) {
+      var win = this.doc.defaultView || this.doc.parentWindow,
+          sel = rangy.saveSelection(win);
+
+      if (!sel) {
+        method();
+      } else {
+        try {
+          method();
+        } catch(e) {
+          setTimeout(function() { throw e; }, 0);
+        }
+      }
+      rangy.restoreSelection(sel);
+    },
+
     // TODO: has problems in chrome 12. investigate block level and uneditable area inbetween
     executeAndRestore: function(method, restoreScrollPosition) {
       var body                  = this.doc.body,
@@ -6566,10 +6601,10 @@ wysihtml5.commands.formatCode = {
 
     // do not count list elements outside of composer
     if (list && !composer.element.contains(list)) {
-      list = null
+      list = null;
     }
     if (otherList && !composer.element.contains(otherList)) {
-      otherList = null
+      otherList = null;
     }
 
     if (!list && !otherList && composer.commands.support(command)) {
@@ -6595,19 +6630,20 @@ wysihtml5.commands.formatCode = {
       });
     } else {
       // Create list
-      tempElement = composer.selection.deblockAndSurround({
-        "nodeName": "div",
-        "className": tempClassName
-      });
-      if (tempElement) {
-        isEmpty = tempElement.innerHTML === "" || tempElement.innerHTML === wysihtml5.INVISIBLE_SPACE || tempElement.innerHTML === "<br>";
-        composer.selection.executeAndRestore(function() {
-          list = wysihtml5.dom.convertToList(tempElement, "ol", composer.parent.config.uneditableContainerClassname);
+      composer.selection.executeAndRestoreRangy(function() {
+        tempElement = composer.selection.deblockAndSurround({
+          "nodeName": "div",
+          "className": tempClassName
         });
-        if (isEmpty) {
-          composer.selection.selectNode(list.querySelector("li"), true);
+
+        if (tempElement) {
+          isEmpty = tempElement.innerHTML === "" || tempElement.innerHTML === wysihtml5.INVISIBLE_SPACE || tempElement.innerHTML === "<br>";
+          list = wysihtml5.dom.convertToList(tempElement, "ol", composer.parent.config.uneditableContainerClassname);
+          if (isEmpty) {
+            composer.selection.selectNode(list.querySelector("li"), true);
+          }
         }
-      }
+      });
     }
   },
 
@@ -6630,10 +6666,10 @@ wysihtml5.commands.formatCode = {
 
     // do not count list elements outside of composer
     if (list && !composer.element.contains(list)) {
-      list = null
+      list = null;
     }
     if (otherList && !composer.element.contains(otherList)) {
-      otherList = null
+      otherList = null;
     }
 
     if (!list && !otherList && composer.commands.support(command)) {
@@ -6659,19 +6695,20 @@ wysihtml5.commands.formatCode = {
       });
     } else {
       // Create list
-      tempElement = composer.selection.deblockAndSurround({
-        "nodeName": "div",
-        "className": tempClassName
-      });
-      if (tempElement) {
-        isEmpty = tempElement.innerHTML === "" || tempElement.innerHTML === wysihtml5.INVISIBLE_SPACE || tempElement.innerHTML === "<br>";
-        composer.selection.executeAndRestore(function() {
-          list = wysihtml5.dom.convertToList(tempElement, "ul", composer.parent.config.uneditableContainerClassname);
+      composer.selection.executeAndRestoreRangy(function() {
+        tempElement = composer.selection.deblockAndSurround({
+          "nodeName": "div",
+          "className": tempClassName
         });
-        if (isEmpty) {
-          composer.selection.selectNode(list.querySelector("li"), true);
+        
+        if (tempElement) {
+          isEmpty = tempElement.innerHTML === "" || tempElement.innerHTML === wysihtml5.INVISIBLE_SPACE || tempElement.innerHTML === "<br>";
+          list = wysihtml5.dom.convertToList(tempElement, "ul", composer.parent.config.uneditableContainerClassname);
+          if (isEmpty) {
+            composer.selection.selectNode(list.querySelector("li"), true);
+          }
         }
-      }
+      });
     }
   },
 
