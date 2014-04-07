@@ -89,7 +89,13 @@
     // This works on built in contenteditable inline format commands
     execWithToggle: function(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp) {
       var that = this;
-      if (this.state(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp) && composer.selection.isCollapsed()) {
+
+      if (this.state(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp) &&
+          composer.selection.isCollapsed() &&
+          !composer.selection.caretIsLastInSelection() &&
+          !composer.selection.caretIsFirstInSelection()
+      ) {
+
         var state_element = that.state(composer, command, tagName, className, classRegExp)[0];
         composer.selection.executeAndRestoreSimple(function() {
           var parent = state_element.parentNode;

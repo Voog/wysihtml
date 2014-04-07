@@ -229,7 +229,25 @@
       return (ret !== this.contain) ? ret : false;
     },
 
+    caretIsLastInSelection: function() {
+      var r = rangy.createRange(this.doc),
+          s = this.getSelection();
 
+      r.selectNodeContents(this.getRange().commonAncestorContainer);
+      r.collapse(false);
+
+      return (this.isCollapsed() && (r.endContainer === s.focusNode || r.endContainer === s.anchorNode) && r.startOffset === s.anchorOffset);
+    },
+
+    caretIsFirstInSelection: function() {
+      var r = rangy.createRange(this.doc),
+          s = this.getSelection();
+
+      r.selectNodeContents(this.getRange().commonAncestorContainer);
+      r.collapse(true);
+
+      return (this.isCollapsed() && (r.startContainer === s.anchorNode || r.endContainer === s.anchorNode) && r.startOffset === s.anchorOffset);
+    },
 
     caretIsInTheBeginnig: function() {
         var selection = this.getSelection(),
