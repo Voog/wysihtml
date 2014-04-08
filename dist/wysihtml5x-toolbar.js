@@ -1,4 +1,23 @@
-/**
+// TODO: in future try to replace most inline compability checks with polyfills for code readability 
+
+// element.textContent polyfill.
+// Unsupporting browsers: IE8
+
+if (Object.defineProperty && Object.getOwnPropertyDescriptor && Object.getOwnPropertyDescriptor(Element.prototype, "textContent") && !Object.getOwnPropertyDescriptor(Element.prototype, "textContent").get) {
+	(function() {
+		var innerText = Object.getOwnPropertyDescriptor(Element.prototype, "innerText");
+		Object.defineProperty(Element.prototype, "textContent",
+			{
+				get: function() {
+					return innerText.get.call(this);
+				},
+				set: function(s) {
+					return innerText.set.call(this, s);
+				}
+			}
+		);
+	})();
+};/**
  * @license wysihtml5x v0.4.4
  * https://github.com/Edicy/wysihtml5
  *
@@ -1539,7 +1558,17 @@ wysihtml5.dom.getStyle = (function() {
     };
   };
 })();
-;/**
+;wysihtml5.dom.getTextNodes = function(node){
+  var all = [];
+  for (node=node.firstChild;node;node=node.nextSibling){
+    if (node.nodeType==3) {
+        all.push(node);
+    } else {
+        all = all.concat(wysihtml5.dom.getTextNodes(node));
+    }
+  }
+  return all;
+};;/**
  * High performant way to check whether an element with a specific tag name is in the given document
  * Optimized for being heavily executed
  * Unleashes the power of live node lists
@@ -2221,7 +2250,7 @@ wysihtml5.dom.parse = (function() {
     var nextSibling = oldNode.nextSibling;
     if (nextSibling && nextSibling.nodeType === wysihtml5.TEXT_NODE) {
       // Concatenate text nodes
-      nextSibling.data = oldNode.data + nextSibling.data;
+      nextSibling.data = oldNode.data.replace(INVISIBLE_SPACE_REG_EXP, "") + nextSibling.data.replace(INVISIBLE_SPACE_REG_EXP, "");
     } else {
       // \uFEFF = wysihtml5.INVISIBLE_SPACE (used as a hack in certain rich text editing situations)
       var data = oldNode.data.replace(INVISIBLE_SPACE_REG_EXP, "");
@@ -3965,7 +3994,7 @@ wysihtml5.quirks.cleanPastedHTML = (function() {
         matches,
         matchesLength,
         i,
-        j = 0;
+        j = 0, n;
     if (isString) {
       element = wysihtml5.dom.getAsDom(elementOrHtml, context);
     } else {
@@ -3979,6 +4008,12 @@ wysihtml5.quirks.cleanPastedHTML = (function() {
       for (; j<matchesLength; j++) {
         method(matches[j]);
       }
+    }
+
+    // replace joined non-breakable spaces with unjoined
+    var txtnodes = wysihtml5.dom.getTextNodes(element);
+    for (n = txtnodes.length; n--;) {
+      txtnodes[n].nodeValue = txtnodes[n].nodeValue.replace(/([\S\u00A0])\u00A0/gi, "$1 ");
     }
 
     matches = elementOrHtml = rules = null;
@@ -4497,7 +4532,37 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       return (ret !== this.contain) ? ret : false;
     },
 
+    getRangeToNodeEnd: function() {
+      if (this.isCollapsed()) {
+        var range = this.getRange(),
+            sNode = range.startContainer,
+            pos = range.startOffset,
+            lastR = rangy.createRange(this.doc);
 
+        lastR.selectNodeContents(sNode);
+        lastR.setStart(sNode, pos);
+        return lastR;
+      }
+    },
+
+    caretIsLastInSelection: function() {
+      var r = rangy.createRange(this.doc),
+          s = this.getSelection(),
+          endc = this.getRangeToNodeEnd().cloneContents(),
+          endtxt = endc.textContent;
+
+      return (/^\s*$/).test(endtxt);
+    },
+
+    caretIsFirstInSelection: function() {
+      var r = rangy.createRange(this.doc),
+          s = this.getSelection();
+
+      r.selectNodeContents(this.getRange().commonAncestorContainer);
+      r.collapse(true);
+
+      return (this.isCollapsed() && (r.startContainer === s.anchorNode || r.endContainer === s.anchorNode) && r.startOffset === s.anchorOffset);
+    },
 
     caretIsInTheBeginnig: function() {
         var selection = this.getSelection(),
@@ -4599,8 +4664,8 @@ wysihtml5.quirks.ensureProperClearing = (function() {
           newRange.setEndAfter(prevSibling);
         } else {
           newCaretPlaceholder = this.doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
-          dom.insert(newCaretPlaceholder).before(caretPlaceholder[0]);
-          newRange.setStartAfter(newCaretPlaceholder);
+          dom.insert(newCaretPlaceholder).after(caretPlaceholder[0]);
+          newRange.setStartBefore(newCaretPlaceholder);
           newRange.setEndAfter(newCaretPlaceholder);
         }
         this.setSelection(newRange);
@@ -6420,7 +6485,13 @@ wysihtml5.commands.formatCode = {
     // This works on built in contenteditable inline format commands
     execWithToggle: function(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp) {
       var that = this;
-      if (this.state(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp) && composer.selection.isCollapsed()) {
+
+      if (this.state(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp) &&
+          composer.selection.isCollapsed() &&
+          !composer.selection.caretIsLastInSelection() &&
+          !composer.selection.caretIsFirstInSelection()
+      ) {
+
         var state_element = that.state(composer, command, tagName, className, classRegExp)[0];
         composer.selection.executeAndRestoreSimple(function() {
           var parent = state_element.parentNode;
@@ -6635,6 +6706,10 @@ wysihtml5.commands.formatCode = {
           "nodeName": "div",
           "className": tempClassName
         });
+        
+        // This space causes new lists to never break on enter 
+        var INVISIBLE_SPACE_REG_EXP = /\uFEFF/g;
+        tempElement.innerHTML = tempElement.innerHTML.replace(INVISIBLE_SPACE_REG_EXP, "");
 
         if (tempElement) {
           isEmpty = tempElement.innerHTML === "" || tempElement.innerHTML === wysihtml5.INVISIBLE_SPACE || tempElement.innerHTML === "<br>";
@@ -6700,6 +6775,10 @@ wysihtml5.commands.formatCode = {
           "nodeName": "div",
           "className": tempClassName
         });
+
+        // This space causes new lists to never break on enter 
+        var INVISIBLE_SPACE_REG_EXP = /\uFEFF/g;
+        tempElement.innerHTML = tempElement.innerHTML.replace(INVISIBLE_SPACE_REG_EXP, "");
         
         if (tempElement) {
           isEmpty = tempElement.innerHTML === "" || tempElement.innerHTML === wysihtml5.INVISIBLE_SPACE || tempElement.innerHTML === "<br>";
