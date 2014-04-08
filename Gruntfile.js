@@ -23,6 +23,7 @@ module.exports = function(grunt) {
     "src/dom/get_as_dom.js",
     "src/dom/get_parent_element.js",
     "src/dom/get_style.js",
+    "src/dom/get_textnodes.js",
     "src/dom/has_element_with_tag_name.js",
     "src/dom/has_element_with_class_name.js",
     "src/dom/insert.js",
