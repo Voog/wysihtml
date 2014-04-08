@@ -525,7 +525,7 @@ wysihtml5.dom.parse = (function() {
     var nextSibling = oldNode.nextSibling;
     if (nextSibling && nextSibling.nodeType === wysihtml5.TEXT_NODE) {
       // Concatenate text nodes
-      nextSibling.data = oldNode.data + nextSibling.data;
+      nextSibling.data = oldNode.data.replace(INVISIBLE_SPACE_REG_EXP, "") + nextSibling.data.replace(INVISIBLE_SPACE_REG_EXP, "");
     } else {
       // \uFEFF = wysihtml5.INVISIBLE_SPACE (used as a hack in certain rich text editing situations)
       var data = oldNode.data.replace(INVISIBLE_SPACE_REG_EXP, "");
