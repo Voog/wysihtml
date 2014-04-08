@@ -9,6 +9,14 @@ if (wysihtml5.browser.supported()) {
       this.editableArea.innerHTML  = "hey tiff, what's up?";
       
       document.body.appendChild(this.editableArea);
+
+      this.setCaretInsideNode = function(editor, el) {
+        var r1 = editor.composer.selection.createRange(),
+            e1 = el.childNodes[0];
+        r1.setEnd(e1, 1);
+        r1.setStart(e1, 1);
+        editor.composer.selection.setSelection(r1);
+      };
       
     },
 
@@ -24,7 +32,7 @@ if (wysihtml5.browser.supported()) {
   
 // bold, italic, underline
   asyncTest("Basic formating tests", function() {
-     expect(10);
+     expect(18);
     var that = this,
         text = "once upon a time there was an unformated text.",
         parserRules = {
@@ -40,39 +48,69 @@ if (wysihtml5.browser.supported()) {
         
     editor.on("load", function() {
       var editableElement   = that.editableArea;
-      editor.setValue(text, true);
-      
       // basic bold
+      editor.setValue(text, true);
       editor.composer.selection.selectNode(editor.editableElement);
       editor.composer.commands.exec('bold');
       equal(editableElement.innerHTML.toLowerCase(), "<b>" + text + "</b>", "Command bold sets text as bold correctly");
-      
-      editor.composer.selection.getSelection().collapseToStart();
+
+      editor.composer.selection.getSelection().collapseToEnd();
       ok(editor.composer.selection.getSelection().isCollapsed, "Text caret is collapsed");
+
       editor.composer.commands.exec('bold');
-      equal(editableElement.innerHTML.toLowerCase(), text, "Bold is correctly removed when text caret is inside bold");
+      editor.composer.commands.exec('insertHtml', 'test');
+
+      equal(editableElement.innerHTML.toLowerCase(), "<b>" + text + "</b>test", "With caret at last position bold is not removed but set to notbold at caret");
       ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
-      
+
+      that.setCaretInsideNode(editor, editableElement.querySelector('b'));
+      editor.composer.commands.exec('bold');
+
+      equal(editableElement.innerHTML.toLowerCase(), text + "test", "Bold is correctly removed when text caret is inside bold");
+      ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
+
       // basic italic
+      editor.setValue(text, true);
       editor.composer.selection.selectNode(editor.editableElement);
       editor.composer.commands.exec('italic');
-      equal(editableElement.innerHTML.toLowerCase(), "<i>" + text + "</i>", "Command italic sets text style correctly");
+      equal(editableElement.innerHTML.toLowerCase(), "<i>" + text + "</i>", "Command italic sets text as italic correctly");
       
-      editor.composer.selection.getSelection().collapseToStart();
+      editor.composer.selection.getSelection().collapseToEnd();
+      ok(editor.composer.selection.getSelection().isCollapsed, "Text caret is collapsed");
+
       editor.composer.commands.exec('italic');
-      equal(editableElement.innerHTML.toLowerCase(), text, "Italic is correctly removed when text caret is inside italic");
+      editor.composer.commands.exec('insertHtml', 'test');
+
+      equal(editableElement.innerHTML.toLowerCase(), "<i>" + text + "</i>test", "With caret at last position italic is not removed but set to notitalic at caret");
       ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
-      
+
+      that.setCaretInsideNode(editor, editableElement.querySelector('i'));
+      editor.composer.commands.exec('italic');
+
+      equal(editableElement.innerHTML.toLowerCase(), text + "test", "Italic is correctly removed when text caret is inside italic");
+      ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
+
       // basic underline
+      editor.setValue(text, true);
       editor.composer.selection.selectNode(editor.editableElement);
       editor.composer.commands.exec('underline');
-      equal(editableElement.innerHTML.toLowerCase(), "<u>" + text + "</u>", "Command underline sets text style correctly");
-      
-      editor.composer.selection.getSelection().collapseToStart();
+      equal(editableElement.innerHTML.toLowerCase(), "<u>" + text + "</u>", "Command underline sets text as underline correctly");
+
+      editor.composer.selection.getSelection().collapseToEnd();
+      ok(editor.composer.selection.getSelection().isCollapsed, "Text caret is collapsed");
+
       editor.composer.commands.exec('underline');
-      equal(editableElement.innerHTML.toLowerCase(), text, "Underline is correctly removed when text caret is inside underline");
+      editor.composer.commands.exec('insertHtml', 'test');
+
+      equal(editableElement.innerHTML.toLowerCase(), "<u>" + text + "</u>test", "With caret at last position underline is not removed but set to notunderline at caret");
       ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
-      
+
+      that.setCaretInsideNode(editor, editableElement.querySelector('u'));
+      editor.composer.commands.exec('underline');
+
+      equal(editableElement.innerHTML.toLowerCase(), text + "test", "Underline is correctly removed when text caret is inside underline");
+      ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
+
       start();
     });
   });
@@ -231,10 +269,10 @@ if (wysihtml5.browser.supported()) {
         
       editor.on("load", function() {
         var editableElement   = that.editableArea,
-            expectText = '<ul><li>﻿</li></ul>',
-            expectTextWithContents = '<ul><li>text﻿</li></ul>',
-            expectOrdText = '<ol><li>﻿</li></ol>',
-            expectOrdTextWithContents = '<ol><li>text﻿</li></ol>';
+            expectText = '<ul><li></li></ul>',
+            expectTextWithContents = '<ul><li>text</li></ul>',
+            expectOrdText = '<ol><li></li></ol>',
+            expectOrdTextWithContents = '<ol><li>text</li></ol>';
 
         editor.setValue(text, true);
         editor.composer.selection.selectNode(editor.editableElement);

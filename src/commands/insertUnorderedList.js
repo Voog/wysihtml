@@ -44,6 +44,10 @@ wysihtml5.commands.insertUnorderedList = {
           "nodeName": "div",
           "className": tempClassName
         });
+
+        // This space causes new lists to never break on enter 
+        var INVISIBLE_SPACE_REG_EXP = /\uFEFF/g;
+        tempElement.innerHTML = tempElement.innerHTML.replace(INVISIBLE_SPACE_REG_EXP, "");
         
         if (tempElement) {
           isEmpty = tempElement.innerHTML === "" || tempElement.innerHTML === wysihtml5.INVISIBLE_SPACE || tempElement.innerHTML === "<br>";

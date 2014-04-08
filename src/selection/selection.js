@@ -229,7 +229,37 @@
       return (ret !== this.contain) ? ret : false;
     },
 
+    getRangeToNodeEnd: function() {
+      if (this.isCollapsed()) {
+        var range = this.getRange(),
+            sNode = range.startContainer,
+            pos = range.startOffset,
+            lastR = rangy.createRange(this.doc);
 
+        lastR.selectNodeContents(sNode);
+        lastR.setStart(sNode, pos);
+        return lastR;
+      }
+    },
+
+    caretIsLastInSelection: function() {
+      var r = rangy.createRange(this.doc),
+          s = this.getSelection(),
+          endc = this.getRangeToNodeEnd().cloneContents(),
+          endtxt = endc.textContent;
+
+      return (/^\s*$/).test(endtxt);
+    },
+
+    caretIsFirstInSelection: function() {
+      var r = rangy.createRange(this.doc),
+          s = this.getSelection();
+
+      r.selectNodeContents(this.getRange().commonAncestorContainer);
+      r.collapse(true);
+
+      return (this.isCollapsed() && (r.startContainer === s.anchorNode || r.endContainer === s.anchorNode) && r.startOffset === s.anchorOffset);
+    },
 
     caretIsInTheBeginnig: function() {
         var selection = this.getSelection(),
@@ -331,8 +361,8 @@
           newRange.setEndAfter(prevSibling);
         } else {
           newCaretPlaceholder = this.doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
-          dom.insert(newCaretPlaceholder).before(caretPlaceholder[0]);
-          newRange.setStartAfter(newCaretPlaceholder);
+          dom.insert(newCaretPlaceholder).after(caretPlaceholder[0]);
+          newRange.setStartBefore(newCaretPlaceholder);
           newRange.setEndAfter(newCaretPlaceholder);
         }
         this.setSelection(newRange);
