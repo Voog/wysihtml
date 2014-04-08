@@ -21,7 +21,7 @@ wysihtml5.quirks.cleanPastedHTML = (function() {
         matches,
         matchesLength,
         i,
-        j = 0;
+        j = 0, n;
     if (isString) {
       element = wysihtml5.dom.getAsDom(elementOrHtml, context);
     } else {
@@ -35,6 +35,12 @@ wysihtml5.quirks.cleanPastedHTML = (function() {
       for (; j<matchesLength; j++) {
         method(matches[j]);
       }
+    }
+
+    // replace joined non-breakable spaces with unjoined
+    var txtnodes = wysihtml5.dom.getTextNodes(element);
+    for (n = txtnodes.length; n--;) {
+      txtnodes[n].nodeValue = txtnodes[n].nodeValue.replace(/([\S\u00A0])\u00A0/gi, "$1 ");
     }
 
     matches = elementOrHtml = rules = null;
