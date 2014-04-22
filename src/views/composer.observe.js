@@ -71,6 +71,14 @@
     }
   };
 
+  var handleTabKeyDown = function(composer, element) {
+    if (!composer.selection.isCollapsed()) {
+      composer.selection.deleteContents();
+    }
+    // Is &emsp; close enough to tab. Could not find enough counter arguments for now.
+    composer.commands.exec("insertHTML", "&emsp;");
+  };
+
   wysihtml5.views.Composer.prototype.observe = function() {
     var that                = this,
         state               = this.getValue(),
@@ -207,8 +215,12 @@
         that.commands.exec(command);
         event.preventDefault();
       }
-      if (keyCode == 8) {
+      if (keyCode === 8) {
+        // delete key
         handleDeleteKeyPress(that.selection, element);
+      } else if (keyCode === 9) {
+        event.preventDefault();
+        handleTabKeyDown(that, element);
       }
     });
 
