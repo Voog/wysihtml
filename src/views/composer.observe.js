@@ -18,6 +18,59 @@
         "85": "underline" // U
       };
 
+  var deleteAroundEditable = function(selection, uneditable, element) {
+    // merge node with previous node from uneditable
+    var prevNode = selection.getPreviousNode(uneditable, true),
+        curNode = selection.getSelectedNode();
+
+    if (curNode.nodeType !== 1 && curNode.parentNode !== element) { curNode = curNode.parentNode; }
+    if (prevNode) {
+      if (curNode.nodeType == 1) {
+        var first = curNode.firstChild;
+
+        if (prevNode.nodeType == 1) {
+          while (curNode.firstChild) {
+            prevNode.appendChild(curNode.firstChild);
+          }
+        } else {
+          while (curNode.firstChild) {
+            uneditable.parentNode.insertBefore(curNode.firstChild, uneditable);
+          }
+        }
+        if (curNode.parentNode) {
+          curNode.parentNode.removeChild(curNode);
+        }
+        selection.setBefore(first);
+      } else {
+        if (prevNode.nodeType == 1) {
+          prevNode.appendChild(curNode);
+        } else {
+          uneditable.parentNode.insertBefore(curNode, uneditable);
+        }
+        selection.setBefore(curNode);
+      }
+    }
+  };
+
+  var handleDeleteKeyPress = function(selection, element) {
+    if (selection.isCollapsed()) {
+      if (selection.caretIsInTheBeginnig()) {
+        event.preventDefault();
+      } else {
+        var beforeUneditable = selection.caretIsBeforeUneditable();
+
+        // Do a special delete if caret would delete uneditable
+        if (beforeUneditable) {
+          event.preventDefault();
+          deleteAroundEditable(selection, beforeUneditable, element);
+        }
+      }
+    } else if (selection.containsUneditable()) {
+      event.preventDefault();
+      selection.deleteContents();
+    }
+  };
+
   wysihtml5.views.Composer.prototype.observe = function() {
     var that                = this,
         state               = this.getValue(),
@@ -155,55 +208,7 @@
         event.preventDefault();
       }
       if (keyCode == 8) {
-
-        if (that.selection.isCollapsed()) {
-          if (that.selection.caretIsInTheBeginnig()) {
-            event.preventDefault();
-          } else {
-            var beforeUneditable = that.selection.caretIsBeforeUneditable();
-            if (beforeUneditable) {
-              event.preventDefault();
-
-              // TODO: take the how to delete around uneditable out of here
-              // merge node with previous node from uneditable
-              var prevNode = that.selection.getPreviousNode(beforeUneditable, true),
-                  curNode = that.selection.getSelectedNode();
-
-              if (curNode.nodeType !== 1 && curNode.parentNode !== element) { curNode = curNode.parentNode; }
-              if (prevNode) {
-                if (curNode.nodeType == 1) {
-                  var first = curNode.firstChild;
-
-                  if (prevNode.nodeType == 1) {
-                    while (curNode.firstChild) {
-                      prevNode.appendChild(curNode.firstChild);
-                    }
-                  } else {
-                    while (curNode.firstChild) {
-                      beforeUneditable.parentNode.insertBefore(curNode.firstChild, beforeUneditable);
-                    }
-                  }
-                  if (curNode.parentNode) {
-                    curNode.parentNode.removeChild(curNode);
-                  }
-                  that.selection.setBefore(first);
-                } else {
-                  if (prevNode.nodeType == 1) {
-                    prevNode.appendChild(curNode);
-                  } else {
-                    beforeUneditable.parentNode.insertBefore(curNode, beforeUneditable);
-                  }
-                  that.selection.setBefore(curNode);
-                }
-              }
-            }
-
-          }
-        } else if (that.selection.containsUneditable()) {
-          event.preventDefault();
-          that.selection.deleteContents();
-        }
-
+        handleDeleteKeyPress(that.selection, element);
       }
     });
 
