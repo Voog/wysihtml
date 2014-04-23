@@ -71,10 +71,32 @@
     }
   };
 
+  var tryToPushLiLevel = function(selection) {
+    var prevLi;
+    selection.executeAndRestoreRangy(function() {
+      var selNode = selection.getSelectedNode(),
+          liNode = (selNode.nodeName && selNode.nodeName === 'LI') ? selNode : wysihtml5.dom.getParentElement(selNode.parentNode, 'LI', 1),
+          listTag = (liNode.parentNode.nodeName === 'OL') ? 'OL' : 'UL',
+          list = selNode.ownerDocument.createElement(listTag);
+
+      prevLi = wysihtml5.dom.getPreviousElement(liNode);
+      if (prevLi) {
+        list.appendChild(liNode);
+        prevLi.appendChild(list);
+      }
+    });
+
+    return (prevLi) ? true : false;
+  };
+
+
   var handleTabKeyDown = function(composer, element) {
     if (!composer.selection.isCollapsed()) {
       composer.selection.deleteContents();
+    } else if (composer.selection.caretIsInTheBeginnig('LI')) {
+      if (tryToPushLiLevel(composer.selection)) return;
     }
+
     // Is &emsp; close enough to tab. Could not find enough counter arguments for now.
     composer.commands.exec("insertHTML", "&emsp;");
   };

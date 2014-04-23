@@ -23,6 +23,8 @@ module.exports = function(grunt) {
     "src/dom/delegate.js",
     "src/dom/get_as_dom.js",
     "src/dom/get_parent_element.js",
+    "src/dom/get_next_element.js",
+    "src/dom/get_previous_element.js",
     "src/dom/get_style.js",
     "src/dom/get_textnodes.js",
     "src/dom/has_element_with_tag_name.js",
