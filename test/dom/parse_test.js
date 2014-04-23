@@ -581,6 +581,24 @@ if (wysihtml5.browser.supported()) {
       "'mailto:' urls are not stripped"
     );
   });
+
+  test("Check anchor links", function() {
+    var rules = {
+      tags: {
+        a: {
+          check_attributes: {
+            href: "href"
+          }
+        }
+      }
+    };
+
+    this.equal(
+      this.sanitize('<a href="#anchor">foo</a>', rules),
+      '<a href="#anchor">foo</a>',
+      "'#'-starting anchor urls are not stripped"
+    );
+  });
   
   test("Check custom data attributes", function() {
     var rules = {
