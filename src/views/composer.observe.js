@@ -75,17 +75,25 @@
     var prevLi;
     selection.executeAndRestoreRangy(function() {
       var selNode = selection.getSelectedNode(),
-          liNode = (selNode.nodeName && selNode.nodeName === 'LI') ? selNode : wysihtml5.dom.getParentElement(selNode.parentNode, 'LI', 1),
-          listTag = (liNode.parentNode.nodeName === 'OL') ? 'OL' : 'UL',
-          list = selNode.ownerDocument.createElement(listTag);
+          liNode = (selNode.nodeName && selNode.nodeName === 'LI') ? selNode : selNode.parentNode,
+          listTag, list;
 
-      prevLi = wysihtml5.dom.getPreviousElement(liNode);
-      if (prevLi) {
-        list.appendChild(liNode);
-        prevLi.appendChild(list);
+      if (liNode.getAttribute('class') === "rangySelectionBoundary") {
+        liNode = liNode.parentNode;
       }
-    });
 
+      if (liNode.nodeName === 'LI') {
+        listTag = (liNode.parentNode.nodeName === 'OL') ? 'OL' : 'UL';
+        list = selNode.ownerDocument.createElement(listTag);
+        prevLi = wysihtml5.dom.getPreviousElement(liNode);
+
+        if (prevLi) {
+          list.appendChild(liNode);
+          prevLi.appendChild(list);
+        }
+      }
+
+    });
     return (prevLi) ? true : false;
   };
 
