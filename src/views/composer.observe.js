@@ -144,7 +144,13 @@
 
 
     if (this.config.handleTables) {
-        this.tableSelection = wysihtml5.quirks.tableCellsSelection(element, that.parent);
+      if(this.doc.execCommand && wysihtml5.browser.supportsCommand(this.doc, "enableObjectResizing") && wysihtml5.browser.supportsCommand(this.doc, "enableInlineTableEditing")) {
+        setTimeout(function() {
+          that.doc.execCommand("enableObjectResizing", false, "false");
+          that.doc.execCommand("enableInlineTableEditing", false, "false");
+        }, 0);
+      }
+      this.tableSelection = wysihtml5.quirks.tableCellsSelection(element, that.parent);
     }
 
     // --------- Focus & blur logic ---------
