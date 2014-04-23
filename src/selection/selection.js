@@ -261,12 +261,15 @@
       return (this.isCollapsed() && (r.startContainer === s.anchorNode || r.endContainer === s.anchorNode) && r.startOffset === s.anchorOffset);
     },
 
-    caretIsInTheBeginnig: function() {
+    caretIsInTheBeginnig: function(ofNode) {
         var selection = this.getSelection(),
             node = selection.anchorNode,
             offset = selection.anchorOffset;
-
-        return (offset === 0 && !this.getPreviousNode(node, true));
+        if (ofNode) {
+          return (offset === 0 && (node.nodeName && node.nodeName === ofNode.toUpperCase() || wysihtml5.dom.getParentElement(node.parentNode, ofNode, 1)));
+        } else {
+          return (offset === 0 && !this.getPreviousNode(node, true));
+        }
     },
 
     caretIsBeforeUneditable: function() {

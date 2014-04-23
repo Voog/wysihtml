@@ -1485,7 +1485,19 @@ wysihtml5.dom.getParentElement = (function() {
     }
   };
 })();
-;/**
+;wysihtml5.dom.getNextElement = function(node){
+  var nextSibling = node.nextSibling;
+  while(nextSibling && nextSibling.nodeType != 1) {
+    nextSibling = nextSibling.nextSibling;
+  }
+  return nextSibling;
+};;wysihtml5.dom.getPreviousElement = function(node){
+  var nextSibling = node.previousSibling;
+  while(nextSibling && nextSibling.nodeType != 1) {
+    nextSibling = nextSibling.previousSibling;
+  }
+  return nextSibling;
+};;/**
  * Get element's style for a specific css property
  *
  * @param {Element} element The element on which to retrieve the style
@@ -4564,12 +4576,15 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       return (this.isCollapsed() && (r.startContainer === s.anchorNode || r.endContainer === s.anchorNode) && r.startOffset === s.anchorOffset);
     },
 
-    caretIsInTheBeginnig: function() {
+    caretIsInTheBeginnig: function(ofNode) {
         var selection = this.getSelection(),
             node = selection.anchorNode,
             offset = selection.anchorOffset;
-
-        return (offset === 0 && !this.getPreviousNode(node, true));
+        if (ofNode) {
+          return (offset === 0 && (node.nodeName && node.nodeName === ofNode.toUpperCase() || wysihtml5.dom.getParentElement(node.parentNode, ofNode, 1)));
+        } else {
+          return (offset === 0 && !this.getPreviousNode(node, true));
+        }
     },
 
     caretIsBeforeUneditable: function() {
@@ -7996,6 +8011,89 @@ wysihtml5.views.View = Base.extend(
         "85": "underline" // U
       };
 
+  var deleteAroundEditable = function(selection, uneditable, element) {
+    // merge node with previous node from uneditable
+    var prevNode = selection.getPreviousNode(uneditable, true),
+        curNode = selection.getSelectedNode();
+
+    if (curNode.nodeType !== 1 && curNode.parentNode !== element) { curNode = curNode.parentNode; }
+    if (prevNode) {
+      if (curNode.nodeType == 1) {
+        var first = curNode.firstChild;
+
+        if (prevNode.nodeType == 1) {
+          while (curNode.firstChild) {
+            prevNode.appendChild(curNode.firstChild);
+          }
+        } else {
+          while (curNode.firstChild) {
+            uneditable.parentNode.insertBefore(curNode.firstChild, uneditable);
+          }
+        }
+        if (curNode.parentNode) {
+          curNode.parentNode.removeChild(curNode);
+        }
+        selection.setBefore(first);
+      } else {
+        if (prevNode.nodeType == 1) {
+          prevNode.appendChild(curNode);
+        } else {
+          uneditable.parentNode.insertBefore(curNode, uneditable);
+        }
+        selection.setBefore(curNode);
+      }
+    }
+  };
+
+  var handleDeleteKeyPress = function(selection, element) {
+    if (selection.isCollapsed()) {
+      if (selection.caretIsInTheBeginnig()) {
+        event.preventDefault();
+      } else {
+        var beforeUneditable = selection.caretIsBeforeUneditable();
+
+        // Do a special delete if caret would delete uneditable
+        if (beforeUneditable) {
+          event.preventDefault();
+          deleteAroundEditable(selection, beforeUneditable, element);
+        }
+      }
+    } else if (selection.containsUneditable()) {
+      event.preventDefault();
+      selection.deleteContents();
+    }
+  };
+
+  var tryToPushLiLevel = function(selection) {
+    var prevLi;
+    selection.executeAndRestoreRangy(function() {
+      var selNode = selection.getSelectedNode(),
+          liNode = (selNode.nodeName && selNode.nodeName === 'LI') ? selNode : wysihtml5.dom.getParentElement(selNode.parentNode, 'LI', 1),
+          listTag = (liNode.parentNode.nodeName === 'OL') ? 'OL' : 'UL',
+          list = selNode.ownerDocument.createElement(listTag);
+
+      prevLi = wysihtml5.dom.getPreviousElement(liNode);
+      if (prevLi) {
+        list.appendChild(liNode);
+        prevLi.appendChild(list);
+      }
+    });
+
+    return (prevLi) ? true : false;
+  };
+
+
+  var handleTabKeyDown = function(composer, element) {
+    if (!composer.selection.isCollapsed()) {
+      composer.selection.deleteContents();
+    } else if (composer.selection.caretIsInTheBeginnig('LI')) {
+      if (tryToPushLiLevel(composer.selection)) return;
+    }
+
+    // Is &emsp; close enough to tab. Could not find enough counter arguments for now.
+    composer.commands.exec("insertHTML", "&emsp;");
+  };
+
   wysihtml5.views.Composer.prototype.observe = function() {
     var that                = this,
         state               = this.getValue(),
@@ -8132,56 +8230,12 @@ wysihtml5.views.View = Base.extend(
         that.commands.exec(command);
         event.preventDefault();
       }
-      if (keyCode == 8) {
-
-        if (that.selection.isCollapsed()) {
-          if (that.selection.caretIsInTheBeginnig()) {
-            event.preventDefault();
-          } else {
-            var beforeUneditable = that.selection.caretIsBeforeUneditable();
-            if (beforeUneditable) {
-              event.preventDefault();
-
-              // TODO: take the how to delete around uneditable out of here
-              // merge node with previous node from uneditable
-              var prevNode = that.selection.getPreviousNode(beforeUneditable, true),
-                  curNode = that.selection.getSelectedNode();
-
-              if (curNode.nodeType !== 1 && curNode.parentNode !== element) { curNode = curNode.parentNode; }
-              if (prevNode) {
-                if (curNode.nodeType == 1) {
-                  var first = curNode.firstChild;
-
-                  if (prevNode.nodeType == 1) {
-                    while (curNode.firstChild) {
-                      prevNode.appendChild(curNode.firstChild);
-                    }
-                  } else {
-                    while (curNode.firstChild) {
-                      beforeUneditable.parentNode.insertBefore(curNode.firstChild, beforeUneditable);
-                    }
-                  }
-                  if (curNode.parentNode) {
-                    curNode.parentNode.removeChild(curNode);
-                  }
-                  that.selection.setBefore(first);
-                } else {
-                  if (prevNode.nodeType == 1) {
-                    prevNode.appendChild(curNode);
-                  } else {
-                    beforeUneditable.parentNode.insertBefore(curNode, beforeUneditable);
-                  }
-                  that.selection.setBefore(curNode);
-                }
-              }
-            }
-
-          }
-        } else if (that.selection.containsUneditable()) {
-          event.preventDefault();
-          that.selection.deleteContents();
-        }
-
+      if (keyCode === 8) {
+        // delete key
+        handleDeleteKeyPress(that.selection, element);
+      } else if (keyCode === 9) {
+        event.preventDefault();
+        handleTabKeyDown(that, element);
       }
     });
 
