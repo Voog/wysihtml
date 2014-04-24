@@ -184,7 +184,7 @@
   }
 
   function _hasStyles(element) {
-    return !!wysihtml5.lang.string(element.getAttribute('style')).trim();
+    return !!wysihtml5.lang.string(element.getAttribute('style') || '').trim();
   }
 
   wysihtml5.commands.formatBlock = {
@@ -193,7 +193,7 @@
           blockElements    = this.state(composer, command, nodeName, className, classRegExp, cssStyle, styleRegExp),
           useLineBreaks   = composer.config.useLineBreaks,
           defaultNodeName = useLineBreaks ? "DIV" : "P",
-          selectedNodes, classRemoveAction, blockRenameFound;
+          selectedNodes, classRemoveAction, blockRenameFound, styleRemoveAction;
       nodeName = typeof(nodeName) === "string" ? nodeName.toUpperCase() : nodeName;
 
       if (blockElements.length) {
@@ -212,7 +212,7 @@
             }
 
             var hasClasses = _hasClasses(blockElements[b]),
-                hasStyles = hasStyles(blockElements[b]);
+                hasStyles = _hasStyles(blockElements[b]);
 
             if (!hasClasses && !hasStyles && (useLineBreaks || nodeName === "P")) {
               // Insert a line break afterwards and beforewards when there are siblings
