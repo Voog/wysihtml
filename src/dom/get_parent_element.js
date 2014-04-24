@@ -44,7 +44,6 @@ wysihtml5.dom.getParentElement = (function() {
     if (!cssStyle) {
       return !!styles.length;
     }
-    console.log(styles);
     return styles[styles.length - 1] === cssStyle;
   }
 
@@ -109,7 +108,7 @@ wysihtml5.dom.getParentElement = (function() {
       );
     } else if (matchingSet.cssStyle || matchingSet.styleRegExp) {
       return _getParentElementWithNodeNameAndStyle(
-        node, matchingSet.nodeName, matchingSet.cssStyle, matchingSet.classRegExp, levels
+        node, matchingSet.nodeName, matchingSet.cssStyle, matchingSet.styleRegExp, levels
       );
     } else {
       return _getParentElementWithNodeName(

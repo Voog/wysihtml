@@ -19,8 +19,8 @@
   }
 
   function _addStyle(element, cssStyle, styleRegExp) {
+    _removeStyle(element, styleRegExp);
     if (element.getAttribute('style')) {
-      _removeStyle(element, styleRegExp);
       element.setAttribute('style', wysihtml5.lang.string(element.getAttribute('style') + " " + cssStyle).trim());
     } else {
       element.setAttribute('style', cssStyle);
@@ -40,7 +40,7 @@
     var ret = styleRegExp.test(element.getAttribute('style'));
     element.setAttribute('style', (element.getAttribute('style') || "").replace(styleRegExp, ""));
     if (wysihtml5.lang.string(element.getAttribute('style') || "").trim() == '') {
-        element.removeAttribute('style');
+      element.removeAttribute('style');
     }
     return ret;
   }
@@ -194,7 +194,6 @@
           useLineBreaks   = composer.config.useLineBreaks,
           defaultNodeName = useLineBreaks ? "DIV" : "P",
           selectedNodes, classRemoveAction, blockRenameFound;
-
       nodeName = typeof(nodeName) === "string" ? nodeName.toUpperCase() : nodeName;
 
       if (blockElements.length) {
@@ -239,7 +238,7 @@
               nodeName: BLOCK_ELEMENTS_GROUP
             });
             if (blockElement == composer.element) {
-                blockElement = null;
+              blockElement = null;
             }
             if (blockElement) {
                 // Rename current block element to new block element and add class
@@ -252,7 +251,6 @@
                 if (cssStyle) {
                   _addStyle(blockElement, cssStyle, styleRegExp);
                 }
-
               blockRenameFound = true;
             }
           }
