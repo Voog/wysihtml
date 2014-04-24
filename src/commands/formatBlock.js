@@ -18,11 +18,29 @@
     }
   }
 
+  function _addStyle(element, cssStyle, styleRegExp) {
+    _removeStyle(element, styleRegExp);
+    if (element.getAttribute('style')) {
+      element.setAttribute('style', wysihtml5.lang.string(element.getAttribute('style') + " " + cssStyle).trim());
+    } else {
+      element.setAttribute('style', cssStyle);
+    }
+  }
+
   function _removeClass(element, classRegExp) {
     var ret = classRegExp.test(element.className);
     element.className = element.className.replace(classRegExp, "");
     if (wysihtml5.lang.string(element.className).trim() == '') {
         element.removeAttribute('class');
+    }
+    return ret;
+  }
+
+  function _removeStyle(element, styleRegExp) {
+    var ret = styleRegExp.test(element.getAttribute('style'));
+    element.setAttribute('style', (element.getAttribute('style') || "").replace(styleRegExp, ""));
+    if (wysihtml5.lang.string(element.getAttribute('style') || "").trim() == '') {
+      element.removeAttribute('style');
     }
     return ret;
   }
@@ -165,14 +183,17 @@
     return !!wysihtml5.lang.string(element.className).trim();
   }
 
+  function _hasStyles(element) {
+    return !!wysihtml5.lang.string(element.getAttribute('style') || '').trim();
+  }
+
   wysihtml5.commands.formatBlock = {
-    exec: function(composer, command, nodeName, className, classRegExp) {
+    exec: function(composer, command, nodeName, className, classRegExp, cssStyle, styleRegExp) {
       var doc             = composer.doc,
-          blockElements    = this.state(composer, command, nodeName, className, classRegExp),
+          blockElements    = this.state(composer, command, nodeName, className, classRegExp, cssStyle, styleRegExp),
           useLineBreaks   = composer.config.useLineBreaks,
           defaultNodeName = useLineBreaks ? "DIV" : "P",
-          selectedNodes, classRemoveAction, blockRenameFound;
-
+          selectedNodes, classRemoveAction, blockRenameFound, styleRemoveAction;
       nodeName = typeof(nodeName) === "string" ? nodeName.toUpperCase() : nodeName;
 
       if (blockElements.length) {
@@ -181,15 +202,19 @@
             if (classRegExp) {
               classRemoveAction = _removeClass(blockElements[b], classRegExp);
             }
+            if (styleRegExp) {
+              styleRemoveAction = _removeStyle(blockElements[b], styleRegExp);
+            }
 
-            if (classRemoveAction && nodeName === null && blockElements[b].nodeName != defaultNodeName) {
-              // dont rename or remove element when just setting block formating class
+            if ((styleRemoveAction || classRemoveAction) && nodeName === null && blockElements[b].nodeName != defaultNodeName) {
+              // dont rename or remove element when just setting block formating class or style
               return;
             }
 
-            var hasClasses = _hasClasses(blockElements[b]);
+            var hasClasses = _hasClasses(blockElements[b]),
+                hasStyles = _hasStyles(blockElements[b]);
 
-            if (!hasClasses && (useLineBreaks || nodeName === "P")) {
+            if (!hasClasses && !hasStyles && (useLineBreaks || nodeName === "P")) {
               // Insert a line break afterwards and beforewards when there are siblings
               // that are not of type line break or block element
               _addLineBreakBeforeAndAfter(blockElements[b]);
@@ -213,7 +238,7 @@
               nodeName: BLOCK_ELEMENTS_GROUP
             });
             if (blockElement == composer.element) {
-                blockElement = null;
+              blockElement = null;
             }
             if (blockElement) {
                 // Rename current block element to new block element and add class
@@ -223,7 +248,9 @@
                 if (className) {
                   _addClass(blockElement, className, classRegExp);
                 }
-
+                if (cssStyle) {
+                  _addStyle(blockElement, cssStyle, styleRegExp);
+                }
               blockRenameFound = true;
             }
           }
@@ -238,12 +265,14 @@
       if (wysihtml5.browser.supportsSelectLine()) {
           _selectionWrap(composer, {
             "nodeName": (nodeName || defaultNodeName),
-            "className": className || null
+            "className": className || null,
+            "cssStyle": cssStyle || null
           });
       } else {
           // Falling back to native command for Opera up to 12 mostly
           // Native command does not create elements from selecton boundaries.
           // Not quite user expected behaviour
+          // TODO: Also it does not support adding style. Drop opera 12 support or find a fallback
           if (composer.commands.support(command)) {
             _execCommand(doc, composer, command, nodeName || defaultNodeName, className);
             return;
@@ -253,7 +282,7 @@
 
     },
 
-    state: function(composer, command, nodeName, className, classRegExp) {
+    state: function(composer, command, nodeName, className, classRegExp, cssStyle, styleRegExp) {
       var nodes = composer.selection.getSelectedOwnNodes(),
           parents = [],
           parent;
@@ -265,7 +294,9 @@
         parent = dom.getParentElement(nodes[i], {
           nodeName:     nodeName,
           className:    className,
-          classRegExp:  classRegExp
+          classRegExp:  classRegExp,
+          cssStyle:     cssStyle,
+          styleRegExp:  styleRegExp
         });
         if (parent && wysihtml5.lang.array(parents).indexOf(parent) == -1) {
           parents.push(parent);

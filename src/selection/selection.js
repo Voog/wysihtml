@@ -488,6 +488,9 @@
         if (nodeOptions.className) {
           node.className = nodeOptions.className;
         }
+        if (nodeOptions.cssStyle) {
+          node.setAttribute('style', nodeOptions.cssStyle);
+        }
         try {
           // This only works when the range boundaries are not overlapping other elements
           ranges[i].surroundContents(node);

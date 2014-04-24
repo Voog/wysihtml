@@ -117,7 +117,7 @@ if (wysihtml5.browser.supported()) {
   
 // formatblock (alignment, headings, paragraph, pre, blockquote)
     asyncTest("Format block", function() {
-       expect(8);
+       expect(12);
       var that = this,
           editor = new wysihtml5.Editor(this.editableArea),
           text = "once upon a time<br>there was an unformated text<br>spanning many lines.";
@@ -158,6 +158,21 @@ if (wysihtml5.browser.supported()) {
         editor.composer.commands.exec('formatBlock', "p");
         editor.composer.commands.exec('justifyRight');
         equal(editableElement.innerHTML.toLowerCase(), '<p>once upon a time</p>there was an unformated text<br>spanning many lines.', "heading alignment removed sucessfully");
+
+        editor.setValue(text, true);
+        editor.composer.selection.selectNode(editor.editableElement);
+        editor.composer.commands.exec('alignRightStyle');
+        equal(editableElement.innerHTML.toLowerCase(), '<div style="text-align: right;">' + text + '</div>', "Text corectly wrapped in one aligning div with style");
+
+        editor.composer.commands.exec('alignCenterStyle');
+        equal(editableElement.innerHTML.toLowerCase(), '<div style="text-align: center;">' + text + '</div>', "Alignment (style) changed correctly to center");
+
+        editor.composer.commands.exec('alignLeftStyle');
+        equal(editableElement.innerHTML.toLowerCase(), '<div style="text-align: left;">' + text + '</div>', "Alignment (style) changed correctly to left");
+
+        editor.composer.commands.exec('alignLeftStyle');
+        equal(editableElement.innerHTML.toLowerCase(), text, "Alignment (style) correctly removed");
+
         start();
       });
     });
