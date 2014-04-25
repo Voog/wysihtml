@@ -1,3 +1,13 @@
+*wysihtml5x 0.4.4* (Apr 25, 2014)
+* Adds TAB key support
+* Improves list handling and adds possibility to create nested lists
+* Improved behaviour of commands that rely on formatInline
+* Added text alignment with style commands (alignLeftStyle, alignRightStyle, alignCenterStyle)
+* Changes to grunt build rather than makefile
+* Updated to newer rangy 1.3alpha
+* Dropped Old Opera 12 support
+* Minor bug fixes
+
 *wysihtml5x 0.4.3* (Mar 02, 2014)
 * Adds command "formatCode"
 * Fixes some IE8 mayor bugs
