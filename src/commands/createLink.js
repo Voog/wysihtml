@@ -17,7 +17,7 @@
         textContent,
         whiteSpace,
         j;
-    wysihtml5.commands.formatInline.exec(composer, undef, NODE_NAME, tempClass, tempClassRegExp, undef, undef, undef, true);
+    wysihtml5.commands.formatInline.exec(composer, undef, NODE_NAME, tempClass, tempClassRegExp, undef, undef, true, true);
     anchors = doc.querySelectorAll(NODE_NAME + "." + tempClass);
     length  = anchors.length;
     for (; i<length; i++) {

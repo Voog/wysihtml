@@ -67,20 +67,21 @@
       }
       composer.selection.getSelection().removeAllRanges();
       _getApplier(tagName, className, classRegExp, cssStyle, styleRegExp).toggleRange(ownRanges);
-      range.setStart(ownRanges[0].startContainer,  ownRanges[0].startOffset);
-      range.setEnd(
-        ownRanges[ownRanges.length - 1].endContainer,
-        ownRanges[ownRanges.length - 1].endOffset
-      );
-      if (!noCleanup) {
-        if (!dontRestoreSelect) {
-          composer.selection.setSelection(range);
-          composer.selection.executeAndRestore(function() {
+
+      if (!dontRestoreSelect) {
+        range.setStart(ownRanges[0].startContainer,  ownRanges[0].startOffset);
+        range.setEnd(
+          ownRanges[ownRanges.length - 1].endContainer,
+          ownRanges[ownRanges.length - 1].endOffset
+        );
+        composer.selection.setSelection(range);
+        composer.selection.executeAndRestore(function() {
+          if (!noCleanup) {
             composer.cleanUp();
-          }, true, true);
-        } else {
-          composer.cleanUp();
-        }
+          }
+        }, true, true);
+      } else if (!noCleanup) {
+        composer.cleanUp();
       }
     },
 
@@ -91,19 +92,24 @@
       var that = this;
 
       if (this.state(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp) &&
-          composer.selection.isCollapsed() &&
-          !composer.selection.caretIsLastInSelection() &&
-          !composer.selection.caretIsFirstInSelection()
+        composer.selection.isCollapsed() &&
+        !composer.selection.caretIsLastInSelection() &&
+        !composer.selection.caretIsFirstInSelection()
       ) {
-
         var state_element = that.state(composer, command, tagName, className, classRegExp)[0];
-        composer.selection.executeAndRestoreSimple(function() {
+        composer.selection.executeAndRestoreRangy(function() {
           var parent = state_element.parentNode;
           composer.selection.selectNode(state_element, true);
           wysihtml5.commands.formatInline.exec(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp, true, true);
         });
       } else {
-        wysihtml5.commands.formatInline.exec(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp);
+        if (this.state(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp) && !composer.selection.isCollapsed()) {
+          composer.selection.executeAndRestoreRangy(function() {
+            wysihtml5.commands.formatInline.exec(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp, true, true);
+          });
+        } else {
+          wysihtml5.commands.formatInline.exec(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp);
+        }
       }
     },
 
