@@ -262,24 +262,11 @@
         }
       }
 
-      if (wysihtml5.browser.supportsSelectLine()) {
-          _selectionWrap(composer, {
-            "nodeName": (nodeName || defaultNodeName),
-            "className": className || null,
-            "cssStyle": cssStyle || null
-          });
-      } else {
-          // Falling back to native command for Opera up to 12 mostly
-          // Native command does not create elements from selecton boundaries.
-          // Not quite user expected behaviour
-          // TODO: Also it does not support adding style. Drop opera 12 support or find a fallback
-          if (composer.commands.support(command)) {
-            _execCommand(doc, composer, command, nodeName || defaultNodeName, className);
-            return;
-          }
-      }
-
-
+      _selectionWrap(composer, {
+        "nodeName": (nodeName || defaultNodeName),
+        "className": className || null,
+        "cssStyle": cssStyle || null
+      });
     },
 
     state: function(composer, command, nodeName, className, classRegExp, cssStyle, styleRegExp) {

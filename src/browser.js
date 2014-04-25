@@ -278,11 +278,6 @@ wysihtml5.browser = (function() {
       return "getSelection" in window && "modify" in window.getSelection();
     },
 
-    // Returns if there is a way for setting selection to expand a line
-    supportsSelectLine: function () {
-        return (this.supportsSelectionModify() || document.selection) ? true : false;
-    },
-
     /**
      * Opera needs a white space after a <br> in order to position the caret correctly
      */
