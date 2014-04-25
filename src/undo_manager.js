@@ -75,53 +75,6 @@
         }
       });
 
-      // Now this is very hacky:
-      // These days browsers don't offer a undo/redo event which we could hook into
-      // to be notified when the user hits undo/redo in the contextmenu.
-      // Therefore we simply insert two elements as soon as the contextmenu gets opened.
-      // The last element being inserted will be immediately be removed again by a exexCommand("undo")
-      //  => When the second element appears in the dom tree then we know the user clicked "redo" in the context menu
-      //  => When the first element disappears from the dom tree then we know the user clicked "undo" in the context menu
-
-      // TODO: unexpected behaviour. Tends to undo on contextmenu showing in chrome on newly inserted blocks
-      /*if (wysihtml5.browser.hasUndoInContextMenu()) {
-        var interval, observed, cleanUp = function() {
-          cleanTempElements(doc);
-          clearInterval(interval);
-        };
-
-        dom.observe(this.element, "contextmenu", function() {
-          cleanUp();
-          that.composer.selection.executeAndRestoreSimple(function() {
-            if (that.element.lastChild) {
-              that.composer.selection.setAfter(that.element.lastChild);
-            }
-
-            // enable undo button in context menu
-            doc.execCommand("insertHTML", false, UNDO_HTML);
-            // enable redo button in context menu
-            doc.execCommand("insertHTML", false, REDO_HTML);
-            doc.execCommand("undo", false, null);
-          });
-
-          interval = setInterval(function() {
-            if (doc.getElementById("_wysihtml5-redo")) {
-              cleanUp();
-              that.redo();
-            } else if (!doc.getElementById("_wysihtml5-undo")) {
-              cleanUp();
-              that.undo();
-            }
-          }, 400);
-
-          if (!observed) {
-            observed = true;
-            dom.observe(document, "mousedown", cleanUp);
-            dom.observe(doc, ["mousedown", "paste", "cut", "copy"], cleanUp);
-          }
-        });
-      }*/
-
       this.editor
         .on("newword:composer", function() {
           that.transact();

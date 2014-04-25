@@ -389,49 +389,6 @@
       } catch(e2) {}
     },
 
-    /**
-     * Different approach of preserving the selection (doesn't modify the dom)
-     * Takes all text nodes in the selection and saves the selection position in the first and last one
-     */
-    executeAndRestoreSimple: function(method) {
-      var range = this.getRange(),
-          body  = this.doc.body,
-          newRange,
-          firstNode,
-          lastNode,
-          textNodes,
-          rangeBackup;
-
-      // Nothing selected, execute and say goodbye
-      if (!range) {
-        method(body, body);
-        return;
-      }
-
-      textNodes = range.getNodes([3]);
-      firstNode = textNodes[0] || range.startContainer;
-      lastNode  = textNodes[textNodes.length - 1] || range.endContainer;
-
-      rangeBackup = {
-        collapsed:      range.collapsed,
-        startContainer: firstNode,
-        startOffset:    firstNode === range.startContainer ? range.startOffset : 0,
-        endContainer:   lastNode,
-        endOffset:      lastNode === range.endContainer ? range.endOffset : lastNode.length
-      };
-
-      try {
-        method(range.startContainer, range.endContainer);
-      } catch(e) {
-        setTimeout(function() { throw e; }, 0);
-      }
-
-      newRange = rangy.createRange(this.doc);
-      try { newRange.setStart(rangeBackup.startContainer, rangeBackup.startOffset); } catch(e1) {}
-      try { newRange.setEnd(rangeBackup.endContainer, rangeBackup.endOffset); } catch(e2) {}
-      try { this.setSelection(newRange); } catch(e3) {}
-    },
-
     set: function(node, offset) {
       var newRange = rangy.createRange(this.doc);
       newRange.setStart(node, offset || 0);
