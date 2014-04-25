@@ -197,7 +197,7 @@
       nodeName = typeof(nodeName) === "string" ? nodeName.toUpperCase() : nodeName;
 
       if (blockElements.length) {
-        composer.selection.executeAndRestoreSimple(function() {
+        composer.selection.executeAndRestoreRangy(function() {
           for (var b = blockElements.length; b--;) {
             if (classRegExp) {
               classRemoveAction = _removeClass(blockElements[b], classRegExp);
@@ -232,7 +232,7 @@
       // Find similiar block element and rename it (<h2 class="foo"></h2>  =>  <h1 class="foo"></h1>)
       if (nodeName === null || wysihtml5.lang.array(BLOCK_ELEMENTS_GROUP).contains(nodeName)) {
         selectedNodes = composer.selection.findNodesInSelection(BLOCK_ELEMENTS_GROUP).concat(composer.selection.getSelectedOwnNodes());
-        composer.selection.executeAndRestoreSimple(function() {
+        composer.selection.executeAndRestoreRangy(function() {
           for (var n = selectedNodes.length; n--;) {
             blockElement = dom.getParentElement(selectedNodes[n], {
               nodeName: BLOCK_ELEMENTS_GROUP
