@@ -187,6 +187,10 @@
         &nbsp;
         <a id="merge" class="editor-btn">[&nbsp;]</a>
       </span>
+
+      <a id="leftbtn" class="editor-btn">Left</a>
+      <a id="centerbtn" class="editor-btn">Center</a>
+      <a id="rightbtn" class="editor-btn">Right</a>
       
     </div>
   </div><!-- toolbar -->
@@ -263,6 +267,24 @@
         $('#merge').addClass('active');
       } else {
         $('#merge').removeClass('active');
+      }
+
+      if (composer.commands.state('alignLeftStyle')) {
+        $('#leftbtn').addClass('active');
+      } else {
+        $('#leftbtn').removeClass('active');
+      }
+
+      if (composer.commands.state('alignRightStyle')) {
+        $('#rightbtn').addClass('active');
+      } else {
+        $('#rightbtn').removeClass('active');
+      }
+
+      if (composer.commands.state('alignCenterStyle')) {
+        $('#centerbtn').addClass('active');
+      } else {
+        $('#centerbtn').removeClass('active');
       }
       
       if (composer.commands.state('foreColorStyle')) {
@@ -341,6 +363,24 @@
     $('#italicbtn').click(function(event) {
       event.preventDefault();
       composer.commands.exec('italic');
+      updateStates();
+    });
+
+    $('#leftbtn').click(function(event) {
+      event.preventDefault();
+      composer.commands.exec('alignLeftStyle');
+      updateStates();
+    });
+
+    $('#rightbtn').click(function(event) {
+      event.preventDefault();
+      composer.commands.exec('alignRightStyle');
+      updateStates();
+    });
+
+    $('#centerbtn').click(function(event) {
+      event.preventDefault();
+      composer.commands.exec('alignCenterStyle');
       updateStates();
     });
     
