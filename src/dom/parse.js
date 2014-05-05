@@ -244,13 +244,6 @@ wysihtml5.dom.parse = (function() {
       } else if (rule.unwrap) {
         return false;
       }
-
-      // tests if type condition is met or node should be removed/unwrapped
-
-      if (rule.one_of_type && !_testTypes(oldNode, currentRules, rule.one_of_type)) {
-        return (rule.remove_action && rule.remove_action == "unwrap") ? false : null;
-      }
-
       rule = typeof(rule) === "string" ? { rename_tag: rule } : rule;
     } else if (oldNode.firstChild) {
       rule = { rename_tag: DEFAULT_NODE_NAME };
@@ -258,9 +251,15 @@ wysihtml5.dom.parse = (function() {
       // Remove empty unknown elements
       return null;
     }
+
     newNode = oldNode.ownerDocument.createElement(rule.rename_tag || nodeName);
     _handleAttributes(oldNode, newNode, rule);
     _handleStyles(oldNode, newNode, rule);
+    // tests if type condition is met or node should be removed/unwrapped
+    if (rule.one_of_type && !_testTypes(newNode, currentRules, rule.one_of_type)) {
+      return (rule.remove_action && rule.remove_action == "unwrap") ? false : null;
+    }
+
     oldNode = null;
 
     if (newNode.normalize) { newNode.normalize(); }
@@ -373,13 +372,14 @@ wysihtml5.dom.parse = (function() {
     var attributes          = {},                         // fresh new set of attributes to set on newNode
         setClass            = rule.set_class,             // classes to set
         addClass            = rule.add_class,             // add classes based on existing attributes
+        addStyle            = rule.add_style,             // add styles based on existing attributes
         setAttributes       = rule.set_attributes,        // attributes to set on the current node
         checkAttributes     = rule.check_attributes,      // check/convert values of attributes
         allowedClasses      = currentRules.classes,
         i                   = 0,
         classes             = [],
+        styles              = [],
         newClasses          = [],
-        newUniqueClasses    = [],
         oldClasses          = [],
         classesLength,
         newClassesLength,
@@ -426,6 +426,20 @@ wysihtml5.dom.parse = (function() {
       }
     }
 
+    if (addStyle) {
+      for (attributeName in addStyle) {
+        method = addStyleMethods[addStyle[attributeName]];
+        if (!method) {
+          continue;
+        }
+
+        newStyle = method(_getAttribute(oldNode, attributeName));
+        if (typeof(newStyle) === "string") {
+          styles.push(newStyle);
+        }
+      }
+    }
+
     // make sure that wysihtml5 temp class doesn't get stripped out
     allowedClasses["_wysihtml5-temp-placeholder"] = 1;
 
@@ -442,17 +456,12 @@ wysihtml5.dom.parse = (function() {
       }
     }
 
-    // remove duplicate entries and preserve class specificity
-    newClassesLength = newClasses.length;
-    while (newClassesLength--) {
-      currentClass = newClasses[newClassesLength];
-      if (!wysihtml5.lang.array(newUniqueClasses).contains(currentClass)) {
-        newUniqueClasses.unshift(currentClass);
-      }
+    if (newClasses.length) {
+      attributes["class"] = wysihtml5.lang.array(newClasses).unique().join(" ");
     }
 
-    if (newUniqueClasses.length) {
-      attributes["class"] = newUniqueClasses.join(" ");
+    if (styles.length) {
+      attributes["style"] = wysihtml5.lang.array(styles).unique().join(" ");
     }
 
     // set attributes on newNode
@@ -595,6 +604,20 @@ wysihtml5.dom.parse = (function() {
         return attributeValue;
       };
     })()
+  };
+
+  // ------------ style converter (converts an html attribute to a style) ------------ \\
+  var addStyleMethods = {
+    align_text: (function() {
+      var mapping = {
+        left:     "text-align: left;",
+        right:    "text-align: right;",
+        center:   "text-align: center;"
+      };
+      return function(attributeValue) {
+        return mapping[String(attributeValue).toLowerCase()];
+      };
+    })(),
   };
 
   // ------------ class converter (converts an html attribute to a class name) ------------ \\

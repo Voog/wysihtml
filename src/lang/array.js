@@ -89,6 +89,27 @@ wysihtml5.lang.array = function(arr) {
         }
         return A;
       }
+    },
+
+    /* ReturnS new array without duplicate entries
+     *
+     * @example
+     *    var uniq = wysihtml5.lang.array([1,2,3,2,1,4]).unique();
+     *    // => [1,2,3,4]
+     */
+    unique: function() {
+      var vals = [],
+          max = arr.length,
+          idx = 0;
+
+      while (idx < max) {
+        if (!wysihtml5.lang.array(vals).contains(arr[idx])) {
+          vals.push(arr[idx]);
+        }
+        idx++;
+      }
+      return vals;
     }
+
   };
 };

@@ -150,11 +150,16 @@ var wysihtml5ParserRules = {
      *    - add_class:        converts and deletes the given HTML4 attribute (align, clear, ...) via the given method to a css class
      *                        The following methods are implemented in wysihtml5.dom.parse:
      *                          - align_text:  converts align attribute values (right/left/center/justify) to their corresponding css class "wysiwyg-text-align-*")
-     *                            <p align="center">foo</p> ... becomes ... <p> class="wysiwyg-text-align-center">foo</p>
+     *                            <p align="center">foo</p> ... becomes ... <p class="wysiwyg-text-align-center">foo</p>
      *                          - clear_br:    converts clear attribute values left/right/all/both to their corresponding css class "wysiwyg-clear-*"
      *                            <br clear="all"> ... becomes ... <br class="wysiwyg-clear-both">
      *                          - align_img:    converts align attribute values (right/left) on <img> to their corresponding css class "wysiwyg-float-*"
-     *                          
+     *
+     *    - add_style:        converts and deletes the given HTML4 attribute (align) via the given method to a css style
+     *                        The following methods are implemented in wysihtml5.dom.parse:
+     *                          - align_text:  converts align attribute values (right/left/center) to their corresponding css style)
+     *                            <p align="center">foo</p> ... becomes ... <p style="text-align:center">foo</p>
+     *
      *    - remove:             removes the element and its content
      *
      *    - unwrap              removes element but leaves content
