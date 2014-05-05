@@ -52,7 +52,7 @@
     }
   };
 
-  var handleDeleteKeyPress = function(selection, element) {
+  var handleDeleteKeyPress = function(event, selection, element) {
     if (selection.isCollapsed()) {
       if (selection.caretIsInTheBeginnig()) {
         event.preventDefault();
@@ -253,7 +253,7 @@
       }
       if (keyCode === 8) {
         // delete key
-        handleDeleteKeyPress(that.selection, element);
+        handleDeleteKeyPress(event, that.selection, element);
       } else if (keyCode === 9) {
         event.preventDefault();
         handleTabKeyDown(that, element);
