@@ -88,7 +88,7 @@ var wysihtml5ParserRules = {
             },
             "styles": {
                 "float": ["left", "right"],
-                "textAlign": ["left", "right", "center"]
+                "text-align": ["left", "right", "center"]
             }
         },
         

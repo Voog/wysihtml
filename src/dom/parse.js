@@ -323,7 +323,7 @@ wysihtml5.dom.parse = (function() {
             styleProp = nodeStyles[sp].split(':');
 
             if (styleProp[0].replace(/\s/g, '').toLowerCase() === s) {
-              if (definition.styles[s] === true || styleProp[1].replace(/\s/g, '').toLowerCase() === definition.styles[s]) {
+              if (definition.styles[s] === true || definition.styles[s] === 1 || wysihtml5.lang.array(definition.styles[s]).contains(styleProp[1].replace(/\s/g, '').toLowerCase()) ) {
                 return true;
               }
             }
