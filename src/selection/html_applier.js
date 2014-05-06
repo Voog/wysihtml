@@ -31,10 +31,9 @@
   function addStyle(el, cssStyle, regExp) {
     if (el.getAttribute('style')) {
       removeStyle(el, regExp);
-      if (el.getAttribute('style') && !(/\s+/).test(el.getAttribute('style'))) {
+      if (el.getAttribute('style') && !(/^\s*$/).test(el.getAttribute('style'))) {
         el.setAttribute('style', cssStyle + ";" + el.getAttribute('style'));
       } else {
-
         el.setAttribute('style', cssStyle);
       }
     } else {
@@ -63,7 +62,7 @@
     if (el.getAttribute('style')) {
       s = el.getAttribute('style').split(';');
       for (var i = s.length; i--;) {
-        if (!s[i].match(regExp) && !(/\s/).test(s[i])) {
+        if (!s[i].match(regExp) && !(/^\s*$/).test(s[i])) {
           s2.push(s[i]);
         }
       }
@@ -82,11 +81,11 @@
 
     if (elStyle) {
       elStyle = elStyle.replace(/\s/gi, '').toLowerCase();
-      regexes.push(new RegExp("(^|\\s|;)" + style.replace(/\s/gi, '').replace(/([\(\)])/gi, "\\$1").toLowerCase().replace(";", ";?"), "gi"));
+      regexes.push(new RegExp("(^|\\s|;)" + style.replace(/\s/gi, '').replace(/([\(\)])/gi, "\\$1").toLowerCase().replace(";", ";?").replace(/rgb\\\((\d+),(\d+),(\d+)\\\)/gi, "\\s?rgb\\($1,\\s?$2,\\s?$3\\)"), "gi"));
 
       for (var i = sSplit.length; i-- > 0;) {
         if (!(/^\s*$/).test(sSplit[i])) {
-          regexes.push(new RegExp("(^|\\s|;)" + sSplit[i].replace(/\s/gi, '').replace(/([\(\)])/gi, "\\$1").toLowerCase().replace(";", ";?"), "gi"));
+          regexes.push(new RegExp("(^|\\s|;)" + sSplit[i].replace(/\s/gi, '').replace(/([\(\)])/gi, "\\$1").toLowerCase().replace(";", ";?").replace(/rgb\\\((\d+),(\d+),(\d+)\\\)/gi, "\\s?rgb\\($1,\\s?$2,\\s?$3\\)"), "gi"));
         }
       }
       for (var j = 0, jmax = regexes.length; j < jmax; j++) {
@@ -97,15 +96,11 @@
     }
 
     return false;
-  };
+  }
 
   function removeOrChangeStyle(el, style, regExp) {
 
     var exactRegex = getMatchingStyleRegexp(el, style);
-
-    /*new RegExp("(^|\\s|;)" + style.replace(/\s/gi, '').replace(/([\(\)])/gi, "\\$1").toLowerCase().replace(";", ";?"), "gi"),
-        elStyle = el.getAttribute('style');*/
-
     if (exactRegex) {
       // adding same style value on property again removes style
       removeStyle(el, exactRegex);
@@ -115,7 +110,7 @@
       addStyle(el, style, regExp);
       return "change";
     }
-  };
+  }
 
   function hasSameClasses(el1, el2) {
     return el1.className.replace(REG_EXP_WHITE_SPACE, " ") == el2.className.replace(REG_EXP_WHITE_SPACE, " ");
@@ -379,6 +374,9 @@
         if (this.cssClass) {
           addClass(parent, this.cssClass, this.similarClassRegExp);
         }
+        if (this.cssStyle) {
+          addStyle(parent, this.cssStyle, this.similarStyleRegExp);
+        }
       } else {
         var el = this.createContainer(rangy.dom.getDocument(textNode));
         textNode.parentNode.insertBefore(el, textNode);
@@ -387,7 +385,12 @@
     },
 
     isRemovable: function(el) {
-      return rangy.dom.arrayContains(this.tagNames, el.tagName.toLowerCase()) && wysihtml5.lang.string(el.className).trim() == this.cssClass;
+      return rangy.dom.arrayContains(this.tagNames, el.tagName.toLowerCase()) &&
+              wysihtml5.lang.string(el.className).trim() === "" &&
+              (
+                !el.getAttribute('style') ||
+                wysihtml5.lang.string(el.getAttribute('style')).trim() === ""
+              );
     },
 
     undoToTextNode: function(textNode, range, ancestorWithClass, ancestorWithStyle) {
@@ -415,7 +418,6 @@
       if (styleMode && this.similarStyleRegExp) {
         styleChanged = (removeOrChangeStyle(ancestor, this.cssStyle, this.similarStyleRegExp) === "change");
       }
-
       if (this.isRemovable(ancestor) && !styleChanged) {
         replaceWithOwnChildren(ancestor);
       }
@@ -443,6 +445,9 @@
               for (var i = 0, len = textNodes.length; i < len; ++i) {
                 textNode = textNodes[i];
                 if (!this.getAncestorWithClass(textNode)) {
+                  this.applyToTextNode(textNode);
+                }
+                if (!this.getAncestorWithStyle(textNode)) {
                   this.applyToTextNode(textNode);
                 }
               }
