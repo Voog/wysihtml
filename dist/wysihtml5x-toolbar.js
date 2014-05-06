@@ -17,8 +17,15 @@ if (Object.defineProperty && Object.getOwnPropertyDescriptor && Object.getOwnPro
 			}
 		);
 	})();
+}
+
+// isArray polyfill for ie8
+if(!Array.isArray) {
+  Array.isArray = function(arg) {
+    return Object.prototype.toString.call(arg) === '[object Array]';
+  };
 };/**
- * @license wysihtml5x v0.4.4
+ * @license wysihtml5x v0.4.5
  * https://github.com/Edicy/wysihtml5
  *
  * Author: Christopher Blum (https://github.com/tiff)
@@ -29,7 +36,7 @@ if (Object.defineProperty && Object.getOwnPropertyDescriptor && Object.getOwnPro
  *
  */
 var wysihtml5 = {
-  version: "0.4.4",
+  version: "0.4.5",
 
   // namespaces
   commands:   {},
@@ -4535,9 +4542,20 @@ wysihtml5.browser = (function() {
      * @example
      *    wysihtml5.lang.array([1, 2]).contains(1);
      *    // => true
+     *
+     * Can be used to match array with array. If intersection is found true is returned
      */
     contains: function(needle) {
+      if (Array.isArray(needle)) {
+        for (var i = needle.length; i--;) {
+          if (wysihtml5.lang.array(arr).indexOf(needle[i]) !== -1) {
+            return true;
+          }
+        }
+        return false;
+      } else {
         return wysihtml5.lang.array(arr).indexOf(needle) !== -1;
+      }
     },
 
     /**
@@ -4618,7 +4636,28 @@ wysihtml5.browser = (function() {
         }
         return A;
       }
+    },
+
+    /* ReturnS new array without duplicate entries
+     *
+     * @example
+     *    var uniq = wysihtml5.lang.array([1,2,3,2,1,4]).unique();
+     *    // => [1,2,3,4]
+     */
+    unique: function() {
+      var vals = [],
+          max = arr.length,
+          idx = 0;
+
+      while (idx < max) {
+        if (!wysihtml5.lang.array(vals).contains(arr[idx])) {
+          vals.push(arr[idx]);
+        }
+        idx++;
+      }
+      return vals;
     }
+
   };
 };
 ;wysihtml5.lang.Dispatcher = Base.extend(
@@ -4801,8 +4840,8 @@ wysihtml5.browser = (function() {
       MAX_DISPLAY_LENGTH    = 100,
       BRACKETS              = { ")": "(", "]": "[", "}": "{" };
 
-  function autoLink(element) {
-    if (_hasParentThatShouldBeIgnored(element)) {
+  function autoLink(element, ignoreInClasses) {
+    if (_hasParentThatShouldBeIgnored(element, ignoreInClasses)) {
       return element;
     }
 
@@ -4810,7 +4849,7 @@ wysihtml5.browser = (function() {
       element = element.ownerDocument.body;
     }
 
-    return _parseNode(element);
+    return _parseNode(element, ignoreInClasses);
   }
 
   /**
@@ -4873,11 +4912,14 @@ wysihtml5.browser = (function() {
     parentNode.removeChild(textNode);
   }
 
-  function _hasParentThatShouldBeIgnored(node) {
+  function _hasParentThatShouldBeIgnored(node, ignoreInClasses) {
     var nodeName;
     while (node.parentNode) {
       node = node.parentNode;
       nodeName = node.nodeName;
+      if (node.className && wysihtml5.lang.array(node.className.split(' ')).contains(ignoreInClasses)) {
+        return true;
+      }
       if (IGNORE_URLS_IN.contains(nodeName)) {
         return true;
       } else if (nodeName === "body") {
@@ -4887,12 +4929,17 @@ wysihtml5.browser = (function() {
     return false;
   }
 
-  function _parseNode(element) {
+  function _parseNode(element, ignoreInClasses) {
     if (IGNORE_URLS_IN.contains(element.nodeName)) {
       return;
     }
 
+    if (element.className && wysihtml5.lang.array(element.className.split(' ')).contains(ignoreInClasses)) {
+      return;
+    }
+
     if (element.nodeType === wysihtml5.TEXT_NODE && element.data.match(URL_REG_EXP)) {
+      console.log(element);
       _wrapMatchesInNode(element);
       return;
     }
@@ -4902,7 +4949,7 @@ wysihtml5.browser = (function() {
         i                 = 0;
 
     for (; i<childNodesLength; i++) {
-      _parseNode(childNodes[i]);
+      _parseNode(childNodes[i], ignoreInClasses);
     }
 
     return element;
@@ -5812,7 +5859,7 @@ wysihtml5.dom.parse = (function() {
     if (cleanUp &&
         newNode.nodeName.toLowerCase() === DEFAULT_NODE_NAME &&
         (!newNode.childNodes.length ||
-         ((/^\s*$/gi).test(newNode.innerHTML) && oldNode.className !== "_wysihtml5-temp-placeholder") ||
+         ((/^\s*$/gi).test(newNode.innerHTML) && oldNode.className !== "_wysihtml5-temp-placeholder" && oldNode.className !== "rangySelectionBoundary") ||
          !newNode.attributes.length)
         ) {
       fragment = newNode.ownerDocument.createDocumentFragment();
@@ -5881,13 +5928,6 @@ wysihtml5.dom.parse = (function() {
       } else if (rule.unwrap) {
         return false;
       }
-
-      // tests if type condition is met or node should be removed/unwrapped
-
-      if (rule.one_of_type && !_testTypes(oldNode, currentRules, rule.one_of_type)) {
-        return (rule.remove_action && rule.remove_action == "unwrap") ? false : null;
-      }
-
       rule = typeof(rule) === "string" ? { rename_tag: rule } : rule;
     } else if (oldNode.firstChild) {
       rule = { rename_tag: DEFAULT_NODE_NAME };
@@ -5895,9 +5935,15 @@ wysihtml5.dom.parse = (function() {
       // Remove empty unknown elements
       return null;
     }
+
     newNode = oldNode.ownerDocument.createElement(rule.rename_tag || nodeName);
     _handleAttributes(oldNode, newNode, rule);
     _handleStyles(oldNode, newNode, rule);
+    // tests if type condition is met or node should be removed/unwrapped
+    if (rule.one_of_type && !_testTypes(newNode, currentRules, rule.one_of_type)) {
+      return (rule.remove_action && rule.remove_action == "unwrap") ? false : null;
+    }
+
     oldNode = null;
 
     if (newNode.normalize) { newNode.normalize(); }
@@ -5908,7 +5954,7 @@ wysihtml5.dom.parse = (function() {
     var definition, type;
 
     // do not interfere with placeholder span or pasting caret position is not maintained
-    if (oldNode.nodeName === "SPAN" && oldNode.className === "_wysihtml5-temp-placeholder") {
+    if (oldNode.nodeName === "SPAN" && (oldNode.className === "_wysihtml5-temp-placeholder" || oldNode.className === "rangySelectionBoundary")) {
       return true;
     }
 
@@ -5960,7 +6006,7 @@ wysihtml5.dom.parse = (function() {
             styleProp = nodeStyles[sp].split(':');
 
             if (styleProp[0].replace(/\s/g, '').toLowerCase() === s) {
-              if (definition.styles[s] === true || styleProp[1].replace(/\s/g, '').toLowerCase() === definition.styles[s]) {
+              if (definition.styles[s] === true || definition.styles[s] === 1 || wysihtml5.lang.array(definition.styles[s]).contains(styleProp[1].replace(/\s/g, '').toLowerCase()) ) {
                 return true;
               }
             }
@@ -6010,13 +6056,14 @@ wysihtml5.dom.parse = (function() {
     var attributes          = {},                         // fresh new set of attributes to set on newNode
         setClass            = rule.set_class,             // classes to set
         addClass            = rule.add_class,             // add classes based on existing attributes
+        addStyle            = rule.add_style,             // add styles based on existing attributes
         setAttributes       = rule.set_attributes,        // attributes to set on the current node
         checkAttributes     = rule.check_attributes,      // check/convert values of attributes
         allowedClasses      = currentRules.classes,
         i                   = 0,
         classes             = [],
+        styles              = [],
         newClasses          = [],
-        newUniqueClasses    = [],
         oldClasses          = [],
         classesLength,
         newClassesLength,
@@ -6063,33 +6110,48 @@ wysihtml5.dom.parse = (function() {
       }
     }
 
-    // make sure that wysihtml5 temp class doesn't get stripped out
-    allowedClasses["_wysihtml5-temp-placeholder"] = 1;
+    if (addStyle) {
+      for (attributeName in addStyle) {
+        method = addStyleMethods[addStyle[attributeName]];
+        if (!method) {
+          continue;
+        }
 
-    // add old classes last
-    oldClasses = oldNode.getAttribute("class");
-    if (oldClasses) {
-      classes = classes.concat(oldClasses.split(WHITE_SPACE_REG_EXP));
-    }
-    classesLength = classes.length;
-    for (; i<classesLength; i++) {
-      currentClass = classes[i];
-      if (allowedClasses[currentClass]) {
-        newClasses.push(currentClass);
+        newStyle = method(_getAttribute(oldNode, attributeName));
+        if (typeof(newStyle) === "string") {
+          styles.push(newStyle);
+        }
       }
     }
 
-    // remove duplicate entries and preserve class specificity
-    newClassesLength = newClasses.length;
-    while (newClassesLength--) {
-      currentClass = newClasses[newClassesLength];
-      if (!wysihtml5.lang.array(newUniqueClasses).contains(currentClass)) {
-        newUniqueClasses.unshift(currentClass);
+
+    if (typeof(allowedClasses) === "string" && allowedClasses === "any" && oldNode.getAttribute("class")) {
+      attributes["class"] = oldNode.getAttribute("class");
+    } else {
+      // make sure that wysihtml5 temp class doesn't get stripped out
+      allowedClasses["_wysihtml5-temp-placeholder"] = 1;
+      allowedClasses["_rangySelectionBoundary"] = 1;
+
+      // add old classes last
+      oldClasses = oldNode.getAttribute("class");
+      if (oldClasses) {
+        classes = classes.concat(oldClasses.split(WHITE_SPACE_REG_EXP));
+      }
+      classesLength = classes.length;
+      for (; i<classesLength; i++) {
+        currentClass = classes[i];
+        if (allowedClasses[currentClass]) {
+          newClasses.push(currentClass);
+        }
+      }
+
+      if (newClasses.length) {
+        attributes["class"] = wysihtml5.lang.array(newClasses).unique().join(" ");
       }
     }
 
-    if (newUniqueClasses.length) {
-      attributes["class"] = newUniqueClasses.join(" ");
+    if (styles.length) {
+      attributes["style"] = wysihtml5.lang.array(styles).unique().join(" ");
     }
 
     // set attributes on newNode
@@ -6232,6 +6294,20 @@ wysihtml5.dom.parse = (function() {
         return attributeValue;
       };
     })()
+  };
+
+  // ------------ style converter (converts an html attribute to a style) ------------ \\
+  var addStyleMethods = {
+    align_text: (function() {
+      var mapping = {
+        left:     "text-align: left;",
+        right:    "text-align: right;",
+        center:   "text-align: center;"
+      };
+      return function(attributeValue) {
+        return mapping[String(attributeValue).toLowerCase()];
+      };
+    })(),
   };
 
   // ------------ class converter (converts an html attribute to a class name) ------------ \\
@@ -8233,6 +8309,40 @@ wysihtml5.quirks.ensureProperClearing = (function() {
     return top;
   }
 
+  // Provides the depth of ``descendant`` relative to ``ancestor``
+  function getDepth(ancestor, descendant) {
+      var ret = 0;
+      while (descendant !== ancestor) {
+          ret++;
+          descendant = descendant.parentNode;
+          if (!descendant)
+              throw new Error("not a descendant of ancestor!");
+      }
+      return ret;
+  }
+
+  // Should fix the obtained ranges that cannot surrond contents normally to apply changes upon
+  // Being considerate to firefox that sets range start start out of span and end inside on doubleclick initiated selection
+  function expandRangeToSurround(range) {
+      if (range.canSurroundContents()) return;
+
+      var common = range.commonAncestorContainer,
+          start_depth = getDepth(common, range.startContainer),
+          end_depth = getDepth(common, range.endContainer);
+
+      while(!range.canSurroundContents()) {
+        // In the following branches, we cannot just decrement the depth variables because the setStartBefore/setEndAfter may move the start or end of the range more than one level relative to ``common``. So we need to recompute the depth.
+        if (start_depth > end_depth) {
+            range.setStartBefore(range.startContainer);
+            start_depth = getDepth(common, range.startContainer);
+        }
+        else {
+            range.setEndAfter(range.endContainer);
+            end_depth = getDepth(common, range.endContainer);
+        }
+      }
+  }
+
   wysihtml5.Selection = Base.extend(
     /** @scope wysihtml5.Selection.prototype */ {
     constructor: function(editor, contain, unselectableClass) {
@@ -8253,6 +8363,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
      */
     getBookmark: function() {
       var range = this.getRange();
+      if (range) expandRangeToSurround(range);
       return range && range.cloneRange();
     },
 
@@ -8982,10 +9093,9 @@ wysihtml5.quirks.ensureProperClearing = (function() {
   function addStyle(el, cssStyle, regExp) {
     if (el.getAttribute('style')) {
       removeStyle(el, regExp);
-      if (el.getAttribute('style') && !(/\s+/).test(el.getAttribute('style'))) {
+      if (el.getAttribute('style') && !(/^\s*$/).test(el.getAttribute('style'))) {
         el.setAttribute('style', cssStyle + ";" + el.getAttribute('style'));
       } else {
-
         el.setAttribute('style', cssStyle);
       }
     } else {
@@ -9014,7 +9124,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
     if (el.getAttribute('style')) {
       s = el.getAttribute('style').split(';');
       for (var i = s.length; i--;) {
-        if (!s[i].match(regExp) && !(/\s/).test(s[i])) {
+        if (!s[i].match(regExp) && !(/^\s*$/).test(s[i])) {
           s2.push(s[i]);
         }
       }
@@ -9033,11 +9143,11 @@ wysihtml5.quirks.ensureProperClearing = (function() {
 
     if (elStyle) {
       elStyle = elStyle.replace(/\s/gi, '').toLowerCase();
-      regexes.push(new RegExp("(^|\\s|;)" + style.replace(/\s/gi, '').replace(/([\(\)])/gi, "\\$1").toLowerCase().replace(";", ";?"), "gi"));
+      regexes.push(new RegExp("(^|\\s|;)" + style.replace(/\s/gi, '').replace(/([\(\)])/gi, "\\$1").toLowerCase().replace(";", ";?").replace(/rgb\\\((\d+),(\d+),(\d+)\\\)/gi, "\\s?rgb\\($1,\\s?$2,\\s?$3\\)"), "gi"));
 
       for (var i = sSplit.length; i-- > 0;) {
         if (!(/^\s*$/).test(sSplit[i])) {
-          regexes.push(new RegExp("(^|\\s|;)" + sSplit[i].replace(/\s/gi, '').replace(/([\(\)])/gi, "\\$1").toLowerCase().replace(";", ";?"), "gi"));
+          regexes.push(new RegExp("(^|\\s|;)" + sSplit[i].replace(/\s/gi, '').replace(/([\(\)])/gi, "\\$1").toLowerCase().replace(";", ";?").replace(/rgb\\\((\d+),(\d+),(\d+)\\\)/gi, "\\s?rgb\\($1,\\s?$2,\\s?$3\\)"), "gi"));
         }
       }
       for (var j = 0, jmax = regexes.length; j < jmax; j++) {
@@ -9048,15 +9158,11 @@ wysihtml5.quirks.ensureProperClearing = (function() {
     }
 
     return false;
-  };
+  }
 
   function removeOrChangeStyle(el, style, regExp) {
 
     var exactRegex = getMatchingStyleRegexp(el, style);
-
-    /*new RegExp("(^|\\s|;)" + style.replace(/\s/gi, '').replace(/([\(\)])/gi, "\\$1").toLowerCase().replace(";", ";?"), "gi"),
-        elStyle = el.getAttribute('style');*/
-
     if (exactRegex) {
       // adding same style value on property again removes style
       removeStyle(el, exactRegex);
@@ -9066,7 +9172,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       addStyle(el, style, regExp);
       return "change";
     }
-  };
+  }
 
   function hasSameClasses(el1, el2) {
     return el1.className.replace(REG_EXP_WHITE_SPACE, " ") == el2.className.replace(REG_EXP_WHITE_SPACE, " ");
@@ -9117,7 +9223,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
     return offset > 0 && offset < node.childNodes.length;
   }
 
-  function splitNodeAt(node, descendantNode, descendantOffset) {
+  function splitNodeAt(node, descendantNode, descendantOffset, container) {
     var newNode;
     if (rangy.dom.isCharacterDataNode(descendantNode)) {
       if (descendantOffset == 0) {
@@ -9131,17 +9237,21 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       }
     }
     if (!newNode) {
-      newNode = descendantNode.cloneNode(false);
-      if (newNode.id) {
-        newNode.removeAttribute("id");
+      if (!container || descendantNode !== container) {
+
+        newNode = descendantNode.cloneNode(false);
+        if (newNode.id) {
+          newNode.removeAttribute("id");
+        }
+        var child;
+        while ((child = descendantNode.childNodes[descendantOffset])) {
+          newNode.appendChild(child);
+        }
+        rangy.dom.insertAfter(newNode, descendantNode);
+
       }
-      var child;
-      while ((child = descendantNode.childNodes[descendantOffset])) {
-        newNode.appendChild(child);
-      }
-      rangy.dom.insertAfter(newNode, descendantNode);
     }
-    return (descendantNode == node) ? newNode : splitNodeAt(node, newNode.parentNode, rangy.dom.getNodeIndex(newNode));
+    return (descendantNode == node) ? newNode :  splitNodeAt(node, newNode.parentNode, rangy.dom.getNodeIndex(newNode), container);
   }
 
   function Merge(firstNode) {
@@ -9185,7 +9295,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
     }
   };
 
-  function HTMLApplier(tagNames, cssClass, similarClassRegExp, normalize, cssStyle, similarStyleRegExp) {
+  function HTMLApplier(tagNames, cssClass, similarClassRegExp, normalize, cssStyle, similarStyleRegExp, container) {
     this.tagNames = tagNames || [defaultTagName];
     this.cssClass = cssClass || ((cssClass === false) ? false : "");
     this.similarClassRegExp = similarClassRegExp;
@@ -9193,6 +9303,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
     this.similarStyleRegExp = similarStyleRegExp;
     this.normalize = normalize;
     this.applyToAnyTagName = false;
+    this.container = container;
   }
 
   HTMLApplier.prototype = {
@@ -9325,6 +9436,9 @@ wysihtml5.quirks.ensureProperClearing = (function() {
         if (this.cssClass) {
           addClass(parent, this.cssClass, this.similarClassRegExp);
         }
+        if (this.cssStyle) {
+          addStyle(parent, this.cssStyle, this.similarStyleRegExp);
+        }
       } else {
         var el = this.createContainer(rangy.dom.getDocument(textNode));
         textNode.parentNode.insertBefore(el, textNode);
@@ -9333,7 +9447,12 @@ wysihtml5.quirks.ensureProperClearing = (function() {
     },
 
     isRemovable: function(el) {
-      return rangy.dom.arrayContains(this.tagNames, el.tagName.toLowerCase()) && wysihtml5.lang.string(el.className).trim() == this.cssClass;
+      return rangy.dom.arrayContains(this.tagNames, el.tagName.toLowerCase()) &&
+              wysihtml5.lang.string(el.className).trim() === "" &&
+              (
+                !el.getAttribute('style') ||
+                wysihtml5.lang.string(el.getAttribute('style')).trim() === ""
+              );
     },
 
     undoToTextNode: function(textNode, range, ancestorWithClass, ancestorWithStyle) {
@@ -9346,11 +9465,11 @@ wysihtml5.quirks.ensureProperClearing = (function() {
             ancestorRange.selectNode(ancestor);
 
         if (ancestorRange.isPointInRange(range.endContainer, range.endOffset) && isSplitPoint(range.endContainer, range.endOffset)) {
-            splitNodeAt(ancestor, range.endContainer, range.endOffset);
+            splitNodeAt(ancestor, range.endContainer, range.endOffset, this.container);
             range.setEndAfter(ancestor);
         }
         if (ancestorRange.isPointInRange(range.startContainer, range.startOffset) && isSplitPoint(range.startContainer, range.startOffset)) {
-            ancestor = splitNodeAt(ancestor, range.startContainer, range.startOffset);
+            ancestor = splitNodeAt(ancestor, range.startContainer, range.startOffset, this.container);
         }
       }
 
@@ -9361,7 +9480,6 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       if (styleMode && this.similarStyleRegExp) {
         styleChanged = (removeOrChangeStyle(ancestor, this.cssStyle, this.similarStyleRegExp) === "change");
       }
-
       if (this.isRemovable(ancestor) && !styleChanged) {
         replaceWithOwnChildren(ancestor);
       }
@@ -9389,6 +9507,9 @@ wysihtml5.quirks.ensureProperClearing = (function() {
               for (var i = 0, len = textNodes.length; i < len; ++i) {
                 textNode = textNodes[i];
                 if (!this.getAncestorWithClass(textNode)) {
+                  this.applyToTextNode(textNode);
+                }
+                if (!this.getAncestorWithStyle(textNode)) {
                   this.applyToTextNode(textNode);
                 }
               }
@@ -10339,13 +10460,13 @@ wysihtml5.commands.formatCode = {
     return alias ? [tagName.toLowerCase(), alias.toLowerCase()] : [tagName.toLowerCase()];
   }
 
-  function _getApplier(tagName, className, classRegExp, cssStyle, styleRegExp) {
+  function _getApplier(tagName, className, classRegExp, cssStyle, styleRegExp, container) {
     var identifier = tagName + ":" + className;
     if (cssStyle) {
       identifier += ":" + cssStyle;
     }
     if (!htmlApplier[identifier]) {
-      htmlApplier[identifier] = new wysihtml5.selection.HTMLApplier(_getTagNames(tagName), className, classRegExp, true, cssStyle, styleRegExp);
+      htmlApplier[identifier] = new wysihtml5.selection.HTMLApplier(_getTagNames(tagName), className, classRegExp, true, cssStyle, styleRegExp, container);
     }
     return htmlApplier[identifier];
   }
@@ -10359,7 +10480,8 @@ wysihtml5.commands.formatCode = {
         return false;
       }
       composer.selection.getSelection().removeAllRanges();
-      _getApplier(tagName, className, classRegExp, cssStyle, styleRegExp).toggleRange(ownRanges);
+
+      _getApplier(tagName, className, classRegExp, cssStyle, styleRegExp, composer.element).toggleRange(ownRanges);
 
       if (!dontRestoreSelect) {
         range.setStart(ownRanges[0].startContainer,  ownRanges[0].startOffset);
@@ -10428,7 +10550,7 @@ wysihtml5.commands.formatCode = {
         return false;
       }
 
-      return _getApplier(tagName, className, classRegExp, cssStyle, styleRegExp).isAppliedToRange(ownRanges);
+      return _getApplier(tagName, className, classRegExp, cssStyle, styleRegExp, composer.element).isAppliedToRange(ownRanges);
     }
   };
 })(wysihtml5);
@@ -11488,13 +11610,22 @@ wysihtml5.views.View = Base.extend(
         this.parent.on("newword:composer", function() {
           if (dom.getTextContent(that.element).match(dom.autoLink.URL_REG_EXP)) {
             that.selection.executeAndRestore(function(startContainer, endContainer) {
-              dom.autoLink(endContainer.parentNode);
+              var uneditables = that.element.querySelectorAll("." + that.config.uneditableContainerClassname),
+                  isInUneditable = false;
+
+              for (var i = uneditables.length; i--;) {
+                if (wysihtml5.dom.contains(uneditables[i], endContainer)) {
+                  isInUneditable = true;
+                }
+              }
+
+              if (!isInUneditable) dom.autoLink(endContainer.parentNode, [that.config.uneditableContainerClassname]);
             });
           }
         });
 
         dom.observe(this.element, "blur", function() {
-          dom.autoLink(that.element);
+          dom.autoLink(that.element, [that.config.uneditableContainerClassname]);
         });
       }
 
@@ -11928,7 +12059,7 @@ wysihtml5.views.View = Base.extend(
     }
   };
 
-  var handleDeleteKeyPress = function(selection, element) {
+  var handleDeleteKeyPress = function(event, selection, element) {
     if (selection.isCollapsed()) {
       if (selection.caretIsInTheBeginnig()) {
         event.preventDefault();
@@ -12129,7 +12260,7 @@ wysihtml5.views.View = Base.extend(
       }
       if (keyCode === 8) {
         // delete key
-        handleDeleteKeyPress(that.selection, element);
+        handleDeleteKeyPress(event, that.selection, element);
       } else if (keyCode === 9) {
         event.preventDefault();
         handleTabKeyDown(that, element);
