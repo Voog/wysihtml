@@ -18,6 +18,40 @@
     return top;
   }
 
+  // Provides the depth of ``descendant`` relative to ``ancestor``
+  function getDepth(ancestor, descendant) {
+      var ret = 0;
+      while (descendant !== ancestor) {
+          ret++;
+          descendant = descendant.parentNode;
+          if (!descendant)
+              throw new Error("not a descendant of ancestor!");
+      }
+      return ret;
+  }
+
+  // Should fix the obtained ranges that cannot surrond contents normally to apply changes upon
+  // Being considerate to firefox that sets range start start out of span and end inside on doubleclick initiated selection
+  function expandRangeToSurround(range) {
+      if (range.canSurroundContents()) return;
+
+      var common = range.commonAncestorContainer,
+          start_depth = getDepth(common, range.startContainer),
+          end_depth = getDepth(common, range.endContainer);
+
+      while(!range.canSurroundContents()) {
+        // In the following branches, we cannot just decrement the depth variables because the setStartBefore/setEndAfter may move the start or end of the range more than one level relative to ``common``. So we need to recompute the depth.
+        if (start_depth > end_depth) {
+            range.setStartBefore(range.startContainer);
+            start_depth = getDepth(common, range.startContainer);
+        }
+        else {
+            range.setEndAfter(range.endContainer);
+            end_depth = getDepth(common, range.endContainer);
+        }
+      }
+  }
+
   wysihtml5.Selection = Base.extend(
     /** @scope wysihtml5.Selection.prototype */ {
     constructor: function(editor, contain, unselectableClass) {
@@ -38,6 +72,7 @@
      */
     getBookmark: function() {
       var range = this.getRange();
+      if (range) expandRangeToSurround(range);
       return range && range.cloneRange();
     },
 

@@ -166,7 +166,7 @@
     return offset > 0 && offset < node.childNodes.length;
   }
 
-  function splitNodeAt(node, descendantNode, descendantOffset) {
+  function splitNodeAt(node, descendantNode, descendantOffset, container) {
     var newNode;
     if (rangy.dom.isCharacterDataNode(descendantNode)) {
       if (descendantOffset == 0) {
@@ -180,17 +180,21 @@
       }
     }
     if (!newNode) {
-      newNode = descendantNode.cloneNode(false);
-      if (newNode.id) {
-        newNode.removeAttribute("id");
+      if (!container || descendantNode !== container) {
+
+        newNode = descendantNode.cloneNode(false);
+        if (newNode.id) {
+          newNode.removeAttribute("id");
+        }
+        var child;
+        while ((child = descendantNode.childNodes[descendantOffset])) {
+          newNode.appendChild(child);
+        }
+        rangy.dom.insertAfter(newNode, descendantNode);
+
       }
-      var child;
-      while ((child = descendantNode.childNodes[descendantOffset])) {
-        newNode.appendChild(child);
-      }
-      rangy.dom.insertAfter(newNode, descendantNode);
     }
-    return (descendantNode == node) ? newNode : splitNodeAt(node, newNode.parentNode, rangy.dom.getNodeIndex(newNode));
+    return (descendantNode == node) ? newNode :  splitNodeAt(node, newNode.parentNode, rangy.dom.getNodeIndex(newNode), container);
   }
 
   function Merge(firstNode) {
@@ -234,7 +238,7 @@
     }
   };
 
-  function HTMLApplier(tagNames, cssClass, similarClassRegExp, normalize, cssStyle, similarStyleRegExp) {
+  function HTMLApplier(tagNames, cssClass, similarClassRegExp, normalize, cssStyle, similarStyleRegExp, container) {
     this.tagNames = tagNames || [defaultTagName];
     this.cssClass = cssClass || ((cssClass === false) ? false : "");
     this.similarClassRegExp = similarClassRegExp;
@@ -242,6 +246,7 @@
     this.similarStyleRegExp = similarStyleRegExp;
     this.normalize = normalize;
     this.applyToAnyTagName = false;
+    this.container = container;
   }
 
   HTMLApplier.prototype = {
@@ -395,11 +400,11 @@
             ancestorRange.selectNode(ancestor);
 
         if (ancestorRange.isPointInRange(range.endContainer, range.endOffset) && isSplitPoint(range.endContainer, range.endOffset)) {
-            splitNodeAt(ancestor, range.endContainer, range.endOffset);
+            splitNodeAt(ancestor, range.endContainer, range.endOffset, this.container);
             range.setEndAfter(ancestor);
         }
         if (ancestorRange.isPointInRange(range.startContainer, range.startOffset) && isSplitPoint(range.startContainer, range.startOffset)) {
-            ancestor = splitNodeAt(ancestor, range.startContainer, range.startOffset);
+            ancestor = splitNodeAt(ancestor, range.startContainer, range.startOffset, this.container);
         }
       }
 

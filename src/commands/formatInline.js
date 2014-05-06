@@ -46,13 +46,13 @@
     return alias ? [tagName.toLowerCase(), alias.toLowerCase()] : [tagName.toLowerCase()];
   }
 
-  function _getApplier(tagName, className, classRegExp, cssStyle, styleRegExp) {
+  function _getApplier(tagName, className, classRegExp, cssStyle, styleRegExp, container) {
     var identifier = tagName + ":" + className;
     if (cssStyle) {
       identifier += ":" + cssStyle;
     }
     if (!htmlApplier[identifier]) {
-      htmlApplier[identifier] = new wysihtml5.selection.HTMLApplier(_getTagNames(tagName), className, classRegExp, true, cssStyle, styleRegExp);
+      htmlApplier[identifier] = new wysihtml5.selection.HTMLApplier(_getTagNames(tagName), className, classRegExp, true, cssStyle, styleRegExp, container);
     }
     return htmlApplier[identifier];
   }
@@ -66,7 +66,8 @@
         return false;
       }
       composer.selection.getSelection().removeAllRanges();
-      _getApplier(tagName, className, classRegExp, cssStyle, styleRegExp).toggleRange(ownRanges);
+
+      _getApplier(tagName, className, classRegExp, cssStyle, styleRegExp, composer.element).toggleRange(ownRanges);
 
       if (!dontRestoreSelect) {
         range.setStart(ownRanges[0].startContainer,  ownRanges[0].startOffset);
@@ -135,7 +136,7 @@
         return false;
       }
 
-      return _getApplier(tagName, className, classRegExp, cssStyle, styleRegExp).isAppliedToRange(ownRanges);
+      return _getApplier(tagName, className, classRegExp, cssStyle, styleRegExp, composer.element).isAppliedToRange(ownRanges);
     }
   };
 })(wysihtml5);

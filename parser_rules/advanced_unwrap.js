@@ -36,6 +36,7 @@ var wysihtml5ParserRules = {
     /**
      * CSS Class white-list
      * Following CSS classes won't be removed when parsed by the wysihtml5 HTML parser
+     * If all classes should pass "any" as classes value. Ex: "classes": "any"
      */
     "classes": {
         "wysiwyg-clear-both": 1,

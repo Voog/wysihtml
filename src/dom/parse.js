@@ -175,7 +175,7 @@ wysihtml5.dom.parse = (function() {
     if (cleanUp &&
         newNode.nodeName.toLowerCase() === DEFAULT_NODE_NAME &&
         (!newNode.childNodes.length ||
-         ((/^\s*$/gi).test(newNode.innerHTML) && oldNode.className !== "_wysihtml5-temp-placeholder") ||
+         ((/^\s*$/gi).test(newNode.innerHTML) && oldNode.className !== "_wysihtml5-temp-placeholder" && oldNode.className !== "rangySelectionBoundary") ||
          !newNode.attributes.length)
         ) {
       fragment = newNode.ownerDocument.createDocumentFragment();
@@ -270,7 +270,7 @@ wysihtml5.dom.parse = (function() {
     var definition, type;
 
     // do not interfere with placeholder span or pasting caret position is not maintained
-    if (oldNode.nodeName === "SPAN" && oldNode.className === "_wysihtml5-temp-placeholder") {
+    if (oldNode.nodeName === "SPAN" && (oldNode.className === "_wysihtml5-temp-placeholder" || oldNode.className === "rangySelectionBoundary")) {
       return true;
     }
 
@@ -440,24 +440,30 @@ wysihtml5.dom.parse = (function() {
       }
     }
 
-    // make sure that wysihtml5 temp class doesn't get stripped out
-    allowedClasses["_wysihtml5-temp-placeholder"] = 1;
 
-    // add old classes last
-    oldClasses = oldNode.getAttribute("class");
-    if (oldClasses) {
-      classes = classes.concat(oldClasses.split(WHITE_SPACE_REG_EXP));
-    }
-    classesLength = classes.length;
-    for (; i<classesLength; i++) {
-      currentClass = classes[i];
-      if (allowedClasses[currentClass]) {
-        newClasses.push(currentClass);
+    if (typeof(allowedClasses) === "string" && allowedClasses === "any" && oldNode.getAttribute("class")) {
+      attributes["class"] = oldNode.getAttribute("class");
+    } else {
+      // make sure that wysihtml5 temp class doesn't get stripped out
+      allowedClasses["_wysihtml5-temp-placeholder"] = 1;
+      allowedClasses["_rangySelectionBoundary"] = 1;
+
+      // add old classes last
+      oldClasses = oldNode.getAttribute("class");
+      if (oldClasses) {
+        classes = classes.concat(oldClasses.split(WHITE_SPACE_REG_EXP));
       }
-    }
+      classesLength = classes.length;
+      for (; i<classesLength; i++) {
+        currentClass = classes[i];
+        if (allowedClasses[currentClass]) {
+          newClasses.push(currentClass);
+        }
+      }
 
-    if (newClasses.length) {
-      attributes["class"] = wysihtml5.lang.array(newClasses).unique().join(" ");
+      if (newClasses.length) {
+        attributes["class"] = wysihtml5.lang.array(newClasses).unique().join(" ");
+      }
     }
 
     if (styles.length) {
