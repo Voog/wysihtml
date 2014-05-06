@@ -29,7 +29,7 @@
       BRACKETS              = { ")": "(", "]": "[", "}": "{" };
 
   function autoLink(element, ignoreInClasses) {
-    if (_hasParentThatShouldBeIgnored(element)) {
+    if (_hasParentThatShouldBeIgnored(element, ignoreInClasses)) {
       return element;
     }
 
@@ -37,7 +37,7 @@
       element = element.ownerDocument.body;
     }
 
-    return _parseNode(element);
+    return _parseNode(element, ignoreInClasses);
   }
 
   /**
@@ -100,11 +100,14 @@
     parentNode.removeChild(textNode);
   }
 
-  function _hasParentThatShouldBeIgnored(node) {
+  function _hasParentThatShouldBeIgnored(node, ignoreInClasses) {
     var nodeName;
     while (node.parentNode) {
       node = node.parentNode;
       nodeName = node.nodeName;
+      if (node.className && wysihtml5.lang.array(node.className.split(' ')).contains(ignoreInClasses)) {
+        return true;
+      }
       if (IGNORE_URLS_IN.contains(nodeName)) {
         return true;
       } else if (nodeName === "body") {
@@ -118,11 +121,13 @@
     if (IGNORE_URLS_IN.contains(element.nodeName)) {
       return;
     }
+
     if (element.className && wysihtml5.lang.array(element.className.split(' ')).contains(ignoreInClasses)) {
       return;
     }
 
     if (element.nodeType === wysihtml5.TEXT_NODE && element.data.match(URL_REG_EXP)) {
+      console.log(element);
       _wrapMatchesInNode(element);
       return;
     }
@@ -132,7 +137,7 @@
         i                 = 0;
 
     for (; i<childNodesLength; i++) {
-      _parseNode(childNodes[i]);
+      _parseNode(childNodes[i], ignoreInClasses);
     }
 
     return element;

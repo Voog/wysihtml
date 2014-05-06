@@ -263,13 +263,22 @@
         this.parent.on("newword:composer", function() {
           if (dom.getTextContent(that.element).match(dom.autoLink.URL_REG_EXP)) {
             that.selection.executeAndRestore(function(startContainer, endContainer) {
-              dom.autoLink(endContainer.parentNode, [this.config.uneditableContainerClassname]);
+              var uneditables = that.element.querySelectorAll("." + that.config.uneditableContainerClassname),
+                  isInUneditable = false;
+
+              for (var i = uneditables.length; i--;) {
+                if (wysihtml5.dom.contains(uneditables[i], endContainer)) {
+                  isInUneditable = true;
+                }
+              }
+
+              if (!isInUneditable) dom.autoLink(endContainer.parentNode, [that.config.uneditableContainerClassname]);
             });
           }
         });
 
         dom.observe(this.element, "blur", function() {
-          dom.autoLink(that.element, [this.config.uneditableContainerClassname]);
+          dom.autoLink(that.element, [that.config.uneditableContainerClassname]);
         });
       }
 
