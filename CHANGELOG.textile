@@ -1,3 +1,8 @@
+*wysihtml5x 0.4.5* (May 6, 2014)
+* Added "add_style" to parser rules
+* Added function "any" as parser class parameter to pass all classes
+* Some errors fixed
+
 *wysihtml5x 0.4.4* (Apr 25, 2014)
 * Adds TAB key support
 * Improves list handling and adds possibility to create nested lists
