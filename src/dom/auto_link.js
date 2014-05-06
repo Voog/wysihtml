@@ -28,7 +28,7 @@
       MAX_DISPLAY_LENGTH    = 100,
       BRACKETS              = { ")": "(", "]": "[", "}": "{" };
 
-  function autoLink(element) {
+  function autoLink(element, ignoreInClasses) {
     if (_hasParentThatShouldBeIgnored(element)) {
       return element;
     }
@@ -114,8 +114,11 @@
     return false;
   }
 
-  function _parseNode(element) {
+  function _parseNode(element, ignoreInClasses) {
     if (IGNORE_URLS_IN.contains(element.nodeName)) {
+      return;
+    }
+    if (element.className && wysihtml5.lang.array(element.className.split(' ')).contains(ignoreInClasses)) {
       return;
     }
 

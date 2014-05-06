@@ -18,3 +18,10 @@ if (Object.defineProperty && Object.getOwnPropertyDescriptor && Object.getOwnPro
 		);
 	})();
 }
+
+// isArray polyfill for ie8
+if(!Array.isArray) {
+  Array.isArray = function(arg) {
+    return Object.prototype.toString.call(arg) === '[object Array]';
+  };
+}

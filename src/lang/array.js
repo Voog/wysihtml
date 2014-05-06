@@ -6,9 +6,20 @@ wysihtml5.lang.array = function(arr) {
      * @example
      *    wysihtml5.lang.array([1, 2]).contains(1);
      *    // => true
+     *
+     * Can be used to match array with array. If intersection is found true is returned
      */
     contains: function(needle) {
+      if (Array.isArray(needle)) {
+        for (var i = needle.length; i--;) {
+          if (wysihtml5.lang.array(arr).indexOf(needle[i]) !== -1) {
+            return true;
+          }
+        }
+        return false;
+      } else {
         return wysihtml5.lang.array(arr).indexOf(needle) !== -1;
+      }
     },
 
     /**

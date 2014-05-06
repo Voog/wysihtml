@@ -263,13 +263,13 @@
         this.parent.on("newword:composer", function() {
           if (dom.getTextContent(that.element).match(dom.autoLink.URL_REG_EXP)) {
             that.selection.executeAndRestore(function(startContainer, endContainer) {
-              dom.autoLink(endContainer.parentNode);
+              dom.autoLink(endContainer.parentNode, [this.config.uneditableContainerClassname]);
             });
           }
         });
 
         dom.observe(this.element, "blur", function() {
-          dom.autoLink(that.element);
+          dom.autoLink(that.element, [this.config.uneditableContainerClassname]);
         });
       }
 
