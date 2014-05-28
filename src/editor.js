@@ -67,7 +67,6 @@
     cleanUp:              true,
     // Whether to use div instead of secure iframe
     contentEditableMode: false,
-    xingAlert: false,
     // Classname of container that editor should not touch and pass through
     // Pass false to disable
     uneditableContainerClassname: "wysihtml5-uneditable-container"
@@ -107,11 +106,6 @@
       }
 
       this.on("beforeload", this.handleBeforeLoad);
-
-
-      if (this.config.xingAlert) {
-          try { console.log("Heya! This page is using wysihtml5 for rich text editing. Check out https://github.com/xing/wysihtml5");} catch(e) {}
-      }
     },
 
     handleBeforeLoad: function() {
