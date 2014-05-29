@@ -47,13 +47,19 @@
   }
 
   function _getApplier(tagName, className, classRegExp, cssStyle, styleRegExp, container) {
-    var identifier = tagName + ":" + className;
+    var identifier = tagName;
+    
+    if (className) {
+      identifier += ":" + className;
+    }
     if (cssStyle) {
       identifier += ":" + cssStyle;
     }
+
     if (!htmlApplier[identifier]) {
       htmlApplier[identifier] = new wysihtml5.selection.HTMLApplier(_getTagNames(tagName), className, classRegExp, true, cssStyle, styleRegExp, container);
     }
+
     return htmlApplier[identifier];
   }
 
@@ -132,7 +138,7 @@
 
       ownRanges = composer.selection.getOwnRanges();
 
-      if (ownRanges.length == 0) {
+      if (!ownRanges || ownRanges.length === 0) {
         return false;
       }
 

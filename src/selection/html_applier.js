@@ -544,6 +544,7 @@
           ancestor, styleAncestor, textNodes;
 
       for (var ri = range.length; ri--;) {
+
         textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
         if (!textNodes.length) {
           ancestor = this.getAncestorWithClass(range[ri].startContainer);
@@ -559,10 +560,11 @@
           if (!ancestor) {
             ancestor = this.getAncestorWithStyle(textNodes[i]);
           }
-          if (!(selectedText != "" && !ancestor)) {
+          if (ancestor && selectedText != "") {
             ancestors.push(ancestor);
           }
         }
+
       }
 
       return (ancestors.length) ? ancestors : false;
