@@ -77,6 +77,12 @@ var wysihtml5ParserRules = {
     
     
     "type_definitions": {
+
+        "visible_content_object": {
+            "methods": {
+                "has_visible_contet": 1
+            }
+        },
         
         "alignment_object": {
             "classes": {
@@ -344,7 +350,7 @@ var wysihtml5ParserRules = {
         
         "div": {
             "one_of_type": {
-                "alignment_object": 1,
+                "visible_content_object": 1,
             },
             "remove_action": "unwrap",
             "keep_styles": {

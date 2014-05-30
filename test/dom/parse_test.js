@@ -747,4 +747,54 @@ if (wysihtml5.browser.supported()) {
     this.equal(this.sanitize(input_valid, rules), input_valid, "Valid image is kept");
     this.equal(this.sanitize(input_valid_2, rules), input_valid_2, "Valid image is kept2");
   });
+
+  test("Test valid type definition visible_content_object ", function() {
+    var rules = {
+      "type_definitions": {
+        "visible_content_object": {
+            "methods": {
+                "has_visible_contet": 1
+            }
+        },
+      },
+      "tags": {
+          'div': {
+              "one_of_type": {
+                  "visible_content_object": 1
+              },
+              "remove_action": "unwrap",
+              "check_attributes": {
+                  "style": "any"
+              }
+          },
+          'img': {
+            "check_attributes": {
+              "src": "any"
+            }
+          },
+          'span': {}
+       }
+    },
+    input1 = '<div></div>',
+    input2 = '<div>   <span>  </span>  </div>',
+    input3 = '<div><img src="pic.jpg"/></div>',
+    input4 = '<div>test</div>',
+    input5 = '<div style="width: 10px; height: 10px;">   <span>  </span>  </div>',
+    tester = document.createElement('div');
+
+    this.equal(this.sanitize(input1, rules), "", "Empty DIV gets removed");
+    this.equal(this.sanitize(input2, rules), "   <span>  </span>  ", "DIV with no textual content gets unwrapped");
+
+    this.equal(this.sanitize(input3, rules), input3, "DIV with img inside is kept");
+    this.equal(this.sanitize(input4, rules), input4, "DIV with textual content is kept");
+
+    document.body.appendChild(tester);
+
+    tester.innerHTML = input2;
+    this.equal(this.sanitize(tester, rules).innerHTML, "   <span>  </span>  ", "DIV with no dimesions and in dom gets unwrapped");
+
+    tester.innerHTML = input5;
+    this.equal(this.sanitize(tester, rules).innerHTML, input5 , "DIV with dimensions and in dom is kept");
+
+  });
 }

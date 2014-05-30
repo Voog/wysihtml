@@ -201,7 +201,6 @@ wysihtml5.dom.parse = (function() {
         nodeName    = oldNode.nodeName.toLowerCase(),
         scopeName   = oldNode.scopeName;
 
-
     /**
      * We already parsed that element
      * ignore it! (yes, this sometimes happens in IE8 when the html is invalid)
@@ -256,7 +255,7 @@ wysihtml5.dom.parse = (function() {
     _handleAttributes(oldNode, newNode, rule);
     _handleStyles(oldNode, newNode, rule);
     // tests if type condition is met or node should be removed/unwrapped
-    if (rule.one_of_type && !_testTypes(newNode, currentRules, rule.one_of_type)) {
+    if (rule.one_of_type && !_testTypes(oldNode, currentRules, rule.one_of_type)) {
       return (rule.remove_action && rule.remove_action == "unwrap") ? false : null;
     }
 
@@ -300,6 +299,18 @@ wysihtml5.dom.parse = (function() {
     var nodeClasses = oldNode.getAttribute("class"),
         nodeStyles =  oldNode.getAttribute("style"),
         classesLength, s, s_corrected, a, attr, currentClass, styleProp;
+
+    // test for methods
+    if (definition.methods) {
+      for (var m in definition.methods) {
+        if (definition.methods.hasOwnProperty(m) && typeCeckMethods[m]) {
+
+          if (typeCeckMethods[m](oldNode)) {
+            return true;
+          }
+        }
+      }
+    }
 
     // test for classes, if one found return true
     if (nodeClasses && definition.classes) {
@@ -676,6 +687,40 @@ wysihtml5.dom.parse = (function() {
       };
       return function(attributeValue) {
         return mapping[String(attributeValue).charAt(0)];
+      };
+    })()
+  };
+
+  // checks if element is possibly visible
+  var typeCeckMethods = {
+    has_visible_contet: (function() {
+      var txt,
+          isVisible = false,
+          visibleElements = ['img', 'video', 'picture', 'br', 'script', 'noscript',
+                             'style', 'table', 'iframe', 'object', 'embed', 'audio',
+                             'svg', 'input', 'button', 'select','textarea', 'canvas'];
+
+      return function(el) {
+
+        // has visible innertext. so is visible
+        txt = (el.innerText || el.textContent).replace(/\s/g, '');
+        if (txt && txt.length > 0) {
+          return true;
+        }
+
+        // matches list of visible dimensioned elements
+        for (var i = visibleElements.length; i--;) {
+          if (el.querySelector(visibleElements[i])) {
+            return true;
+          }
+        }
+
+        // try to measure dimesions in last resort. (can find only of elements in dom)
+        if (el.offsetWidth && el.offsetWidth > 0 && el.offsetHeight && el.offsetHeight > 0) {
+          return true;
+        }
+
+        return false;
       };
     })()
   };
