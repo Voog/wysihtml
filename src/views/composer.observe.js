@@ -230,7 +230,7 @@
       if (keyCode === 8) {
         // delete key
         handleDeleteKeyPress(event, that.selection, element, that);
-      } else if (keyCode === 9) {
+      } else if (that.config.handleTabKey && keyCode === 9) {
         event.preventDefault();
         handleTabKeyDown(that, element);
       }
