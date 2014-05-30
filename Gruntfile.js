@@ -87,6 +87,8 @@ module.exports = function(grunt) {
     "src/commands/mergeTableCells.js",
     "src/commands/addTableCells.js",
     "src/commands/deleteTableCells.js",
+    "src/commands/indentList.js",
+    "src/commands/outdentList.js",
     "src/undo_manager.js",
     "src/views/view.js",
     "src/views/composer.js",
