@@ -314,7 +314,7 @@
             node = selection.anchorNode,
             offset = selection.anchorOffset;
         if (ofNode) {
-          return (offset === 0 && (node.nodeName && node.nodeName === ofNode.toUpperCase() || wysihtml5.dom.getParentElement(node.parentNode, ofNode, 1)));
+          return (offset === 0 && (node.nodeName && node.nodeName === ofNode.toUpperCase() || wysihtml5.dom.getParentElement(node.parentNode, { nodeName: ofNode }, 1)));
         } else {
           return (offset === 0 && !this.getPreviousNode(node, true));
         }
