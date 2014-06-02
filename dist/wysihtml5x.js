@@ -25,7 +25,7 @@ if(!Array.isArray) {
     return Object.prototype.toString.call(arg) === '[object Array]';
   };
 };/**
- * @license wysihtml5x v0.4.6
+ * @license wysihtml5x v0.4.7
  * https://github.com/Edicy/wysihtml5
  *
  * Author: Christopher Blum (https://github.com/tiff)
@@ -36,7 +36,7 @@ if(!Array.isArray) {
  *
  */
 var wysihtml5 = {
-  version: "0.4.6",
+  version: "0.4.7",
 
   // namespaces
   commands:   {},
@@ -8598,7 +8598,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
             node = selection.anchorNode,
             offset = selection.anchorOffset;
         if (ofNode) {
-          return (offset === 0 && (node.nodeName && node.nodeName === ofNode.toUpperCase() || wysihtml5.dom.getParentElement(node.parentNode, ofNode, 1)));
+          return (offset === 0 && (node.nodeName && node.nodeName === ofNode.toUpperCase() || wysihtml5.dom.getParentElement(node.parentNode, { nodeName: ofNode }, 1)));
         } else {
           return (offset === 0 && !this.getPreviousNode(node, true));
         }

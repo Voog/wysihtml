@@ -1,3 +1,6 @@
+*wysihtml5x 0.4.7* (June 2, 2014)
+* Fixes mayor bug that prevents deleting some elements.
+
 *wysihtml5x 0.4.6* (June 2, 2014)
 * Added "hasVisibleContent" to parser check methods to clean up empty elements
 * Added list indent and outdent commands
