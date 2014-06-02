@@ -264,6 +264,19 @@
       return (ret !== this.contain) ? ret : false;
     },
 
+    getSelectionParentsByTag: function(tagName) {
+      var nodes = this.getSelectedOwnNodes(),
+          curEl, parents = [];
+
+      for (var i = 0, maxi = nodes.length; i < maxi; i++) {
+        curEl = (nodes[i].nodeName &&  nodes[i].nodeName === 'LI') ? nodes[i] : wysihtml5.dom.getParentElement(nodes[i], { nodeName: ['LI']}, false, this.contain);
+        if (curEl) {
+          parents.push(curEl);
+        }
+      }
+      return (parents.length) ? parents : null;
+    },
+
     getRangeToNodeEnd: function() {
       if (this.isCollapsed()) {
         var range = this.getRange(),

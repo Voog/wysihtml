@@ -47,73 +47,21 @@ wysihtml5.dom.getParentElement = (function() {
     return styles[styles.length - 1] === cssStyle;
   }
 
-  function _getParentElementWithNodeName(node, nodeName, levels) {
-    while (levels-- && node && node.nodeName !== "BODY") {
-      if (_isSameNodeName(node.nodeName, nodeName)) {
-        return node;
-      }
-      node = node.parentNode;
-    }
-    return null;
-  }
+  return function(node, matchingSet, levels, container) {
+    var findByStyle = (matchingSet.cssStyle || matchingSet.styleRegExp),
+        findByClass = (matchingSet.className || matchingSet.classRegExp);
 
-  function _getParentElementWithNodeNameAndClassName(node, nodeName, className, classRegExp, levels) {
-    while (levels-- && node && node.nodeName !== "BODY") {
-      if (_isElement(node) &&
-          _isSameNodeName(node.nodeName, nodeName) &&
-          _hasClassName(node, className, classRegExp)) {
-        return node;
-      }
-      node = node.parentNode;
-    }
-    return null;
-  }
-
-  function _getParentElementWithNodeNameAndStyle(node, nodeName, cssStyle, styleRegExp, levels) {
-    while (levels-- && node && node.nodeName !== "BODY") {
-      if (_isElement(node) &&
-          _isSameNodeName(node.nodeName, nodeName) &&
-          _hasStyle(node, cssStyle, styleRegExp)
-      ) {
-        return node;
-      }
-      node = node.parentNode;
-    }
-    return null;
-  }
-
-  function _getParentElementWithNodeNameAndClassNameAndStyle(node, nodeName, className, classRegExp, cssStyle, styleRegExp, levels) {
-    while (levels-- && node && node.nodeName !== "BODY") {
-      if (_isElement(node) &&
-          _isSameNodeName(node.nodeName, nodeName) &&
-          _hasStyle(node, cssStyle, styleRegExp) &&
-          _hasClassName(node, className, classRegExp)
-      ) {
-        return node;
-      }
-      node = node.parentNode;
-    }
-    return null;
-  }
-
-  return function(node, matchingSet, levels) {
     levels = levels || 50; // Go max 50 nodes upwards from current node
-    if ((matchingSet.className || matchingSet.classRegExp) && (matchingSet.cssStyle || matchingSet.styleRegExp)) {
-      return _getParentElementWithNodeNameAndClassNameAndStyle(
-        node, matchingSet.nodeName, matchingSet.className, matchingSet.classRegExp, matchingSet.cssStyle, matchingSet.styleRegExp, levels
-      );
-    } else if (matchingSet.className || matchingSet.classRegExp) {
-      return _getParentElementWithNodeNameAndClassName(
-        node, matchingSet.nodeName, matchingSet.className, matchingSet.classRegExp, levels
-      );
-    } else if (matchingSet.cssStyle || matchingSet.styleRegExp) {
-      return _getParentElementWithNodeNameAndStyle(
-        node, matchingSet.nodeName, matchingSet.cssStyle, matchingSet.styleRegExp, levels
-      );
-    } else {
-      return _getParentElementWithNodeName(
-        node, matchingSet.nodeName, levels
-      );
+
+    while (levels-- && node && node.nodeName !== "BODY" && (!container || node !== container)) {
+      if (_isElement(node) && _isSameNodeName(node.nodeName, matchingSet.nodeName) &&
+          (!findByStyle || _hasStyle(node, matchingSet.cssStyle, matchingSet.styleRegExp)) &&
+          (!findByClass || _hasClassName(node, matchingSet.className, matchingSet.classRegExp))
+      ) {
+        return node;
+      }
+      node = node.parentNode;
     }
+    return null;
   };
 })();

@@ -277,7 +277,7 @@ if (wysihtml5.browser.supported()) {
 
   // create table
     asyncTest("Create lists", function() {
-      expect(4);
+      expect(7);
       var that = this,
           editor = new wysihtml5.Editor(this.editableArea),
           text = "";
@@ -304,6 +304,18 @@ if (wysihtml5.browser.supported()) {
 
         editor.composer.commands.exec('insertHTML', 'text');
         equal(editableElement.innerHTML.toLowerCase(), expectOrdTextWithContents, "In ordered list placed caret correctly");
+
+        editableElement.innerHTML = '<ul><li>test</li><li class="second">test</li><li>test</li></ul>';
+        editor.composer.selection.selectNode(editor.editableElement.querySelector('.second'));
+        editor.composer.commands.exec('indentList');
+        equal(editableElement.innerHTML.toLowerCase(), '<ul><li>test<ul><li class="second">test</li></ul></li><li>test</li></ul>', "List indent increases level correctly");
+
+        editor.composer.commands.exec('outdentList');
+        equal(editableElement.innerHTML.toLowerCase(), '<ul><li>test</li><li class="second">test</li><li>test</li></ul>', "List outdent decreases level correctly");
+
+        editor.composer.commands.exec('outdentList');
+        equal(editableElement.innerHTML.toLowerCase(), '<ul><li>test</li></ul><br>test<ul><li>test</li></ul>', "List outdent escapes current list item correctly out of list");
+
 
         start();
       });

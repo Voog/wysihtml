@@ -25,7 +25,7 @@ if(!Array.isArray) {
     return Object.prototype.toString.call(arg) === '[object Array]';
   };
 };/**
- * @license wysihtml5x v0.4.5
+ * @license wysihtml5x v0.4.6
  * https://github.com/Edicy/wysihtml5
  *
  * Author: Christopher Blum (https://github.com/tiff)
@@ -36,7 +36,7 @@ if(!Array.isArray) {
  *
  */
 var wysihtml5 = {
-  version: "0.4.5",
+  version: "0.4.6",
 
   // namespaces
   commands:   {},
@@ -5362,74 +5362,22 @@ wysihtml5.dom.getParentElement = (function() {
     return styles[styles.length - 1] === cssStyle;
   }
 
-  function _getParentElementWithNodeName(node, nodeName, levels) {
-    while (levels-- && node && node.nodeName !== "BODY") {
-      if (_isSameNodeName(node.nodeName, nodeName)) {
-        return node;
-      }
-      node = node.parentNode;
-    }
-    return null;
-  }
+  return function(node, matchingSet, levels, container) {
+    var findByStyle = (matchingSet.cssStyle || matchingSet.styleRegExp),
+        findByClass = (matchingSet.className || matchingSet.classRegExp);
 
-  function _getParentElementWithNodeNameAndClassName(node, nodeName, className, classRegExp, levels) {
-    while (levels-- && node && node.nodeName !== "BODY") {
-      if (_isElement(node) &&
-          _isSameNodeName(node.nodeName, nodeName) &&
-          _hasClassName(node, className, classRegExp)) {
-        return node;
-      }
-      node = node.parentNode;
-    }
-    return null;
-  }
-
-  function _getParentElementWithNodeNameAndStyle(node, nodeName, cssStyle, styleRegExp, levels) {
-    while (levels-- && node && node.nodeName !== "BODY") {
-      if (_isElement(node) &&
-          _isSameNodeName(node.nodeName, nodeName) &&
-          _hasStyle(node, cssStyle, styleRegExp)
-      ) {
-        return node;
-      }
-      node = node.parentNode;
-    }
-    return null;
-  }
-
-  function _getParentElementWithNodeNameAndClassNameAndStyle(node, nodeName, className, classRegExp, cssStyle, styleRegExp, levels) {
-    while (levels-- && node && node.nodeName !== "BODY") {
-      if (_isElement(node) &&
-          _isSameNodeName(node.nodeName, nodeName) &&
-          _hasStyle(node, cssStyle, styleRegExp) &&
-          _hasClassName(node, className, classRegExp)
-      ) {
-        return node;
-      }
-      node = node.parentNode;
-    }
-    return null;
-  }
-
-  return function(node, matchingSet, levels) {
     levels = levels || 50; // Go max 50 nodes upwards from current node
-    if ((matchingSet.className || matchingSet.classRegExp) && (matchingSet.cssStyle || matchingSet.styleRegExp)) {
-      return _getParentElementWithNodeNameAndClassNameAndStyle(
-        node, matchingSet.nodeName, matchingSet.className, matchingSet.classRegExp, matchingSet.cssStyle, matchingSet.styleRegExp, levels
-      );
-    } else if (matchingSet.className || matchingSet.classRegExp) {
-      return _getParentElementWithNodeNameAndClassName(
-        node, matchingSet.nodeName, matchingSet.className, matchingSet.classRegExp, levels
-      );
-    } else if (matchingSet.cssStyle || matchingSet.styleRegExp) {
-      return _getParentElementWithNodeNameAndStyle(
-        node, matchingSet.nodeName, matchingSet.cssStyle, matchingSet.styleRegExp, levels
-      );
-    } else {
-      return _getParentElementWithNodeName(
-        node, matchingSet.nodeName, levels
-      );
+
+    while (levels-- && node && node.nodeName !== "BODY" && (!container || node !== container)) {
+      if (_isElement(node) && _isSameNodeName(node.nodeName, matchingSet.nodeName) &&
+          (!findByStyle || _hasStyle(node, matchingSet.cssStyle, matchingSet.styleRegExp)) &&
+          (!findByClass || _hasClassName(node, matchingSet.className, matchingSet.classRegExp))
+      ) {
+        return node;
+      }
+      node = node.parentNode;
     }
+    return null;
   };
 })();
 ;wysihtml5.dom.getNextElement = function(node){
@@ -5885,7 +5833,6 @@ wysihtml5.dom.parse = (function() {
         nodeName    = oldNode.nodeName.toLowerCase(),
         scopeName   = oldNode.scopeName;
 
-
     /**
      * We already parsed that element
      * ignore it! (yes, this sometimes happens in IE8 when the html is invalid)
@@ -5940,7 +5887,7 @@ wysihtml5.dom.parse = (function() {
     _handleAttributes(oldNode, newNode, rule);
     _handleStyles(oldNode, newNode, rule);
     // tests if type condition is met or node should be removed/unwrapped
-    if (rule.one_of_type && !_testTypes(newNode, currentRules, rule.one_of_type)) {
+    if (rule.one_of_type && !_testTypes(oldNode, currentRules, rule.one_of_type)) {
       return (rule.remove_action && rule.remove_action == "unwrap") ? false : null;
     }
 
@@ -5984,6 +5931,18 @@ wysihtml5.dom.parse = (function() {
     var nodeClasses = oldNode.getAttribute("class"),
         nodeStyles =  oldNode.getAttribute("style"),
         classesLength, s, s_corrected, a, attr, currentClass, styleProp;
+
+    // test for methods
+    if (definition.methods) {
+      for (var m in definition.methods) {
+        if (definition.methods.hasOwnProperty(m) && typeCeckMethods[m]) {
+
+          if (typeCeckMethods[m](oldNode)) {
+            return true;
+          }
+        }
+      }
+    }
 
     // test for classes, if one found return true
     if (nodeClasses && definition.classes) {
@@ -6360,6 +6319,40 @@ wysihtml5.dom.parse = (function() {
       };
       return function(attributeValue) {
         return mapping[String(attributeValue).charAt(0)];
+      };
+    })()
+  };
+
+  // checks if element is possibly visible
+  var typeCeckMethods = {
+    has_visible_contet: (function() {
+      var txt,
+          isVisible = false,
+          visibleElements = ['img', 'video', 'picture', 'br', 'script', 'noscript',
+                             'style', 'table', 'iframe', 'object', 'embed', 'audio',
+                             'svg', 'input', 'button', 'select','textarea', 'canvas'];
+
+      return function(el) {
+
+        // has visible innertext. so is visible
+        txt = (el.innerText || el.textContent).replace(/\s/g, '');
+        if (txt && txt.length > 0) {
+          return true;
+        }
+
+        // matches list of visible dimensioned elements
+        for (var i = visibleElements.length; i--;) {
+          if (el.querySelector(visibleElements[i])) {
+            return true;
+          }
+        }
+
+        // try to measure dimesions in last resort. (can find only of elements in dom)
+        if (el.offsetWidth && el.offsetWidth > 0 && el.offsetHeight && el.offsetHeight > 0) {
+          return true;
+        }
+
+        return false;
       };
     })()
   };
@@ -8555,6 +8548,19 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       return (ret !== this.contain) ? ret : false;
     },
 
+    getSelectionParentsByTag: function(tagName) {
+      var nodes = this.getSelectedOwnNodes(),
+          curEl, parents = [];
+
+      for (var i = 0, maxi = nodes.length; i < maxi; i++) {
+        curEl = (nodes[i].nodeName &&  nodes[i].nodeName === 'LI') ? nodes[i] : wysihtml5.dom.getParentElement(nodes[i], { nodeName: ['LI']}, false, this.contain);
+        if (curEl) {
+          parents.push(curEl);
+        }
+      }
+      return (parents.length) ? parents : null;
+    },
+
     getRangeToNodeEnd: function() {
       if (this.isCollapsed()) {
         var range = this.getRange(),
@@ -9606,6 +9612,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
           ancestor, styleAncestor, textNodes;
 
       for (var ri = range.length; ri--;) {
+
         textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
         if (!textNodes.length) {
           ancestor = this.getAncestorWithClass(range[ri].startContainer);
@@ -9621,10 +9628,11 @@ wysihtml5.quirks.ensureProperClearing = (function() {
           if (!ancestor) {
             ancestor = this.getAncestorWithStyle(textNodes[i]);
           }
-          if (!(selectedText != "" && !ancestor)) {
+          if (ancestor && selectedText != "") {
             ancestors.push(ancestor);
           }
         }
+
       }
 
       return (ancestors.length) ? ancestors : false;
@@ -10461,13 +10469,19 @@ wysihtml5.commands.formatCode = {
   }
 
   function _getApplier(tagName, className, classRegExp, cssStyle, styleRegExp, container) {
-    var identifier = tagName + ":" + className;
+    var identifier = tagName;
+    
+    if (className) {
+      identifier += ":" + className;
+    }
     if (cssStyle) {
       identifier += ":" + cssStyle;
     }
+
     if (!htmlApplier[identifier]) {
       htmlApplier[identifier] = new wysihtml5.selection.HTMLApplier(_getTagNames(tagName), className, classRegExp, true, cssStyle, styleRegExp, container);
     }
+
     return htmlApplier[identifier];
   }
 
@@ -10546,7 +10560,7 @@ wysihtml5.commands.formatCode = {
 
       ownRanges = composer.selection.getOwnRanges();
 
-      if (ownRanges.length == 0) {
+      if (!ownRanges || ownRanges.length === 0) {
         return false;
       }
 
@@ -11082,7 +11096,125 @@ wysihtml5.commands.formatCode = {
       return false;
   }
 };
-;/**
+;wysihtml5.commands.indentList = {
+  exec: function(composer, command, value) {
+    var listEls = composer.selection.getSelectionParentsByTag('LI');
+    if (listEls) {
+      return this.tryToPushLiLevel(listEls, composer.selection);
+    }
+    return false;
+  },
+
+  state: function(composer, command) {
+      return false;
+  },
+
+  tryToPushLiLevel: function(liNodes, selection) {
+    var listTag, list, prevLi, liNode, prevLiList,
+        found = false;
+
+    selection.executeAndRestoreRangy(function() {
+
+      for (var i = liNodes.length; i--;) {
+        liNode = liNodes[i];
+        listTag = (liNode.parentNode.nodeName === 'OL') ? 'OL' : 'UL';
+        list = liNode.ownerDocument.createElement(listTag);
+        prevLi = wysihtml5.dom.getPreviousElement(liNode);
+        prevLiList = (prevLi) ? prevLi.querySelector('ul, ol') : null;
+
+        if (prevLi) {
+          if (prevLiList) {
+            prevLiList.appendChild(liNode);
+          } else {
+            list.appendChild(liNode);
+            prevLi.appendChild(list);
+          }
+          found = true;
+        }
+      }
+
+    });
+    return found;
+  }
+};
+;wysihtml5.commands.outdentList = {
+  exec: function(composer, command, value) {
+    var listEls = composer.selection.getSelectionParentsByTag('LI');
+    if (listEls) {
+      return this.tryToPullLiLevel(listEls, composer);
+    }
+    return false;
+  },
+
+  state: function(composer, command) {
+      return false;
+  },
+
+  tryToPullLiLevel: function(liNodes, composer) {
+    var listNode, outerListNode, outerLiNode, list, prevLi, liNode, afterList,
+        found = false,
+        that = this;
+
+    composer.selection.executeAndRestoreRangy(function() {
+
+      for (var i = liNodes.length; i--;) {
+        liNode = liNodes[i];
+        if (liNode.parentNode) {
+          listNode = liNode.parentNode;
+
+          if (listNode.tagName === 'OL' || listNode.tagName === 'UL') {
+            found = true;
+
+            outerListNode = wysihtml5.dom.getParentElement(listNode.parentNode, { nodeName: ['OL', 'UL']}, false, composer.element);
+            outerLiNode = wysihtml5.dom.getParentElement(listNode.parentNode, { nodeName: ['LI']}, false, composer.element);
+
+            if (outerListNode && outerLiNode) {
+
+              if (liNode.nextSibling) {
+                afterList = that.getAfterList(listNode, liNode);
+                liNode.appendChild(afterList);
+              }
+              outerListNode.insertBefore(liNode, outerLiNode.nextSibling);
+
+            } else {
+
+              if (liNode.nextSibling) {
+                afterList = that.getAfterList(listNode, liNode);
+                liNode.appendChild(afterList);
+              }
+
+              for (var j = liNode.childNodes.length; j--;) {
+                listNode.parentNode.insertBefore(liNode.childNodes[j], listNode.nextSibling);
+              }
+
+              listNode.parentNode.insertBefore(document.createElement('br'), listNode.nextSibling);
+              liNode.parentNode.removeChild(liNode);
+
+            }
+
+            // cleanup
+            if (listNode.childNodes.length === 0) {
+                listNode.parentNode.removeChild(listNode);
+            }
+          }
+        }
+      }
+
+    });
+    return found;
+  },
+
+  getAfterList: function(listNode, liNode) {
+    var nodeName = listNode.nodeName,
+        newList = document.createElement(nodeName);
+
+    while (liNode.nextSibling) {
+      newList.appendChild(liNode.nextSibling);
+    }
+    return newList;
+  }
+
+};;/**
  * Undo Manager for wysihtml5
  * slightly inspired by http://rniwa.com/editing/undomanager.html#the-undomanager-interface
  */
@@ -12059,9 +12191,12 @@ wysihtml5.views.View = Base.extend(
     }
   };
 
-  var handleDeleteKeyPress = function(event, selection, element) {
+  var handleDeleteKeyPress = function(event, selection, element, composer) {
     if (selection.isCollapsed()) {
-      if (selection.caretIsInTheBeginnig()) {
+      if (selection.caretIsInTheBeginnig('LI')) {
+        event.preventDefault();
+        composer.commands.exec('outdentList');
+      } else if (selection.caretIsInTheBeginnig()) {
         event.preventDefault();
       } else {
         var beforeUneditable = selection.caretIsBeforeUneditable();
@@ -12078,38 +12213,11 @@ wysihtml5.views.View = Base.extend(
     }
   };
 
-  var tryToPushLiLevel = function(selection) {
-    var prevLi;
-    selection.executeAndRestoreRangy(function() {
-      var selNode = selection.getSelectedNode(),
-          liNode = (selNode.nodeName && selNode.nodeName === 'LI') ? selNode : selNode.parentNode,
-          listTag, list;
-
-      if (liNode.getAttribute('class') === "rangySelectionBoundary") {
-        liNode = liNode.parentNode;
-      }
-
-      if (liNode.nodeName === 'LI') {
-        listTag = (liNode.parentNode.nodeName === 'OL') ? 'OL' : 'UL';
-        list = selNode.ownerDocument.createElement(listTag);
-        prevLi = wysihtml5.dom.getPreviousElement(liNode);
-
-        if (prevLi) {
-          list.appendChild(liNode);
-          prevLi.appendChild(list);
-        }
-      }
-
-    });
-    return (prevLi) ? true : false;
-  };
-
-
   var handleTabKeyDown = function(composer, element) {
     if (!composer.selection.isCollapsed()) {
       composer.selection.deleteContents();
     } else if (composer.selection.caretIsInTheBeginnig('LI')) {
-      if (tryToPushLiLevel(composer.selection)) return;
+      if (composer.commands.exec('indentList')) return;
     }
 
     // Is &emsp; close enough to tab. Could not find enough counter arguments for now.
@@ -12260,8 +12368,8 @@ wysihtml5.views.View = Base.extend(
       }
       if (keyCode === 8) {
         // delete key
-        handleDeleteKeyPress(event, that.selection, element);
-      } else if (keyCode === 9) {
+        handleDeleteKeyPress(event, that.selection, element, that);
+      } else if (that.config.handleTabKey && keyCode === 9) {
         event.preventDefault();
         handleTabKeyDown(that, element);
       }
@@ -12540,6 +12648,8 @@ wysihtml5.views.View = Base.extend(
     autoLink:             true,
     // Includes table editing events and cell selection tracking
     handleTables:         true,
+    // Tab key inserts tab into text as default behaviour. It can be disabled to regain keyboard navigation
+    handleTabKey:         true,
     // Object which includes parser rules to apply when html gets inserted via copy & paste
     // See parser_rules/*.js for examples
     parserRules:          { tags: { br: {}, span: {}, div: {}, p: {} }, classes: {} },
@@ -12561,7 +12671,6 @@ wysihtml5.views.View = Base.extend(
     cleanUp:              true,
     // Whether to use div instead of secure iframe
     contentEditableMode: false,
-    xingAlert: false,
     // Classname of container that editor should not touch and pass through
     // Pass false to disable
     uneditableContainerClassname: "wysihtml5-uneditable-container"
@@ -12601,11 +12710,6 @@ wysihtml5.views.View = Base.extend(
       }
 
       this.on("beforeload", this.handleBeforeLoad);
-
-
-      if (this.config.xingAlert) {
-          try { console.log("Heya! This page is using wysihtml5 for rich text editing. Check out https://github.com/xing/wysihtml5");} catch(e) {}
-      }
     },
 
     handleBeforeLoad: function() {

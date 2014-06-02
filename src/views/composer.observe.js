@@ -52,9 +52,12 @@
     }
   };
 
-  var handleDeleteKeyPress = function(event, selection, element) {
+  var handleDeleteKeyPress = function(event, selection, element, composer) {
     if (selection.isCollapsed()) {
-      if (selection.caretIsInTheBeginnig()) {
+      if (selection.caretIsInTheBeginnig('LI')) {
+        event.preventDefault();
+        composer.commands.exec('outdentList');
+      } else if (selection.caretIsInTheBeginnig()) {
         event.preventDefault();
       } else {
         var beforeUneditable = selection.caretIsBeforeUneditable();
@@ -71,38 +74,11 @@
     }
   };
 
-  var tryToPushLiLevel = function(selection) {
-    var prevLi;
-    selection.executeAndRestoreRangy(function() {
-      var selNode = selection.getSelectedNode(),
-          liNode = (selNode.nodeName && selNode.nodeName === 'LI') ? selNode : selNode.parentNode,
-          listTag, list;
-
-      if (liNode.getAttribute('class') === "rangySelectionBoundary") {
-        liNode = liNode.parentNode;
-      }
-
-      if (liNode.nodeName === 'LI') {
-        listTag = (liNode.parentNode.nodeName === 'OL') ? 'OL' : 'UL';
-        list = selNode.ownerDocument.createElement(listTag);
-        prevLi = wysihtml5.dom.getPreviousElement(liNode);
-
-        if (prevLi) {
-          list.appendChild(liNode);
-          prevLi.appendChild(list);
-        }
-      }
-
-    });
-    return (prevLi) ? true : false;
-  };
-
-
   var handleTabKeyDown = function(composer, element) {
     if (!composer.selection.isCollapsed()) {
       composer.selection.deleteContents();
     } else if (composer.selection.caretIsInTheBeginnig('LI')) {
-      if (tryToPushLiLevel(composer.selection)) return;
+      if (composer.commands.exec('indentList')) return;
     }
 
     // Is &emsp; close enough to tab. Could not find enough counter arguments for now.
@@ -253,8 +229,8 @@
       }
       if (keyCode === 8) {
         // delete key
-        handleDeleteKeyPress(event, that.selection, element);
-      } else if (keyCode === 9) {
+        handleDeleteKeyPress(event, that.selection, element, that);
+      } else if (that.config.handleTabKey && keyCode === 9) {
         event.preventDefault();
         handleTabKeyDown(that, element);
       }
