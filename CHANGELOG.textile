@@ -1,3 +1,9 @@
+*wysihtml5x 0.4.6* (June 2, 2014)
+* Added "hasVisibleContent" to parser check methods to clean up empty elements
+* Added list indent and outdent commands
+* TAB key handling is now optional and can be turned off
+* Minor bug fixes
+
 *wysihtml5x 0.4.5* (May 6, 2014)
 * Added "add_style" to parser rules
 * Added function "any" as parser class parameter to pass all classes
