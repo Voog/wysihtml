@@ -350,7 +350,7 @@ var wysihtml5ParserRules = {
         
         "div": {
             "one_of_type": {
-                "visible_content_object": 1,
+                "visible_content_object": 1
             },
             "remove_action": "unwrap",
             "keep_styles": {
