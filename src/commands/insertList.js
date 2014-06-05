@@ -1,7 +1,17 @@
 wysihtml5.commands.insertList = (function() {
 
   var isNode = function(node, name) {
-    return node && node.nodeName && node.nodeName === name;
+    if (node && node.nodeName) {
+      if (typeof name === 'string') {
+        name = [name];
+      }
+      for (var n = name.length; n--;) {
+        if (node.nodeName === name[n]) {
+          return true;
+        }
+      }
+    }
+    return false;
   };
 
   var findListEl = function(node, nodeName, composer) {
@@ -42,12 +52,25 @@ wysihtml5.commands.insertList = (function() {
   };
 
   var handleSameTypeList = function(el, nodeName, composer) {
+    var otherNodeName = (nodeName === "UL") ? "OL" : "UL",
+        otherLists, innerLists;
     // Unwrap list
     // <ul><li>foo</li><li>bar</li></ul>
     // becomes:
     // foo<br>bar<br>
     composer.selection.executeAndRestore(function() {
-      wysihtml5.dom.resolveList(el, composer.config.useLineBreaks);
+      var otherLists = getListsInSelection(otherNodeName, composer);
+      if (otherLists.length) {
+        for (var l = otherLists.length; l--;) {
+          wysihtml5.dom.renameElement(otherLists[l], nodeName.toLowerCase());
+        }
+      } else {
+        innerLists = getListsInSelection(['OL', 'UL'], composer);
+        for (var i = innerLists.length; i--;) {
+          wysihtml5.dom.resolveList(innerLists[i], composer.config.useLineBreaks);
+        }
+        wysihtml5.dom.resolveList(el, composer.config.useLineBreaks);
+      }
     });
   };
 
@@ -57,20 +80,28 @@ wysihtml5.commands.insertList = (function() {
     // <ol><li>foo</li><li>bar</li></ol>
     // becomes:
     // <ul><li>foo</li><li>bar</li></ul>
+    // Also rename other lists in selection
     composer.selection.executeAndRestore(function() {
-      var renameLists = [el],
-          ranges = composer.selection.getOwnRanges();
+      var renameLists = [el].concat(getListsInSelection(otherNodeName, composer));
 
       // All selection inner lists get renamed too
-      for (var r = ranges.length; r--;) {
-        renameLists = renameLists.concat(ranges[r].getNodes([1], function(node) {
-          return isNode(node, otherNodeName);
-        }));
-      }
       for (var l = renameLists.length; l--;) {
         wysihtml5.dom.renameElement(renameLists[l], nodeName.toLowerCase());
       }
     });
+  };
+
+  var getListsInSelection = function(nodeName, composer) {
+      var ranges = composer.selection.getOwnRanges(),
+          renameLists = [];
+
+      for (var r = ranges.length; r--;) {
+        renameLists = renameLists.concat(ranges[r].getNodes([1], function(node) {
+          return isNode(node, nodeName);
+        }));
+      }
+
+      return renameLists;
   };
 
   var createListFallback = function(nodeName, composer) {
