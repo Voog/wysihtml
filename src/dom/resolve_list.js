@@ -34,6 +34,15 @@
     element.appendChild(lineBreak);
   }
 
+  // ignores empty text nodes as they have no contextual meaning
+  function _getPreviousElement(element) {
+    var prev = element.previousSibling;
+    if (prev && prev.nodeType === 3 && (/^\s*$/g).test(prev.nodeValue)) {
+      return _getPreviousElement(prev);
+    }
+    return prev;
+  }
+
   function resolveList(list, useLineBreaks) {
     if (!list.nodeName.match(/^(MENU|UL|OL)$/)) {
       return;
@@ -41,7 +50,7 @@
 
     var doc             = list.ownerDocument,
         fragment        = doc.createDocumentFragment(),
-        previousSibling = list.previousElementSibling || list.previousSibling,
+        previousSibling = _getPreviousElement(list),
         firstChild,
         lastChild,
         isLastChild,
