@@ -127,7 +127,6 @@
     }
 
     if (element.nodeType === wysihtml5.TEXT_NODE && element.data.match(URL_REG_EXP)) {
-      console.log(element);
       _wrapMatchesInNode(element);
       return;
     }
