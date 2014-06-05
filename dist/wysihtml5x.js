@@ -6479,6 +6479,15 @@ wysihtml5.dom.replaceWithChildNodes = function(node) {
     element.appendChild(lineBreak);
   }
 
+  // ignores empty text nodes as they have no contextual meaning
+  function _getPreviousElement(element) {
+    var prev = element.previousSibling;
+    if (prev && prev.nodeType === 3 && (/^\s*$/g).test(prev.nodeValue)) {
+      return _getPreviousElement(prev);
+    }
+    return prev;
+  }
+
   function resolveList(list, useLineBreaks) {
     if (!list.nodeName.match(/^(MENU|UL|OL)$/)) {
       return;
@@ -6486,7 +6495,7 @@ wysihtml5.dom.replaceWithChildNodes = function(node) {
 
     var doc             = list.ownerDocument,
         fragment        = doc.createDocumentFragment(),
-        previousSibling = list.previousElementSibling || list.previousSibling,
+        previousSibling = _getPreviousElement(list),
         firstChild,
         lastChild,
         isLastChild,
@@ -10701,143 +10710,181 @@ wysihtml5.commands.formatCode = {
 })(wysihtml5);
 ;wysihtml5.commands.insertOrderedList = {
   exec: function(composer, command) {
-    var doc           = composer.doc,
-        selectedNode  = composer.selection.getSelectedNode(),
-        list          = wysihtml5.dom.getParentElement(selectedNode, { nodeName: "OL" }),
-        otherList     = wysihtml5.dom.getParentElement(selectedNode, { nodeName: "UL" }),
-        tempClassName =  "_wysihtml5-temp-" + new Date().getTime(),
-        isEmpty,
-        tempElement;
-
-    // do not count list elements outside of composer
-    if (list && !composer.element.contains(list)) {
-      list = null;
-    }
-    if (otherList && !composer.element.contains(otherList)) {
-      otherList = null;
-    }
-
-    if (!list && !otherList && composer.commands.support(command)) {
-      doc.execCommand(command, false, null);
-      return;
-    }
-
-    if (list) {
-      // Unwrap list
-      // <ol><li>foo</li><li>bar</li></ol>
-      // becomes:
-      // foo<br>bar<br>
-      composer.selection.executeAndRestore(function() {
-        wysihtml5.dom.resolveList(list, composer.config.useLineBreaks);
-      });
-    } else if (otherList) {
-      // Turn an unordered list into an ordered list
-      // <ul><li>foo</li><li>bar</li></ul>
-      // becomes:
-      // <ol><li>foo</li><li>bar</li></ol>
-      composer.selection.executeAndRestore(function() {
-        wysihtml5.dom.renameElement(otherList, "ol");
-      });
-    } else {
-      // Create list
-      composer.selection.executeAndRestoreRangy(function() {
-        tempElement = composer.selection.deblockAndSurround({
-          "nodeName": "div",
-          "className": tempClassName
-        });
-        
-        // This space causes new lists to never break on enter 
-        var INVISIBLE_SPACE_REG_EXP = /\uFEFF/g;
-        tempElement.innerHTML = tempElement.innerHTML.replace(INVISIBLE_SPACE_REG_EXP, "");
-
-        if (tempElement) {
-          isEmpty = tempElement.innerHTML === "" || tempElement.innerHTML === wysihtml5.INVISIBLE_SPACE || tempElement.innerHTML === "<br>";
-          list = wysihtml5.dom.convertToList(tempElement, "ol", composer.parent.config.uneditableContainerClassname);
-          if (isEmpty) {
-            composer.selection.selectNode(list.querySelector("li"), true);
-          }
-        }
-      });
-    }
+    wysihtml5.commands.insertList.exec(composer, command, "OL");
   },
 
-  state: function(composer) {
-    var selectedNode = composer.selection.getSelectedNode(),
-        node = wysihtml5.dom.getParentElement(selectedNode, { nodeName: "OL" });
-
-    return (composer.element.contains(node) ? node : false);
+  state: function(composer, command) {
+    return wysihtml5.commands.insertList.state(composer, command, "OL");
   }
 };
 ;wysihtml5.commands.insertUnorderedList = {
   exec: function(composer, command) {
-    var doc           = composer.doc,
-        selectedNode  = composer.selection.getSelectedNode(),
-        list          = wysihtml5.dom.getParentElement(selectedNode, { nodeName: "UL" }),
-        otherList     = wysihtml5.dom.getParentElement(selectedNode, { nodeName: "OL" }),
-        tempClassName =  "_wysihtml5-temp-" + new Date().getTime(),
-        isEmpty,
-        tempElement;
-
-    // do not count list elements outside of composer
-    if (list && !composer.element.contains(list)) {
-      list = null;
-    }
-    if (otherList && !composer.element.contains(otherList)) {
-      otherList = null;
-    }
-
-    if (!list && !otherList && composer.commands.support(command)) {
-      doc.execCommand(command, false, null);
-      return;
-    }
-
-    if (list) {
-      // Unwrap list
-      // <ul><li>foo</li><li>bar</li></ul>
-      // becomes:
-      // foo<br>bar<br>
-      composer.selection.executeAndRestore(function() {
-        wysihtml5.dom.resolveList(list, composer.config.useLineBreaks);
-      });
-    } else if (otherList) {
-      // Turn an ordered list into an unordered list
-      // <ol><li>foo</li><li>bar</li></ol>
-      // becomes:
-      // <ul><li>foo</li><li>bar</li></ul>
-      composer.selection.executeAndRestore(function() {
-        wysihtml5.dom.renameElement(otherList, "ul");
-      });
-    } else {
-      // Create list
-      composer.selection.executeAndRestoreRangy(function() {
-        tempElement = composer.selection.deblockAndSurround({
-          "nodeName": "div",
-          "className": tempClassName
-        });
-
-        // This space causes new lists to never break on enter 
-        var INVISIBLE_SPACE_REG_EXP = /\uFEFF/g;
-        tempElement.innerHTML = tempElement.innerHTML.replace(INVISIBLE_SPACE_REG_EXP, "");
-        
-        if (tempElement) {
-          isEmpty = tempElement.innerHTML === "" || tempElement.innerHTML === wysihtml5.INVISIBLE_SPACE || tempElement.innerHTML === "<br>";
-          list = wysihtml5.dom.convertToList(tempElement, "ul", composer.parent.config.uneditableContainerClassname);
-          if (isEmpty) {
-            composer.selection.selectNode(list.querySelector("li"), true);
-          }
-        }
-      });
-    }
+    wysihtml5.commands.insertList.exec(composer, command, "UL");
   },
 
-  state: function(composer) {
-    var selectedNode = composer.selection.getSelectedNode(),
-        node = wysihtml5.dom.getParentElement(selectedNode, { nodeName: "UL" });
-
-    return (composer.element.contains(node) ? node : false);
+  state: function(composer, command) {
+    return wysihtml5.commands.insertList.state(composer, command, "UL");
   }
 };
-;wysihtml5.commands.italic = {
+;wysihtml5.commands.insertList = (function() {
+
+  var isNode = function(node, name) {
+    if (node && node.nodeName) {
+      if (typeof name === 'string') {
+        name = [name];
+      }
+      for (var n = name.length; n--;) {
+        if (node.nodeName === name[n]) {
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+
+  var findListEl = function(node, nodeName, composer) {
+    var ret = {
+          el: null,
+          other: false
+        };
+
+    if (node) {
+      var parentLi = wysihtml5.dom.getParentElement(node, { nodeName: "LI" });
+          otherNodeName = (nodeName === "UL") ? "OL" : "UL";
+
+      if (isNode(node, nodeName)) {
+        ret.el = node;
+      } else if (isNode(node, otherNodeName)) {
+        ret = {
+          el: node,
+          other: true
+        };
+      } else if (parentLi) {
+        if (isNode(parentLi.parentNode, nodeName)) {
+          ret.el = parentLi.parentNode;
+        } else if (isNode(parentLi.parentNode, otherNodeName)) {
+          ret = {
+            el : parentLi.parentNode,
+            other: true
+          };
+        }
+      }
+    }
+
+    // do not count list elements outside of composer
+    if (ret.el && !composer.element.contains(ret.el)) {
+      ret.el = null;
+    }
+
+    return ret;
+  };
+
+  var handleSameTypeList = function(el, nodeName, composer) {
+    var otherNodeName = (nodeName === "UL") ? "OL" : "UL",
+        otherLists, innerLists;
+    // Unwrap list
+    // <ul><li>foo</li><li>bar</li></ul>
+    // becomes:
+    // foo<br>bar<br>
+    composer.selection.executeAndRestore(function() {
+      var otherLists = getListsInSelection(otherNodeName, composer);
+      if (otherLists.length) {
+        for (var l = otherLists.length; l--;) {
+          wysihtml5.dom.renameElement(otherLists[l], nodeName.toLowerCase());
+        }
+      } else {
+        innerLists = getListsInSelection(['OL', 'UL'], composer);
+        for (var i = innerLists.length; i--;) {
+          wysihtml5.dom.resolveList(innerLists[i], composer.config.useLineBreaks);
+        }
+        wysihtml5.dom.resolveList(el, composer.config.useLineBreaks);
+      }
+    });
+  };
+
+  var handleOtherTypeList =  function(el, nodeName, composer) {
+    var otherNodeName = (nodeName === "UL") ? "OL" : "UL";
+    // Turn an ordered list into an unordered list
+    // <ol><li>foo</li><li>bar</li></ol>
+    // becomes:
+    // <ul><li>foo</li><li>bar</li></ul>
+    // Also rename other lists in selection
+    composer.selection.executeAndRestore(function() {
+      var renameLists = [el].concat(getListsInSelection(otherNodeName, composer));
+
+      // All selection inner lists get renamed too
+      for (var l = renameLists.length; l--;) {
+        wysihtml5.dom.renameElement(renameLists[l], nodeName.toLowerCase());
+      }
+    });
+  };
+
+  var getListsInSelection = function(nodeName, composer) {
+      var ranges = composer.selection.getOwnRanges(),
+          renameLists = [];
+
+      for (var r = ranges.length; r--;) {
+        renameLists = renameLists.concat(ranges[r].getNodes([1], function(node) {
+          return isNode(node, nodeName);
+        }));
+      }
+
+      return renameLists;
+  };
+
+  var createListFallback = function(nodeName, composer) {
+    // Fallback for Create list
+    composer.selection.executeAndRestoreRangy(function() {
+      var tempClassName =  "_wysihtml5-temp-" + new Date().getTime(),
+          tempElement = composer.selection.deblockAndSurround({
+            "nodeName": "div",
+            "className": tempClassName
+          }),
+          isEmpty, list;
+
+      // This space causes new lists to never break on enter 
+      var INVISIBLE_SPACE_REG_EXP = /\uFEFF/g;
+      tempElement.innerHTML = tempElement.innerHTML.replace(INVISIBLE_SPACE_REG_EXP, "");
+      
+      if (tempElement) {
+        isEmpty = wysihtml5.lang.array(["", "<br>", wysihtml5.INVISIBLE_SPACE]).contains(tempElement.innerHTML);
+        list = wysihtml5.dom.convertToList(tempElement, nodeName.toLowerCase(), composer.parent.config.uneditableContainerClassname);
+        if (isEmpty) {
+          composer.selection.selectNode(list.querySelector("li"), true);
+        }
+      }
+    });
+  };
+
+  return {
+    exec: function(composer, command, nodeName) {
+      var doc           = composer.doc,
+          cmd           = (nodeName === "OL") ? "insertorderedlist" : "insertunorderedlist",
+          selectedNode  = composer.selection.getSelectedNode(),
+          list          = findListEl(selectedNode, nodeName, composer);
+
+      if (!list.el) {
+        if (composer.commands.support(cmd)) {
+          doc.execCommand(cmd, false, null);
+        } else {
+          createListFallback(nodeName, composer);
+        }
+      } else if (list.other) {
+        handleOtherTypeList(list.el, nodeName, composer);
+      } else {
+        handleSameTypeList(list.el, nodeName, composer);
+      }
+    },
+
+    state: function(composer, command, nodeName) {
+      var selectedNode = composer.selection.getSelectedNode(),
+          list         = findListEl(selectedNode, nodeName, composer);
+
+      return (list.el && !list.other) ? list.el : false;
+    }
+  };
+
+})();;wysihtml5.commands.italic = {
   exec: function(composer, command) {
     wysihtml5.commands.formatInline.execWithToggle(composer, command, "i");
   },

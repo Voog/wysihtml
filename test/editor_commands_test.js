@@ -285,25 +285,29 @@ if (wysihtml5.browser.supported()) {
       editor.on("load", function() {
         var editableElement   = that.editableArea,
             expectText = '<ul><li></li></ul>',
+            expectTextBr = '<ul><li><br></li></ul>',
             expectTextWithContents = '<ul><li>text</li></ul>',
+            expectTextWithContentsBr = '<ul><li>text<br></li></ul>',
             expectOrdText = '<ol><li></li></ol>',
-            expectOrdTextWithContents = '<ol><li>text</li></ol>';
+            expectOrdTextBr = '<ol><li><br></li></ol>',
+            expectOrdTextWithContents = '<ol><li>text</li></ol>',
+            expectOrdTextWithContentsBr = '<ol><li>text<br></li></ol>';
 
         editor.setValue(text, true);
         editor.composer.selection.selectNode(editor.editableElement);
         editor.composer.commands.exec('insertUnorderedList');
-        equal(editableElement.innerHTML.toLowerCase(), expectText, "Unordered list created");
+        ok(editableElement.innerHTML.toLowerCase() == expectText || editableElement.innerHTML.toLowerCase() == expectTextBr, "Unordered list created");
 
         editor.composer.commands.exec('insertHTML', 'text');
-        equal(editableElement.innerHTML.toLowerCase(), expectTextWithContents, "In unordered list placed caret correctly");
+        ok(editableElement.innerHTML.toLowerCase() == expectTextWithContents || editableElement.innerHTML.toLowerCase() == expectTextWithContentsBr , "In unordered list placed caret correctly");
 
         editor.setValue(text, true);
         editor.composer.selection.selectNode(editor.editableElement);
         editor.composer.commands.exec('insertOrderedList');
-        equal(editableElement.innerHTML.toLowerCase(), expectOrdText, "Ordered list created");
+        ok(editableElement.innerHTML.toLowerCase() == expectOrdText || editableElement.innerHTML.toLowerCase() == expectOrdTextBr, "Ordered list created");
 
         editor.composer.commands.exec('insertHTML', 'text');
-        equal(editableElement.innerHTML.toLowerCase(), expectOrdTextWithContents, "In ordered list placed caret correctly");
+        ok(editableElement.innerHTML.toLowerCase() == expectOrdTextWithContents || editableElement.innerHTML.toLowerCase() == expectOrdTextWithContentsBr, "In ordered list placed caret correctly");
 
         editableElement.innerHTML = '<ul><li>test</li><li class="second">test</li><li>test</li></ul>';
         editor.composer.selection.selectNode(editor.editableElement.querySelector('.second'));
