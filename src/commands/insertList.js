@@ -1,4 +1,4 @@
-wysihtml5.commands.insertList = (function() {
+wysihtml5.commands.insertList = (function(wysihtml5) {
 
   var isNode = function(node, name) {
     if (node && node.nodeName) {
@@ -156,4 +156,4 @@ wysihtml5.commands.insertList = (function() {
     }
   };
 
-})();
+})(wysihtml5);
