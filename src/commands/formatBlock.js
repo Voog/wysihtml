@@ -45,67 +45,6 @@
     return ret;
   }
 
-  /**
-   * Check whether given node is a text node and whether it's empty
-   */
-  function _isBlankTextNode(node) {
-    return node.nodeType === wysihtml5.TEXT_NODE && !wysihtml5.lang.string(node.data).trim();
-  }
-
-  /**
-   * Returns previous sibling node that is not a blank text node
-   */
-  function _getPreviousSiblingThatIsNotBlank(node) {
-    var previousSibling = node.previousSibling;
-    while (previousSibling && _isBlankTextNode(previousSibling)) {
-      previousSibling = previousSibling.previousSibling;
-    }
-    return previousSibling;
-  }
-
-  /**
-   * Returns next sibling node that is not a blank text node
-   */
-  function _getNextSiblingThatIsNotBlank(node) {
-    var nextSibling = node.nextSibling;
-    while (nextSibling && _isBlankTextNode(nextSibling)) {
-      nextSibling = nextSibling.nextSibling;
-    }
-    return nextSibling;
-  }
-
-  /**
-   * Adds line breaks before and after the given node if the previous and next siblings
-   * aren't already causing a visual line break (block element or <br>)
-   */
-  function _addLineBreakBeforeAndAfter(node) {
-    var doc             = node.ownerDocument,
-        nextSibling     = _getNextSiblingThatIsNotBlank(node),
-        previousSibling = _getPreviousSiblingThatIsNotBlank(node);
-
-    if (nextSibling && !_isLineBreakOrBlockElement(nextSibling)) {
-      node.parentNode.insertBefore(doc.createElement("br"), nextSibling);
-    }
-    if (previousSibling && !_isLineBreakOrBlockElement(previousSibling)) {
-      node.parentNode.insertBefore(doc.createElement("br"), node);
-    }
-  }
-
-  /**
-   * Removes line breaks before and after the given node
-   */
-  function _removeLineBreakBeforeAndAfter(node) {
-    var nextSibling     = _getNextSiblingThatIsNotBlank(node),
-        previousSibling = _getPreviousSiblingThatIsNotBlank(node);
-
-    if (nextSibling && _isLineBreak(nextSibling)) {
-      nextSibling.parentNode.removeChild(nextSibling);
-    }
-    if (previousSibling && _isLineBreak(previousSibling)) {
-      previousSibling.parentNode.removeChild(previousSibling);
-    }
-  }
-
   function _removeLastChildIfLineBreak(node) {
     var lastChild = node.lastChild;
     if (lastChild && _isLineBreak(lastChild)) {
@@ -115,22 +54,6 @@
 
   function _isLineBreak(node) {
     return node.nodeName === "BR";
-  }
-
-  /**
-   * Checks whether the elment causes a visual line break
-   * (<br> or block elements)
-   */
-  function _isLineBreakOrBlockElement(element) {
-    if (_isLineBreak(element)) {
-      return true;
-    }
-
-    if (dom.getStyle("display").from(element) === "block") {
-      return true;
-    }
-
-    return false;
   }
 
   /**
@@ -171,7 +94,7 @@
 
     var surroundedNodes = composer.selection.surround(options);
     for (var i = 0, imax = surroundedNodes.length; i < imax; i++) {
-      _removeLineBreakBeforeAndAfter(surroundedNodes[i]);
+      wysihtml5.dom.lineBreaks(surroundedNodes[i]).remove();
       _removeLastChildIfLineBreak(surroundedNodes[i]);
     }
 
@@ -217,7 +140,7 @@
             if (!hasClasses && !hasStyles && (useLineBreaks || nodeName === "P")) {
               // Insert a line break afterwards and beforewards when there are siblings
               // that are not of type line break or block element
-              _addLineBreakBeforeAndAfter(blockElements[b]);
+              wysihtml5.dom.lineBreaks(blockElements[b]).add();
               dom.replaceWithChildNodes(blockElements[b]);
             } else {
               // Make sure that styling is kept by renaming the element to a <div> or <p> and copying over the class name
