@@ -775,6 +775,43 @@
         return this.getSelection().isCollapsed;
     },
 
+    isEndToEndInNode: function(nodeNames) {
+      var range = this.getRange(),
+          parentElement = range.commonAncestorContainer,
+          startNode = range.startContainer,
+          endNode = range.endContainer,
+          startSpace = new RegExp("^\\s{" + range.startOffset + "}"),
+          endSpace = new RegExp("^(.|\\s){" + range.endOffset + "}\\s*$");
+
+        if (parentElement.nodeType === wysihtml5.TEXT_NODE) {
+          parentElement = parentElement.parentNode;
+        }
+
+        if (startNode.nodeType === wysihtml5.TEXT_NODE && !startSpace.test(startNode.data)) {
+          return false;
+        }
+
+        if (endNode.nodeType === wysihtml5.TEXT_NODE && !endSpace.test(endNode.data)) {
+          return false;
+        }
+
+        while (startNode && startNode !== parentElement) {
+          if (wysihtml5.dom.domNode(startNode).prev({ignoreBlankTexts: true})) {
+            return false;
+          }
+          startNode = startNode.parentNode;
+        }
+
+        while (endNode && endNode !== parentElement) {
+          if (wysihtml5.dom.domNode(endNode).next({ignoreBlankTexts: true})) {
+            return false;
+          }
+          endNode = endNode.parentNode;
+        }
+
+        return (wysihtml5.lang.array(nodeNames).contains(parentElement.nodeName)) ? parentElement : false;
+    },
+
     deselect: function() {
       var sel = this.getSelection();
       sel && sel.removeAllRanges();

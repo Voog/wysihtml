@@ -34,15 +34,6 @@
     element.appendChild(lineBreak);
   }
 
-  // ignores empty text nodes as they have no contextual meaning
-  function _getPreviousElement(element) {
-    var prev = element.previousSibling;
-    if (prev && prev.nodeType === 3 && (/^\s*$/g).test(prev.nodeValue)) {
-      return _getPreviousElement(prev);
-    }
-    return prev;
-  }
-
   function resolveList(list, useLineBreaks) {
     if (!list.nodeName.match(/^(MENU|UL|OL)$/)) {
       return;
@@ -50,7 +41,7 @@
 
     var doc             = list.ownerDocument,
         fragment        = doc.createDocumentFragment(),
-        previousSibling = _getPreviousElement(list),
+        previousSibling = wysihtml5.dom.domNode(list).prev({ignoreBlankTexts: true}),
         firstChild,
         lastChild,
         isLastChild,

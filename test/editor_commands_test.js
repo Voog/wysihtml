@@ -326,5 +326,47 @@ if (wysihtml5.browser.supported()) {
     });
 
 
+  // create blockQuote
+    asyncTest("Create blockquote", function() {
+      expect(4);
+      var that = this,
+        editor = new wysihtml5.Editor(this.editableArea, {
+          parserRules: {
+            tags: {
+              h1: true,
+              p: true,
+              blockquote: true
+            }
+          }
+        }),
+        text = "<h1>heading</h1><p>text</p>",
+        text2 = "test<h1>heading</h1>test";
+
+      editor.on("load", function() {
+        var editableElement   = that.editableArea;
+
+        editor.setValue(text, true);
+
+        editor.composer.selection.selectNode(editor.editableElement);
+        editor.composer.commands.exec('insertBlockQuote');
+        equal(editableElement.innerHTML.toLowerCase(), "<blockquote>" + text + "</blockquote>" , "Blockquote created with headings and paragraphs preserved.");
+
+        editor.composer.commands.exec('insertBlockQuote');
+        equal(editableElement.innerHTML.toLowerCase(), text, "Blockquote removed with headings and paragraphs preserved.");
+
+
+        editor.setValue(text2, true);
+        editor.composer.selection.selectNode(editor.editableElement.querySelector('h1'));
+        editor.composer.commands.exec('insertBlockQuote');
+        equal(editableElement.innerHTML.toLowerCase(), "test<blockquote><h1>heading</h1></blockquote>test" , "Blockquote created.");
+
+        editor.composer.commands.exec('insertBlockQuote');
+        equal(editableElement.innerHTML.toLowerCase(), "test<br><h1>heading</h1><br>test" , "Blockquote removed and line breaks added.");
+
+        start();
+      });
+    });
+
+
   
 }
