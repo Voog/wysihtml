@@ -29,7 +29,7 @@
     },
     state: function(composer, command) {
       var selectedNode  = composer.selection.getSelectedNode(),
-        node = wysihtml5.dom.getParentElement(selectedNode, { nodeName: "BLOCKQUOTE" }, false, composer.element);
+          node = wysihtml5.dom.getParentElement(selectedNode, { nodeName: "BLOCKQUOTE" }, false, composer.element);
 
       return (node) ? node : false;
     }
