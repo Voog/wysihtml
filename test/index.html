@@ -29,8 +29,7 @@
 <script src="../src/dom/delegate.js"></script>
 <script src="../src/dom/get_as_dom.js"></script>
 <script src="../src/dom/get_parent_element.js"></script>
-<script src="../src/dom/get_next_element.js"></script>
-<script src="../src/dom/get_previous_element.js"></script>
+<script src="../src/dom/dom_node.js"></script>
 <script src="../src/dom/get_style.js"></script>
 <script src="../src/dom/get_textnodes.js"></script>
 <script src="../src/dom/has_element_with_tag_name.js"></script>
@@ -51,13 +50,18 @@
 <script src="../src/dom/get_attribute.js"></script>
 <script src="../src/dom/table.js"></script>
 <script src="../src/dom/query.js"></script>
+<script src="../src/dom/unwrap.js"></script>
+<script src="../src/dom/line_breaks.js"></script>
+
 <script src="../src/quirks/clean_pasted_html.js"></script>
 <script src="../src/quirks/ensure_proper_clearing.js"></script>
 <script src="../src/quirks/get_correct_inner_html.js"></script>
 <script src="../src/quirks/redraw.js"></script>
 <script src="../src/quirks/table_cells_selection.js"></script>
+
 <script src="../src/selection/selection.js"></script>
 <script src="../src/selection/html_applier.js"></script>
+
 <script src="../src/commands.js"></script>
 <script src="../src/commands/bold.js"></script>
 <script src="../src/commands/createLink.js"></script>
@@ -79,11 +83,9 @@
 <script src="../src/commands/justifyLeft.js"></script>
 <script src="../src/commands/justifyRight.js"></script>
 <script src="../src/commands/justifyFull.js"></script>
-
 <script src="../src/commands/alignRightStyle.js"></script>
 <script src="../src/commands/alignLeftStyle.js"></script>
 <script src="../src/commands/alignCenterStyle.js"></script>
-
 <script src="../src/commands/redo.js"></script>
 <script src="../src/commands/underline.js"></script>
 <script src="../src/commands/undo.js"></script>
@@ -91,22 +93,25 @@
 <script src="../src/commands/createTable.js"></script>
 <script src="../src/commands/deleteTableCells.js"></script>
 <script src="../src/commands/mergeTableCells.js"></script>
-
 <script src="../src/commands/indentList.js"></script>
 <script src="../src/commands/outdentList.js"></script>
+<script src="../src/commands/insertBlockQuote.js"></script>
 
 <script src="../src/undo_manager.js"></script>
+
 <script src="../src/views/view.js"></script>
 <script src="../src/views/composer.js"></script>
 <script src="../src/views/composer.style.js"></script>
 <script src="../src/views/composer.observe.js"></script>
 <script src="../src/views/synchronizer.js"></script>
 <script src="../src/views/textarea.js"></script>
+
 <script src="../src/toolbar/dialog.js"></script>
 <script src="../src/toolbar/dialog_foreColorStyle.js"></script>
 <script src="../src/toolbar/dialog_createTable.js"></script>
 <script src="../src/toolbar/speech.js"></script>
 <script src="../src/toolbar/toolbar.js"></script>
+
 <script src="../src/editor.js"></script>
 
 <!-- additions for iflameless  -->
@@ -136,7 +141,7 @@
       '<script src="dom/observe_test.js"><\/script>'                      +
       '<script src="dom/get_as_dom_test.js"><\/script>'                   +
       '<script src="dom/get_parent_element_test.js"><\/script>'           +
-      '<script src="dom/get_next_previous_element.js"><\/script>'         +
+      '<script src="dom/dom_node_test.js"><\/script>'                     +
       '<script src="dom/get_style_test.js"><\/script>'                    +
       '<script src="dom/has_element_with_tag_name_test.js"><\/script>'    +
       '<script src="dom/has_element_with_class_name_test.js"><\/script>'  +
@@ -147,6 +152,7 @@
       '<script src="dom/set_attributes_test.js"><\/script>'               +
       '<script src="dom/parse_test.js"><\/script>'                        +
       '<script src="dom/table_test.js"><\/script>'                        +
+      '<script src="dom/unwrap_test.js"><\/script>'                       +
       '<script src="quirks/clean_pasted_html_test.js"><\/script>'         +
       '<script src="undo_manager_test.js"><\/script>'                     +
       '<script src="editor_test.js"><\/script>'                           +

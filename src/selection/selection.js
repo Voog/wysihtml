@@ -775,6 +775,48 @@
         return this.getSelection().isCollapsed;
     },
 
+    isEndToEndInNode: function(nodeNames) {
+      var range = this.getRange(),
+          parentElement = range.commonAncestorContainer,
+          startNode = range.startContainer,
+          endNode = range.endContainer;
+
+
+        if (parentElement.nodeType === wysihtml5.TEXT_NODE) {
+          parentElement = parentElement.parentNode;
+        }
+
+        if (startNode.nodeType === wysihtml5.TEXT_NODE && !(/^\s*$/).test(startNode.data.substr(range.startOffset))) {
+          return false;
+        }
+
+        if (endNode.nodeType === wysihtml5.TEXT_NODE && !(/^\s*$/).test(endNode.data.substr(range.endOffset))) {
+          return false;
+        }
+
+        while (startNode && startNode !== parentElement) {
+          if (startNode.nodeType !== wysihtml5.TEXT_NODE && !wysihtml5.dom.contains(parentElement, startNode)) {
+            return false;
+          }
+          if (wysihtml5.dom.domNode(startNode).prev({ignoreBlankTexts: true})) {
+            return false;
+          }
+          startNode = startNode.parentNode;
+        }
+
+        while (endNode && endNode !== parentElement) {
+          if (endNode.nodeType !== wysihtml5.TEXT_NODE && !wysihtml5.dom.contains(parentElement, endNode)) {
+            return false;
+          }
+          if (wysihtml5.dom.domNode(endNode).next({ignoreBlankTexts: true})) {
+            return false;
+          }
+          endNode = endNode.parentNode;
+        }
+
+        return (wysihtml5.lang.array(nodeNames).contains(parentElement.nodeName)) ? parentElement : false;
+    },
+
     deselect: function() {
       var sel = this.getSelection();
       sel && sel.removeAllRanges();

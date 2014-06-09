@@ -21,7 +21,7 @@ wysihtml5.commands.indentList = {
         liNode = liNodes[i];
         listTag = (liNode.parentNode.nodeName === 'OL') ? 'OL' : 'UL';
         list = liNode.ownerDocument.createElement(listTag);
-        prevLi = wysihtml5.dom.getPreviousElement(liNode);
+        prevLi = wysihtml5.dom.domNode(liNode).prev({nodeTypes: [wysihtml5.ELEMENT_NODE]});
         prevLiList = (prevLi) ? prevLi.querySelector('ul, ol') : null;
 
         if (prevLi) {
