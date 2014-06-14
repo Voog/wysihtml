@@ -157,7 +157,7 @@ if (wysihtml5.browser.supported()) {
       '<img>'
     );
   });
-  
+
   test("Attribute check of 'href' cleans up", function() {
     var rules = {
       tags: {
@@ -184,6 +184,33 @@ if (wysihtml5.browser.supported()) {
       '<a></a>' +
       '<a></a>'
     );
+  });
+
+  test("Attribute check of 'liquidURL' cleans up", function() {
+    var rules = {
+      tags: {
+        a: {
+          check_attributes: { href: "liquidURL" }
+        }
+      }
+    };
+    var sanitize = this.sanitize;
+    var result;
+
+    result = this.sanitize('<a href="{{model.url}}"></a>', rules);
+    this.equal(result, '<a href="{{model.url}}"></a>', 'Allows URL: <a href="{{model.url}}"></a>');
+
+    result = this.sanitize('<a href="google.com"></a>', rules);
+    this.equal(result, '<a href="http://google.com"></a>', 'Allows URL: <a href="http://google.com"></a>');
+
+    result = this.sanitize('<a href="http://subdomain.google.com"></a>', rules);
+    this.equal(result, '<a href="http://subdomain.google.com"></a>', 'Allows URL: <a href="http://subdomain.google.com"></a>');
+
+    result = this.sanitize('<a href="http://google.com/user/{{model.id}}"></a>', rules);
+    this.equal(result, '<a href="http://google.com/user/{{model.id}}"></a>', 'Allows URL: <a href="http://google.com/user/{{model.id}}"></a>');
+
+    result = this.sanitize('<a href="{% if model.url %}{{ model.url }}{% else %}http://google.com/{% end %}"></a>', rules);
+    this.equal(result, '<a href="{% if model.url %}{{ model.url }}{% else %}http://google.com/{% end %}"></a>', 'Allows URL: <a href="{% if model.url %}{{ model.url }}{% else %}http://google.com/{% end %}"></a>');
   });
 
   test("Bug in IE8 where invalid html causes duplicated content", function() {
