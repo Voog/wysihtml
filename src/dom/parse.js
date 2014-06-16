@@ -97,9 +97,11 @@ wysihtml5.dom.parse = (function() {
     while (element.firstChild) {
       firstChild = element.firstChild;
       newNode = _convert(firstChild, config.cleanUp);
-      element.removeChild(firstChild);
       if (newNode) {
         fragment.appendChild(newNode);
+      }
+      if (firstChild !== newNode) {
+        element.removeChild(firstChild);
       }
     }
 
@@ -134,9 +136,11 @@ wysihtml5.dom.parse = (function() {
             fragment = oldNode.ownerDocument.createDocumentFragment();
 
             for (i = oldChildsLength; i--;) {
-              newChild = _convert(oldChilds[i], cleanUp);
-              if (newChild) {
-                fragment.insertBefore(newChild, fragment.firstChild);
+              if (oldChilds[i]) {
+                newChild = _convert(oldChilds[i], cleanUp);
+                if (newChild) {
+                  fragment.insertBefore(newChild, fragment.firstChild);
+                }
               }
             }
 
@@ -165,9 +169,11 @@ wysihtml5.dom.parse = (function() {
     }
 
     for (i=0; i<oldChildsLength; i++) {
-      newChild = _convert(oldChilds[i], cleanUp);
-      if (newChild) {
-        newNode.appendChild(newChild);
+      if (oldChilds[i]) {
+        newChild = _convert(oldChilds[i], cleanUp);
+        if (newChild) {
+          newNode.appendChild(newChild);
+        }
       }
     }
 
