@@ -139,6 +139,9 @@ wysihtml5.dom.parse = (function() {
               if (oldChilds[i]) {
                 newChild = _convert(oldChilds[i], cleanUp);
                 if (newChild) {
+                  if (oldChilds[i] === newChild) {
+                    i--;
+                  }
                   fragment.insertBefore(newChild, fragment.firstChild);
                 }
               }
@@ -172,6 +175,9 @@ wysihtml5.dom.parse = (function() {
       if (oldChilds[i]) {
         newChild = _convert(oldChilds[i], cleanUp);
         if (newChild) {
+          if (oldChilds[i] === newChild) {
+            i--;
+          }
           newNode.appendChild(newChild);
         }
       }
