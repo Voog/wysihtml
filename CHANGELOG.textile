@@ -1,3 +1,11 @@
+*wysihtml5x 0.4.9* (June 17, 2014)
+* Prevent possible errors when uneditable element is passed through in parser
+* getValue api changed so passing no parameter will parse and remove all possible internals on result. Takes two parameters getValue(true /* parse content */, true /* ensure removal of all internals and selection markers */)
+
+*wysihtml5x 0.4.8* (June 9, 2014)
+*Improvements in list indent outdent handling
+* Add insertBlockQuote command and remove blockquote creation from formatBlock
+
 *wysihtml5x 0.4.7* (June 2, 2014)
 * Fixes mayor bug that prevents deleting some elements.
 
