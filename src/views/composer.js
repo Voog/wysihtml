@@ -30,7 +30,7 @@
     getValue: function(parse) {
       var value = this.isEmpty() ? "" : wysihtml5.quirks.getCorrectInnerHTML(this.element);
 
-      if (parse) {
+      if (typeof(parse) === 'undefined' || parse === true) {
         value = this.parent.parse(value);
       }
 
@@ -38,7 +38,7 @@
     },
 
     setValue: function(html, parse) {
-      if (parse) {
+      if (typeof(parse) === 'undefined' || parse === true) {
         html = this.parent.parse(html);
       }
 
