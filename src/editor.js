@@ -128,8 +128,8 @@
       return this;
     },
 
-    getValue: function(parse) {
-      return this.currentView.getValue(parse);
+    getValue: function(parse, clearInternals) {
+      return this.currentView.getValue(parse, clearInternals);
     },
 
     setValue: function(html, parse) {
@@ -176,13 +176,14 @@
       return this.currentView.hasPlaceholderSet();
     },
 
-    parse: function(htmlOrElement) {
-      var parseContext = (this.config.contentEditableMode) ? document : this.composer.sandbox.getDocument();
+    parse: function(htmlOrElement, clearInternals) {
+      var parseContext = (this.config.contentEditableMode) ? document : ((this.composer) ? this.composer.sandbox.getDocument() : null);
       var returnValue = this.config.parser(htmlOrElement, {
         "rules": this.config.parserRules,
         "cleanUp": this.config.cleanUp,
         "context": parseContext,
-        "uneditableClass": this.config.uneditableContainerClassname
+        "uneditableClass": this.config.uneditableContainerClassname,
+        "clearInternals" : clearInternals
       });
       if (typeof(htmlOrElement) === "object") {
         wysihtml5.quirks.redraw(htmlOrElement);

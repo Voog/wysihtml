@@ -80,9 +80,14 @@ wysihtml5.dom.parse = (function() {
     var context       = config.context || elementOrHtml.ownerDocument || document,
         fragment      = context.createDocumentFragment(),
         isString      = typeof(elementOrHtml) === "string",
+        clearInternals = false,
         element,
         newNode,
         firstChild;
+
+    if (config.clearInternals === true) {
+      clearInternals = true;
+    }
 
     if (config.uneditableClass) {
       uneditableClass = config.uneditableClass;
@@ -96,7 +101,7 @@ wysihtml5.dom.parse = (function() {
 
     while (element.firstChild) {
       firstChild = element.firstChild;
-      newNode = _convert(firstChild, config.cleanUp);
+      newNode = _convert(firstChild, config.cleanUp, clearInternals);
       if (newNode) {
         fragment.appendChild(newNode);
       }
@@ -114,7 +119,7 @@ wysihtml5.dom.parse = (function() {
     return isString ? wysihtml5.quirks.getCorrectInnerHTML(element) : element;
   }
 
-  function _convert(oldNode, cleanUp) {
+  function _convert(oldNode, cleanUp, clearInternals) {
     var oldNodeType     = oldNode.nodeType,
         oldChilds       = oldNode.childNodes,
         oldChildsLength = oldChilds.length,
@@ -124,12 +129,14 @@ wysihtml5.dom.parse = (function() {
         newNode,
         newChild;
 
+    // Passes directly elemets with uneditable class
     if (uneditableClass && oldNodeType === 1 && wysihtml5.dom.hasClass(oldNode, uneditableClass)) {
         return oldNode;
     }
 
-    newNode = method && method(oldNode);
+    newNode = method && method(oldNode, clearInternals);
 
+    // Remove or unwrap node in case of return value null or false
     if (!newNode) {
         if (newNode === false) {
             // false defines that tag should be removed but contents should remain (unwrap)
@@ -137,7 +144,7 @@ wysihtml5.dom.parse = (function() {
 
             for (i = oldChildsLength; i--;) {
               if (oldChilds[i]) {
-                newChild = _convert(oldChilds[i], cleanUp);
+                newChild = _convert(oldChilds[i], cleanUp, clearInternals);
                 if (newChild) {
                   if (oldChilds[i] === newChild) {
                     i--;
@@ -167,13 +174,15 @@ wysihtml5.dom.parse = (function() {
             }
             return fragment;
         } else {
-            return null;
+          // Remove
+          return null;
         }
     }
 
+    // Converts all childnodes
     for (i=0; i<oldChildsLength; i++) {
       if (oldChilds[i]) {
-        newChild = _convert(oldChilds[i], cleanUp);
+        newChild = _convert(oldChilds[i], cleanUp, clearInternals);
         if (newChild) {
           if (oldChilds[i] === newChild) {
             i--;
@@ -187,7 +196,7 @@ wysihtml5.dom.parse = (function() {
     if (cleanUp &&
         newNode.nodeName.toLowerCase() === DEFAULT_NODE_NAME &&
         (!newNode.childNodes.length ||
-         ((/^\s*$/gi).test(newNode.innerHTML) && oldNode.className !== "_wysihtml5-temp-placeholder" && oldNode.className !== "rangySelectionBoundary") ||
+         ((/^\s*$/gi).test(newNode.innerHTML) && (clearInternals || (oldNode.className !== "_wysihtml5-temp-placeholder" && oldNode.className !== "rangySelectionBoundary"))) ||
          !newNode.attributes.length)
         ) {
       fragment = newNode.ownerDocument.createDocumentFragment();
@@ -206,7 +215,7 @@ wysihtml5.dom.parse = (function() {
     return newNode;
   }
 
-  function _handleElement(oldNode) {
+  function _handleElement(oldNode, clearInternals) {
     var rule,
         newNode,
         tagRules    = currentRules.tags,
@@ -264,10 +273,10 @@ wysihtml5.dom.parse = (function() {
     }
 
     newNode = oldNode.ownerDocument.createElement(rule.rename_tag || nodeName);
-    _handleAttributes(oldNode, newNode, rule);
+    _handleAttributes(oldNode, newNode, rule, clearInternals);
     _handleStyles(oldNode, newNode, rule);
     // tests if type condition is met or node should be removed/unwrapped
-    if (rule.one_of_type && !_testTypes(oldNode, currentRules, rule.one_of_type)) {
+    if (rule.one_of_type && !_testTypes(oldNode, currentRules, rule.one_of_type, clearInternals)) {
       return (rule.remove_action && rule.remove_action == "unwrap") ? false : null;
     }
 
@@ -277,11 +286,11 @@ wysihtml5.dom.parse = (function() {
     return newNode;
   }
 
-  function _testTypes(oldNode, rules, types) {
+  function _testTypes(oldNode, rules, types, clearInternals) {
     var definition, type;
 
     // do not interfere with placeholder span or pasting caret position is not maintained
-    if (oldNode.nodeName === "SPAN" && (oldNode.className === "_wysihtml5-temp-placeholder" || oldNode.className === "rangySelectionBoundary")) {
+    if (oldNode.nodeName === "SPAN" && !clearInternals && (oldNode.className === "_wysihtml5-temp-placeholder" || oldNode.className === "rangySelectionBoundary")) {
       return true;
     }
 
@@ -391,7 +400,8 @@ wysihtml5.dom.parse = (function() {
     }
   }
 
-  function _handleAttributes(oldNode, newNode, rule) {
+  // TODO: refactor. Too long to read
+  function _handleAttributes(oldNode, newNode, rule, clearInternals) {
     var attributes          = {},                         // fresh new set of attributes to set on newNode
         setClass            = rule.set_class,             // classes to set
         addClass            = rule.add_class,             // add classes based on existing attributes
@@ -468,8 +478,11 @@ wysihtml5.dom.parse = (function() {
       attributes["class"] = oldNode.getAttribute("class");
     } else {
       // make sure that wysihtml5 temp class doesn't get stripped out
-      allowedClasses["_wysihtml5-temp-placeholder"] = 1;
-      allowedClasses["_rangySelectionBoundary"] = 1;
+      if (!clearInternals) {
+        allowedClasses["_wysihtml5-temp-placeholder"] = 1;
+        allowedClasses["_rangySelectionBoundary"] = 1;
+        allowedClasses["wysiwyg-tmp-selected-cell"] = 1;
+      }
 
       // add old classes last
       oldClasses = oldNode.getAttribute("class");
@@ -486,6 +499,14 @@ wysihtml5.dom.parse = (function() {
 
       if (newClasses.length) {
         attributes["class"] = wysihtml5.lang.array(newClasses).unique().join(" ");
+      }
+    }
+
+    // remove table selection class if present
+    if (attributes["class"] && clearInternals) {
+      attributes["class"] = attributes["class"].replace("wysiwyg-tmp-selected-cell", "");
+      if ((/^\s*$/g).test(attributes["class"])) {
+        delete attributes.class;
       }
     }
 

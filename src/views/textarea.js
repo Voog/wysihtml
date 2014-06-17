@@ -14,7 +14,7 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
 
   getValue: function(parse) {
     var value = this.isEmpty() ? "" : this.element.value;
-    if (parse) {
+    if (parse !== false) {
       value = this.parent.parse(value);
     }
     return value;

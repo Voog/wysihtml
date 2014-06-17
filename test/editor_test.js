@@ -369,8 +369,8 @@ if (wysihtml5.browser.supported()) {
       equal(composerElement.innerHTML.toLowerCase(), html, "Editor content correctly set after calling 'setValue'");
       ok(!editor.isEmpty(), "'isEmpty' returns correct value when the composer element isn't actually empty");
       
-      var value = editor.getValue();
-      equal(value.toLowerCase(), html, "Editor content correctly returned after calling 'getValue'");
+      var value = editor.getValue(false, false);
+      equal(value.toLowerCase(), html, "Editor content correctly returned after calling 'getValue(false, false)'");
       
       editor.clear();
       value = editor.getValue();
@@ -415,7 +415,7 @@ if (wysihtml5.browser.supported()) {
       equal(editor.config.parserRules, parserRules, "Parser rules correctly set on config object");
       // Invoke parsing via second parameter of setValue()
       editor.setValue(input, true);
-      equal(editor.getValue().toLowerCase(), output, "HTML got correctly parsed within setValue()");
+      equal(editor.getValue(false, false).toLowerCase(), output, "HTML got correctly parsed within setValue()");
       start();
     });
   });
@@ -428,7 +428,6 @@ if (wysihtml5.browser.supported()) {
         parserRules = { script: undefined },
         input       = this.textareaElement.value,
         output      = input;
-    
     var editor = new wysihtml5.Editor(this.textareaElement, {
       parserRules: parserRules,
       parser:      function(html, config) {
@@ -445,7 +444,7 @@ if (wysihtml5.browser.supported()) {
       
       // Invoke parsing via second parameter of setValue()
       editor.setValue(input, true);
-      equal(editor.getValue().toLowerCase(), output, "HTML got correctly parsed within setValue()");
+      equal(editor.getValue(false, false).toLowerCase(), output, "HTML got correctly parsed within setValue()");
       
       start();
     });

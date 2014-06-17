@@ -87,7 +87,7 @@
 
     transact: function() {
       var previousHtml      = this.historyStr[this.position - 1],
-          currentHtml       = this.composer.getValue();
+          currentHtml       = this.composer.getValue(false, false);
 
       if (currentHtml === previousHtml) {
         return;
