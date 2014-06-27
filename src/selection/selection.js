@@ -183,6 +183,12 @@
       }
     },
 
+    fixSelBorders: function() {
+      var range = this.getRange();
+      expandRangeToSurround(range);
+      this.setSelection(range);
+    },
+
     getSelectedOwnNodes: function(controlRange) {
       var selection,
           ranges = this.getOwnRanges(),
@@ -301,12 +307,17 @@
 
     caretIsFirstInSelection: function() {
       var r = rangy.createRange(this.doc),
-          s = this.getSelection();
-
-      r.selectNodeContents(this.getRange().commonAncestorContainer);
-      r.collapse(true);
-
-      return (this.isCollapsed() && (r.startContainer === s.anchorNode || r.endContainer === s.anchorNode) && r.startOffset === s.anchorOffset);
+          s = this.getSelection(),
+          range = this.getRange(),
+          startNode = range.startContainer;
+      
+      if (startNode.nodeType === wysihtml5.TEXT_NODE) {
+        return this.isCollapsed() && (startNode.nodeType === wysihtml5.TEXT_NODE && (/^\s*$/).test(startNode.data.substr(0,range.startOffset)));
+      } else {
+        r.selectNodeContents(this.getRange().commonAncestorContainer);
+        r.collapse(true);
+        return (this.isCollapsed() && (r.startContainer === s.anchorNode || r.endContainer === s.anchorNode) && r.startOffset === s.anchorOffset);
+      }
     },
 
     caretIsInTheBeginnig: function(ofNode) {
@@ -681,8 +692,8 @@
     },
 
     _endOffsetForNode: function(node) {
-      var range = document.createRange()
-      range.selectNodeContents(node)
+      var range = document.createRange();
+      range.selectNodeContents(node);
       return range.endOffset;
     },
 

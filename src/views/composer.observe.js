@@ -60,17 +60,36 @@
       } else if (selection.caretIsInTheBeginnig()) {
         event.preventDefault();
       } else {
-        var beforeUneditable = selection.caretIsBeforeUneditable();
-
+        if (selection.caretIsFirstInSelection() &&
+            selection.getPreviousNode() &&
+            selection.getPreviousNode().nodeName &&
+            (/^H\d$/gi).test(selection.getPreviousNode().nodeName)
+        ) {
+          var prevNode = selection.getPreviousNode();
+          event.preventDefault();
+          if ((/^\s*$/).test(prevNode.textContent || prevNode.innerText)) {
+            // heading is empty
+            prevNode.parentNode.removeChild(prevNode);
+          } else {
+            var range = prevNode.ownerDocument.createRange();
+            range.selectNodeContents(prevNode);
+            range.collapse(false);
+            selection.setSelection(range);
+          }
+        }
+        
+        /*var beforeUneditable = selection.caretIsBeforeUneditable();
         // Do a special delete if caret would delete uneditable
         if (beforeUneditable) {
           event.preventDefault();
           deleteAroundEditable(selection, beforeUneditable, element);
-        }
+        }*/
       }
-    } else if (selection.containsUneditable()) {
-      event.preventDefault();
-      selection.deleteContents();
+    } else {
+      if (selection.containsUneditable()) {
+        event.preventDefault();
+        selection.deleteContents();
+      }
     }
   };
 
