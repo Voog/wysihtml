@@ -98,6 +98,25 @@
     return false;
   }
 
+  function isMatchingAllready(node, tags, style, className) {
+    if (style) {
+      return getMatchingStyleRegexp(node, style);
+    } else if (className) {
+      return wysihtml5.dom.hasClass(node, className);
+    } else {
+      return rangy.dom.arrayContains(tags, node.tagName.toLowerCase());
+    }
+  }
+
+  function areMatchingAllready(nodes, tags, style, className) {
+    for (var i = nodes.length; i--;) {
+      if (!isMatchingAllready(nodes[i], tags, style, className)) {
+        return false;
+      }
+    }
+    return nodes.length ? true : false;
+  }
+
   function removeOrChangeStyle(el, style, regExp) {
 
     var exactRegex = getMatchingStyleRegexp(el, style);
@@ -120,9 +139,6 @@
     var parent = el.parentNode;
     while (el.firstChild) {
       parent.insertBefore(el.firstChild, el);
-    }
-    if (parent.normalize) {
-      parent.normalize();
     }
     parent.removeChild(el);
   }
@@ -269,6 +285,27 @@
         node = node.parentNode;
       }
       return false;
+    },
+
+    getMatchingAncestor: function(node) {
+      var ancestor = this.getAncestorWithClass(node),
+          matchType = false;
+
+      if (!ancestor) {
+        ancestor = this.getAncestorWithStyle(node);
+        if (ancestor) {
+          matchType = "style";
+        }
+      } else {
+        if (this.cssStyle) {
+          matchType = "class";
+        }
+      }
+
+      return {
+        "element": ancestor,
+        "type": matchType
+      };
     },
 
     // Normalizes nodes after applying a CSS class to a Range.
@@ -444,10 +481,7 @@
 
               for (var i = 0, len = textNodes.length; i < len; ++i) {
                 textNode = textNodes[i];
-                if (!this.getAncestorWithClass(textNode)) {
-                  this.applyToTextNode(textNode);
-                }
-                if (!this.getAncestorWithStyle(textNode)) {
+                if (!this.getMatchingAncestor(textNode).element) {
                   this.applyToTextNode(textNode);
                 }
               }
@@ -466,8 +500,8 @@
 
     undoToRange: function(range) {
       var textNodes, textNode, ancestorWithClass, ancestorWithStyle;
-
       for (var ri = range.length; ri--;) {
+
           textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
           if (textNodes.length) {
             range[ri].splitBoundaries();
@@ -480,16 +514,15 @@
             textNodes = [node];
           }
 
-
           for (var i = 0, len = textNodes.length; i < len; ++i) {
             if (range[ri].isValid()) {
               textNode = textNodes[i];
-              ancestorWithClass = this.getAncestorWithClass(textNode);
-              ancestorWithStyle = this.getAncestorWithStyle(textNode);
-              if (ancestorWithClass) {
-                this.undoToTextNode(textNode, range[ri], ancestorWithClass);
-              } else if (ancestorWithStyle) {
-                this.undoToTextNode(textNode, range[ri], false, ancestorWithStyle);
+
+              ancestor = this.getMatchingAncestor(textNode);
+              if (ancestor.type === "style") {
+                this.undoToTextNode(textNode, range[ri], false, ancestor.element);
+              } else if (ancestor.element) {
+                this.undoToTextNode(textNode, range[ri], ancestor.element);
               }
             }
           }
@@ -541,38 +574,65 @@
 
     isAppliedToRange: function(range) {
       var ancestors = [],
+          appliedType = "full",
           ancestor, styleAncestor, textNodes;
 
       for (var ri = range.length; ri--;) {
 
         textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
         if (!textNodes.length) {
-          ancestor = this.getAncestorWithClass(range[ri].startContainer);
-          if (!ancestor) {
-            ancestor = this.getAncestorWithStyle(range[ri].startContainer);
-          }
-          return ancestor ? [ancestor] : false;
+          ancestor = this.getMatchingAncestor(range[ri].startContainer).element;
+
+          return (ancestor) ? {
+            "elements": [ancestor],
+            "coverage": appliedType
+          } : false;
         }
 
         for (var i = 0, len = textNodes.length, selectedText; i < len; ++i) {
           selectedText = this.getTextSelectedByRange(textNodes[i], range[ri]);
-          ancestor = this.getAncestorWithClass(textNodes[i]);
-          if (!ancestor) {
-            ancestor = this.getAncestorWithStyle(textNodes[i]);
-          }
+          ancestor = this.getMatchingAncestor(textNodes[i]).element;
           if (ancestor && selectedText != "") {
             ancestors.push(ancestor);
+
+            if (wysihtml5.dom.getTextNodes(ancestor, true).length === 1) {
+              appliedType = "full";
+            } else if (appliedType === "full") {
+              appliedType = "inline";
+            }
+          } else if (!ancestor) {
+            appliedType = "partial";
           }
         }
 
       }
 
-      return (ancestors.length) ? ancestors : false;
+      return (ancestors.length) ? {
+        "elements": ancestors,
+        "coverage": appliedType
+      } : false;
     },
 
     toggleRange: function(range) {
-      if (this.isAppliedToRange(range)) {
-        this.undoToRange(range);
+      var isApplied = this.isAppliedToRange(range),
+          parentsExactMatch;
+
+      if (isApplied) {
+        if (isApplied.coverage === "full") {
+          this.undoToRange(range);
+        } else if (isApplied.coverage === "inline") {
+          parentsExactMatch = areMatchingAllready(isApplied.elements, this.tagNames, this.cssStyle, this.cssClass);
+          this.undoToRange(range);
+          if (!parentsExactMatch) {
+            this.applyToRange(range);
+          }
+        } else {
+          // partial
+          if (!areMatchingAllready(isApplied.elements, this.tagNames, this.cssStyle, this.cssClass)) {
+            this.undoToRange(range);
+          }
+          this.applyToRange(range);
+        }
       } else {
         this.applyToRange(range);
       }

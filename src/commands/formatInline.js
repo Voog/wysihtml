@@ -123,7 +123,7 @@
     state: function(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp) {
       var doc           = composer.doc,
           aliasTagName  = ALIAS_MAPPING[tagName] || tagName,
-          ownRanges;
+          ownRanges, isApplied;
 
       // Check whether the document contains a node with the desired tagName
       if (!wysihtml5.dom.hasElementWithTagName(doc, tagName) &&
@@ -142,7 +142,9 @@
         return false;
       }
 
-      return _getApplier(tagName, className, classRegExp, cssStyle, styleRegExp, composer.element).isAppliedToRange(ownRanges);
+      isApplied = _getApplier(tagName, className, classRegExp, cssStyle, styleRegExp, composer.element).isAppliedToRange(ownRanges);
+
+      return (isApplied && isApplied.elements) ? isApplied.elements : false;
     }
   };
 })(wysihtml5);
