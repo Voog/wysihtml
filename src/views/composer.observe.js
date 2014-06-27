@@ -60,6 +60,7 @@
       } else if (selection.caretIsInTheBeginnig()) {
         event.preventDefault();
       } else {
+
         if (selection.caretIsFirstInSelection() &&
             selection.getPreviousNode() &&
             selection.getPreviousNode().nodeName &&
@@ -77,13 +78,13 @@
             selection.setSelection(range);
           }
         }
-        
-        /*var beforeUneditable = selection.caretIsBeforeUneditable();
+
+        var beforeUneditable = selection.caretIsBeforeUneditable();
         // Do a special delete if caret would delete uneditable
         if (beforeUneditable) {
           event.preventDefault();
           deleteAroundEditable(selection, beforeUneditable, element);
-        }*/
+        }
       }
     } else {
       if (selection.containsUneditable()) {
