@@ -5,6 +5,7 @@ module("wysihtml5.dom.delegate", {
     this.link2        = document.createElement("a");
     this.nestedSpan   = document.createElement("span");
     
+    this.link1.href = "#";
     this.link2.appendChild(this.nestedSpan);
     this.container.appendChild(this.link1);
     this.container.appendChild(this.link2);
@@ -28,7 +29,7 @@ test("Basic test", function() {
     ok(event.stopPropagation && event.preventDefault, "Parameter passed into callback handler is a proper event object");
   });
   
-  QUnit.triggerEvent(this.link1, "click");
+  happen.click(this.link1);
 });
 
 test("Click on nested element works as well", function() {
@@ -42,7 +43,7 @@ test("Click on nested element works as well", function() {
     ok(event.stopPropagation && event.preventDefault, "Parameter passed into callback handler is a proper event object");
   });
   
-  QUnit.triggerEvent(this.nestedSpan, "click");
+  happen.click(this.nestedSpan);
 });
 
 test("Delegation on the body", function() {
@@ -54,9 +55,9 @@ test("Delegation on the body", function() {
   
   this.link1.className = "delegation-test another-class";
   
-  QUnit.triggerEvent(this.link1, "mousedown");
+  happen.mousedown(this.link1);
   
   delegater.stop();
   
-  QUnit.triggerEvent(this.link1, "mousedown");
+  happen.mousedown(this.link1);
 });
