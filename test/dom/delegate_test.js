@@ -5,7 +5,6 @@ module("wysihtml5.dom.delegate", {
     this.link2        = document.createElement("a");
     this.nestedSpan   = document.createElement("span");
     
-    this.link1.href = "#";
     this.link2.appendChild(this.nestedSpan);
     this.container.appendChild(this.link1);
     this.container.appendChild(this.link2);
