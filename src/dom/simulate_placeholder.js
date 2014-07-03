@@ -18,6 +18,7 @@
         unset = function() {
           if (view.hasPlaceholderSet()) {
             view.clear();
+            view.selection.selectNode(view.element.firstChild);
           }
           view.placeholderSet = false;
           dom.removeClass(view.element, CLASS_NAME);
