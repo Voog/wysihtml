@@ -110,7 +110,8 @@
 
     isEmpty: function() {
       var innerHTML = this.element.innerHTML.toLowerCase();
-      return innerHTML === ""            ||
+      return (/^\s*$/i).test(innerHTML)  ||
+             innerHTML === ""            ||
              innerHTML === "<br>"        ||
              innerHTML === "<p></p>"     ||
              innerHTML === "<p><br></p>" ||
