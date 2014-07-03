@@ -3,10 +3,11 @@
   "version": "0.4.10",
   "devDependencies": {
     "grunt": "~0.4.4",
+    "grunt-contrib-concat": "~0.4.0",
     "grunt-contrib-jshint": "~0.6.3",
     "grunt-contrib-nodeunit": "~0.2.0",
     "grunt-contrib-uglify": "~0.3.0",
-    "grunt-contrib-concat": "~0.4.0"
+    "qunit-assert-html": "^0.2.1"
   },
   "description": "h1. wysihtml5x 0.4.1",
   "main": "Gruntfile.js",
