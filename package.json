@@ -1,6 +1,6 @@
 {
   "name": "wysihtml5x",
-  "version": "0.4.11",
+  "version": "0.4.12",
   "devDependencies": {
     "grunt": "~0.4.4",
     "grunt-contrib-concat": "~0.4.0",

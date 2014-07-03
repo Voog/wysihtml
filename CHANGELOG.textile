@@ -1,3 +1,6 @@
+*wysihtml5x 0.4.12* (July 03, 2014)
+* Fixes some placeholder problems targeting Firefox and Safari.
+
 *wysihtml5x 0.4.11* (July 03, 2014)
 * Tests are now made with up to date Qunit (tanks @Waxolunist)
 * Fixes an error that placeholder will not be displayed when whitespace present in editor

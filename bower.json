@@ -1,6 +1,6 @@
 {
   "name": "wysihtml5x",
-  "version": "0.4.11",
+  "version": "0.4.12",
   "main": [
     "dist/wysihtml5x.min.js",
     "dist/wysihtml5x-toolbar.min.js"
