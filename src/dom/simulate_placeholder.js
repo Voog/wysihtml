@@ -18,7 +18,13 @@
         unset = function() {
           if (view.hasPlaceholderSet()) {
             view.clear();
-            view.selection.selectNode(view.element.firstChild);
+            view.element.focus();
+            setTimeout(function() {
+              var sel = view.selection.getSelection();
+              if (!sel.focusNode || !sel.anchorNode) {
+                view.selection.selectNode(view.element.firstChild || view.element);
+              }
+            }, 0);
           }
           view.placeholderSet = false;
           dom.removeClass(view.element, CLASS_NAME);
