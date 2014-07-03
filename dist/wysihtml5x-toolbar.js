@@ -25,7 +25,7 @@ if(!Array.isArray) {
     return Object.prototype.toString.call(arg) === '[object Array]';
   };
 };/**
- * @license wysihtml5x v0.4.10
+ * @license wysihtml5x v0.4.11
  * https://github.com/Edicy/wysihtml5
  *
  * Author: Christopher Blum (https://github.com/tiff)
@@ -36,7 +36,7 @@ if(!Array.isArray) {
  *
  */
 var wysihtml5 = {
-  version: "0.4.10",
+  version: "0.4.11",
 
   // namespaces
   commands:   {},
@@ -11845,7 +11845,8 @@ wysihtml5.views.View = Base.extend(
 
     isEmpty: function() {
       var innerHTML = this.element.innerHTML.toLowerCase();
-      return innerHTML === ""            ||
+      return (/^\s*$/i).test(innerHTML)  ||
+             innerHTML === ""            ||
              innerHTML === "<br>"        ||
              innerHTML === "<p></p>"     ||
              innerHTML === "<p><br></p>" ||

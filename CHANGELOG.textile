@@ -1,3 +1,7 @@
+*wysihtml5x 0.4.11* (July 03, 2014)
+* Tests are now made with up to date Qunit (tanks @Waxolunist)
+* Fixes an error that placeholder will not be displayed when whitespace present in editor
+
 *wysihtml5x 0.4.10* (June 27, 2014)
 * Solve inline formating issues when applying multiple styles
 * Add a special case when deleting into heading with caret
