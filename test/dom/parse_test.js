@@ -11,7 +11,7 @@ if (wysihtml5.browser.supported()) {
     },
 
     equal: function(actual, expected, message) {
-      return wysihtml5.assert.htmlEqual(actual, expected, message);
+      return QUnit.assert.htmlEqual(actual, expected, message);
     }
   });
 
