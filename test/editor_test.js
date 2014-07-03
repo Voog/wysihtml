@@ -211,16 +211,16 @@ if (wysihtml5.browser.supported()) {
         ok(true, "'custom_event' correctly fired");
       });
       
-      QUnit.triggerEvent(composerElement, "focus");
+      happen.once(composerElement, {type: "focus"});
       editor.stopObserving("focus");
       
       // Modify innerHTML in order to force 'change' event to trigger onblur
       composerElement.innerHTML = "foobar";
-      QUnit.triggerEvent(composerElement, "blur");
-      QUnit.triggerEvent(composerElement, "focusout");
+      happen.once(composerElement, {type: "blur"});
+      happen.once(composerElement, {type: "focusout"});
       equal(wysihtml5.dom.getStyle("margin-top").from(iframeElement), "5px", ":focus styles are correctly unset");
-      QUnit.triggerEvent(composerElement, "paste");
-      QUnit.triggerEvent(composerElement, "drop");
+      happen.once(composerElement, {type: "paste"});
+      happen.once(composerElement, {type: "drop"});
       
       editor.fire("custom_event");
       
@@ -275,7 +275,7 @@ if (wysihtml5.browser.supported()) {
         equal(composerElement.innerHTML.toLowerCase(), "hey <strong>richard!</strong>", "Textarea sanitized and copied over it's value to the editor after switch");
         
         composerElement.innerHTML = "<i>hey </i><strong>timmay!</strong>";
-        QUnit.triggerEvent(that.form, "submit");
+        happen.once(that.form, {type: "submit"});
         equal(that.textareaElement.value.toLowerCase(), "hey <strong>timmay!</strong>", "Textarea gets the sanitized content of the editor onsubmit");
         
         setTimeout(function() {
@@ -464,10 +464,10 @@ if (wysihtml5.browser.supported()) {
       composerElement.innerHTML = html;
       
       // Fire events that could cause a change in the composer
-      QUnit.triggerEvent(composerElement, "keypress");
-      QUnit.triggerEvent(composerElement, "keyup");
-      QUnit.triggerEvent(composerElement, "cut");
-      QUnit.triggerEvent(composerElement, "blur");
+      happen.once(composerElement, {type: "keypress"});
+      happen.once(composerElement, {type: "keyup"});
+      happen.once(composerElement, {type: "cut"});
+      happen.once(composerElement, {type: "blur"});
       
       setTimeout(function() {
         equal(composerElement.innerHTML.toLowerCase(), html, "Composer still has correct content");
