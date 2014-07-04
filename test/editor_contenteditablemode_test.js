@@ -57,7 +57,7 @@ if (wysihtml5.browser.supported()) {
 
 // EVENTS TESTS 
   asyncTest("Check events", function() {
-    expect(6);
+    expect(17);
     
     var that = this;
     var editor = new wysihtml5.Editor(this.editableArea);
@@ -69,21 +69,32 @@ if (wysihtml5.browser.supported()) {
     editor.on("load", function() {
       var composerElement = that.editableArea;
       
-      editor.on("focus", function() {
+      editor.on("focus", function(event) {
         ok(true, "'focus' event correctly fired");
+        ok(event, "event is defined");
+        ok(event instanceof Event, "event is instance of 'Event'");
+        ok(event && event.type === 'focus', "event is of type 'focus'");
       });
       
-      editor.on("blur", function() {
+      editor.on("blur", function(event) {
         ok(true, "'blur' event correctly fired");
+        ok(event, "event is defined");
+        ok(event instanceof Event, "event is instance of 'Event'");
+        ok(event && event.type === 'blur', "event is of type 'blur'");
       });
       
-      editor.on("change", function() {
+      editor.on("change", function(event) {
         ok(true, "'change' event correctly fired");
+        ok(event, "event is defined");
+        ok(event instanceof Event, "event is instance of 'Event'");
+        ok(event && event.type === 'change', "event is of type 'change'");
       });
       
       
-      editor.on("custom_event", function() {
+      editor.on("custom_event", function(event) {
         ok(true, "'custom_event' correctly fired");
+        ok(event, "event is defined");
+        ok(event && event.type === 'custom_event', "event is of type 'custom_event'");
       });
       
       happen.once(composerElement, {type: "focus"});
@@ -97,7 +108,7 @@ if (wysihtml5.browser.supported()) {
       equal(wysihtml5.dom.getStyle("margin-top").from(composerElement), "5px", ":focus styles are correctly unset");
       
       
-      editor.fire("custom_event");
+      editor.fire("custom_event", { type: 'custom_event' });
       
       setTimeout(function() { start(); }, 100);
     });
@@ -149,6 +160,10 @@ if (wysihtml5.browser.supported()) {
         ok(event, "event is defined");
         ok(event instanceof Event, "event is instance of 'Event'");
         ok(event && event.type === 'drop', "event is of type 'drop'");
+      });
+
+      editor.on('paste', function(event) {
+        ok(false, "No 'paste' event was fired.");
       });
 
       //Assure that the event on the dom element works as expected
