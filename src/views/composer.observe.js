@@ -160,8 +160,11 @@
 
     dom.observe(focusBlurElement, "blur", function(event) {
       if (state !== that.getValue(false, false)) {
-        //create change event
-        var changeevent = Object.create(event, { type: { value: 'change' } });
+        //create change event if supported (all except IE8)
+        var changeevent = event;
+        if(typeof Object.create == 'function') {
+          changeevent = Object.create(event, { type: { value: 'change' } });
+        }
         that.parent.fire("change", changeevent).fire("change:composer", changeevent);
       }
       that.parent.fire("blur", event).fire("blur:composer", event);
