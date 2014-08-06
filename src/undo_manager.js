@@ -87,7 +87,9 @@
 
     transact: function() {
       var previousHtml      = this.historyStr[this.position - 1],
-          currentHtml       = this.composer.getValue(false, false);
+          currentHtml       = this.composer.getValue(false, false),
+          composerIsVisible   = this.element.offsetWidth > 0 && this.element.offsetHeight > 0,
+          range, node, offset, element, position;
 
       if (currentHtml === previousHtml) {
         return;
@@ -102,30 +104,34 @@
 
       this.position++;
 
-      var range   = this.composer.selection.getRange(),
-          node    = (range && range.startContainer) ? range.startContainer : this.element,
-          offset  = (range && range.startOffset) ? range.startOffset : 0,
-          element,
-          position;
+      if (composerIsVisible) {
+        // Do not start saving selection if composer is not visible
+        range   = this.composer.selection.getRange();
+        node    = (range && range.startContainer) ? range.startContainer : this.element;
+        offset  = (range && range.startOffset) ? range.startOffset : 0;
 
-      if (node.nodeType === wysihtml5.ELEMENT_NODE) {
-        element = node;
-      } else {
-        element  = node.parentNode;
-        position = this.getChildNodeIndex(element, node);
-      }
+        if (node.nodeType === wysihtml5.ELEMENT_NODE) {
+          element = node;
+        } else {
+          element  = node.parentNode;
+          position = this.getChildNodeIndex(element, node);
+        }
 
-      element.setAttribute(DATA_ATTR_OFFSET, offset);
-      if (typeof(position) !== "undefined") {
-        element.setAttribute(DATA_ATTR_NODE, position);
+        element.setAttribute(DATA_ATTR_OFFSET, offset);
+        if (typeof(position) !== "undefined") {
+          element.setAttribute(DATA_ATTR_NODE, position);
+        }
       }
 
       var clone = this.element.cloneNode(!!currentHtml);
       this.historyDom.push(clone);
       this.historyStr.push(currentHtml);
 
-      element.removeAttribute(DATA_ATTR_OFFSET);
-      element.removeAttribute(DATA_ATTR_NODE);
+      if (element) {
+        element.removeAttribute(DATA_ATTR_OFFSET);
+        element.removeAttribute(DATA_ATTR_NODE);
+      }
+
     },
 
     undo: function() {
