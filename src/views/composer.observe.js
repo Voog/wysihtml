@@ -140,11 +140,19 @@
 
 
     if (this.config.handleTables) {
-      if(this.doc.execCommand && wysihtml5.browser.supportsCommand(this.doc, "enableObjectResizing") && wysihtml5.browser.supportsCommand(this.doc, "enableInlineTableEditing")) {
-        setTimeout(function() {
-          that.doc.execCommand("enableObjectResizing", false, "false");
-          that.doc.execCommand("enableInlineTableEditing", false, "false");
-        }, 0);
+      if(!this.tableClickHandle && this.doc.execCommand && wysihtml5.browser.supportsCommand(this.doc, "enableObjectResizing") && wysihtml5.browser.supportsCommand(this.doc, "enableInlineTableEditing")) {
+        if (this.sandbox.getIframe) {
+          this.tableClickHandle = dom.observe(container , ["focus", "mouseup", "mouseover"], function() {
+            that.doc.execCommand("enableObjectResizing", false, "false");
+            that.doc.execCommand("enableInlineTableEditing", false, "false");
+            that.tableClickHandle.stop();
+          });
+        } else {
+          setTimeout(function() {
+            that.doc.execCommand("enableObjectResizing", false, "false");
+            that.doc.execCommand("enableInlineTableEditing", false, "false");
+          }, 0);
+        }
       }
       this.tableSelection = wysihtml5.quirks.tableCellsSelection(element, that.parent);
     }
