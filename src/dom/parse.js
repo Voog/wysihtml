@@ -420,7 +420,8 @@ wysihtml5.dom.parse = (function() {
         newClass,
         attributeName,
         newAttributeValue,
-        method;
+        method,
+        oldAttribute;
 
     if (setAttributes) {
       attributes = wysihtml5.lang.object(setAttributes).clone();

@@ -499,7 +499,7 @@
     },
 
     undoToRange: function(range) {
-      var textNodes, textNode, ancestorWithClass, ancestorWithStyle;
+      var textNodes, textNode, ancestorWithClass, ancestorWithStyle, ancestor;
       for (var ri = range.length; ri--;) {
 
           textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);

@@ -21,7 +21,7 @@ wysihtml5.commands.insertList = (function(wysihtml5) {
         };
 
     if (node) {
-      var parentLi = wysihtml5.dom.getParentElement(node, { nodeName: "LI" });
+      var parentLi = wysihtml5.dom.getParentElement(node, { nodeName: "LI" }),
           otherNodeName = (nodeName === "UL") ? "OL" : "UL";
 
       if (isNode(node, nodeName)) {

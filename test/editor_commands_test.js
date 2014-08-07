@@ -2,31 +2,36 @@ if (wysihtml5.browser.supported()) {
   module("wysihtml5.Editor.commands", {
     setup: function() {
         
-      this.editableArea        = document.createElement("div");
-      this.editableArea.id     = "wysihtml5-test-editable";
-      this.editableArea.className = "wysihtml5-test-class";
-      this.editableArea.title  = "Please enter your foo";
-      this.editableArea.innerHTML  = "hey tiff, what's up?";
+      this.editableArea1        = document.createElement("div");
+      this.editableArea1.id     = "wysihtml5-test-editable1";
+      this.editableArea1.className = "wysihtml5-test-class1";
+      this.editableArea1.title  = "Please enter your foo";
+      this.editableArea1.innerHTML  = "hey tiff, what's up?";
       
-      document.body.appendChild(this.editableArea);
+      document.body.appendChild(this.editableArea1);
+      
+    },
 
-      this.setCaretInsideNode = function(editor, el) {
+    setCaretInsideNode: function(editor, el) {
         var r1 = editor.composer.selection.createRange(),
             e1 = el.childNodes[0];
         r1.setEnd(e1, 1);
         r1.setStart(e1, 1);
         editor.composer.selection.setSelection(r1);
-      };
-      
     },
 
     teardown: function() {
       var leftover;
-      while (leftover = document.querySelector("div.wysihtml5-sandbox")) {
+      this.editableArea1.parentNode.removeChild(this.editableArea1);
+      while (leftover = document.querySelector("div.wysihtml5-test-class1, iframe.wysihtml5-sandbox, div.wysihtml5-sandbox")) {
         leftover.parentNode.removeChild(leftover);
       }
       document.body.className = this.originalBodyClassName;
-    }
+    },
+
+    equal: function(actual, expected, message) {
+      return QUnit.assert.htmlEqual(actual, expected, message);
+    },
   });
   
   
@@ -42,12 +47,12 @@ if (wysihtml5.browser.supported()) {
             u: true
           }
         },
-        editor = new wysihtml5.Editor(this.editableArea, {
+        editor = new wysihtml5.Editor(this.editableArea1, {
           parserRules: parserRules
         });
         
     editor.on("load", function() {
-      var editableElement   = that.editableArea;
+      var editableElement   = that.editableArea1;
       // basic bold
       editor.setValue(text, true);
       editor.composer.selection.selectNode(editor.editableElement);
@@ -55,18 +60,20 @@ if (wysihtml5.browser.supported()) {
       equal(editableElement.innerHTML.toLowerCase(), "<b>" + text + "</b>", "Command bold sets text as bold correctly");
 
       editor.composer.selection.getSelection().collapseToEnd();
+
       ok(editor.composer.selection.getSelection().isCollapsed, "Text caret is collapsed");
 
       editor.composer.commands.exec('bold');
+      editor.composer.selection.getSelection().collapseToEnd();
       editor.composer.commands.exec('insertHtml', 'test');
-
-      equal(editableElement.innerHTML.toLowerCase(), "<b>" + text + "</b>test", "With caret at last position bold is not removed but set to notbold at caret");
       ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<b>" + text + "</b>test", "With caret at last position bold is not removed but set to notbold at caret");
+      
 
       that.setCaretInsideNode(editor, editableElement.querySelector('b'));
       editor.composer.commands.exec('bold');
 
-      equal(editableElement.innerHTML.toLowerCase(), text + "test", "Bold is correctly removed when text caret is inside bold");
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), text + "test", "Bold is correctly removed when text caret is inside bold");
       ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
 
       // basic italic
@@ -79,36 +86,38 @@ if (wysihtml5.browser.supported()) {
       ok(editor.composer.selection.getSelection().isCollapsed, "Text caret is collapsed");
 
       editor.composer.commands.exec('italic');
+      editor.composer.selection.getSelection().collapseToEnd();
       editor.composer.commands.exec('insertHtml', 'test');
 
-      equal(editableElement.innerHTML.toLowerCase(), "<i>" + text + "</i>test", "With caret at last position italic is not removed but set to notitalic at caret");
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<i>" + text + "</i>test", "With caret at last position italic is not removed but set to notitalic at caret");
       ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
 
       that.setCaretInsideNode(editor, editableElement.querySelector('i'));
       editor.composer.commands.exec('italic');
 
-      equal(editableElement.innerHTML.toLowerCase(), text + "test", "Italic is correctly removed when text caret is inside italic");
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), text + "test", "Italic is correctly removed when text caret is inside italic");
       ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
 
       // basic underline
       editor.setValue(text, true);
       editor.composer.selection.selectNode(editor.editableElement);
       editor.composer.commands.exec('underline');
-      equal(editableElement.innerHTML.toLowerCase(), "<u>" + text + "</u>", "Command underline sets text as underline correctly");
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<u>" + text + "</u>", "Command underline sets text as underline correctly");
 
       editor.composer.selection.getSelection().collapseToEnd();
       ok(editor.composer.selection.getSelection().isCollapsed, "Text caret is collapsed");
 
       editor.composer.commands.exec('underline');
+      editor.composer.selection.getSelection().collapseToEnd();
       editor.composer.commands.exec('insertHtml', 'test');
 
-      equal(editableElement.innerHTML.toLowerCase(), "<u>" + text + "</u>test", "With caret at last position underline is not removed but set to notunderline at caret");
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<u>" + text + "</u>test", "With caret at last position underline is not removed but set to notunderline at caret");
       ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
 
       that.setCaretInsideNode(editor, editableElement.querySelector('u'));
       editor.composer.commands.exec('underline');
 
-      equal(editableElement.innerHTML.toLowerCase(), text + "test", "Underline is correctly removed when text caret is inside underline");
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), text + "test", "Underline is correctly removed when text caret is inside underline");
       ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
 
       start();
@@ -119,11 +128,11 @@ if (wysihtml5.browser.supported()) {
     asyncTest("Format block", function() {
        expect(12);
       var that = this,
-          editor = new wysihtml5.Editor(this.editableArea),
+          editor = new wysihtml5.Editor(this.editableArea1),
           text = "once upon a time<br>there was an unformated text<br>spanning many lines.";
         
       editor.on("load", function() {
-        var editableElement   = that.editableArea;
+        var editableElement   = that.editableArea1;
         editor.setValue(text, true);
         editor.composer.selection.selectNode(editor.editableElement);
         editor.composer.commands.exec('justifyRight');
@@ -134,8 +143,9 @@ if (wysihtml5.browser.supported()) {
         
         editor.composer.selection.selectNode(editor.editableElement);
         editor.composer.selection.getSelection().collapseToStart();
-        
+
         editor.composer.commands.exec('justifyRight');
+        editor.composer.selection.getSelection().collapseToStart();
         equal(editableElement.innerHTML.toLowerCase(), '<div class="wysiwyg-text-align-right">once upon a time</div>there was an unformated text<br>spanning many lines.', "Only first line correctly wrapped in aligning div");
         
         var node = editor.editableElement.querySelectorAll('.wysiwyg-text-align-right');
@@ -181,11 +191,11 @@ if (wysihtml5.browser.supported()) {
   asyncTest("Format code", function() {
        expect(2);
       var that = this,
-          editor = new wysihtml5.Editor(this.editableArea),
+          editor = new wysihtml5.Editor(this.editableArea1),
           text = "once upon a time there was an unformated text.";
         
       editor.on("load", function() {
-        var editableElement   = that.editableArea;
+        var editableElement   = that.editableArea1;
         editor.setValue(text, true);
 
         editor.composer.selection.selectNode(editor.editableElement);
@@ -204,11 +214,11 @@ if (wysihtml5.browser.supported()) {
            expect(4);
            
           var that = this,
-              editor = new wysihtml5.Editor(this.editableArea),
+              editor = new wysihtml5.Editor(this.editableArea1),
               text = "text";
         
           editor.on("load", function() {
-            var editableElement   = that.editableArea;
+            var editableElement   = that.editableArea1;
             editor.setValue(text, true);
             editor.composer.selection.selectNode(editor.editableElement);
             
@@ -216,19 +226,19 @@ if (wysihtml5.browser.supported()) {
             editor.composer.commands.exec('createLink', {
               "href": "http://test.com", "title": "test"
             });
-            equal(editableElement.innerHTML.toLowerCase(), '<a href="http://test.com" title="test">' + text + '</a>', "Link added correctly");
+            that.equal(editableElement.innerHTML.toLowerCase(), '<a href="http://test.com" title="test">' + text + '</a>', "Link added correctly");
             
             // Change
             editor.composer.selection.selectNode(editor.editableElement);
             editor.composer.commands.exec('createLink', {
               "href": "http://changed.com"
             });
-            equal(editableElement.innerHTML.toLowerCase(), '<a href="http://changed.com">' + text + '</a>', "Link attributes changed correctly when createLink is executed on existing link");
+            that.equal(editableElement.innerHTML.toLowerCase(), '<a href="http://changed.com">' + text + '</a>', "Link attributes changed correctly when createLink is executed on existing link");
             
             //Remove
             editor.composer.selection.selectNode(editor.editableElement);
             editor.composer.commands.exec('removeLink');
-            equal(editableElement.innerHTML, text, "Link remove correctly");
+            that.equal(editableElement.innerHTML, text, "Link remove correctly");
             
             // Create with caret
             editor.composer.selection.selectNode(editor.editableElement);
@@ -236,7 +246,7 @@ if (wysihtml5.browser.supported()) {
             editor.composer.commands.exec('createLink', {
               "href": "http://test.com", "title": "test"
             });
-            equal(editableElement.innerHTML.toLowerCase(), '<a href="http://test.com" title="test">http://test.com/</a> ' + text + '', "Link with caret added correctly");
+            that.equal(editableElement.innerHTML.toLowerCase(), '<a href="http://test.com" title="test">http://test.com/</a> ' + text + '', "Link with caret added correctly");
             
             start();
           });
@@ -246,11 +256,11 @@ if (wysihtml5.browser.supported()) {
     asyncTest("Create table", function() {
        expect(1);
       var that = this,
-          editor = new wysihtml5.Editor(this.editableArea),
+          editor = new wysihtml5.Editor(this.editableArea1),
           text = "test";
         
       editor.on("load", function() {
-        var editableElement   = that.editableArea,
+        var editableElement   = that.editableArea1,
             expectText = '<table style="width: 100%;">' +
                            '<tbody>' +
                               '<tr>' +
@@ -279,11 +289,11 @@ if (wysihtml5.browser.supported()) {
     asyncTest("Create lists", function() {
       expect(7);
       var that = this,
-          editor = new wysihtml5.Editor(this.editableArea),
+          editor = new wysihtml5.Editor(this.editableArea1),
           text = "";
         
       editor.on("load", function() {
-        var editableElement   = that.editableArea,
+        var editableElement   = that.editableArea1,
             expectText = '<ul><li></li></ul>',
             expectTextBr = '<ul><li><br></li></ul>',
             expectTextWithContents = '<ul><li>text</li></ul>',
@@ -330,7 +340,7 @@ if (wysihtml5.browser.supported()) {
     asyncTest("Create blockquote", function() {
       expect(4);
       var that = this,
-        editor = new wysihtml5.Editor(this.editableArea, {
+        editor = new wysihtml5.Editor(this.editableArea1, {
           parserRules: {
             tags: {
               h1: true,
@@ -343,7 +353,7 @@ if (wysihtml5.browser.supported()) {
         text2 = "test<h1>heading</h1>test";
 
       editor.on("load", function() {
-        var editableElement   = that.editableArea;
+        var editableElement   = that.editableArea1;
 
         editor.setValue(text, true);
 

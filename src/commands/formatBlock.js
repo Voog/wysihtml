@@ -116,7 +116,7 @@
           blockElements    = this.state(composer, command, nodeName, className, classRegExp, cssStyle, styleRegExp),
           useLineBreaks   = composer.config.useLineBreaks,
           defaultNodeName = useLineBreaks ? "DIV" : "P",
-          selectedNodes, classRemoveAction, blockRenameFound, styleRemoveAction;
+          selectedNodes, classRemoveAction, blockRenameFound, styleRemoveAction, blockElement;
       nodeName = typeof(nodeName) === "string" ? nodeName.toUpperCase() : nodeName;
 
       if (blockElements.length) {

@@ -21,7 +21,8 @@ if (wysihtml5.browser.supported()) {
 
     teardown: function() {
       var leftover;
-      while (leftover = document.querySelector("div.wysihtml5-sandbox")) {
+      this.editableArea.parentNode.removeChild(this.editableArea);
+      while (leftover = document.querySelector("div.wysihtml5-sandbox, div.wysihtml5-test-class")) {
         leftover.parentNode.removeChild(leftover);
       }
       document.body.className = this.originalBodyClassName;
@@ -257,6 +258,8 @@ if (wysihtml5.browser.supported()) {
   
   asyncTest("Parser (custom parser method with parserRules as object", function() {
     expect(6);
+
+    this.editableArea.innerHTML = "<p>foobar</p><script>alert(1);</script>";
     
     var that        = this,
         parserRules = { script: undefined },
@@ -278,12 +281,9 @@ if (wysihtml5.browser.supported()) {
     });
     
     editor.on("load", function() {
-      input   = "<p>foobar</p><script>alert(1);</script>";
-      output  = "<p>foobar</p>";
-      
+      var output2  = "<p>foobar</p>";
       // Invoke parsing via second parameter of setValue()
-      editor.setValue(input, true);
-      equal(editor.getValue(false, false).toLowerCase(), output, "HTML got correctly parsed within setValue()");
+      equal(editor.getValue(true, true).toLowerCase(), output2, "HTML got correctly parsed within setValue()");
       start();
     });
   });

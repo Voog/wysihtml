@@ -65,7 +65,7 @@
 
   wysihtml5.commands.formatInline = {
     exec: function(composer, command, tagName, className, classRegExp, cssStyle, styleRegExp, dontRestoreSelect, noCleanup) {
-      var range = composer.selection.createRange();
+      var range = composer.selection.createRange(),
           ownRanges = composer.selection.getOwnRanges();
 
       if (!ownRanges || ownRanges.length == 0) {

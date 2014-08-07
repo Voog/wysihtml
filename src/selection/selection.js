@@ -698,7 +698,7 @@
     },
 
     _detectInlineRangeProblems: function(range) {
-      position = dom.compareDocumentPosition(range.startContainer, range.endContainer);
+      var position = dom.compareDocumentPosition(range.startContainer, range.endContainer);
       return (
         range.endOffset == 0 &&
         position & 4 //Node.DOCUMENT_POSITION_FOLLOWING
