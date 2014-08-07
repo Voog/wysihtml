@@ -131,7 +131,7 @@ wysihtml5.commands.insertList = (function(wysihtml5) {
   return {
     exec: function(composer, command, nodeName) {
       var doc           = composer.doc,
-          cmd           = (nodeName === "OL") ? "insertorderedlist" : "insertunorderedlist",
+          cmd           = (nodeName === "OL") ? "insertOrderedList" : "insertUnorderedList",
           selectedNode  = composer.selection.getSelectedNode(),
           list          = findListEl(selectedNode, nodeName, composer);
 
