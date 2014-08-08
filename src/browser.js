@@ -5,7 +5,6 @@ wysihtml5.browser = (function() {
   var userAgent   = navigator.userAgent,
       testElement = document.createElement("div"),
       // Browser sniffing is unfortunately needed since some behaviors are impossible to feature detect
-      isIE        = userAgent.indexOf("MSIE")         !== -1 && userAgent.indexOf("Opera") === -1,
       isGecko     = userAgent.indexOf("Gecko")        !== -1 && userAgent.indexOf("KHTML") === -1,
       isWebKit    = userAgent.indexOf("AppleWebKit/") !== -1,
       isChrome    = userAgent.indexOf("Chrome/")      !== -1,
@@ -17,6 +16,29 @@ wysihtml5.browser = (function() {
 
   function androidVersion(userAgent) {
     return +(userAgent.match(/android (\d+)/) || [undefined, 0])[1];
+  }
+
+  function isIE(version, equation) {
+    var rv = -1,
+        re;
+
+    if (navigator.appName == 'Microsoft Internet Explorer') {
+      re = new RegExp("MSIE ([0-9]{1,}[\.0-9]{0,})");
+    } else if (navigator.appName == 'Netscape') {
+      re = new RegExp("Trident/.*rv:([0-9]{1,}[\.0-9]{0,})");
+    }
+
+    if (re && re.exec(navigator.userAgent) != null) {
+      rv = parseFloat(RegExp.$1);
+    }
+
+    if (rv === -1) { return false; }
+    if (!version) { return true; }
+    if (!equation) { return version === rv; }
+    if (equation === "<") { return version < rv; }
+    if (equation === ">") { return version > rv; }
+    if (equation === "<=") { return version <= rv; }
+    if (equation === ">=") { return version >= rv; }
   }
 
   return {
@@ -69,7 +91,7 @@ wysihtml5.browser = (function() {
      * HTML5 sandboxed iframes are still buggy and their DOM is not reachable from the outside (except when using postMessage)
      */
     supportsSandboxedIframes: function() {
-      return isIE;
+      return isIE();
     },
 
     /**
@@ -86,7 +108,7 @@ wysihtml5.browser = (function() {
      * Firefox sometimes shows a huge caret in the beginning after focusing
      */
     displaysCaretInEmptyContentEditableCorrectly: function() {
-      return isIE;
+      return isIE();
     },
 
     /**
@@ -161,12 +183,12 @@ wysihtml5.browser = (function() {
       // Following commands are supported but contain bugs in some browsers
       var buggyCommands = {
         // formatBlock fails with some tags (eg. <blockquote>)
-        "formatBlock":          isIE,
+        "formatBlock":          isIE(10, "<="),
          // When inserting unordered or ordered lists in Firefox, Chrome or Safari, the current selection or line gets
          // converted into a list (<ul><li>...</li></ul>, <ol><li>...</li></ol>)
          // IE and Opera act a bit different here as they convert the entire content of the current block element into a list
-        "insertUnorderedList":  isIE,
-        "insertOrderedList":    isIE
+        "insertUnorderedList":  isIE(),
+        "insertOrderedList":    isIE()
       };
 
       // Firefox throws errors for queryCommandSupported, so we have to build up our own object of supported commands
@@ -203,7 +225,7 @@ wysihtml5.browser = (function() {
      * http://blogs.msdn.com/b/ieinternals/archive/2009/09/17/prevent-automatic-hyperlinking-in-contenteditable-html.aspx).
      */
     doesAutoLinkingInContentEditable: function() {
-      return isIE;
+      return isIE();
     },
 
     /**
@@ -235,7 +257,7 @@ wysihtml5.browser = (function() {
      * Chrome and Safari both don't support this
      */
     canSelectImagesInContentEditable: function() {
-      return isGecko || isIE || isOpera;
+      return isGecko || isIE() || isOpera;
     },
 
     /**
@@ -306,21 +328,21 @@ wysihtml5.browser = (function() {
      * or try the POC http://tifftiff.de/ie9_crash/
      */
     crashesWhenDefineProperty: function(property) {
-      return isIE && (property === "XMLHttpRequest" || property === "XDomainRequest");
+      return isIE(9) && (property === "XMLHttpRequest" || property === "XDomainRequest");
     },
 
     /**
      * IE is the only browser who fires the "focus" event not immediately when .focus() is called on an element
      */
     doesAsyncFocus: function() {
-      return isIE;
+      return isIE();
     },
 
     /**
      * In IE it's impssible for the user and for the selection library to set the caret after an <img> when it's the lastChild in the document
      */
     hasProblemsSettingCaretAfterImg: function() {
-      return isIE;
+      return isIE();
     },
 
     hasUndoInContextMenu: function() {
@@ -341,7 +363,7 @@ wysihtml5.browser = (function() {
      * IE 8+9 don't fire the focus event of the <body> when the iframe gets focused (even though the caret gets set into the <body>)
      */
     hasIframeFocusIssue: function() {
-      return isIE;
+      return isIE();
     },
 
     /**
