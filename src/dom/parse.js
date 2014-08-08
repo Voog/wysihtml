@@ -507,7 +507,7 @@ wysihtml5.dom.parse = (function() {
     if (attributes["class"] && clearInternals) {
       attributes["class"] = attributes["class"].replace("wysiwyg-tmp-selected-cell", "");
       if ((/^\s*$/g).test(attributes["class"])) {
-        delete attributes.class;
+        delete attributes["class"];
       }
     }
 
