@@ -797,4 +797,12 @@ if (wysihtml5.browser.supported()) {
     this.equal(this.sanitize(tester, rules).innerHTML, input5 , "DIV with dimensions and in dom is kept");
 
   });
+
+  test("Test keeping comments ", function() {
+    var rules = {
+      "comments": 1
+    },
+    input = 'Test <!-- some comment -->';
+    this.equal(this.sanitize(input, rules), input, "Comments are kept if configured to keep");
+  });
 }

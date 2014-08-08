@@ -61,7 +61,8 @@ wysihtml5.dom.parse = (function() {
    */
   var NODE_TYPE_MAPPING = {
         "1": _handleElement,
-        "3": _handleText
+        "3": _handleText,
+        "8": _handleComment
       },
       // Rename unknown tags to this
       DEFAULT_NODE_NAME   = "span",
@@ -593,6 +594,11 @@ wysihtml5.dom.parse = (function() {
     }
   }
 
+  function _handleComment(oldNode) {
+    if (currentRules.comments) {
+      return oldNode.ownerDocument.createComment(oldNode.nodeValue);
+    }
+  }
 
   // ------------ attribute checks ------------ \\
   var attributeCheckMethods = {

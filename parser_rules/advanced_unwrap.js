@@ -148,6 +148,8 @@ var wysihtml5ParserRules = {
             }
         }
     },
+
+    "comments": 1, // if set allows comments to pass
     
     /**
      * Tag list
