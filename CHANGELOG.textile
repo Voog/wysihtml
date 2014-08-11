@@ -1,3 +1,9 @@
+*wysihtml5x 0.4.13* (August 11, 2014)
+* Adds option for parser to keep comments
+* Fixes list insertion problems in IE
+* Fixes some leaking varaibles reduces browser error messages
+* Updates rangy to latest (1.3alpha.20140804)
+
 *wysihtml5x 0.4.12* (July 03, 2014)
 * Fixes some placeholder problems targeting Firefox and Safari.
 
