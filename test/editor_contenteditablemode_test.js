@@ -58,7 +58,7 @@ if (wysihtml5.browser.supported()) {
 
 // EVENTS TESTS 
   asyncTest("Check events", function() {
-    expect(8);
+    expect(17);
     
     var that = this;
     var editor = new wysihtml5.Editor(this.editableArea);
@@ -70,28 +70,32 @@ if (wysihtml5.browser.supported()) {
     editor.on("load", function() {
       var composerElement = that.editableArea;
       
-      editor.on("focus", function() {
+      editor.on("focus", function(event) {
         ok(true, "'focus' event correctly fired");
+        ok(event, "event is defined");
+        ok(event instanceof Event, "event is instance of 'Event'");
+        ok(event && event.type === 'focus', "event is of type 'focus'");
       });
       
-      editor.on("blur", function() {
+      editor.on("blur", function(event) {
         ok(true, "'blur' event correctly fired");
+        ok(event, "event is defined");
+        ok(event instanceof Event, "event is instance of 'Event'");
+        ok(event && event.type === 'blur', "event is of type 'blur'");
       });
       
-      editor.on("change", function() {
+      editor.on("change", function(event) {
         ok(true, "'change' event correctly fired");
+        ok(event, "event is defined");
+        ok(event instanceof Event, "event is instance of 'Event'");
+        ok(event && event.type === 'change', "event is of type 'change'");
       });
       
-      editor.on("paste", function() {
-        ok(true, "'paste' event correctly fired");
-      });
       
-      editor.on("drop", function() {
-        ok(true, "'drop' event correctly fired");
-      });
-      
-      editor.on("custom_event", function() {
+      editor.on("custom_event", function(event) {
         ok(true, "'custom_event' correctly fired");
+        ok(event, "event is defined");
+        ok(event && event.type === 'custom_event', "event is of type 'custom_event'");
       });
       
       happen.once(composerElement, {type: "focus"});
@@ -104,14 +108,82 @@ if (wysihtml5.browser.supported()) {
       
       equal(wysihtml5.dom.getStyle("margin-top").from(composerElement), "5px", ":focus styles are correctly unset");
       
-      happen.once(composerElement, {type: "paste"});
-      happen.once(composerElement, {type: "drop"});
       
-      editor.fire("custom_event");
+      editor.fire("custom_event", { type: 'custom_event' });
       
       setTimeout(function() { start(); }, 100);
     });
   });
+
+  asyncTest("Check events paste", function() {
+    expect(12);
+    
+    var that = this;
+    var editor = new wysihtml5.Editor(this.editableArea);
+    
+    editor.on("load", function() {
+      var composerElement = that.editableArea;
+      
+      editor.on("paste", function(event) {
+        ok(event, "event is defined");
+        ok(event instanceof Event, "event is instance of 'Event'");
+        ok(event && event.type === 'paste', "event is of type 'paste'");
+      });
+
+      //Assure that the event on the dom element works as expected
+      that.editableArea.addEventListener('paste', function (event) {
+        ok(event, "event is defined");
+        ok(event instanceof Event, "event is instance of 'Event'");
+        ok(event && event.type === 'paste', "event is of type 'paste'");
+      });
+
+      happen.once(composerElement, {type: "paste"});
+      //Just to show that not happen.js is the source of error
+      var event = new Event('paste');
+      that.editableArea.dispatchEvent(event);
+      //QUnit.triggerEvent(composerElement, 'paste');
+      
+      setTimeout(function() { start(); }, 100);
+    });
+  });
+
+  asyncTest("Check events drop", function() {
+    expect(12);
+    
+    var that = this;
+    var editor = new wysihtml5.Editor(this.editableArea);
+    
+    editor.on("load", function() {
+      var composerElement = that.editableArea;
+      
+      //if changing from drop to paste it works
+      editor.on('drop', function(event) {
+        ok(event, "event is defined");
+        ok(event instanceof Event, "event is instance of 'Event'");
+        ok(event && event.type === 'drop', "event is of type 'drop'");
+      });
+
+      editor.on('paste', function(event) {
+        ok(false, "No 'paste' event was fired.");
+      });
+
+      //Assure that the event on the dom element works as expected
+      that.editableArea.addEventListener('drop', function (event) {
+        ok(event, "event is defined");
+        ok(event instanceof Event, "event is instance of 'Event'");
+        ok(event && event.type === 'drop', "event is of type 'drop'");
+      });
+
+      happen.once(composerElement, {type: "drop"});
+      //Just to show that not happen.js is the source of error
+      var event = new Event('drop');
+      that.editableArea.dispatchEvent(event);
+      //QUnit.triggerEvent(composerElement, 'drop');
+
+      setTimeout(function() { start(); }, 100);
+    });
+  });
+
 
 // Placeholder tests  
   asyncTest("Check placeholder", function() {

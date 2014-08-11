@@ -158,19 +158,24 @@
     }
 
     // --------- Focus & blur logic ---------
-    dom.observe(focusBlurElement, "focus", function() {
-      that.parent.fire("focus").fire("focus:composer");
+    dom.observe(focusBlurElement, "focus", function(event) {
+      that.parent.fire("focus", event).fire("focus:composer", event);
 
       // Delay storing of state until all focus handler are fired
       // especially the one which resets the placeholder
       setTimeout(function() { state = that.getValue(false, false); }, 0);
     });
 
-    dom.observe(focusBlurElement, "blur", function() {
+    dom.observe(focusBlurElement, "blur", function(event) {
       if (state !== that.getValue(false, false)) {
-        that.parent.fire("change").fire("change:composer");
+        //create change event if supported (all except IE8)
+        var changeevent = event;
+        if(typeof Object.create == 'function') {
+          changeevent = Object.create(event, { type: { value: 'change' } });
+        }
+        that.parent.fire("change", changeevent).fire("change:composer", changeevent);
       }
-      that.parent.fire("blur").fire("blur:composer");
+      that.parent.fire("blur", event).fire("blur:composer", event);
     });
 
     // --------- Drag & Drop logic ---------
@@ -178,9 +183,9 @@
       that.parent.fire("unset_placeholder");
     });
 
-    dom.observe(element, pasteEvents, function() {
+    dom.observe(element, pasteEvents, function(event) {
       setTimeout(function() {
-        that.parent.fire("paste").fire("paste:composer");
+        that.parent.fire(event.type, event).fire(event.type + ":composer", event);
       }, 0);
     });
 
