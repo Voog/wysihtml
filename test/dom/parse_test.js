@@ -113,7 +113,6 @@ if (wysihtml5.browser.supported()) {
       '<span><i title=""></i></span>'
     );
   });
-
   test("Attribute check of 'url' cleans up", function() {
     var rules = {
       tags: {
@@ -804,5 +803,34 @@ if (wysihtml5.browser.supported()) {
     },
     input = 'Test <!-- some comment -->';
     this.equal(this.sanitize(input, rules), input, "Comments are kept if configured to keep");
+  });
+
+  test("Test global valid attributes for all elements ", function() {
+    var rules = {
+      "attributes": {
+          "id": "any",
+          "data-*": "any"
+      },
+      "tags": {
+        'div': {},
+        'span': {
+          "check_attributes": {
+            "data-*": "numbers"
+          }
+        }
+      }
+    },
+    input1 = '<div id="test">Test</div>',
+    input2 = '<div class="test">Test</div>',
+    output2 = '<div>Test</div>',
+    input3 = '<div data-name="test" data-value="test">Test</div>',
+    input4 = '<span data-name="test" data-value="1234">Test</span>',
+    output4 = '<span data-value="1234">Test</span>';
+
+    this.equal(this.sanitize(input1, rules), input1, "Global attribute allows id for all elements and div is allowewd tag and kept");
+    this.equal(this.sanitize(input2, rules), output2, "Div is kept but attribute 'class' is not allowed locally and globally, so it is removed.");
+    this.equal(this.sanitize(input3, rules), input3, "Global eattribute configuration allows all attributes beginning with 'data-'.");
+    this.equal(this.sanitize(input4, rules), output4, "Local check_attributes overwrites global attributes");
+  
   });
 }

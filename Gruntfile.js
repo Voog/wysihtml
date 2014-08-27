@@ -44,6 +44,8 @@ module.exports = function(grunt) {
     "src/dom/simulate_placeholder.js",
     "src/dom/text_content.js",
     "src/dom/get_attribute.js",
+    "src/dom/get_attributes.js",
+    "src/dom/is_loaded_image.js",
     "src/dom/table.js",
     "src/dom/query.js",
     "src/dom/compare_document_position.js",

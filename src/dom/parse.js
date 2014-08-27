@@ -50,7 +50,9 @@
  *    // => '<p class="red">foo</p><p>bar</p>'
  */
 
-wysihtml5.dom.parse = (function() {
+wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
+  /* TODO: Currently escaped module pattern as otherwise folloowing default swill be shared among multiple editors.
+   * Refactor whole code as this method while workind is kind of awkward too */
 
   /**
    * It's not possible to use a XMLParser/DOMParser as HTML5 is not always well-formed XML
@@ -368,7 +370,7 @@ wysihtml5.dom.parse = (function() {
     if (definition.attrs) {
         for (a in definition.attrs) {
             if (definition.attrs.hasOwnProperty(a)) {
-                attr = _getAttribute(oldNode, a);
+                attr = wysihtml5.dom.getAttribute(oldNode, a);
                 if (typeof(attr) === "string") {
                     if (attr.search(definition.attrs[a]) > -1) {
                         return true;
@@ -401,6 +403,61 @@ wysihtml5.dom.parse = (function() {
     }
   }
 
+  function _getAttributesBeginningWith(beginning, attributes) {
+    var returnAttributes = [];
+    for (var attr in attributes) {
+      if (attributes.hasOwnProperty(attr) && attr.indexOf(beginning) === 0) {
+        returnAttributes.push(attr);
+      }
+    }
+    return returnAttributes;
+  }
+
+  function _checkAttribute(attributeName, attributeValue, methodName, nodeName) {
+    var method = attributeCheckMethods[methodName],
+        newAttributeValue;
+
+    if (method) {
+      if (attributeValue || (attributeName === "alt" && nodeName == "IMG")) {
+        newAttributeValue = method(attributeValue);
+        if (typeof(newAttributeValue) === "string") {
+          return newAttributeValue;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  function _checkAttributes(oldNode, local_attributes) {
+    var globalAttributes  = wysihtml5.lang.object(currentRules.attributes || {}).clone(), // global values for check/convert values of attributes
+        checkAttributes   = wysihtml5.lang.object(globalAttributes).merge( wysihtml5.lang.object(local_attributes || {}).clone()).get(),
+        attributes        = {},
+        oldAttributes     = wysihtml5.dom.getAttributes(oldNode),
+        attributeName, newValue, matchingAttributes;
+
+    for (attributeName in checkAttributes) {
+      if ((/\*$/).test(attributeName)) {
+
+        matchingAttributes = _getAttributesBeginningWith(attributeName.slice(0,-1), oldAttributes);
+        for (var i = 0, imax = matchingAttributes.length; i < imax; i++) {
+
+          newValue = _checkAttribute(matchingAttributes[i], oldAttributes[matchingAttributes[i]], checkAttributes[attributeName], oldNode.nodeName);
+          if (newValue !== false) {
+            attributes[matchingAttributes[i]] = newValue;
+          }
+        }
+      } else {
+        newValue = _checkAttribute(attributeName, oldAttributes[attributeName], checkAttributes[attributeName], oldNode.nodeName);
+        if (newValue !== false) {
+          attributes[attributeName] = newValue;
+        }
+      }
+    }
+
+    return attributes;
+  }
+
   // TODO: refactor. Too long to read
   function _handleAttributes(oldNode, newNode, rule, clearInternals) {
     var attributes          = {},                         // fresh new set of attributes to set on newNode
@@ -408,7 +465,6 @@ wysihtml5.dom.parse = (function() {
         addClass            = rule.add_class,             // add classes based on existing attributes
         addStyle            = rule.add_style,             // add styles based on existing attributes
         setAttributes       = rule.set_attributes,        // attributes to set on the current node
-        checkAttributes     = rule.check_attributes,      // check/convert values of attributes
         allowedClasses      = currentRules.classes,
         i                   = 0,
         classes             = [],
@@ -420,29 +476,14 @@ wysihtml5.dom.parse = (function() {
         currentClass,
         newClass,
         attributeName,
-        newAttributeValue,
-        method,
-        oldAttribute;
+        method;
 
     if (setAttributes) {
       attributes = wysihtml5.lang.object(setAttributes).clone();
     }
 
-    if (checkAttributes) {
-      for (attributeName in checkAttributes) {
-        method = attributeCheckMethods[checkAttributes[attributeName]];
-        if (!method) {
-          continue;
-        }
-        oldAttribute = _getAttribute(oldNode, attributeName);
-        if (oldAttribute || (attributeName === "alt" && oldNode.nodeName == "IMG")) {
-          newAttributeValue = method(oldAttribute);
-          if (typeof(newAttributeValue) === "string") {
-            attributes[attributeName] = newAttributeValue;
-          }
-        }
-      }
-    }
+    // check/convert values of attributes
+    attributes = wysihtml5.lang.object(attributes).merge(_checkAttributes(oldNode,  rule.check_attributes)).get();
 
     if (setClass) {
       classes.push(setClass);
@@ -454,7 +495,7 @@ wysihtml5.dom.parse = (function() {
         if (!method) {
           continue;
         }
-        newClass = method(_getAttribute(oldNode, attributeName));
+        newClass = method(wysihtml5.dom.getAttribute(oldNode, attributeName));
         if (typeof(newClass) === "string") {
           classes.push(newClass);
         }
@@ -468,7 +509,7 @@ wysihtml5.dom.parse = (function() {
           continue;
         }
 
-        newStyle = method(_getAttribute(oldNode, attributeName));
+        newStyle = method(wysihtml5.dom.getAttribute(oldNode, attributeName));
         if (typeof(newStyle) === "string") {
           styles.push(newStyle);
         }
@@ -534,49 +575,6 @@ wysihtml5.dom.parse = (function() {
       }
       if (typeof(attributes.height) !== "undefined") {
         newNode.setAttribute("height", attributes.height);
-      }
-    }
-  }
-
-  /**
-   * IE gives wrong results for hasAttribute/getAttribute, for example:
-   *    var td = document.createElement("td");
-   *    td.getAttribute("rowspan"); // => "1" in IE
-   *
-   * Therefore we have to check the element's outerHTML for the attribute
-   */
-  var HAS_GET_ATTRIBUTE_BUG = !wysihtml5.browser.supportsGetAttributeCorrectly();
-  function _getAttribute(node, attributeName) {
-    attributeName = attributeName.toLowerCase();
-    var nodeName = node.nodeName;
-    if (nodeName == "IMG" && attributeName == "src" && _isLoadedImage(node) === true) {
-      // Get 'src' attribute value via object property since this will always contain the
-      // full absolute url (http://...)
-      // this fixes a very annoying bug in firefox (ver 3.6 & 4) and IE 8 where images copied from the same host
-      // will have relative paths, which the sanitizer strips out (see attributeCheckMethods.url)
-      return node.src;
-    } else if (HAS_GET_ATTRIBUTE_BUG && "outerHTML" in node) {
-      // Don't trust getAttribute/hasAttribute in IE 6-8, instead check the element's outerHTML
-      var outerHTML      = node.outerHTML.toLowerCase(),
-          // TODO: This might not work for attributes without value: <input disabled>
-          hasAttribute   = outerHTML.indexOf(" " + attributeName +  "=") != -1;
-
-      return hasAttribute ? node.getAttribute(attributeName) : null;
-    } else{
-      return node.getAttribute(attributeName);
-    }
-  }
-
-  /**
-   * Check whether the given node is a proper loaded image
-   * FIXME: Returns undefined when unknown (Chrome, Safari)
-   */
-  function _isLoadedImage(node) {
-    try {
-      return node.complete && !node.mozMatchesSelector(":-moz-broken");
-    } catch(e) {
-      if (node.complete && node.readyState === "complete") {
-        return true;
       }
     }
   }
@@ -765,5 +763,5 @@ wysihtml5.dom.parse = (function() {
     })()
   };
 
-  return parse;
-})();
+  return parse(elementOrHtml_current, config_current);
+};
