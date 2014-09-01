@@ -27,7 +27,7 @@ wysihtml5.lang.object = function(obj) {
       var newObj = {},
           i;
 
-      if (obj === null || obj instanceof Object) {
+      if (obj === null || !(obj instanceof Object)) {
         return obj;
       }
 

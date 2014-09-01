@@ -210,9 +210,7 @@
             "rules": that.config.parserRules,
             "uneditableClass": that.config.uneditableContainerClassname
           });
-          setTimeout(function() {
-            that.composer.selection.insertHTML(cleanHtml);
-          }, 0);
+          that.composer.selection.insertHTML(cleanHtml);
           //that.composer.commands.exec("insertHTML", cleanHtml);
         });
 
@@ -226,7 +224,7 @@
               "rules": that.config.parserRules,
               "uneditableClass": that.config.uneditableContainerClassname
             });
-            that.composer.commands.exec("insertHTML", cleanHtml);
+            that.composer.selection.insertHTML(cleanHtml);
           });
         });
 
