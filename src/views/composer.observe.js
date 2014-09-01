@@ -111,7 +111,7 @@
         container           = (this.sandbox.getIframe) ? this.sandbox.getIframe() : this.sandbox.getContentEditable(),
         element             = this.element,
         focusBlurElement    = (browser.supportsEventsInIframeCorrectly() || this.sandbox.getContentEditable) ? element : this.sandbox.getWindow(),
-        pasteEvents         = ["drop", "paste"],
+        pasteEvents         = ["drop", "paste", "beforepaste"],
         interactionEvents   = ["drop", "paste", "mouseup", "focus", "keyup"];
 
     // --------- destroy:composer event ---------
@@ -184,9 +184,9 @@
     });
 
     dom.observe(element, pasteEvents, function(event) {
-      setTimeout(function() {
+      //setTimeout(function() {
         that.parent.fire(event.type, event).fire(event.type + ":composer", event);
-      }, 0);
+      //}, 0);
     });
 
     // --------- neword event ---------

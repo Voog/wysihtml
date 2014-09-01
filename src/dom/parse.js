@@ -383,25 +383,26 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
   }
 
   function _handleStyles(oldNode, newNode, rule) {
-    var s;
+    var s, v;
     if(rule && rule.keep_styles) {
       for (s in rule.keep_styles) {
         if (rule.keep_styles.hasOwnProperty(s)) {
-          if (s == "float") {
+          v = (s === "float") ? oldNode.style.styleFloat || oldNode.style.cssFloat : oldNode.style[s];
+          // value can be regex and if so should match or style skipped
+          if (rule.keep_styles[s] instanceof RegExp && !rule.keep_styles[s].test(v)) {
+            continue;
+          }
+
+          if (s === "float") {
             // IE compability
-            if (oldNode.style.styleFloat) {
-              newNode.style.styleFloat = oldNode.style.styleFloat;
-            }
-            if (oldNode.style.cssFloat) {
-              newNode.style.cssFloat = oldNode.style.cssFloat;
-            }
+            newNode.style[(oldNode.style.styleFloat) ? 'styleFloat': 'cssFloat'] = v;
            } else if (oldNode.style[s]) {
-             newNode.style[s] = oldNode.style[s];
+             newNode.style[s] = v;
            }
         }
       }
     }
-  }
+  };
 
   function _getAttributesBeginningWith(beginning, attributes) {
     var returnAttributes = [];

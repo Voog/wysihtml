@@ -196,14 +196,53 @@
      *  - Observes for paste and drop
      */
     _initParser: function() {
-      this.on("paste:composer", function() {
+      var that = this,
+          oldHtml,
+          cleanHtml;
+
+      if (wysihtml5.browser.supportsModenPaste()) {
+
+        this.on("paste:composer", function(event) {
+          event.preventDefault();
+          oldHtml = wysihtml5.dom.getPastedHtml(event);
+          cleanHtml = wysihtml5.quirks.cleanPastedHTML(oldHtml, {
+            "referenceNode": that.composer.element,
+            "rules": that.config.parserRules,
+            "uneditableClass": that.config.uneditableContainerClassname
+          });
+          setTimeout(function() {
+            that.composer.selection.insertHTML(cleanHtml);
+          }, 0);
+          //that.composer.commands.exec("insertHTML", cleanHtml);
+        });
+
+      } else {
+
+        this.on("beforepaste:composer", function(event) {
+          event.preventDefault();
+          wysihtml5.dom.getPastedHtmlWithDiv(that.composer, function(pastedHTML) {
+            cleanHtml = wysihtml5.quirks.cleanPastedHTML(pastedHTML, {
+              "referenceNode": that.composer.element,
+              "rules": that.config.parserRules,
+              "uneditableClass": that.config.uneditableContainerClassname
+            });
+            that.composer.commands.exec("insertHTML", cleanHtml);
+          });
+        });
+
+      }
+
+      /*this.on("paste:composer", function(event) {
+        event.preventDefault();
+
         var keepScrollPosition  = true,
             that                = this;
         that.composer.selection.executeAndRestore(function() {
           wysihtml5.quirks.cleanPastedHTML(that.composer.element);
           that.parse(that.composer.element);
         }, keepScrollPosition);
-      });
+        
+      });*/
     }
   });
 })(wysihtml5);

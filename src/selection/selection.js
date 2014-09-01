@@ -350,7 +350,7 @@
       return false;
     },
 
-    // TODO: Figure out a method from following 3 that would work universally
+    // TODO: Figure out a method from following 2 that would work universally
     executeAndRestoreRangy: function(method, restoreScrollPosition) {
       var win = this.doc.defaultView || this.doc.parentWindow,
           sel = rangy.saveSelection(win);
@@ -463,10 +463,16 @@
      */
     insertHTML: function(html) {
       var range     = rangy.createRange(this.doc),
-          node      = range.createContextualFragment(html),
-          lastChild = node.lastChild;
+          node = this.doc.createElement('DIV'),
+          lastChild;
 
-      this.insertNode(node);
+      node.innerHTML = html;
+      lastChild = node.lastChild;
+
+      while (node.firstChild) {
+        this.insertNode(node.firstChild);
+      }
+
       if (lastChild) {
         this.setAfter(lastChild);
       }
