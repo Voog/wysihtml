@@ -639,3 +639,19 @@ var wysihtml5ParserRules = {
         "header": wysihtml5ParserRulesDefaults.makeDiv
     }
 };
+
+(function() {
+
+    var commonRules = wysihtml5.lang.object(wysihtml5ParserRules).clone(true);
+
+    commonRules.tags.style = false;
+    commonRules.tags.script = false;
+
+    window.wysihtml5ParserPasteRulesets = [
+        {
+            condition: null,
+            set: commonRules
+        }
+    ];
+
+})();

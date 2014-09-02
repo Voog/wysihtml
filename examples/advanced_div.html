@@ -449,7 +449,7 @@
 <script src="jquery.1.10.2.js" type="text/javascript" charset="utf-8"></script>
 
 
-<script src="../parser_rules/advanced_unwrap.js"></script>
+<script src="../parser_rules/advanced_and_extended.js"></script>
 <script src="../dist/wysihtml5x-toolbar.min.js"></script>
 
 <script>
@@ -458,7 +458,8 @@ var editors = [];
   $('.ewrapper').each(function(idx, wrapper) {
     var e = new wysihtml5.Editor($(wrapper).find('.editable').get(0), {
       toolbar:        $(wrapper).find('.toolbar').get(0),
-      parserRules:    wysihtml5ParserRules
+      parserRules:    wysihtml5ParserRules,
+      pasteParserRulesets: wysihtml5ParserPasteRulesets
       //showToolbarAfterInit: false
     });
     editors.push(e);

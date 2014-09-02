@@ -31,7 +31,7 @@ if (wysihtml5.browser.supported()) {
 
     var options = {
       "referenceNode": this.refNode,
-      "rules": rules,
+      "rules": [{"set":rules}],
       "uneditableClass": "wysihtml5-uneditable-container"
     };
 
@@ -45,7 +45,7 @@ if (wysihtml5.browser.supported()) {
   test("Non-breakable space test", function(assert) {
     var options = {
       "referenceNode": this.refNode,
-      "rules": {},
+      "rules": [{"set": {}}],
       "uneditableClass": "wysihtml5-uneditable-container"
     };
 

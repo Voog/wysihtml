@@ -35,12 +35,31 @@ wysihtml5.quirks.cleanPastedHTML = (function() {
     return newRules;
   };
 
+  var pickRuleset = function(ruleset, html) {
+    var pickedSet, defaultSet;
+
+    if (!ruleset) {
+      return null;
+    }
+
+    for (var i = 0, max = ruleset.length; i < max; i++) {
+      if (!ruleset[i].condition) {
+        defaultSet = ruleset[i].set;
+      }
+      if (ruleset[i].condition && ruleset[i].condition.test(html)) {
+        return ruleset[i].set;
+      }
+    }
+
+    return defaultSet;
+  };
+
   return function(html, options) {
     var exceptStyles = {
           'color': wysihtml5.dom.getStyle("color").from(options.referenceNode),
           'fontSize': wysihtml5.dom.getStyle("font-size").from(options.referenceNode)
         },
-        rules = extendRulesWithStyleExceptions(options.rules || {}, exceptStyles),
+        rules = extendRulesWithStyleExceptions(pickRuleset(options.rules, html) || {}, exceptStyles),
         newHtml;
 
     newHtml = wysihtml5.dom.parse(html, {
