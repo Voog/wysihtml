@@ -211,6 +211,7 @@
               "rules": that.config.parserRules,
               "uneditableClass": that.config.uneditableContainerClassname
             });
+            that.composer.selection.deleteContents();
             that.composer.selection.insertHTML(cleanHtml);
           }
         });
@@ -226,6 +227,7 @@
                 "rules": that.config.parserRules,
                 "uneditableClass": that.config.uneditableContainerClassname
               });
+              that.composer.selection.deleteContents();
               that.composer.selection.insertHTML(cleanHtml);
             }
           });
