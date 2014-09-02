@@ -220,12 +220,14 @@
         this.on("beforepaste:composer", function(event) {
           event.preventDefault();
           wysihtml5.dom.getPastedHtmlWithDiv(that.composer, function(pastedHTML) {
-            cleanHtml = wysihtml5.quirks.cleanPastedHTML(pastedHTML, {
-              "referenceNode": that.composer.element,
-              "rules": that.config.parserRules,
-              "uneditableClass": that.config.uneditableContainerClassname
-            });
-            that.composer.selection.insertHTML(cleanHtml);
+            if (pastedHTML) {
+              cleanHtml = wysihtml5.quirks.cleanPastedHTML(pastedHTML, {
+                "referenceNode": that.composer.element,
+                "rules": that.config.parserRules,
+                "uneditableClass": that.config.uneditableContainerClassname
+              });
+              that.composer.selection.insertHTML(cleanHtml);
+            }
           });
         });
 
