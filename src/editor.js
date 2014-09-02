@@ -206,13 +206,7 @@
           event.preventDefault();
           oldHtml = wysihtml5.dom.getPastedHtml(event);
           if (oldHtml) {
-            cleanHtml = wysihtml5.quirks.cleanPastedHTML(oldHtml, {
-              "referenceNode": that.composer.element,
-              "rules": that.config.parserRules,
-              "uneditableClass": that.config.uneditableContainerClassname
-            });
-            that.composer.selection.deleteContents();
-            that.composer.selection.insertHTML(cleanHtml);
+            that._cleanAndPaste(oldHtml);
           }
         });
 
@@ -222,30 +216,22 @@
           event.preventDefault();
           wysihtml5.dom.getPastedHtmlWithDiv(that.composer, function(pastedHTML) {
             if (pastedHTML) {
-              cleanHtml = wysihtml5.quirks.cleanPastedHTML(pastedHTML, {
-                "referenceNode": that.composer.element,
-                "rules": that.config.parserRules,
-                "uneditableClass": that.config.uneditableContainerClassname
-              });
-              that.composer.selection.deleteContents();
-              that.composer.selection.insertHTML(cleanHtml);
+              that._cleanAndPaste(pastedHTML);
             }
           });
         });
 
       }
+    },
 
-      /*this.on("paste:composer", function(event) {
-        event.preventDefault();
-
-        var keepScrollPosition  = true,
-            that                = this;
-        that.composer.selection.executeAndRestore(function() {
-          wysihtml5.quirks.cleanPastedHTML(that.composer.element);
-          that.parse(that.composer.element);
-        }, keepScrollPosition);
-        
-      });*/
+    _cleanAndPaste: function (oldHtml) {
+      var cleanHtml = wysihtml5.quirks.cleanPastedHTML(oldHtml, {
+        "referenceNode": this.composer.element,
+        "rules": this.config.parserRules,
+        "uneditableClass": this.config.uneditableContainerClassname
+      });
+      this.composer.selection.deleteContents();
+      this.composer.selection.insertHTML(cleanHtml);
     }
   });
 })(wysihtml5);
