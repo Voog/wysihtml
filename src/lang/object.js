@@ -50,6 +50,15 @@ wysihtml5.lang.object = function(obj) {
      */
     isArray: function() {
       return Object.prototype.toString.call(obj) === "[object Array]";
+    },
+
+    /**
+     * @example
+     *    wysihtml5.lang.object(function() {}).isFunction();
+     *    // => true
+     */
+    isFunction: function() {
+      return Object.prototype.toString.call(obj) === '[object Function]';
     }
   };
 };

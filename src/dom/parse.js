@@ -102,6 +102,10 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
       element = elementOrHtml;
     }
 
+    if (currentRules.selectors) {
+      _applySelectorRules(element, currentRules.selectors);
+    }
+
     while (element.firstChild) {
       firstChild = element.firstChild;
       newNode = _convert(firstChild, config.cleanUp, clearInternals);
@@ -110,6 +114,14 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
       }
       if (firstChild !== newNode) {
         element.removeChild(firstChild);
+      }
+    }
+
+    if (config.unjoinNbsps) {
+      // replace joined non-breakable spaces with unjoined
+      var txtnodes = wysihtml5.dom.getTextNodes(fragment);
+      for (var n = txtnodes.length; n--;) {
+        txtnodes[n].nodeValue = txtnodes[n].nodeValue.replace(/([\S\u00A0])\u00A0/gi, "$1 ");
       }
     }
 
@@ -216,6 +228,24 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
       newNode.normalize();
     }
     return newNode;
+  }
+
+  function _applySelectorRules (element, selectorRules) {
+    var sel, method, els;
+
+    for (sel in selectorRules) {
+      if (selectorRules.hasOwnProperty(sel)) {
+        if (wysihtml5.lang.object(selectorRules[sel]).isFunction()) {
+          method = selectorRules[sel];
+        } else if (typeof(selectorRules[sel]) === "string" && elementHandlingMethods[selectorRules[sel]]) {
+          method = elementHandlingMethods[selectorRules[sel]];
+        }
+        els = element.querySelectorAll(sel);
+        for (var i = els.length; i--;) {
+          method(els[i]);
+        }
+      }
+    }
   }
 
   function _handleElement(oldNode, clearInternals) {
@@ -762,6 +792,12 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
         return false;
       };
     })()
+  };
+
+  var elementHandlingMethods = {
+    unwrap: function (element) {
+      wysihtml5.dom.unwrap(element);
+    }
   };
 
   return parse(elementOrHtml_current, config_current);

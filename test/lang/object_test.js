@@ -20,3 +20,11 @@ test("isArray()", function() {
   ok(!wysihtml5.lang.object(document.body.childNodes).isArray());
   ok(!wysihtml5.lang.object("1,2,3").isArray());
 });
+
+test("isFunction()", function() {
+  ok(wysihtml5.lang.object(function() {}).isFunction());
+  ok(!wysihtml5.lang.object({}).isFunction());
+  ok(!wysihtml5.lang.object([]).isFunction());
+  ok(!wysihtml5.lang.object(document.body.childNodes).isFunction());
+  ok(!wysihtml5.lang.object("1,2,3").isFunction());
+});
