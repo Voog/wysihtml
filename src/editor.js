@@ -205,13 +205,14 @@
         this.on("paste:composer", function(event) {
           event.preventDefault();
           oldHtml = wysihtml5.dom.getPastedHtml(event);
-          cleanHtml = wysihtml5.quirks.cleanPastedHTML(oldHtml, {
-            "referenceNode": that.composer.element,
-            "rules": that.config.parserRules,
-            "uneditableClass": that.config.uneditableContainerClassname
-          });
-          that.composer.selection.insertHTML(cleanHtml);
-          //that.composer.commands.exec("insertHTML", cleanHtml);
+          if (oldHtml) {
+            cleanHtml = wysihtml5.quirks.cleanPastedHTML(oldHtml, {
+              "referenceNode": that.composer.element,
+              "rules": that.config.parserRules,
+              "uneditableClass": that.config.uneditableContainerClassname
+            });
+            that.composer.selection.insertHTML(cleanHtml);
+          }
         });
 
       } else {
