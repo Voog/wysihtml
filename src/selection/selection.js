@@ -469,8 +469,8 @@
       node.innerHTML = html;
       lastChild = node.lastChild;
 
-      while (node.firstChild) {
-        this.insertNode(node.firstChild);
+      while (node.lastChild) {
+        this.insertNode(node.lastChild);
       }
 
       if (lastChild) {
