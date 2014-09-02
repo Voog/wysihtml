@@ -27,7 +27,7 @@ wysihtml5.lang.object = function(obj) {
       var newObj = {},
           i;
 
-      if (obj === null || !(obj instanceof Object)) {
+      if (obj === null || !wysihtml5.lang.object(obj).isPlainObject()) {
         return obj;
       }
 
@@ -59,6 +59,10 @@ wysihtml5.lang.object = function(obj) {
      */
     isFunction: function() {
       return Object.prototype.toString.call(obj) === '[object Function]';
+    },
+
+    isPlainObject: function () {
+      return Object.prototype.toString.call(obj) === '[object Object]';
     }
   };
 };

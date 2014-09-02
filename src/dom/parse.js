@@ -419,10 +419,9 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
         if (rule.keep_styles.hasOwnProperty(s)) {
           v = (s === "float") ? oldNode.style.styleFloat || oldNode.style.cssFloat : oldNode.style[s];
           // value can be regex and if so should match or style skipped
-          if (rule.keep_styles[s] instanceof RegExp && !rule.keep_styles[s].test(v)) {
+          if (rule.keep_styles[s] instanceof RegExp && !(rule.keep_styles[s].test(v))) {
             continue;
           }
-
           if (s === "float") {
             // IE compability
             newNode.style[(oldNode.style.styleFloat) ? 'styleFloat': 'cssFloat'] = v;
@@ -549,7 +548,27 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
 
 
     if (typeof(allowedClasses) === "string" && allowedClasses === "any" && oldNode.getAttribute("class")) {
-      attributes["class"] = oldNode.getAttribute("class");
+      if (currentRules.classes_blacklist) {
+        oldClasses = oldNode.getAttribute("class");
+        if (oldClasses) {
+          classes = classes.concat(oldClasses.split(WHITE_SPACE_REG_EXP));
+        }
+
+        classesLength = classes.length;
+        for (; i<classesLength; i++) {
+          currentClass = classes[i];
+          if (!currentRules.classes_blacklist[currentClass]) {
+            newClasses.push(currentClass);
+          }
+        }
+
+        if (newClasses.length) {
+          attributes["class"] = wysihtml5.lang.array(newClasses).unique().join(" ");
+        }
+
+      } else {
+        attributes["class"] = oldNode.getAttribute("class");
+      }
     } else {
       // make sure that wysihtml5 temp class doesn't get stripped out
       if (!clearInternals) {

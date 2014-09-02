@@ -44,6 +44,11 @@ var wysihtml5ParserRules = {
      * If all classes should pass "any" as classes value. Ex: "classes": "any"
      */
     "classes": "any",
+
+    /* blacklist of classes is only available if classes is set to any */
+    "classes_blacklist": {
+        "Apple-interchange-newline": 1
+    },
     
     "type_definitions": {
         
