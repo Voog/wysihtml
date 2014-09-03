@@ -1,7 +1,7 @@
 if (wysihtml5.browser.supported()) {
   module("wysihtml5.quirks.cleanPastedHTML", {
     setup: function() {
-      this.refNode       = document.createElement("div");
+      this.refNode = document.createElement("div");
       this.refNode.style.fontSize = "24px";
       this.refNode.style.color = "rgba(0,0,0)";
     },

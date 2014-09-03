@@ -47,7 +47,9 @@ var wysihtml5ParserRules = {
 
     /* blacklist of classes is only available if classes is set to any */
     "classes_blacklist": {
-        "Apple-interchange-newline": 1
+        "Apple-interchange-newline": 1,
+        "MsoNormal": 1,
+        "MsoPlainText": 1
     },
     
     "type_definitions": {
@@ -640,16 +642,24 @@ var wysihtml5ParserRules = {
     }
 };
 
+
 (function() {
 
     var commonRules = wysihtml5.lang.object(wysihtml5ParserRules).clone(true);
-
-    commonRules.tags.style = false;
+    commonRules.tags.style  = false;
     commonRules.tags.script = false;
+    commonRules.comments    = false;
+    commonRules.selectors   = { "a u": "unwrap" };
+
+    var msOfficeRules = wysihtml5.lang.object(commonRules).clone(true);
+    msOfficeRules.tags.span.keep_styles = false;
+    msOfficeRules.classes = {};
 
     window.wysihtml5ParserPasteRulesets = [
         {
-            condition: null,
+            condition: /<font face="Times New Roman"|class="?Mso|style="[^"]*\bmso-|style='[^'']*\bmso-|w:WordDocument|class="OutlineElement|id="?docs\-internal\-guid\-/i,
+            set: msOfficeRules
+        },{
             set: commonRules
         }
     ];
