@@ -14,6 +14,22 @@ test("clone()", function() {
   deepEqual(obj, returnValue);
 });
 
+test("deep clone()", function() {
+  var obj = {
+      boo : {
+        foo: true
+      }
+    },
+    returnValueShallow = wysihtml5.lang.object(obj).clone(),
+    returnValueDeep = wysihtml5.lang.object(obj).clone(true);
+
+  ok(obj != returnValueShallow && obj.boo === returnValueShallow.boo);
+  deepEqual(obj, returnValueShallow);
+
+  ok(obj != returnValueDeep && obj.boo !== returnValueDeep.boo);
+  deepEqual(obj, returnValueDeep);
+});
+
 test("isArray()", function() {
   ok(wysihtml5.lang.object([]).isArray());
   ok(!wysihtml5.lang.object({}).isArray());
