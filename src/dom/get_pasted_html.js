@@ -29,6 +29,7 @@ wysihtml5.dom.getPastedHtmlWithDiv = function (composer, f) {
   cleanerDiv.focus();
 
   setTimeout(function () {
+    composer.selection.setBookmark(selBookmark);
     f(cleanerDiv.innerHTML);
     cleanerDiv.parentNode.removeChild(cleanerDiv);
   }, 0);

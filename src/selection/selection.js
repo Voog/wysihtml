@@ -464,14 +464,16 @@
     insertHTML: function(html) {
       var range     = rangy.createRange(this.doc),
           node = this.doc.createElement('DIV'),
+          fragment = this.doc.createDocumentFragment(),
           lastChild;
 
       node.innerHTML = html;
       lastChild = node.lastChild;
 
-      while (node.lastChild) {
-        this.insertNode(node.lastChild);
+      while (node.firstChild) {
+        fragment.appendChild(node.firstChild);
       }
+      this.insertNode(fragment);
 
       if (lastChild) {
         this.setAfter(lastChild);

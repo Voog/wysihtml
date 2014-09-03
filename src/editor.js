@@ -203,7 +203,6 @@
           cleanHtml;
 
       if (wysihtml5.browser.supportsModenPaste()) {
-
         this.on("paste:composer", function(event) {
           event.preventDefault();
           oldHtml = wysihtml5.dom.getPastedHtml(event);
@@ -213,7 +212,6 @@
         });
 
       } else {
-
         this.on("beforepaste:composer", function(event) {
           event.preventDefault();
           wysihtml5.dom.getPastedHtmlWithDiv(that.composer, function(pastedHTML) {

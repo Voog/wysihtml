@@ -388,7 +388,7 @@ wysihtml5.browser = (function() {
       Should actually check for clipboardData on paste event, but cannot in firefox
     */
     supportsModenPaste: function () {
-      return !('createEvent' in window);
+      return !("clipboardData" in window);
     }
   };
 })();
