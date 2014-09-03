@@ -833,4 +833,27 @@ if (wysihtml5.browser.supported()) {
     this.equal(this.sanitize(input4, rules), output4, "Local check_attributes overwrites global attributes");
   
   });
+
+  test("Test classes blacklist ", function() {
+    var rules = {
+      "classes": "any",
+      "classes_blacklist": {
+        "Apple-interchange-newline": 1
+      },
+      "tags": {
+        'span': {
+        }
+      }
+    },
+    input1 = '<span class="Apple-interchange-newline">Test</span',
+    output1 = '<span>Test</span>',
+    input2 = '<span class="SomeClass">Test</span>',
+    input3 = '<span class="SomeClass Apple-interchange-newline">Test</span>';
+
+    this.equal(this.sanitize(input1, rules), output1, "Blacklist class removed");
+    this.equal(this.sanitize(input2, rules), input2, "Other class kept");
+    this.equal(this.sanitize(input3, rules), input2, "Other class kept, but blacklisted class removed");
+
+  
+  });
 }
