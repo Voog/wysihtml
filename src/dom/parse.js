@@ -169,6 +169,10 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
               }
             }
 
+            if (wysihtml5.dom.getStyle("display").from(oldNode) === "block") {
+              fragment.appendChild(oldNode.ownerDocument.createElement("br"));
+            }
+
             // TODO: try to minimize surplus spaces
             if (wysihtml5.lang.array([
                 "div", "pre", "p",
@@ -253,7 +257,8 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
         newNode,
         tagRules    = currentRules.tags,
         nodeName    = oldNode.nodeName.toLowerCase(),
-        scopeName   = oldNode.scopeName;
+        scopeName   = oldNode.scopeName,
+        renameTag;
 
     /**
      * We already parsed that element
@@ -305,13 +310,24 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
       return null;
     }
 
-    newNode = oldNode.ownerDocument.createElement(rule.rename_tag || nodeName);
+    // tests if type condition is met or node should be removed/unwrapped/renamed
+    if (rule.one_of_type && !_testTypes(oldNode, currentRules, rule.one_of_type, clearInternals)) {
+      if (rule.remove_action) {
+        if (rule.remove_action === "unwrap") {
+          return false;
+        } else if (rule.remove_action === "rename") {
+          renameTag = rule.remove_action_rename_to || DEFAULT_NODE_NAME;
+        } else {
+          return null;
+        }
+      } else {
+        return null;
+      }
+    }
+
+    newNode = oldNode.ownerDocument.createElement(renameTag || rule.rename_tag || nodeName);
     _handleAttributes(oldNode, newNode, rule, clearInternals);
     _handleStyles(oldNode, newNode, rule);
-    // tests if type condition is met or node should be removed/unwrapped
-    if (rule.one_of_type && !_testTypes(oldNode, currentRules, rule.one_of_type, clearInternals)) {
-      return (rule.remove_action && rule.remove_action == "unwrap") ? false : null;
-    }
 
     oldNode = null;
 

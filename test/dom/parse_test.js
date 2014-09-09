@@ -722,9 +722,9 @@ if (wysihtml5.browser.supported()) {
             "attrs": {
                 "src": /^[^data\:]/i
             }
-         } 
+         }
       },
-      "tags": { 
+      "tags": {
           "img": {
               "one_of_type": {
                   "valid_image_src": 1
@@ -734,7 +734,7 @@ if (wysihtml5.browser.supported()) {
                   "height": "numbers",
                   "width": "numbers",
                   "alt": "alt"
-              } 
+              }
           }
        }
     },
@@ -745,6 +745,41 @@ if (wysihtml5.browser.supported()) {
     this.equal(this.sanitize(input, rules), "", "Image with data src gets removed");
     this.equal(this.sanitize(input_valid, rules), input_valid, "Valid image is kept");
     this.equal(this.sanitize(input_valid_2, rules), input_valid_2, "Valid image is kept2");
+  });
+
+  test("Test valid type check and remove_action", function() {
+    var rules = {
+      "type_definitions": {
+        "valid_element": {
+          "classes": {
+            "testclass": 1
+          }
+        }
+      },
+      "tags": {
+        "div": {
+          "one_of_type": {
+            "valid_element": 1
+          },
+          "check_attributes": {
+            "class": "any"
+          },
+          "remove_action": "rename",
+          "remove_action_rename_to": "span"
+        },
+        "span": {
+          "check_attributes": {
+            "class": "any"
+          }
+        }
+      }
+    },
+    input = '<div class="testclass">Test</div>',
+    input2 = '<div class="otherclass">Test</div>',
+    output2 = '<span class="otherclass">Test</span>';
+    
+    this.equal(this.sanitize(input, rules), input, "Div is kept as having valid class");
+    this.equal(this.sanitize(input2, rules), output2, "Div is renamed to span when type declaration is not met");
   });
 
   test("Test valid type definition visible_content_object ", function() {
@@ -790,7 +825,7 @@ if (wysihtml5.browser.supported()) {
     document.body.appendChild(tester);
 
     tester.innerHTML = input2;
-    this.equal(this.sanitize(tester, rules).innerHTML, "   <span>  </span>  ", "DIV with no dimesions and in dom gets unwrapped");
+    this.equal(this.sanitize(tester, rules).innerHTML, "   <span>  </span>  <br>", "DIV with no dimesions and in dom gets unwrapped");
 
     tester.innerHTML = input5;
     this.equal(this.sanitize(tester, rules).innerHTML, input5 , "DIV with dimensions and in dom is kept");
@@ -807,27 +842,37 @@ if (wysihtml5.browser.supported()) {
 
   test("Test global valid attributes for all elements ", function() {
     var rules = {
-      "attributes": {
-          "id": "any",
-          "data-*": "any"
-      },
-      "tags": {
-        'div': {},
-        'span': {
-          "check_attributes": {
-            "data-*": "numbers"
+          "attributes": {
+              "id": "any",
+              "data-*": "any"
+          },
+          "tags": {
+            'div': {},
+            'span': {
+              "check_attributes": {
+                "data-*": "numbers"
+              }
+            }
           }
-        }
-      }
-    },
-    input1 = '<div id="test">Test</div>',
-    input2 = '<div class="test">Test</div>',
-    output2 = '<div>Test</div>',
-    input3 = '<div data-name="test" data-value="test">Test</div>',
-    input4 = '<span data-name="test" data-value="1234">Test</span>',
-    output4 = '<span data-value="1234">Test</span>';
+        },
+        rules2 = {
+          "attributes": {
+              "id": "any",
+              "data-*": "any"
+          },
+          "tags": {
+            'div': {}
+          }
+        },
+        input1 = '<div id="test">Test</div>',
+        input2 = '<div class="test">Test</div>',
+        output2 = '<div>Test</div>',
+        input3 = '<div data-name="test" data-value="test">Test</div>',
+        input4 = '<span data-name="test" data-value="1234">Test</span>',
+        output4 = '<span data-value="1234">Test</span>';
 
     this.equal(this.sanitize(input1, rules), input1, "Global attribute allows id for all elements and div is allowewd tag and kept");
+    this.equal(this.sanitize(input1, rules2), input1, "Global attribute allows id for all elements and div is allowewd tag and kept even if no check_attributes");
     this.equal(this.sanitize(input2, rules), output2, "Div is kept but attribute 'class' is not allowed locally and globally, so it is removed.");
     this.equal(this.sanitize(input3, rules), input3, "Global eattribute configuration allows all attributes beginning with 'data-'.");
     this.equal(this.sanitize(input4, rules), output4, "Local check_attributes overwrites global attributes");
