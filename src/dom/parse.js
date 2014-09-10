@@ -70,8 +70,7 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
       DEFAULT_NODE_NAME   = "span",
       WHITE_SPACE_REG_EXP = /\s+/,
       defaultRules        = { tags: {}, classes: {} },
-      currentRules        = {},
-      uneditableClass     = false;
+      currentRules        = {};
 
   /**
    * Iterates over all childs of the element, recreates them, appends them into a document fragment
@@ -92,24 +91,32 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
       clearInternals = true;
     }
 
-    if (config.uneditableClass) {
-      uneditableClass = config.uneditableClass;
-    }
-
     if (isString) {
       element = wysihtml5.dom.getAsDom(elementOrHtml, context);
     } else {
       element = elementOrHtml;
     }
 
+    if (currentRules.selectors) {
+      _applySelectorRules(element, currentRules.selectors);
+    }
+
     while (element.firstChild) {
       firstChild = element.firstChild;
-      newNode = _convert(firstChild, config.cleanUp, clearInternals);
+      newNode = _convert(firstChild, config.cleanUp, clearInternals, config.uneditableClass);
       if (newNode) {
         fragment.appendChild(newNode);
       }
       if (firstChild !== newNode) {
         element.removeChild(firstChild);
+      }
+    }
+
+    if (config.unjoinNbsps) {
+      // replace joined non-breakable spaces with unjoined
+      var txtnodes = wysihtml5.dom.getTextNodes(fragment);
+      for (var n = txtnodes.length; n--;) {
+        txtnodes[n].nodeValue = txtnodes[n].nodeValue.replace(/([\S\u00A0])\u00A0/gi, "$1 ");
       }
     }
 
@@ -122,7 +129,7 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
     return isString ? wysihtml5.quirks.getCorrectInnerHTML(element) : element;
   }
 
-  function _convert(oldNode, cleanUp, clearInternals) {
+  function _convert(oldNode, cleanUp, clearInternals, uneditableClass) {
     var oldNodeType     = oldNode.nodeType,
         oldChilds       = oldNode.childNodes,
         oldChildsLength = oldChilds.length,
@@ -147,7 +154,7 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
 
             for (i = oldChildsLength; i--;) {
               if (oldChilds[i]) {
-                newChild = _convert(oldChilds[i], cleanUp, clearInternals);
+                newChild = _convert(oldChilds[i], cleanUp, clearInternals, uneditableClass);
                 if (newChild) {
                   if (oldChilds[i] === newChild) {
                     i--;
@@ -155,6 +162,10 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
                   fragment.insertBefore(newChild, fragment.firstChild);
                 }
               }
+            }
+
+            if (wysihtml5.dom.getStyle("display").from(oldNode) === "block") {
+              fragment.appendChild(oldNode.ownerDocument.createElement("br"));
             }
 
             // TODO: try to minimize surplus spaces
@@ -185,7 +196,7 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
     // Converts all childnodes
     for (i=0; i<oldChildsLength; i++) {
       if (oldChilds[i]) {
-        newChild = _convert(oldChilds[i], cleanUp, clearInternals);
+        newChild = _convert(oldChilds[i], cleanUp, clearInternals, uneditableClass);
         if (newChild) {
           if (oldChilds[i] === newChild) {
             i--;
@@ -218,12 +229,31 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
     return newNode;
   }
 
+  function _applySelectorRules (element, selectorRules) {
+    var sel, method, els;
+
+    for (sel in selectorRules) {
+      if (selectorRules.hasOwnProperty(sel)) {
+        if (wysihtml5.lang.object(selectorRules[sel]).isFunction()) {
+          method = selectorRules[sel];
+        } else if (typeof(selectorRules[sel]) === "string" && elementHandlingMethods[selectorRules[sel]]) {
+          method = elementHandlingMethods[selectorRules[sel]];
+        }
+        els = element.querySelectorAll(sel);
+        for (var i = els.length; i--;) {
+          method(els[i]);
+        }
+      }
+    }
+  }
+
   function _handleElement(oldNode, clearInternals) {
     var rule,
         newNode,
         tagRules    = currentRules.tags,
         nodeName    = oldNode.nodeName.toLowerCase(),
-        scopeName   = oldNode.scopeName;
+        scopeName   = oldNode.scopeName,
+        renameTag;
 
     /**
      * We already parsed that element
@@ -275,13 +305,24 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
       return null;
     }
 
-    newNode = oldNode.ownerDocument.createElement(rule.rename_tag || nodeName);
+    // tests if type condition is met or node should be removed/unwrapped/renamed
+    if (rule.one_of_type && !_testTypes(oldNode, currentRules, rule.one_of_type, clearInternals)) {
+      if (rule.remove_action) {
+        if (rule.remove_action === "unwrap") {
+          return false;
+        } else if (rule.remove_action === "rename") {
+          renameTag = rule.remove_action_rename_to || DEFAULT_NODE_NAME;
+        } else {
+          return null;
+        }
+      } else {
+        return null;
+      }
+    }
+
+    newNode = oldNode.ownerDocument.createElement(renameTag || rule.rename_tag || nodeName);
     _handleAttributes(oldNode, newNode, rule, clearInternals);
     _handleStyles(oldNode, newNode, rule);
-    // tests if type condition is met or node should be removed/unwrapped
-    if (rule.one_of_type && !_testTypes(oldNode, currentRules, rule.one_of_type, clearInternals)) {
-      return (rule.remove_action && rule.remove_action == "unwrap") ? false : null;
-    }
 
     oldNode = null;
 
@@ -383,25 +424,25 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
   }
 
   function _handleStyles(oldNode, newNode, rule) {
-    var s;
+    var s, v;
     if(rule && rule.keep_styles) {
       for (s in rule.keep_styles) {
         if (rule.keep_styles.hasOwnProperty(s)) {
-          if (s == "float") {
+          v = (s === "float") ? oldNode.style.styleFloat || oldNode.style.cssFloat : oldNode.style[s];
+          // value can be regex and if so should match or style skipped
+          if (rule.keep_styles[s] instanceof RegExp && !(rule.keep_styles[s].test(v))) {
+            continue;
+          }
+          if (s === "float") {
             // IE compability
-            if (oldNode.style.styleFloat) {
-              newNode.style.styleFloat = oldNode.style.styleFloat;
-            }
-            if (oldNode.style.cssFloat) {
-              newNode.style.cssFloat = oldNode.style.cssFloat;
-            }
+            newNode.style[(oldNode.style.styleFloat) ? 'styleFloat': 'cssFloat'] = v;
            } else if (oldNode.style[s]) {
-             newNode.style[s] = oldNode.style[s];
+             newNode.style[s] = v;
            }
         }
       }
     }
-  }
+  };
 
   function _getAttributesBeginningWith(beginning, attributes) {
     var returnAttributes = [];
@@ -518,7 +559,27 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
 
 
     if (typeof(allowedClasses) === "string" && allowedClasses === "any" && oldNode.getAttribute("class")) {
-      attributes["class"] = oldNode.getAttribute("class");
+      if (currentRules.classes_blacklist) {
+        oldClasses = oldNode.getAttribute("class");
+        if (oldClasses) {
+          classes = classes.concat(oldClasses.split(WHITE_SPACE_REG_EXP));
+        }
+
+        classesLength = classes.length;
+        for (; i<classesLength; i++) {
+          currentClass = classes[i];
+          if (!currentRules.classes_blacklist[currentClass]) {
+            newClasses.push(currentClass);
+          }
+        }
+
+        if (newClasses.length) {
+          attributes["class"] = wysihtml5.lang.array(newClasses).unique().join(" ");
+        }
+
+      } else {
+        attributes["class"] = oldNode.getAttribute("class");
+      }
     } else {
       // make sure that wysihtml5 temp class doesn't get stripped out
       if (!clearInternals) {
@@ -761,6 +822,16 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
         return false;
       };
     })()
+  };
+
+  var elementHandlingMethods = {
+    unwrap: function (element) {
+      wysihtml5.dom.unwrap(element);
+    },
+
+    remove: function (element) {
+      element.parentNode.removeChild(element);
+    }
   };
 
   return parse(elementOrHtml_current, config_current);

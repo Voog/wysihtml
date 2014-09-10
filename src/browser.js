@@ -380,6 +380,15 @@ wysihtml5.browser = (function() {
 
     supportsMutationEvents: function() {
         return ("MutationEvent" in window);
+    },
+
+    /**
+      IE (at least up to 11) does not support clipboardData on event.
+      It is on window but cannot return text/html
+      Should actually check for clipboardData on paste event, but cannot in firefox
+    */
+    supportsModenPaste: function () {
+      return !("clipboardData" in window);
     }
   };
 })();

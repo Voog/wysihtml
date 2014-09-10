@@ -20,12 +20,25 @@ wysihtml5.lang.object = function(obj) {
      * @example
      *    wysihtml5.lang.object({ foo: 1 }).clone();
      *    // => { foo: 1 }
+     *
+     *    v0.4.14 adds options for deep clone : wysihtml5.lang.object({ foo: 1 }).clone(true);
      */
-    clone: function() {
+    clone: function(deep) {
       var newObj = {},
           i;
+
+      if (obj === null || !wysihtml5.lang.object(obj).isPlainObject()) {
+        return obj;
+      }
+
       for (i in obj) {
-        newObj[i] = obj[i];
+        if(obj.hasOwnProperty(i)) {
+          if (deep) {
+            newObj[i] = wysihtml5.lang.object(obj[i]).clone(deep);
+          } else {
+            newObj[i] = obj[i];
+          }
+        }
       }
       return newObj;
     },
@@ -37,6 +50,19 @@ wysihtml5.lang.object = function(obj) {
      */
     isArray: function() {
       return Object.prototype.toString.call(obj) === "[object Array]";
+    },
+
+    /**
+     * @example
+     *    wysihtml5.lang.object(function() {}).isFunction();
+     *    // => true
+     */
+    isFunction: function() {
+      return Object.prototype.toString.call(obj) === '[object Function]';
+    },
+
+    isPlainObject: function () {
+      return Object.prototype.toString.call(obj) === '[object Object]';
     }
   };
 };

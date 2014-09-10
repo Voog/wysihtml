@@ -311,15 +311,14 @@ if (wysihtml5.browser.supported()) {
               }
           },
           input       = "<div><div>Hi,</div> there!</div>",
-          output      = "Hi, there!",
+          output      = "Hi,<br> there!<br>",
           editor;
           
       this.editableArea.innerHTML = input;
-      equal(that.editableArea.innerHTML, input, "Content is set as unclean before editor initiation");   
-      
+      equal(that.editableArea.innerHTML, input, "Content is set as unclean before editor initiation");
       editor = new wysihtml5.Editor(this.editableArea, {
           parserRules: parserRules
-      }),
+      });
           
       editor.on("load", function() {
           equal(that.editableArea.innerHTML, output, "Content is cleaned after initiation");

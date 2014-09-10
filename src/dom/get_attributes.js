@@ -15,15 +15,17 @@ wysihtml5.dom.getAttributes = function(node) {
       attr;
 
   for (attr in node.attributes) {
-    if (node.attributes[attr].specified) {
-      if (nodeName == "IMG" && node.attributes[attr].name.toLowerCase() == "src" && wysihtml5.dom.isLoadedImage(node) === true) {
-        attributes['src'] = node.src;
-      } else if (wysihtml5.lang.array(['rowspan', 'colspan']).contains(node.attributes[attr].name.toLowerCase()) && HAS_GET_ATTRIBUTE_BUG) {
-        if (node.attributes[attr].value !== 1) {
+    if ((node.attributes.hasOwnProperty && node.attributes.hasOwnProperty(attr)) || (!node.attributes.hasOwnProperty && Object.prototype.hasOwnProperty.call(node.attributes, attr)))  {
+      if (node.attributes[attr].specified) {
+        if (nodeName == "IMG" && node.attributes[attr].name.toLowerCase() == "src" && wysihtml5.dom.isLoadedImage(node) === true) {
+          attributes['src'] = node.src;
+        } else if (wysihtml5.lang.array(['rowspan', 'colspan']).contains(node.attributes[attr].name.toLowerCase()) && HAS_GET_ATTRIBUTE_BUG) {
+          if (node.attributes[attr].value !== 1) {
+            attributes[node.attributes[attr].name] = node.attributes[attr].value;
+          }
+        } else {
           attributes[node.attributes[attr].name] = node.attributes[attr].value;
         }
-      } else {
-        attributes[node.attributes[attr].name] = node.attributes[attr].value;
       }
     }
   }
