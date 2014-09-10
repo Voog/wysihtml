@@ -646,13 +646,26 @@ var wysihtml5ParserRules = {
 (function() {
 
     var commonRules = wysihtml5.lang.object(wysihtml5ParserRules).clone(true);
-    commonRules.tags.style  = false;
-    commonRules.tags.script = false;
+
     commonRules.comments    = false;
-    commonRules.selectors   = { "a u": "unwrap" };
+    commonRules.selectors   = {
+        "a u": "unwrap"
+    };
+
+    commonRules.tags.style  = { "remove": 1 };
+    commonRules.tags.script = { "remove": 1 };
+    commonRules.tags.head = { "remove": 1 };
+    
+    commonRules.tags.div.one_of_type.alignment_object = 1;
+    commonRules.tags.div.remove_action = "unwrap";
+    commonRules.tags.div.check_attributes.style = false;
+    commonRules.tags.div.keep_styles = {
+        "textAlign": /^((left)|(right)|(center)|(justify))$/i,
+        "float": 1
+    };
+    commonRules.tags.span.keep_styles = false;
 
     var msOfficeRules = wysihtml5.lang.object(commonRules).clone(true);
-    msOfficeRules.tags.span.keep_styles = false;
     msOfficeRules.classes = {};
 
     window.wysihtml5ParserPasteRulesets = [
