@@ -1,6 +1,7 @@
-*wysihtml5x 0.4.14* (, 2014)
+*wysihtml5x 0.4.14* (September 10, 2014)
 * Adds ability for check_attributes parameter in cleanup rules to define attributes whose name is beginning with string (ex: "data-*")
 * Toolbar buttons active and disabled classes can be configured
+* Paste logic rewrite. Pasted data is now precaught and separate rulesets can be defined for pasted data.
 
 *wysihtml5x 0.4.13* (August 11, 2014)
 * Adds option for parser to keep comments
