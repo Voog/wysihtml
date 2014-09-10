@@ -66,7 +66,7 @@ wysihtml5.quirks.cleanPastedHTML = (function() {
       "rules": rules,
       "cleanUp": true, // <span> elements, empty or without attributes, should be removed/replaced with their content
       "context": options.referenceNode.ownerDocument,
-      "uneditableClass": options.uneditableContainerClassname,
+      "uneditableClass": options.uneditableClass,
       "clearInternals" : true, // don't paste temprorary selection and other markings
       "unjoinNbsps" : true
     });

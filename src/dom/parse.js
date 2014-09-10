@@ -70,8 +70,7 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
       DEFAULT_NODE_NAME   = "span",
       WHITE_SPACE_REG_EXP = /\s+/,
       defaultRules        = { tags: {}, classes: {} },
-      currentRules        = {},
-      uneditableClass     = false;
+      currentRules        = {};
 
   /**
    * Iterates over all childs of the element, recreates them, appends them into a document fragment
@@ -92,10 +91,6 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
       clearInternals = true;
     }
 
-    if (config.uneditableClass) {
-      uneditableClass = config.uneditableClass;
-    }
-
     if (isString) {
       element = wysihtml5.dom.getAsDom(elementOrHtml, context);
     } else {
@@ -108,7 +103,7 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
 
     while (element.firstChild) {
       firstChild = element.firstChild;
-      newNode = _convert(firstChild, config.cleanUp, clearInternals);
+      newNode = _convert(firstChild, config.cleanUp, clearInternals, config.uneditableClass);
       if (newNode) {
         fragment.appendChild(newNode);
       }
@@ -134,7 +129,7 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
     return isString ? wysihtml5.quirks.getCorrectInnerHTML(element) : element;
   }
 
-  function _convert(oldNode, cleanUp, clearInternals) {
+  function _convert(oldNode, cleanUp, clearInternals, uneditableClass) {
     var oldNodeType     = oldNode.nodeType,
         oldChilds       = oldNode.childNodes,
         oldChildsLength = oldChilds.length,
@@ -159,7 +154,7 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
 
             for (i = oldChildsLength; i--;) {
               if (oldChilds[i]) {
-                newChild = _convert(oldChilds[i], cleanUp, clearInternals);
+                newChild = _convert(oldChilds[i], cleanUp, clearInternals, uneditableClass);
                 if (newChild) {
                   if (oldChilds[i] === newChild) {
                     i--;
@@ -201,7 +196,7 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
     // Converts all childnodes
     for (i=0; i<oldChildsLength; i++) {
       if (oldChilds[i]) {
-        newChild = _convert(oldChilds[i], cleanUp, clearInternals);
+        newChild = _convert(oldChilds[i], cleanUp, clearInternals, uneditableClass);
         if (newChild) {
           if (oldChilds[i] === newChild) {
             i--;
@@ -832,6 +827,10 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
   var elementHandlingMethods = {
     unwrap: function (element) {
       wysihtml5.dom.unwrap(element);
+    },
+
+    remove: function (element) {
+      element.parentNode.removeChild(element);
     }
   };
 
