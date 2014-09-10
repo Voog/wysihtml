@@ -21,8 +21,13 @@ wysihtml5.dom.getPastedHtml = function(event) {
 /* Older temprorary contenteditable as paste source catcher method for fallbacks */
 wysihtml5.dom.getPastedHtmlWithDiv = function (composer, f) {
   var selBookmark = composer.selection.getBookmark(),
-      cleanerDiv = document.createElement('DIV'),
-      doc = composer.element.ownerDocument;
+      doc = composer.element.ownerDocument,
+      cleanerDiv = coc.createElement('DIV');
+  
+  cleanerDiv.style.width = "1px";
+  cleanerDiv.style.height = "1px";
+  cleanerDiv.style.visibility = "hidden";
+  cleanerDiv.style.overflow = "hidden";
 
   cleanerDiv.setAttribute('contenteditable', 'true');
   doc.body.appendChild(cleanerDiv);
