@@ -73,7 +73,12 @@
     contentEditableMode: false,
     // Classname of container that editor should not touch and pass through
     // Pass false to disable
-    uneditableContainerClassname: "wysihtml5-uneditable-container"
+    uneditableContainerClassname: "wysihtml5-uneditable-container",
+    // Browsers that support copied source handling will get a marking of the origin of the copied source (for determinig code cleanup rules on paste)
+    // Also copied source is based directly on selection - 
+    // (very useful for webkit based browsers where copy will otherwise contain a lot of code and styles based on whatever and not actually in selection).
+    // If falsy value is passed source override is also disabled
+    copyedFromMarking: '<meta name="copied-from" content="wysihtml5">'
   };
 
   wysihtml5.Editor = wysihtml5.lang.Dispatcher.extend(

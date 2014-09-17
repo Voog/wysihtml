@@ -644,28 +644,28 @@ var wysihtml5ParserRules = {
 
 
 (function() {
-
+    // Paste cleanup rules universal for all rules (also applied to content copied from editor)
     var commonRules = wysihtml5.lang.object(wysihtml5ParserRules).clone(true);
-
     commonRules.comments    = false;
-    commonRules.selectors   = {
-        "a u": "unwrap"
-    };
-
+    commonRules.selectors   = { "a u": "unwrap"};
     commonRules.tags.style  = { "remove": 1 };
     commonRules.tags.script = { "remove": 1 };
     commonRules.tags.head = { "remove": 1 };
     
-    commonRules.tags.div.one_of_type.alignment_object = 1;
-    commonRules.tags.div.remove_action = "unwrap";
-    commonRules.tags.div.check_attributes.style = false;
-    commonRules.tags.div.keep_styles = {
+    // Paste cleanup for unindentified source
+    var universalRules = wysihtml5.lang.object(commonRules).clone(true);
+    universalRules.tags.div.one_of_type.alignment_object = 1;
+    universalRules.tags.div.remove_action = "unwrap";
+    universalRules.tags.div.check_attributes.style = false;
+    universalRules.tags.div.keep_styles = {
         "textAlign": /^((left)|(right)|(center)|(justify))$/i,
         "float": 1
     };
-    commonRules.tags.span.keep_styles = false;
+    universalRules.tags.span.keep_styles = false;
 
-    var msOfficeRules = wysihtml5.lang.object(commonRules).clone(true);
+    // Paste cleanup for MS Office
+    // TODO: should be extended to stricter ruleset, as current set will probably not cover all Office bizarreness
+    var msOfficeRules = wysihtml5.lang.object(universalRules).clone(true);
     msOfficeRules.classes = {};
 
     window.wysihtml5ParserPasteRulesets = [
@@ -673,7 +673,10 @@ var wysihtml5ParserRules = {
             condition: /<font face="Times New Roman"|class="?Mso|style="[^"]*\bmso-|style='[^'']*\bmso-|w:WordDocument|class="OutlineElement|id="?docs\-internal\-guid\-/i,
             set: msOfficeRules
         },{
+            condition: /<meta name="copied-from" content="wysihtml5">/i,
             set: commonRules
+        },{
+            set: universalRules
         }
     ];
 

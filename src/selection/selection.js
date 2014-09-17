@@ -794,6 +794,10 @@
         return this.getSelection().isCollapsed;
     },
 
+    getHtml: function() {
+      return this.getSelection().toHtml();
+    },
+
     isEndToEndInNode: function(nodeNames) {
       var range = this.getRange(),
           parentElement = range.commonAncestorContainer,

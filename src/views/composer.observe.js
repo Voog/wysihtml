@@ -184,10 +184,21 @@
     });
 
     dom.observe(element, pasteEvents, function(event) {
-      //setTimeout(function() {
-        that.parent.fire(event.type, event).fire(event.type + ":composer", event);
-      //}, 0);
+      that.parent.fire(event.type, event).fire(event.type + ":composer", event);
     });
+
+
+    if (this.config.copyedFromMarking) {
+      // If supported the copied source is based directly on selection
+      // Very useful for webkit based browsers where copy will otherwise contain a lot of code and styles based on whatever and not actually in selection.
+      dom.observe(element, "copy", function(event) {
+        if (event.clipboardData) {
+          event.clipboardData.setData("text/html", that.config.copyedFromMarking + that.selection.getHtml());
+          event.preventDefault();
+        }
+        that.parent.fire(event.type, event).fire(event.type + ":composer", event);
+      });
+    }
 
     // --------- neword event ---------
     dom.observe(element, "keyup", function(event) {
