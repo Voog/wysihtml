@@ -1,3 +1,6 @@
+*wysihtml5x 0.4.15* (September 17, 2014)
+* Fixes copying incorrrect source (spans, styles etc.) from texteditor in webkit and adds ability to add separate ruleset for paste cleanup if source origin is editor itself
+
 *wysihtml5x 0.4.14* (September 10, 2014)
 * Adds ability for check_attributes parameter in cleanup rules to define attributes whose name is beginning with string (ex: "data-*")
 * Toolbar buttons active and disabled classes can be configured

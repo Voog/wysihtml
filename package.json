@@ -1,6 +1,6 @@
 {
   "name": "wysihtml5x",
-  "version": "0.4.14",
+  "version": "0.4.15",
   "devDependencies": {
     "grunt": "~0.4.4",
     "grunt-contrib-concat": "~0.4.0",
@@ -11,7 +11,7 @@
     "qunitjs": "1.14.0",
     "qunit-assert-html": "^0.2.1"
   },
-  "description": "h1. wysihtml5x 0.4.1",
+  "description": "h1. wysihtml5x 0.4.15",
   "main": "Gruntfile.js",
   "directories": {
     "example": "examples",
