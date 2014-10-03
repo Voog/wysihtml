@@ -33,7 +33,7 @@ wysihtml5.views.View = Base.extend(
       return;
     }
 
-    try { this.element.focus(); } catch(e) {}
+    try { if(this.element) { this.element.focus(); } } catch(e) {}
   },
 
   hide: function() {
