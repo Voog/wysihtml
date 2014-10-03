@@ -83,13 +83,8 @@
         // Do a special delete if caret would delete uneditable
         if (beforeUneditable) {
           event.preventDefault();
-          deleteAroundEditable(selection, beforeUneditable, element);
+          beforeUneditable.parentNode.removeChild(beforeUneditable);
         }
-      }
-    } else {
-      if (selection.containsUneditable()) {
-        event.preventDefault();
-        selection.deleteContents();
       }
     }
   };
