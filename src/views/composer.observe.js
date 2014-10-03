@@ -194,6 +194,7 @@
       dom.observe(element, "copy", function(event) {
         if (event.clipboardData) {
           event.clipboardData.setData("text/html", that.config.copyedFromMarking + that.selection.getHtml());
+          event.clipboardData.setData("text/plain", that.selection.getPlainText());
           event.preventDefault();
         }
         that.parent.fire(event.type, event).fire(event.type + ":composer", event);

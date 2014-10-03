@@ -798,6 +798,10 @@
       return this.getSelection().toHtml();
     },
 
+    getPlainText: function () {
+      return this.getSelection().toString();
+    },
+
     isEndToEndInNode: function(nodeNames) {
       var range = this.getRange(),
           parentElement = range.commonAncestorContainer,
