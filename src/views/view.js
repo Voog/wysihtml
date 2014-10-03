@@ -29,7 +29,7 @@ wysihtml5.views.View = Base.extend(
   },
 
   focus: function() {
-    if (this.element.ownerDocument.querySelector(":focus") === this.element) {
+    if (this.element && this.element.ownerDocument && this.element.ownerDocument.querySelector(":focus") === this.element) {
       return;
     }
 
