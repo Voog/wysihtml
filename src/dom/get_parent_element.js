@@ -53,8 +53,13 @@ wysihtml5.dom.getParentElement = (function() {
 
     levels = levels || 50; // Go max 50 nodes upwards from current node
 
+    // make the matching class regex from class name if omitted
+    if (findByClass && !matchingSet.classRegExp) {
+      matchingSet.classRegExp = new RegExp(matchingSet.className);
+    }
+
     while (levels-- && node && node.nodeName !== "BODY" && (!container || node !== container)) {
-      if (_isElement(node) && _isSameNodeName(node.nodeName, matchingSet.nodeName) &&
+      if (_isElement(node) && (!matchingSet.nodeName || _isSameNodeName(node.nodeName, matchingSet.nodeName)) &&
           (!findByStyle || _hasStyle(node, matchingSet.cssStyle, matchingSet.styleRegExp)) &&
           (!findByClass || _hasClassName(node, matchingSet.className, matchingSet.classRegExp))
       ) {

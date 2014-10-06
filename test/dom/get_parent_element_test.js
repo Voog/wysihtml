@@ -160,6 +160,19 @@ test("Test - with only a classRegExp", function() {
   equal(result, alignedDiv);
 });
 
+test("Test - with only a className", function() {
+  this.container.innerHTML = '<div><div class="wysiwyg-text-align-right"><span>foo</span></div></div>';
+
+  var spanElement = this.container.querySelector("span"),
+      alignedDiv  = this.container.querySelector("div").querySelector("div"),
+      result;
+
+  result = wysihtml5.dom.getParentElement(spanElement, {
+    className:  "wysiwyg-text-align-right"
+  });
+  equal(result, alignedDiv);
+});
+
 test("Test with parent container limit", function() {
   this.container.innerHTML = '<div><div><p><span>foo</span></p></div></div>';
   

@@ -86,6 +86,11 @@
           beforeUneditable.parentNode.removeChild(beforeUneditable);
         }
       }
+    } else {
+      if (selection.containsUneditable()) {
+        event.preventDefault();
+        selection.deleteContents();
+      }
     }
   };
 

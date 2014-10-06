@@ -225,12 +225,21 @@
       return false;
     },
 
+    // deletes selection contents making sure uneditables/unselectables are not partially deleted
     deleteContents: function()  {
-      var ranges = this.getOwnRanges();
-      for (var i = ranges.length; i--;) {
-        ranges[i].deleteContents();
+      var range = this.getRange(),
+          startParent, endParent;
+
+      if (this.unselectableClass) {
+        if ((startParent = wysihtml5.dom.getParentElement(range.startContainer, { className: this.unselectableClass }))) {
+          range.setStartBefore(startParent);
+        }
+        if ((endParent = wysihtml5.dom.getParentElement(range.endContainer, { className: this.unselectableClass }))) {
+          range.setEndAfter(endParent);
+        }
       }
-      this.setSelection(ranges[0]);
+      range.deleteContents();
+      this.setSelection(range);
     },
 
     getPreviousNode: function(node, ignoreEmpty) {
