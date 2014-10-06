@@ -69,3 +69,48 @@ test(".next() test with empty textnode in between and ignoreBlankTexts", functio
     lastItem = this.container.querySelector("span");
   equal(wysihtml5.dom.domNode(firstItem).next({ignoreBlankTexts: true}), lastItem);
 });
+
+test(".lastLeafNode() test for element that is last leaf itself", function () {
+  this.container.innerHTML = "";
+  equal(wysihtml5.dom.domNode(this.container).lastLeafNode(), this.container);
+});
+
+test(".lastLeafNode() test for inner elements traversing", function () {
+  var txtNode = document.createTextNode("test"),
+      elementNode = document.createElement('div'),
+      innerElementNode = document.createElement('div');
+
+  this.container.innerHTML = "";
+
+  this.container.appendChild(txtNode);
+  equal(wysihtml5.dom.domNode(this.container).lastLeafNode(), txtNode, "Found last only child textnode");
+
+  this.container.appendChild(elementNode);
+  equal(wysihtml5.dom.domNode(this.container).lastLeafNode(), elementNode, "Found last div element");
+
+  elementNode.appendChild(innerElementNode);
+  equal(wysihtml5.dom.domNode(this.container).lastLeafNode(), innerElementNode, "Found last wrapped div element");
+
+  this.container.insertBefore(elementNode, txtNode);
+  equal(wysihtml5.dom.domNode(this.container).lastLeafNode(), txtNode, "Found last textnode after reordering elements");
+});
+
+test(".lastLeafNode() test for leafClasses option", function () {
+  var elementNode = document.createElement('div'),
+      innerElementNode = document.createElement('div');
+
+  this.container.innerHTML = "";
+
+  elementNode.className = "forced-leaf";
+  elementNode.appendChild(innerElementNode);
+  this.container.appendChild(elementNode);
+  
+  equal(wysihtml5.dom.domNode(this.container).lastLeafNode(), innerElementNode, "Wihout leafClasses option finds inner element node");
+  equal(wysihtml5.dom.domNode(this.container).lastLeafNode({leafClasses: ['forced-leaf']}), elementNode, "With leafClasses option, stops search and returns the element with leafClass");
+});
+
+
+
+
+
+

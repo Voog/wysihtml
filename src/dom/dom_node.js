@@ -45,9 +45,36 @@
         }
         
         return nextNode;
+      },
+
+      // Traverses a node for last children and their chidren (including itself), and finds the last node that has no children.
+      // Array of classes for forced last-leaves (ex: uneditable-container) can be defined (options = {leafClasses: [...]})
+      // Useful for finding the actually visible element before cursor
+      lastLeafNode: function(options) {
+        var lastChild;
+
+        // Returns non-element nodes
+        if (node.nodeType !== 1) {
+          return node;
+        }
+
+        // Returns if element is leaf
+        lastChild = node.lastChild;
+        if (!lastChild) {
+          return node;
+        }
+
+        // Returns if element is of of options.leafClasses leaf
+        if (options && options.leafClasses) {
+          for (var i = options.leafClasses.length; i--;) {
+            if (wysihtml5.dom.hasClass(node, options.leafClasses[i])) {
+              return node;
+            }
+          }
+        }
+
+        return wysihtml5.dom.domNode(lastChild).lastLeafNode(options);
       }
-
-
 
     };
   };

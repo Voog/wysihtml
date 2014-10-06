@@ -254,7 +254,7 @@
          // do not count comments and other node types
          ret = this.getPreviousNode(ret, ignoreEmpty);
       } else if (ret && ret.nodeType === 3 && (/^\s*$/).test(ret.textContent)) {
-        // do not count empty textnodes as previus nodes
+        // do not count empty textnodes as previous nodes
         ret = this.getPreviousNode(ret, ignoreEmpty);
       } else if (ignoreEmpty && ret && ret.nodeType === 1 && !wysihtml5.lang.array(["BR", "HR", "IMG"]).contains(ret.nodeName) && (/^[\s]*$/).test(ret.innerHTML)) {
         // Do not count empty nodes if param set.
@@ -337,11 +337,12 @@
           offset = selection.anchorOffset;
 
       if (offset === 0) {
-        var prevNode = this.getPreviousNode(node, true);
-        if (prevNode) {
+        var prevNode = this.getPreviousNode(node, true),
+            prevLeaf = prevNode ? wysihtml5.dom.domNode(prevNode).lastLeafNode((this.unselectableClass) ? {leafClasses: [this.unselectableClass]} : false) : null;
+        if (prevLeaf) {
           var uneditables = this.getOwnUneditables();
           for (var i = 0, maxi = uneditables.length; i < maxi; i++) {
-            if (prevNode === uneditables[i]) {
+            if (prevLeaf === uneditables[i]) {
               return uneditables[i];
             }
           }
