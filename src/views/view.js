@@ -29,11 +29,11 @@ wysihtml5.views.View = Base.extend(
   },
 
   focus: function() {
-    if (this.element.ownerDocument.querySelector(":focus") === this.element) {
+    if (this.element && this.element.ownerDocument && this.element.ownerDocument.querySelector(":focus") === this.element) {
       return;
     }
 
-    try { this.element.focus(); } catch(e) {}
+    try { if(this.element) { this.element.focus(); } } catch(e) {}
   },
 
   hide: function() {
