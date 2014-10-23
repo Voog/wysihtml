@@ -234,7 +234,7 @@
     }
 
     // If uneditables configured makes click on uneditable moves caret after clicked element (so it can be deleted like text)
-    // If uneditable needs text selection itself event.stopPropagation can be used toi prevent this behaviour
+    // If uneditable needs text selection itself event.stopPropagation can be used to prevent this behaviour
     if (this.config.uneditableContainerClassname) {
       dom.observe(element, "click", function(event) {
         var uneditable = wysihtml5.dom.getParentElement(event.target, { className: that.config.uneditableContainerClassname }, false, that.element);
