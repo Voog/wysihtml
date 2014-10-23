@@ -262,18 +262,17 @@
       if (!supportsAutoLinking || (supportsAutoLinking && supportsDisablingOfAutoLinking)) {
         this.parent.on("newword:composer", function() {
           if (dom.getTextContent(that.element).match(dom.autoLink.URL_REG_EXP)) {
-            that.selection.executeAndRestore(function(startContainer, endContainer) {
-              var uneditables = that.element.querySelectorAll("." + that.config.uneditableContainerClassname),
-                  isInUneditable = false;
+            var nodeWithSelection = that.selection.getSelectedNode(),
+                uneditables = that.element.querySelectorAll("." + that.config.uneditableContainerClassname),
+                isInUneditable = false;
 
-              for (var i = uneditables.length; i--;) {
-                if (wysihtml5.dom.contains(uneditables[i], endContainer)) {
-                  isInUneditable = true;
-                }
+            for (var i = uneditables.length; i--;) {
+              if (wysihtml5.dom.contains(uneditables[i], nodeWithSelection)) {
+                isInUneditable = true;
               }
+            }
 
-              if (!isInUneditable) dom.autoLink(endContainer.parentNode, [that.config.uneditableContainerClassname]);
-            });
+            if (!isInUneditable) dom.autoLink(nodeWithSelection, [that.config.uneditableContainerClassname]);
           }
         });
 

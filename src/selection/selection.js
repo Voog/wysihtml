@@ -243,6 +243,7 @@
     },
 
     getPreviousNode: function(node, ignoreEmpty) {
+      var displayStyle;
       if (!node) {
         var selection = this.getSelection();
         node = selection.anchorNode;
@@ -265,10 +266,17 @@
       } else if (ret && ret.nodeType === 3 && (/^\s*$/).test(ret.textContent)) {
         // do not count empty textnodes as previous nodes
         ret = this.getPreviousNode(ret, ignoreEmpty);
-      } else if (ignoreEmpty && ret && ret.nodeType === 1 && !wysihtml5.lang.array(["BR", "HR", "IMG"]).contains(ret.nodeName) && (/^[\s]*$/).test(ret.innerHTML)) {
+      } else if (ignoreEmpty && ret && ret.nodeType === 1) {
         // Do not count empty nodes if param set.
-        // Contenteditable tends to bypass and delete these silently when deleting with caret
-        ret = this.getPreviousNode(ret, ignoreEmpty);
+        // Contenteditable tends to bypass and delete these silently when deleting with caret when element is inline-like
+        displayStyle = wysihtml5.dom.getStyle("display").from(ret);
+        if (
+            !wysihtml5.lang.array(["BR", "HR", "IMG"]).contains(ret.nodeName) &&
+            !wysihtml5.lang.array(["block", "inline-block", "flex", "list-item", "table"]).contains(displayStyle) &&
+            (/^[\s]*$/).test(ret.innerHTML)
+          ) {
+            ret = this.getPreviousNode(ret, ignoreEmpty);
+          }
       } else if (!ret && node !== this.contain) {
         parent = node.parentNode;
         if (parent !== this.contain) {
@@ -320,12 +328,14 @@
           range = this.getRange(),
           startNode = range.startContainer;
       
-      if (startNode.nodeType === wysihtml5.TEXT_NODE) {
-        return this.isCollapsed() && (startNode.nodeType === wysihtml5.TEXT_NODE && (/^\s*$/).test(startNode.data.substr(0,range.startOffset)));
-      } else {
-        r.selectNodeContents(this.getRange().commonAncestorContainer);
-        r.collapse(true);
-        return (this.isCollapsed() && (r.startContainer === s.anchorNode || r.endContainer === s.anchorNode) && r.startOffset === s.anchorOffset);
+      if (startNode) {
+        if (startNode.nodeType === wysihtml5.TEXT_NODE) {
+          return this.isCollapsed() && (startNode.nodeType === wysihtml5.TEXT_NODE && (/^\s*$/).test(startNode.data.substr(0,range.startOffset)));
+        } else {
+          r.selectNodeContents(this.getRange().commonAncestorContainer);
+          r.collapse(true);
+          return (this.isCollapsed() && (r.startContainer === s.anchorNode || r.endContainer === s.anchorNode) && r.startOffset === s.anchorOffset);
+        }
       }
     },
 
@@ -333,9 +343,9 @@
         var selection = this.getSelection(),
             node = selection.anchorNode,
             offset = selection.anchorOffset;
-        if (ofNode) {
+        if (ofNode && node) {
           return (offset === 0 && (node.nodeName && node.nodeName === ofNode.toUpperCase() || wysihtml5.dom.getParentElement(node.parentNode, { nodeName: ofNode }, 1)));
-        } else {
+        } else if (node) {
           return (offset === 0 && !this.getPreviousNode(node, true));
         }
     },
@@ -343,18 +353,39 @@
     caretIsBeforeUneditable: function() {
       var selection = this.getSelection(),
           node = selection.anchorNode,
-          offset = selection.anchorOffset;
+          offset = selection.anchorOffset,
+          childNodes = [],
+          range, contentNodes, lastNode;
 
-      if (offset === 0) {
-        var prevNode = this.getPreviousNode(node, true),
-            prevLeaf = prevNode ? wysihtml5.dom.domNode(prevNode).lastLeafNode((this.unselectableClass) ? {leafClasses: [this.unselectableClass]} : false) : null;
-        if (prevLeaf) {
-          var uneditables = this.getOwnUneditables();
-          for (var i = 0, maxi = uneditables.length; i < maxi; i++) {
-            if (prevLeaf === uneditables[i]) {
-              return uneditables[i];
+      if (node) {
+        if (offset === 0) {
+          var prevNode = this.getPreviousNode(node, true),
+              prevLeaf = prevNode ? wysihtml5.dom.domNode(prevNode).lastLeafNode((this.unselectableClass) ? {leafClasses: [this.unselectableClass]} : false) : null;
+          if (prevLeaf) {
+            var uneditables = this.getOwnUneditables();
+            for (var i = 0, maxi = uneditables.length; i < maxi; i++) {
+              if (prevLeaf === uneditables[i]) {
+                return uneditables[i];
+              }
             }
           }
+        } else {
+          range = selection.getRangeAt(0);
+          range.setStart(range.startContainer, range.startOffset - 1);
+          // TODO: make getting children on range a separate funtion
+          if (range) {
+            contentNodes = range.getNodes([1,3]);
+            for (var n = 0, max = contentNodes.length; n < max; n++) {
+              if (contentNodes[n].parentNode && contentNodes[n].parentNode === node) {
+                childNodes.push(contentNodes[n]);
+              }
+            }
+          }
+          lastNode = childNodes.length > 0 ? childNodes[childNodes.length -1] : null;
+          if (lastNode && lastNode.nodeType === 1 && wysihtml5.dom.hasClass(lastNode, this.unselectableClass)) {
+            return lastNode;
+          }
+
         }
       }
       return false;

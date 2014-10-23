@@ -83,6 +83,12 @@
         // Do a special delete if caret would delete uneditable
         if (beforeUneditable) {
           event.preventDefault();
+          // If customevents present notify element of being deleted
+          // TODO: Investigate if browser support can be extended
+          try {
+            var ev = new CustomEvent("wysihtml5:uneditable:delete");
+            beforeUneditable.dispatchEvent(ev);
+          } catch (err) {}
           beforeUneditable.parentNode.removeChild(beforeUneditable);
         }
       }
@@ -223,6 +229,17 @@
 
         if (target.nodeName === "IMG" && wysihtml5.lang.array(myImages).contains(target)) {
           that.selection.selectNode(target);
+        }
+      });
+    }
+
+    // If uneditables configured makes click on uneditable moves caret after clicked element (so it can be deleted like text)
+    // If uneditable needs text selection itself event.stopPropagation can be used toi prevent this behaviour
+    if (this.config.uneditableContainerClassname) {
+      dom.observe(element, "click", function(event) {
+        var uneditable = wysihtml5.dom.getParentElement(event.target, { className: that.config.uneditableContainerClassname }, false, that.element);
+        if (uneditable) {
+          that.selection.setAfter(uneditable);
         }
       });
     }
