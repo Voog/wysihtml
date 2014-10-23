@@ -1,3 +1,7 @@
+*wysihtml5x 0.4.16* (October 23, 2014)
+* Fix copy being broken for plain/text
+* Change deleting and selection behaviour of uneditable containers
+
 *wysihtml5x 0.4.15* (September 17, 2014)
 * Fixes copying incorrrect source (spans, styles etc.) from texteditor in webkit and adds ability to add separate ruleset for paste cleanup if source origin is editor itself
 

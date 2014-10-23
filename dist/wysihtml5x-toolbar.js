@@ -25,7 +25,7 @@ if(!Array.isArray) {
     return Object.prototype.toString.call(arg) === '[object Array]';
   };
 };/**
- * @license wysihtml5x v0.4.15
+ * @license wysihtml5x v0.4.16
  * https://github.com/Edicy/wysihtml5
  *
  * Author: Christopher Blum (https://github.com/tiff)
@@ -36,7 +36,7 @@ if(!Array.isArray) {
  *
  */
 var wysihtml5 = {
-  version: "0.4.15",
+  version: "0.4.16",
 
   // namespaces
   commands:   {},
@@ -5369,9 +5369,36 @@ wysihtml5.dom.copyAttributes = function(attributesToCopy) {
         }
         
         return nextNode;
+      },
+
+      // Traverses a node for last children and their chidren (including itself), and finds the last node that has no children.
+      // Array of classes for forced last-leaves (ex: uneditable-container) can be defined (options = {leafClasses: [...]})
+      // Useful for finding the actually visible element before cursor
+      lastLeafNode: function(options) {
+        var lastChild;
+
+        // Returns non-element nodes
+        if (node.nodeType !== 1) {
+          return node;
+        }
+
+        // Returns if element is leaf
+        lastChild = node.lastChild;
+        if (!lastChild) {
+          return node;
+        }
+
+        // Returns if element is of of options.leafClasses leaf
+        if (options && options.leafClasses) {
+          for (var i = options.leafClasses.length; i--;) {
+            if (wysihtml5.dom.hasClass(node, options.leafClasses[i])) {
+              return node;
+            }
+          }
+        }
+
+        return wysihtml5.dom.domNode(lastChild).lastLeafNode(options);
       }
-
-
 
     };
   };
@@ -5494,8 +5521,13 @@ wysihtml5.dom.getParentElement = (function() {
 
     levels = levels || 50; // Go max 50 nodes upwards from current node
 
+    // make the matching class regex from class name if omitted
+    if (findByClass && !matchingSet.classRegExp) {
+      matchingSet.classRegExp = new RegExp(matchingSet.className);
+    }
+
     while (levels-- && node && node.nodeName !== "BODY" && (!container || node !== container)) {
-      if (_isElement(node) && _isSameNodeName(node.nodeName, matchingSet.nodeName) &&
+      if (_isElement(node) && (!matchingSet.nodeName || _isSameNodeName(node.nodeName, matchingSet.nodeName)) &&
           (!findByStyle || _hasStyle(node, matchingSet.cssStyle, matchingSet.styleRegExp)) &&
           (!findByClass || _hasClassName(node, matchingSet.className, matchingSet.classRegExp))
       ) {
@@ -8922,15 +8954,25 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       return false;
     },
 
+    // deletes selection contents making sure uneditables/unselectables are not partially deleted
     deleteContents: function()  {
-      var ranges = this.getOwnRanges();
-      for (var i = ranges.length; i--;) {
-        ranges[i].deleteContents();
+      var range = this.getRange(),
+          startParent, endParent;
+
+      if (this.unselectableClass) {
+        if ((startParent = wysihtml5.dom.getParentElement(range.startContainer, { className: this.unselectableClass }, false, this.contain))) {
+          range.setStartBefore(startParent);
+        }
+        if ((endParent = wysihtml5.dom.getParentElement(range.endContainer, { className: this.unselectableClass }, false, this.contain))) {
+          range.setEndAfter(endParent);
+        }
       }
-      this.setSelection(ranges[0]);
+      range.deleteContents();
+      this.setSelection(range);
     },
 
     getPreviousNode: function(node, ignoreEmpty) {
+      var displayStyle;
       if (!node) {
         var selection = this.getSelection();
         node = selection.anchorNode;
@@ -8951,12 +8993,19 @@ wysihtml5.quirks.ensureProperClearing = (function() {
          // do not count comments and other node types
          ret = this.getPreviousNode(ret, ignoreEmpty);
       } else if (ret && ret.nodeType === 3 && (/^\s*$/).test(ret.textContent)) {
-        // do not count empty textnodes as previus nodes
+        // do not count empty textnodes as previous nodes
         ret = this.getPreviousNode(ret, ignoreEmpty);
-      } else if (ignoreEmpty && ret && ret.nodeType === 1 && !wysihtml5.lang.array(["BR", "HR", "IMG"]).contains(ret.nodeName) && (/^[\s]*$/).test(ret.innerHTML)) {
+      } else if (ignoreEmpty && ret && ret.nodeType === 1) {
         // Do not count empty nodes if param set.
-        // Contenteditable tends to bypass and delete these silently when deleting with caret
-        ret = this.getPreviousNode(ret, ignoreEmpty);
+        // Contenteditable tends to bypass and delete these silently when deleting with caret when element is inline-like
+        displayStyle = wysihtml5.dom.getStyle("display").from(ret);
+        if (
+            !wysihtml5.lang.array(["BR", "HR", "IMG"]).contains(ret.nodeName) &&
+            !wysihtml5.lang.array(["block", "inline-block", "flex", "list-item", "table"]).contains(displayStyle) &&
+            (/^[\s]*$/).test(ret.innerHTML)
+          ) {
+            ret = this.getPreviousNode(ret, ignoreEmpty);
+          }
       } else if (!ret && node !== this.contain) {
         parent = node.parentNode;
         if (parent !== this.contain) {
@@ -9008,12 +9057,14 @@ wysihtml5.quirks.ensureProperClearing = (function() {
           range = this.getRange(),
           startNode = range.startContainer;
       
-      if (startNode.nodeType === wysihtml5.TEXT_NODE) {
-        return this.isCollapsed() && (startNode.nodeType === wysihtml5.TEXT_NODE && (/^\s*$/).test(startNode.data.substr(0,range.startOffset)));
-      } else {
-        r.selectNodeContents(this.getRange().commonAncestorContainer);
-        r.collapse(true);
-        return (this.isCollapsed() && (r.startContainer === s.anchorNode || r.endContainer === s.anchorNode) && r.startOffset === s.anchorOffset);
+      if (startNode) {
+        if (startNode.nodeType === wysihtml5.TEXT_NODE) {
+          return this.isCollapsed() && (startNode.nodeType === wysihtml5.TEXT_NODE && (/^\s*$/).test(startNode.data.substr(0,range.startOffset)));
+        } else {
+          r.selectNodeContents(this.getRange().commonAncestorContainer);
+          r.collapse(true);
+          return (this.isCollapsed() && (r.startContainer === s.anchorNode || r.endContainer === s.anchorNode) && r.startOffset === s.anchorOffset);
+        }
       }
     },
 
@@ -9021,9 +9072,9 @@ wysihtml5.quirks.ensureProperClearing = (function() {
         var selection = this.getSelection(),
             node = selection.anchorNode,
             offset = selection.anchorOffset;
-        if (ofNode) {
+        if (ofNode && node) {
           return (offset === 0 && (node.nodeName && node.nodeName === ofNode.toUpperCase() || wysihtml5.dom.getParentElement(node.parentNode, { nodeName: ofNode }, 1)));
-        } else {
+        } else if (node) {
           return (offset === 0 && !this.getPreviousNode(node, true));
         }
     },
@@ -9031,17 +9082,39 @@ wysihtml5.quirks.ensureProperClearing = (function() {
     caretIsBeforeUneditable: function() {
       var selection = this.getSelection(),
           node = selection.anchorNode,
-          offset = selection.anchorOffset;
+          offset = selection.anchorOffset,
+          childNodes = [],
+          range, contentNodes, lastNode;
 
-      if (offset === 0) {
-        var prevNode = this.getPreviousNode(node, true);
-        if (prevNode) {
-          var uneditables = this.getOwnUneditables();
-          for (var i = 0, maxi = uneditables.length; i < maxi; i++) {
-            if (prevNode === uneditables[i]) {
-              return uneditables[i];
+      if (node) {
+        if (offset === 0) {
+          var prevNode = this.getPreviousNode(node, true),
+              prevLeaf = prevNode ? wysihtml5.dom.domNode(prevNode).lastLeafNode((this.unselectableClass) ? {leafClasses: [this.unselectableClass]} : false) : null;
+          if (prevLeaf) {
+            var uneditables = this.getOwnUneditables();
+            for (var i = 0, maxi = uneditables.length; i < maxi; i++) {
+              if (prevLeaf === uneditables[i]) {
+                return uneditables[i];
+              }
             }
           }
+        } else {
+          range = selection.getRangeAt(0);
+          range.setStart(range.startContainer, range.startOffset - 1);
+          // TODO: make getting children on range a separate funtion
+          if (range) {
+            contentNodes = range.getNodes([1,3]);
+            for (var n = 0, max = contentNodes.length; n < max; n++) {
+              if (contentNodes[n].parentNode && contentNodes[n].parentNode === node) {
+                childNodes.push(contentNodes[n]);
+              }
+            }
+          }
+          lastNode = childNodes.length > 0 ? childNodes[childNodes.length -1] : null;
+          if (lastNode && lastNode.nodeType === 1 && wysihtml5.dom.hasClass(lastNode, this.unselectableClass)) {
+            return lastNode;
+          }
+
         }
       }
       return false;
@@ -9493,6 +9566,10 @@ wysihtml5.quirks.ensureProperClearing = (function() {
 
     getHtml: function() {
       return this.getSelection().toHtml();
+    },
+
+    getPlainText: function () {
+      return this.getSelection().toString();
     },
 
     isEndToEndInNode: function(nodeNames) {
@@ -11998,11 +12075,11 @@ wysihtml5.views.View = Base.extend(
   },
 
   focus: function() {
-    if (this.element.ownerDocument.querySelector(":focus") === this.element) {
+    if (this.element && this.element.ownerDocument && this.element.ownerDocument.querySelector(":focus") === this.element) {
       return;
     }
 
-    try { this.element.focus(); } catch(e) {}
+    try { if(this.element) { this.element.focus(); } } catch(e) {}
   },
 
   hide: function() {
@@ -12285,18 +12362,17 @@ wysihtml5.views.View = Base.extend(
       if (!supportsAutoLinking || (supportsAutoLinking && supportsDisablingOfAutoLinking)) {
         this.parent.on("newword:composer", function() {
           if (dom.getTextContent(that.element).match(dom.autoLink.URL_REG_EXP)) {
-            that.selection.executeAndRestore(function(startContainer, endContainer) {
-              var uneditables = that.element.querySelectorAll("." + that.config.uneditableContainerClassname),
-                  isInUneditable = false;
+            var nodeWithSelection = that.selection.getSelectedNode(),
+                uneditables = that.element.querySelectorAll("." + that.config.uneditableContainerClassname),
+                isInUneditable = false;
 
-              for (var i = uneditables.length; i--;) {
-                if (wysihtml5.dom.contains(uneditables[i], endContainer)) {
-                  isInUneditable = true;
-                }
+            for (var i = uneditables.length; i--;) {
+              if (wysihtml5.dom.contains(uneditables[i], nodeWithSelection)) {
+                isInUneditable = true;
               }
+            }
 
-              if (!isInUneditable) dom.autoLink(endContainer.parentNode, [that.config.uneditableContainerClassname]);
-            });
+            if (!isInUneditable) dom.autoLink(nodeWithSelection, [that.config.uneditableContainerClassname]);
           }
         });
 
@@ -12766,7 +12842,13 @@ wysihtml5.views.View = Base.extend(
         // Do a special delete if caret would delete uneditable
         if (beforeUneditable) {
           event.preventDefault();
-          deleteAroundEditable(selection, beforeUneditable, element);
+          // If customevents present notify element of being deleted
+          // TODO: Investigate if browser support can be extended
+          try {
+            var ev = new CustomEvent("wysihtml5:uneditable:delete");
+            beforeUneditable.dispatchEvent(ev);
+          } catch (err) {}
+          beforeUneditable.parentNode.removeChild(beforeUneditable);
         }
       }
     } else {
@@ -12877,6 +12959,7 @@ wysihtml5.views.View = Base.extend(
       dom.observe(element, "copy", function(event) {
         if (event.clipboardData) {
           event.clipboardData.setData("text/html", that.config.copyedFromMarking + that.selection.getHtml());
+          event.clipboardData.setData("text/plain", that.selection.getPlainText());
           event.preventDefault();
         }
         that.parent.fire(event.type, event).fire(event.type + ":composer", event);
@@ -12905,6 +12988,17 @@ wysihtml5.views.View = Base.extend(
 
         if (target.nodeName === "IMG" && wysihtml5.lang.array(myImages).contains(target)) {
           that.selection.selectNode(target);
+        }
+      });
+    }
+
+    // If uneditables configured makes click on uneditable moves caret after clicked element (so it can be deleted like text)
+    // If uneditable needs text selection itself event.stopPropagation can be used to prevent this behaviour
+    if (this.config.uneditableContainerClassname) {
+      dom.observe(element, "click", function(event) {
+        var uneditable = wysihtml5.dom.getParentElement(event.target, { className: that.config.uneditableContainerClassname }, false, that.element);
+        if (uneditable) {
+          that.selection.setAfter(uneditable);
         }
       });
     }
