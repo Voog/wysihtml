@@ -640,15 +640,14 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
     }
   }
 
-  var INVISIBLE_SPACE_REG_EXP = /\uFEFF/g;
   function _handleText(oldNode) {
     var nextSibling = oldNode.nextSibling;
     if (nextSibling && nextSibling.nodeType === wysihtml5.TEXT_NODE) {
       // Concatenate text nodes
-      nextSibling.data = oldNode.data.replace(INVISIBLE_SPACE_REG_EXP, "") + nextSibling.data.replace(INVISIBLE_SPACE_REG_EXP, "");
+      nextSibling.data = oldNode.data.replace(wysihtml5.INVISIBLE_SPACE_REG_EXP, "") + nextSibling.data.replace(wysihtml5.INVISIBLE_SPACE_REG_EXP, "");
     } else {
       // \uFEFF = wysihtml5.INVISIBLE_SPACE (used as a hack in certain rich text editing situations)
-      var data = oldNode.data.replace(INVISIBLE_SPACE_REG_EXP, "");
+      var data = oldNode.data.replace(wysihtml5.INVISIBLE_SPACE_REG_EXP, "");
       return oldNode.ownerDocument.createTextNode(data);
     }
   }

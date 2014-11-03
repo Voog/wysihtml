@@ -22,6 +22,7 @@ var wysihtml5 = {
   views:      {},
 
   INVISIBLE_SPACE: "\uFEFF",
+  INVISIBLE_SPACE_REG_EXP: /\uFEFF/g,
 
   EMPTY_FUNCTION: function() {},
 

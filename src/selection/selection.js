@@ -103,6 +103,66 @@
       return this.setSelection(range);
     },
 
+    // Constructs a self removing whitespace for placing selection caret when normal methods fail.
+    // Webkit has ann issue placing caret into places where there are no textnodes near by.
+    creteTemporaryCaretSpaceAfter: function (node) {
+      var caretPlaceholder = this.doc.createElement('span'),
+          caretPlaceholderText = this.doc.createTextNode(wysihtml5.INVISIBLE_SPACE),
+          placeholderRemover = (function(event) {
+            var lastChild;
+
+            this.contain.removeEventListener('mouseup', placeholderRemover);
+            this.contain.removeEventListener('keydown', keyDownHandler);
+            this.contain.removeEventListener('touchstart', placeholderRemover);
+            this.contain.removeEventListener('focus', placeholderRemover);
+            this.contain.removeEventListener('blur', placeholderRemover);
+            this.contain.removeEventListener('paste', delayedPlaceholderRemover);
+            this.contain.removeEventListener('drop', delayedPlaceholderRemover);
+            this.contain.removeEventListener('beforepaste', delayedPlaceholderRemover);
+
+            if (caretPlaceholder && caretPlaceholder.parentNode) {
+              caretPlaceholder.innerHTML = caretPlaceholder.innerHTML.replace(wysihtml5.INVISIBLE_SPACE_REG_EXP, "");
+              if ((/[^\s]+/).test(caretPlaceholder.innerHTML)) {
+                lastChild = caretPlaceholder.lastChild;
+                wysihtml5.dom.unwrap(caretPlaceholder);
+                this.setAfter(lastChild);
+              } else {
+                caretPlaceholder.parentNode.removeChild(caretPlaceholder);
+              }
+
+            }
+          }).bind(this),
+        delayedPlaceholderRemover = function (event) {
+          if (caretPlaceholder && caretPlaceholder.parentNode) {
+            setTimeout(placeholderRemover, 0);
+          }
+        },
+        keyDownHandler = function(event) {
+          if (event.which !== 8 && event.which !== 91 && event.which !== 17 && (event.which !== 86 || (!event.ctrlKey && !event.metaKey))) {
+            placeholderRemover();
+          }
+        };
+
+      caretPlaceholder.style.position = 'absolute';
+      caretPlaceholder.style.display = 'block';
+      caretPlaceholder.style.minWidth = '1px';
+      caretPlaceholder.appendChild(caretPlaceholderText);
+
+      node.parentNode.insertBefore(caretPlaceholder, node.nextSibling);
+      this.setBefore(caretPlaceholderText);
+
+      this.contain.addEventListener('mouseup', placeholderRemover);
+      this.contain.addEventListener('keydown', keyDownHandler);
+      this.contain.addEventListener('touchstart', placeholderRemover);
+      this.contain.addEventListener('focus', placeholderRemover);
+      this.contain.addEventListener('blur', placeholderRemover);
+      this.contain.addEventListener('paste', delayedPlaceholderRemover);
+      this.contain.addEventListener('drop', delayedPlaceholderRemover);
+      this.contain.addEventListener('beforepaste', delayedPlaceholderRemover);
+
+      return caretPlaceholder;
+    },
+
     /**
      * Set the caret after the given node
      *
@@ -111,11 +171,19 @@
      *    selection.setBefore(myElement);
      */
     setAfter: function(node) {
-      var range = rangy.createRange(this.doc);
+      var range = rangy.createRange(this.doc),
+          sel;
 
       range.setStartAfter(node);
       range.setEndAfter(node);
-      return this.setSelection(range);
+      sel = this.setSelection(range);
+
+      // Webkit fails to add selection if there are no textnodes in that region
+      // (like an uneditable container at the end of content).
+      if (!sel) {
+        this.creteTemporaryCaretSpaceAfter(node);
+      }
+      return sel;
     },
 
     /**
@@ -821,10 +889,14 @@
       return rangy.getSelection(this.doc.defaultView || this.doc.parentWindow);
     },
 
+    // Sets selection in document to a given range
+    // Set selection method detects if it fails to set any selection in document and returns null on fail
+    // (especially needed in webkit where some ranges just can not create selection for no reason)
     setSelection: function(range) {
       var win       = this.doc.defaultView || this.doc.parentWindow,
           selection = rangy.getSelection(win);
-      return selection.setSingleRange(range);
+      selection.setSingleRange(range);
+      return (selection && selection.anchorNode && selection.focusNode) ? selection : null;
     },
 
     createRange: function() {
