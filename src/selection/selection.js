@@ -293,10 +293,11 @@
       return false;
     },
 
-    // deletes selection contents making sure uneditables/unselectables are not partially deleted
+    // Deletes selection contents making sure uneditables/unselectables are not partially deleted
+    // Triggers wysihtml5:uneditable:delete custom event on all deleted uneditables if customevents suppoorted
     deleteContents: function()  {
       var range = this.getRange(),
-          startParent, endParent;
+          startParent, endParent, uneditables, ev;
 
       if (this.unselectableClass) {
         if ((startParent = wysihtml5.dom.getParentElement(range.startContainer, { className: this.unselectableClass }, false, this.contain))) {
@@ -305,6 +306,18 @@
         if ((endParent = wysihtml5.dom.getParentElement(range.endContainer, { className: this.unselectableClass }, false, this.contain))) {
           range.setEndAfter(endParent);
         }
+
+        // If customevents present notify uneditable elements of being deleted
+        uneditables = range.getNodes([1], (function (node) {
+          return wysihtml5.dom.hasClass(node, this.unselectableClass);
+        }).bind(this));
+        for (var i = uneditables.length; i--;) {
+          try {
+            ev = new CustomEvent("wysihtml5:uneditable:delete");
+            uneditables[i].dispatchEvent(ev);
+          } catch (err) {}
+        }
+
       }
       range.deleteContents();
       this.setSelection(range);
