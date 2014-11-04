@@ -18,6 +18,22 @@
         "85": "underline" // U
       };
 
+  // Adds multiple eventlisteners to target, bound to one callback
+  // TODO: If needed elsewhere make it part of wysihtml5.dom or sth
+  var addListeners = function (target, events, callback) {
+    for(var i = 0, max = events.length; i < max; i++) {
+      target.addEventListener(events[i], callback, false);
+    }
+  };
+
+  // Removes multiple eventlisteners from target, bound to one callback
+  // TODO: If needed elsewhere make it part of wysihtml5.dom or sth
+  var removeListeners = function (target, events, callback) {
+    for(var i = 0, max = events.length; i < max; i++) {
+      target.removeEventListener(events[i], callback, false);
+    }
+  };
+
   var deleteAroundEditable = function(selection, uneditable, element) {
     // merge node with previous node from uneditable
     var prevNode = selection.getPreviousNode(uneditable, true),
@@ -52,7 +68,10 @@
     }
   };
 
-  var handleDeleteKeyPress = function(event, selection, element, composer) {
+  var handleDeleteKeyPress = function(event, composer) {
+    var selection = composer.selection,
+        element = composer.element;
+
     if (selection.isCollapsed()) {
       if (selection.caretIsInTheBeginnig('LI')) {
         event.preventDefault();
@@ -111,247 +130,269 @@
     composer.commands.exec("insertHTML", "&emsp;");
   };
 
-  wysihtml5.views.Composer.prototype.observe = function() {
-    var that                = this,
-        state               = this.getValue(false, false),
-        container           = (this.sandbox.getIframe) ? this.sandbox.getIframe() : this.sandbox.getContentEditable(),
-        element             = this.element,
-        focusBlurElement    = (browser.supportsEventsInIframeCorrectly() || this.sandbox.getContentEditable) ? element : this.sandbox.getWindow(),
-        pasteEvents         = ["drop", "paste", "beforepaste"],
-        interactionEvents   = ["drop", "paste", "mouseup", "focus", "keyup"];
-
-    // --------- destroy:composer event ---------
-    dom.observe(container, "DOMNodeRemoved", function() {
-      clearInterval(domNodeRemovedInterval);
-      that.parent.fire("destroy:composer");
-    });
-
-    // DOMNodeRemoved event is not supported in IE 8
-    if (!browser.supportsMutationEvents()) {
-        var domNodeRemovedInterval = setInterval(function() {
-          if (!dom.contains(document.documentElement, container)) {
-            clearInterval(domNodeRemovedInterval);
-            that.parent.fire("destroy:composer");
-          }
-        }, 250);
-    }
-
-    // --------- User interaction tracking --
-
-    dom.observe(focusBlurElement, interactionEvents, function() {
-      setTimeout(function() {
-        that.parent.fire("interaction").fire("interaction:composer");
-      }, 0);
-    });
-
-
-    if (this.config.handleTables) {
-      if(!this.tableClickHandle && this.doc.execCommand && wysihtml5.browser.supportsCommand(this.doc, "enableObjectResizing") && wysihtml5.browser.supportsCommand(this.doc, "enableInlineTableEditing")) {
-        if (this.sandbox.getIframe) {
-          this.tableClickHandle = dom.observe(container , ["focus", "mouseup", "mouseover"], function() {
-            that.doc.execCommand("enableObjectResizing", false, "false");
-            that.doc.execCommand("enableInlineTableEditing", false, "false");
-            that.tableClickHandle.stop();
-          });
-        } else {
-          setTimeout(function() {
-            that.doc.execCommand("enableObjectResizing", false, "false");
-            that.doc.execCommand("enableInlineTableEditing", false, "false");
-          }, 0);
-        }
+  var handleDomNodeRemoved = function(event) {
+      if (this.domNodeRemovedInterval) {
+        clearInterval(domNodeRemovedInterval);
       }
-      this.tableSelection = wysihtml5.quirks.tableCellsSelection(element, that.parent);
-    }
+      this.parent.fire("destroy:composer");
+  };
 
-    // --------- Focus & blur logic ---------
-    dom.observe(focusBlurElement, "focus", function(event) {
-      that.parent.fire("focus", event).fire("focus:composer", event);
+  // Listens to "drop", "paste", "mouseup", "focus", "keyup" events and fires
+  var handleUserInteraction = function (event) {
+    this.parent.fire("beforeinteraction").fire("beforeinteraction:composer");
+    setTimeout((function() {
+      this.parent.fire("interaction").fire("interaction:composer");
+    }).bind(this), 0);
+  };
 
-      // Delay storing of state until all focus handler are fired
-      // especially the one which resets the placeholder
-      setTimeout(function() { state = that.getValue(false, false); }, 0);
-    });
+  var handleFocus = function(event) {
+    this.parent.fire("focus", event).fire("focus:composer", event);
 
-    dom.observe(focusBlurElement, "blur", function(event) {
-      if (state !== that.getValue(false, false)) {
-        //create change event if supported (all except IE8)
-        var changeevent = event;
-        if(typeof Object.create == 'function') {
-          changeevent = Object.create(event, { type: { value: 'change' } });
-        }
-        that.parent.fire("change", changeevent).fire("change:composer", changeevent);
+    // Delay storing of state until all focus handler are fired
+    // especially the one which resets the placeholder
+    setTimeout((function() {
+      this.focusState = this.getValue(false, false);
+    }).bind(this), 0);
+  };
+
+  var handleBlur = function(event) {
+    if (this.focusState !== this.getValue(false, false)) {
+      //create change event if supported (all except IE8)
+      var changeevent = event;
+      if(typeof Object.create == 'function') {
+        changeevent = Object.create(event, { type: { value: 'change' } });
       }
-      that.parent.fire("blur", event).fire("blur:composer", event);
-    });
+      this.parent.fire("change", changeevent).fire("change:composer", changeevent);
+    }
+    this.parent.fire("blur", event).fire("blur:composer", event);
+  };
 
-    // --------- Drag & Drop logic ---------
-    dom.observe(element, "dragenter", function() {
-      that.parent.fire("unset_placeholder");
-    });
+  var handlePaste = function(event) {
+    this.parent.fire(event.type, event).fire(event.type + ":composer", event);
+    if (event.type === "paste") {
+      setTimeout((function() {
+        this.parent.fire("newword:composer");
+      }).bind(this), 0);
+    }
+  };
 
-    dom.observe(element, pasteEvents, function(event) {
-      that.parent.fire(event.type, event).fire(event.type + ":composer", event);
-    });
-
-
+  var handleCopy = function(event) {
     if (this.config.copyedFromMarking) {
-      // If supported the copied source is based directly on selection
+      // If supported the copied source can be based directly on selection
       // Very useful for webkit based browsers where copy will otherwise contain a lot of code and styles based on whatever and not actually in selection.
-      dom.observe(element, "copy", function(event) {
-        if (event.clipboardData) {
-          event.clipboardData.setData("text/html", that.config.copyedFromMarking + that.selection.getHtml());
-          event.clipboardData.setData("text/plain", that.selection.getPlainText());
-          event.preventDefault();
-        }
-        that.parent.fire(event.type, event).fire(event.type + ":composer", event);
-      });
-    }
-
-    // --------- neword event ---------
-    dom.observe(element, "keyup", function(event) {
-      var keyCode = event.keyCode;
-      if (keyCode === wysihtml5.SPACE_KEY || keyCode === wysihtml5.ENTER_KEY) {
-        that.parent.fire("newword:composer");
+      if (event.clipboardData) {
+        event.clipboardData.setData("text/html", this.config.copyedFromMarking + this.selection.getHtml());
+        event.clipboardData.setData("text/plain", this.selection.getPlainText());
+        event.preventDefault();
       }
-    });
-
-    this.parent.on("paste:composer", function() {
-      setTimeout(function() { that.parent.fire("newword:composer"); }, 0);
-    });
-
-    // --------- Make sure that images are selected when clicking on them ---------
-    if (!browser.canSelectImagesInContentEditable()) {
-      dom.observe(element, "mousedown", function(event) {
-        var target = event.target;
-        var allImages = element.querySelectorAll('img'),
-            notMyImages = element.querySelectorAll('.' + that.config.uneditableContainerClassname + ' img'),
-            myImages = wysihtml5.lang.array(allImages).without(notMyImages);
-
-        if (target.nodeName === "IMG" && wysihtml5.lang.array(myImages).contains(target)) {
-          that.selection.selectNode(target);
-        }
-      });
+      this.parent.fire(event.type, event).fire(event.type + ":composer", event);
     }
+  };
 
-    // If uneditables configured makes click on uneditable moves caret after clicked element (so it can be deleted like text)
-    // If uneditable needs text selection itself event.stopPropagation can be used to prevent this behaviour
+  var handleKeyUp = function(event) {
+    var keyCode = event.keyCode;
+    if (keyCode === wysihtml5.SPACE_KEY || keyCode === wysihtml5.ENTER_KEY) {
+      this.parent.fire("newword:composer");
+    }
+  };
+
+  var handleMouseDown = function(event) {
+    if (!browser.canSelectImagesInContentEditable()) {
+      // Make sure that images are selected when clicking on them
+      var target = event.target,
+          allImages = this.element.querySelectorAll('img'),
+          notMyImages = this.element.querySelectorAll('.' + this.config.uneditableContainerClassname + ' img'),
+          myImages = wysihtml5.lang.array(allImages).without(notMyImages);
+
+      if (target.nodeName === "IMG" && wysihtml5.lang.array(myImages).contains(target)) {
+        this.selection.selectNode(target);
+      }
+    }
+  };
+
+  // TODO: mouseover is not actually a foolproof and obvious place for this, must be changed as it modifies dom on random basis
+  // Shows url in tooltip when hovering links or images
+  var handleMouseOver = function(event) {
+    var titlePrefixes = {
+          IMG: "Image: ",
+          A:   "Link: "
+        },
+        target   = event.target,
+        nodeName = target.nodeName,
+        title;
+
+    if (nodeName !== "A" && nodeName !== "IMG") {
+      return;
+    }
+    if(!target.hasAttribute("title")){
+      title = titlePrefixes[nodeName] + (target.getAttribute("href") || target.getAttribute("src"));
+      target.setAttribute("title", title);
+    }
+  };
+
+  var handleClick = function(event) {
     if (this.config.uneditableContainerClassname) {
-      dom.observe(element, "click", function(event) {
-        var uneditable = wysihtml5.dom.getParentElement(event.target, { className: that.config.uneditableContainerClassname }, false, that.element);
-        if (uneditable) {
-          that.selection.setAfter(uneditable);
-        }
-      });
+      // If uneditables is configured, makes clicking on uneditable move caret after clicked element (so it can be deleted like text)
+      // If uneditable needs text selection itself event.stopPropagation can be used to prevent this behaviour
+      var uneditable = wysihtml5.dom.getParentElement(event.target, { className: this.config.uneditableContainerClassname }, false, this.element);
+      if (uneditable) {
+        this.selection.setAfter(uneditable);
+      }
     }
+  };
 
+  var handleDrop = function(event) {
     if (!browser.canSelectImagesInContentEditable()) {
-        dom.observe(element, "drop", function(event) {
-            // TODO: if I knew how to get dropped elements list from event I could limit it to only IMG element case
-            setTimeout(function() {
-                that.selection.getSelection().removeAllRanges();
-            }, 0);
-        });
+      // TODO: if I knew how to get dropped elements list from event I could limit it to only IMG element case
+      setTimeout((function() {
+        this.selection.getSelection().removeAllRanges();
+      }).bind(this), 0);
+    }
+  };
+
+  var handleKeyDown = function(event) {
+    var keyCode = event.keyCode,
+        command = shortcuts[keyCode],
+        target, parent;
+
+    // Shortcut logic
+    if ((event.ctrlKey || event.metaKey) && !event.altKey && command) {
+      this.commands.exec(command);
+      event.preventDefault();
     }
 
-    if (browser.hasHistoryIssue() && browser.supportsSelectionModify()) {
-      dom.observe(element, "keydown", function(event) {
-        if (!event.metaKey && !event.ctrlKey) {
-          return;
-        }
-
-        var keyCode   = event.keyCode,
-            win       = element.ownerDocument.defaultView,
-            selection = win.getSelection();
-
-        if (keyCode === 37 || keyCode === 39) {
-          if (keyCode === 37) {
-            selection.modify("extend", "left", "lineboundary");
-            if (!event.shiftKey) {
-              selection.collapseToStart();
-            }
-          }
-          if (keyCode === 39) {
-            selection.modify("extend", "right", "lineboundary");
-            if (!event.shiftKey) {
-              selection.collapseToEnd();
-            }
-          }
-          event.preventDefault();
-        }
-      });
+    if (keyCode === wysihtml5.BACKSPACE_KEY) {
+      // Delete key override for special cases
+      handleDeleteKeyPress(event, this);
     }
 
-    // --------- Shortcut logic ---------
-    dom.observe(element, "keydown", function(event) {
-      var keyCode  = event.keyCode,
-          command  = shortcuts[keyCode];
-      if ((event.ctrlKey || event.metaKey) && !event.altKey && command) {
-        that.commands.exec(command);
+    // Make sure that when pressing backspace/delete on selected images deletes the image and it's anchor
+    if (keyCode === wysihtml5.BACKSPACE_KEY || keyCode === wysihtml5.DELETE_KEY) {
+      target = this.selection.getSelectedNode(true);
+      if (target && target.nodeName === "IMG") {
         event.preventDefault();
-      }
-      if (keyCode === 8) {
-        // delete key
-        handleDeleteKeyPress(event, that.selection, element, that);
-      } else if (that.config.handleTabKey && keyCode === 9) {
-        event.preventDefault();
-        handleTabKeyDown(that, element);
-      }
-    });
-
-    // --------- Make sure that when pressing backspace/delete on selected images deletes the image and it's anchor ---------
-    dom.observe(element, "keydown", function(event) {
-      var target  = that.selection.getSelectedNode(true),
-          keyCode = event.keyCode,
-          parent;
-      if (target && target.nodeName === "IMG" && (keyCode === wysihtml5.BACKSPACE_KEY || keyCode === wysihtml5.DELETE_KEY)) { // 8 => backspace, 46 => delete
         parent = target.parentNode;
-        // delete the <img>
-        parent.removeChild(target);
-        // and it's parent <a> too if it hasn't got any other child nodes
+        parent.removeChild(target);// delete the <img>
+        // And it's parent <a> too if it hasn't got any other child nodes
         if (parent.nodeName === "A" && !parent.firstChild) {
           parent.parentNode.removeChild(parent);
         }
+        setTimeout(function() {
+          wysihtml5.quirks.redraw(element);
+        }, 0);
+      }
+    }
 
-        setTimeout(function() { wysihtml5.quirks.redraw(element); }, 0);
+    if (this.config.handleTabKey && keyCode === wysihtml5.TAB_KEY) {
+      // TAB key handling
+      event.preventDefault();
+      handleTabKeyDown(this, element);
+    }
+
+    // Firefox on OSX navigates through history when hitting CMD + Arrow right/left
+    if (browser.hasHistoryIssue() && browser.supportsSelectionModify()) {
+      if (event.keyCode === 37 && (event.metaKey || event.ctrlKey)) {
+        this.selection.toLineBoundary("left", !event.shiftKey);
         event.preventDefault();
       }
-    });
+      if (event.keyCode === 39 && (event.metaKey || event.ctrlKey)) {
+        this.selection.toLineBoundary("right", !event.shiftKey);
+        event.preventDefault();
+      }
+    }
+
+  };
+
+  var handleIframeFocus = function(event) {
+    setTimeout((function() {
+      if (this.doc.querySelector(":focus") !== this.element) {
+        this.focus();
+      }
+    }).bind(this), 0);
+  };
+
+  var handleIframeBlur = function(event) {
+    setTimeout((function() {
+      this.selection.getSelection().removeAllRanges();
+    }).bind(this), 0);
+  };
+
+  // Table management
+  // If present enableObjectResizing and enableInlineTableEditing command should be called with false to prevent native table handlers
+  var initTableHandling = function () {
+    var hideHandlers = function () {
+          this.doc.execCommand("enableObjectResizing", false, "false");
+          this.doc.execCommand("enableInlineTableEditing", false, "false");
+        },
+        iframeInitiator = (function() {
+          hideHandlers.call(this);
+          removeListeners(container, ["focus", "mouseup", "mouseover"], iframeInitiator);
+        }).bind(this);
+
+    if( this.doc.execCommand &&
+        wysihtml5.browser.supportsCommand(this.doc, "enableObjectResizing") &&
+        wysihtml5.browser.supportsCommand(this.doc, "enableInlineTableEditing"))
+    {
+      if (this.sandbox.getIframe) {
+        addListeners(container, ["focus", "mouseup", "mouseover"], iframeInitiator);
+      } else {
+        setTimeout((function() {
+          hideHandlers.call(this);
+        }).bind(this), 0);
+      }
+    }
+    this.tableSelection = wysihtml5.quirks.tableCellsSelection(this.element, this.parent);
+  };
+
+  wysihtml5.views.Composer.prototype.observe = function() {
+    var that                = this,
+        container           = (this.sandbox.getIframe) ? this.sandbox.getIframe() : this.sandbox.getContentEditable(),
+        element             = this.element,
+        focusBlurElement    = (browser.supportsEventsInIframeCorrectly() || this.sandbox.getContentEditable) ? this.element : this.sandbox.getWindow();
+
+    this.focusState = this.getValue(false, false);
+
+    // --------- destroy:composer event ---------
+    container.addEventListener(["DOMNodeRemoved"], handleDomNodeRemoved.bind(this), false);
+
+    // DOMNodeRemoved event is not supported in IE 8
+    // TODO: try to figure out a polyfill style fix, so it could be transferred to polyfills and removed if ie8 is not needed
+    if (!browser.supportsMutationEvents()) {
+      this.domNodeRemovedInterval = setInterval(function() {
+        if (!dom.contains(document.documentElement, container)) {
+          handleDomNodeRemoved.call(this);
+        }
+      }, 250);
+    }
+
+    // --------- User interactions --
+    if (this.config.handleTables) {
+      // If handleTables option is true, table handling functions are bound
+      initTableHandling.call(this);
+    }
+
+    addListeners(focusBlurElement, ["drop", "paste", "mouseup", "focus", "keyup"], handleUserInteraction.bind(this));
+    focusBlurElement.addEventListener("focus", handleFocus.bind(this), false);
+    focusBlurElement.addEventListener("blur",  handleBlur.bind(this), false);
+    
+    addListeners(this.element, ["drop", "paste", "beforepaste"], handlePaste.bind(this), false);
+    this.element.addEventListener("copy",       handleCopy.bind(this), false);
+    this.element.addEventListener("mousedown",  handleMouseDown.bind(this), false);
+    this.element.addEventListener("mouseover",  handleMouseOver.bind(this), false);
+    this.element.addEventListener("click",      handleClick.bind(this), false);
+    this.element.addEventListener("drop",       handleDrop.bind(this), false);
+    this.element.addEventListener("keyup",      handleKeyUp.bind(this), false);
+    this.element.addEventListener("keydown",    handleKeyDown.bind(this), false);
+
+    this.element.addEventListener("dragenter", (function() {
+      this.parent.fire("unset_placeholder");
+    }).bind(this), false);
 
     // --------- IE 8+9 focus the editor when the iframe is clicked (without actually firing the 'focus' event on the <body>) ---------
     if (!this.config.contentEditableMode && browser.hasIframeFocusIssue()) {
-      dom.observe(container, "focus", function() {
-        setTimeout(function() {
-          if (that.doc.querySelector(":focus") !== that.element) {
-            that.focus();
-          }
-        }, 0);
-      });
-
-      dom.observe(this.element, "blur", function() {
-        setTimeout(function() {
-          that.selection.getSelection().removeAllRanges();
-        }, 0);
-      });
+      container.addEventListener("focus", handleIframeFocus.bind(this), false);
+      container.addEventListener("blur", handleIframeBlur.bind(this), false);
     }
 
-    // --------- Show url in tooltip when hovering links or images ---------
-    var titlePrefixes = {
-      IMG: "Image: ",
-      A:   "Link: "
-    };
-
-    dom.observe(element, "mouseover", function(event) {
-      var target   = event.target,
-          nodeName = target.nodeName,
-          title;
-      if (nodeName !== "A" && nodeName !== "IMG") {
-        return;
-      }
-      var hasTitle = target.hasAttribute("title");
-      if(!hasTitle){
-        title = titlePrefixes[nodeName] + (target.getAttribute("href") || target.getAttribute("src"));
-        target.setAttribute("title", title);
-      }
-    });
   };
 })(wysihtml5);

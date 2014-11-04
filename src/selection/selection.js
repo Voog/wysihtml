@@ -737,6 +737,24 @@
       selection.modify("extend", "right", "lineboundary");
     },
 
+    // collapses selection to current line beginning or end
+    toLineBoundary: function (location, collapse) {
+      collapse = (typeof collapse === 'undefined') ? false : collapse;
+      if (wysihtml5.browser.supportsSelectionModify()) {
+        var win = this.doc.defaultView,
+            selection = win.getSelection();
+
+        selection.modify("extend", location, "lineboundary");
+        if (collapse) {
+          if (location === "left") {
+            selection.collapseToStart();
+          } else if (location === "right") {
+            selection.collapseToEnd();
+          }
+        }
+      }
+    },
+
     _selectLine_MSIE: function() {
       var range       = this.doc.selection.createRange(),
           rangeTop    = range.boundingTop,
