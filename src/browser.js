@@ -121,14 +121,6 @@ wysihtml5.browser = (function() {
     },
 
     /**
-     * Firefox on OSX navigates through history when hitting CMD + Arrow right/left
-     * TODO: Actually fixed in v29
-     */
-    hasHistoryIssue: function() {
-      return isGecko && navigator.platform.substr(0, 3) === "Mac";
-    },
-
-    /**
      * Whether the browser inserts a <br> when pressing enter in a contentEditable element
      */
     insertsLineBreaksOnReturn: function() {

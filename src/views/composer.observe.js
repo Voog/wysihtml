@@ -289,18 +289,6 @@
       handleTabKeyDown(this, element);
     }
 
-    // Firefox on OSX navigates through history when hitting CMD + Arrow right/left
-    if (browser.hasHistoryIssue() && browser.supportsSelectionModify()) {
-      if (event.keyCode === 37 && (event.metaKey || event.ctrlKey)) {
-        this.selection.toLineBoundary("left", !event.shiftKey);
-        event.preventDefault();
-      }
-      if (event.keyCode === 39 && (event.metaKey || event.ctrlKey)) {
-        this.selection.toLineBoundary("right", !event.shiftKey);
-        event.preventDefault();
-      }
-    }
-
   };
 
   var handleIframeFocus = function(event) {
@@ -326,7 +314,7 @@
         },
         iframeInitiator = (function() {
           hideHandlers.call(this);
-          removeListeners(container, ["focus", "mouseup", "mouseover"], iframeInitiator);
+          removeListeners(this.sandbox.getIframe(), ["focus", "mouseup", "mouseover"], iframeInitiator);
         }).bind(this);
 
     if( this.doc.execCommand &&
@@ -334,7 +322,7 @@
         wysihtml5.browser.supportsCommand(this.doc, "enableInlineTableEditing"))
     {
       if (this.sandbox.getIframe) {
-        addListeners(container, ["focus", "mouseup", "mouseover"], iframeInitiator);
+        addListeners(this.sandbox.getIframe(), ["focus", "mouseup", "mouseover"], iframeInitiator);
       } else {
         setTimeout((function() {
           hideHandlers.call(this);
