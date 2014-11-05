@@ -70,7 +70,10 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
       DEFAULT_NODE_NAME   = "span",
       WHITE_SPACE_REG_EXP = /\s+/,
       defaultRules        = { tags: {}, classes: {} },
-      currentRules        = {};
+      currentRules        = {},
+      blockElements       = ["ADDRESS" ,"BLOCKQUOTE" ,"CENTER" ,"DIR" ,"DIV" ,"DL" ,"FIELDSET" ,
+                             "FORM", "H1" ,"H2" ,"H3" ,"H4" ,"H5" ,"H6" ,"ISINDEX" ,"MENU",
+                             "NOFRAMES", "NOSCRIPT" ,"OL" ,"P" ,"PRE","TABLE", "UL"];
 
   /**
    * Iterates over all childs of the element, recreates them, appends them into a document fragment
@@ -137,7 +140,8 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
         i               = 0,
         fragment,
         newNode,
-        newChild;
+        newChild,
+        nodeDisplay;
 
     // Passes directly elemets with uneditable class
     if (uneditableClass && oldNodeType === 1 && wysihtml5.dom.hasClass(oldNode, uneditableClass)) {
@@ -164,7 +168,13 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
               }
             }
 
-            if (wysihtml5.dom.getStyle("display").from(oldNode) === "block") {
+            nodeDisplay = wysihtml5.dom.getStyle("display").from(oldNode);
+
+            if (nodeDisplay === '') {
+              // Handle display style when element not in dom
+              nodeDisplay = wysihtml5.lang.array(blockElements).contains(oldNode.tagName) ? "block" : "";
+            }
+            if (wysihtml5.lang.array(["block", "flex", "table"]).contains(nodeDisplay)) {
               fragment.appendChild(oldNode.ownerDocument.createElement("br"));
             }
 

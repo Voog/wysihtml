@@ -678,8 +678,7 @@ if (wysihtml5.browser.supported()) {
        }
     },
     input = "<div>Hi,<span> there<span></span>!</span></div>",
-    output = "Hi, there!";
-    
+    output = "Hi, there!<br>";
     this.equal(this.sanitize(input, rules), output);
   });
   
@@ -707,9 +706,9 @@ if (wysihtml5.browser.supported()) {
        }
     },
     input_list = "<ul><li>This</li><li>is</li><li>a</li><li>list</li></ul>",
-    output_list = "This is a list",
+    output_list = "This is a list<br>",
     input_table = "<table><tbody><tr><td>This</td><td>is</td><td>a</td><td>table</td></tr></tbody></table>",
-    output_table = "This is a table";
+    output_table = "This is a table<br>";
     
     this.equal(this.sanitize(input_list, rules), output_list, "List unwrapping working ok");
     this.equal(this.sanitize(input_table, rules), output_table, "Table unwrapping working ok");
@@ -816,8 +815,8 @@ if (wysihtml5.browser.supported()) {
     input5 = '<div style="width: 10px; height: 10px;">   <span>  </span>  </div>',
     tester = document.createElement('div');
 
-    this.equal(this.sanitize(input1, rules), "", "Empty DIV gets removed");
-    this.equal(this.sanitize(input2, rules), "   <span>  </span>  ", "DIV with no textual content gets unwrapped");
+    this.equal(this.sanitize(input1, rules), "<br>", "Empty DIV gets removed");
+    this.equal(this.sanitize(input2, rules), "   <span>  </span>  <br>", "DIV with no textual content gets unwrapped");
 
     this.equal(this.sanitize(input3, rules), input3, "DIV with img inside is kept");
     this.equal(this.sanitize(input4, rules), input4, "DIV with textual content is kept");
