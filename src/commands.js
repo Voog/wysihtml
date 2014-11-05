@@ -37,6 +37,11 @@ wysihtml5.Commands = Base.extend(
         method  = obj && obj.exec,
         result  = null;
 
+    // if composer ahs placeholder unset it before command
+    if (this.composer.hasPlaceholderSet()) {
+      this.editor.fire('unset_placeholder');
+    }
+
     this.editor.fire("beforecommand:composer");
 
     if (method) {
