@@ -172,10 +172,14 @@
      */
     setAfter: function(node) {
       var range = rangy.createRange(this.doc),
+          originalScrollTop = this.doc.documentElement.scrollTop || this.doc.body.scrollTop || this.doc.defaultView.pageYOffset,
+          originalScrollLeft = this.doc.documentElement.scrollLeft || this.doc.body.scrollLeft || this.doc.defaultView.pageXOffset,
           sel;
 
       range.setStartAfter(node);
       range.setEndAfter(node);
+      this.composer.element.focus();
+      this.doc.defaultView.scrollTo(originalScrollLeft, originalScrollTop);
       sel = this.setSelection(range);
 
       // Webkit fails to add selection if there are no textnodes in that region
