@@ -103,12 +103,13 @@
       return this.setSelection(range);
     },
 
-    // Constructs a self removing whitespace for placing selection caret when normal methods fail.
-    // Webkit has ann issue placing caret into places where there are no textnodes near by.
+    // Constructs a self removing whitespace (ain absolute positioned span) for placing selection caret when normal methods fail.
+    // Webkit has an issue with placing caret into places where there are no textnodes near by.
     creteTemporaryCaretSpaceAfter: function (node) {
       var caretPlaceholder = this.doc.createElement('span'),
           caretPlaceholderText = this.doc.createTextNode(wysihtml5.INVISIBLE_SPACE),
           placeholderRemover = (function(event) {
+            // Self-destructs the caret and keeps the text inserted into it by user
             var lastChild;
 
             this.contain.removeEventListener('mouseup', placeholderRemover);
@@ -120,6 +121,8 @@
             this.contain.removeEventListener('drop', delayedPlaceholderRemover);
             this.contain.removeEventListener('beforepaste', delayedPlaceholderRemover);
 
+            // If user inserted sth it is in the placeholder and sgould be unwrapped and stripped of invisible whitespace hack
+            // Otherwise the wrapper can just be removed
             if (caretPlaceholder && caretPlaceholder.parentNode) {
               caretPlaceholder.innerHTML = caretPlaceholder.innerHTML.replace(wysihtml5.INVISIBLE_SPACE_REG_EXP, "");
               if ((/[^\s]+/).test(caretPlaceholder.innerHTML)) {
@@ -132,25 +135,27 @@
 
             }
           }).bind(this),
-        delayedPlaceholderRemover = function (event) {
-          if (caretPlaceholder && caretPlaceholder.parentNode) {
-            setTimeout(placeholderRemover, 0);
-          }
-        },
-        keyDownHandler = function(event) {
-          if (event.which !== 8 && event.which !== 91 && event.which !== 17 && (event.which !== 86 || (!event.ctrlKey && !event.metaKey))) {
-            placeholderRemover();
-          }
-        };
+          delayedPlaceholderRemover = function (event) {
+            if (caretPlaceholder && caretPlaceholder.parentNode) {
+              setTimeout(placeholderRemover, 0);
+            }
+          },
+          keyDownHandler = function(event) {
+            if (event.which !== 8 && event.which !== 91 && event.which !== 17 && (event.which !== 86 || (!event.ctrlKey && !event.metaKey))) {
+              placeholderRemover();
+            }
+          };
 
       caretPlaceholder.style.position = 'absolute';
       caretPlaceholder.style.display = 'block';
       caretPlaceholder.style.minWidth = '1px';
+      caretPlaceholder.style.zIndex = '99999';
       caretPlaceholder.appendChild(caretPlaceholderText);
 
       node.parentNode.insertBefore(caretPlaceholder, node.nextSibling);
       this.setBefore(caretPlaceholderText);
 
+      // Remove the caret fix on any of the following events (some are delayed as content change happens after event)
       this.contain.addEventListener('mouseup', placeholderRemover);
       this.contain.addEventListener('keydown', keyDownHandler);
       this.contain.addEventListener('touchstart', placeholderRemover);
