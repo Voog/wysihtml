@@ -1,3 +1,9 @@
+*wysihtml5x 0.4.17* (November 6, 2014)
+* Updated rangy and added as node package
+* Updated qUnit for testing
+* Fixes some selection issues with webkit and autolinking
+* Refactored composer.observer for readability
+
 *wysihtml5x 0.4.16* (October 23, 2014)
 * Fix copy being broken for plain/text
 * Change deleting and selection behaviour of uneditable containers

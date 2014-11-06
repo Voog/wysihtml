@@ -1,6 +1,6 @@
 {
   "name": "wysihtml5x",
-  "version": "0.4.16",
+  "version": "0.4.17",
   "devDependencies": {
     "grunt": "~0.4.4",
     "grunt-contrib-concat": "~0.4.0",
@@ -14,7 +14,7 @@
   "dependencies": {
     "rangy": "^1.3.0-alpha.20140921"
   },
-  "description": "h1. wysihtml5x 0.4.16",
+  "description": "h1. wysihtml5x 0.4.17",
   "main": "Gruntfile.js",
   "directories": {
     "example": "examples",
