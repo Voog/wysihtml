@@ -84,6 +84,18 @@
     exec: function(composer, command, value) {
       var anchors = this.state(composer, command);
       if (anchors) {
+
+        // remove <a> tag if there's no attributes provided.
+        if (value === null && anchors.length !== null && anchors.length !== undefined && anchors.length > 0)
+        {
+          for(var i=0; i < anchors.length; i++)
+          {
+            wysihtml5.dom.unwrap(anchors[i]);
+          }
+
+          return;
+        }
+
         // Selection contains links then change attributes of these links
         composer.selection.executeAndRestore(function() {
           _changeLinks(composer, anchors, value);

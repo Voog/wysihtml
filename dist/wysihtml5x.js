@@ -6653,7 +6653,7 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
     })(),
 
     href: (function() {
-      var REG_EXP = /^(#|\/|https?:\/\/|mailto:)/i;
+      var REG_EXP = /^(#|\/|https?:\/\/|mailto:|tel:)/i;
       return function(attributeValue) {
         if (!attributeValue || !attributeValue.match(REG_EXP)) {
           return null;
@@ -10706,6 +10706,18 @@ wysihtml5.Commands = Base.extend(
     exec: function(composer, command, value) {
       var anchors = this.state(composer, command);
       if (anchors) {
+
+        // remove <a> tag if there's no attributes provided.
+        if (value === null && anchors.length !== null && anchors.length !== undefined && anchors.length > 0)
+        {
+          for(var i=0; i < anchors.length; i++)
+          {
+            wysihtml5.dom.unwrap(anchors[i]);
+          }
+
+          return;
+        }
+
         // Selection contains links then change attributes of these links
         composer.selection.executeAndRestore(function() {
           _changeLinks(composer, anchors, value);
