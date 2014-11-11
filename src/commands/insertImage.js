@@ -20,8 +20,8 @@
           textNode,
           parent;
 
-      if (image) {
-        // Image already selected, set the caret before it and delete it
+      // If image is selected and src ie empty, set the caret before it and delete the image
+      if (image && !value.src) {
         composer.selection.setBefore(image);
         parent = image.parentNode;
         parent.removeChild(image);
@@ -38,6 +38,17 @@
         return;
       }
 
+      // If image selected change attributes accordingly
+      if (image) {
+        for (var key in value) {
+          if (value.hasOwnProperty(key)) {
+            image.setAttribute(key === "className" ? "class" : key, value[key]);
+          }
+        }
+        return;
+      }
+
+      // Otherwise lets create the image
       image = doc.createElement(NODE_NAME);
 
       for (var i in value) {

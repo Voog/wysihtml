@@ -51,11 +51,7 @@
       var that = this,
           callbackWrapper = function(event) {
             var attributes = that._serialize();
-            if (attributes == that.elementToChange) {
-              that.fire("edit", attributes);
-            } else {
-              that.fire("save", attributes);
-            }
+            that.fire("save", attributes);
             that.hide();
             event.preventDefault();
             event.stopPropagation();
@@ -103,7 +99,7 @@
      * then gets returned
      */
     _serialize: function() {
-      var data    = this.elementToChange || {},
+      var data    = {},
           fields  = this.container.querySelectorAll(SELECTOR_FIELDS),
           length  = fields.length,
           i       = 0;
