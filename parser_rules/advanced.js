@@ -106,7 +106,8 @@ var wysihtml5ParserRules = {
      *                            - src:            allows something like "/foobar.jpg", "http://google.com", ...
      *                            - href:           allows something like "mailto:bert@foo.com", "http://google.com", "/foobar.jpg"
      *                            - alt:            strips unwanted characters. if the attribute is not set, then it gets set (to ensure valid and compatible HTML)
-     *                            - numbers:  ensures that the attribute only contains numeric characters
+     *                            - numbers:        ensures that the attribute only contains numeric (integer) characters (no float values or units)
+     *                            - dimension:      for with/height attributes where floating point numbrs and percentages are allowed
      *                            - any:            allows anything to pass 
      */
     "tags": {
@@ -197,10 +198,10 @@ var wysihtml5ParserRules = {
         },
         "img": {
             "check_attributes": {
-                "width": "numbers",
+                "width": "dimension",
                 "alt": "alt",
                 "src": "url", // if you compiled master manually then change this from 'url' to 'src'
-                "height": "numbers"
+                "height": "dimension"
             },
             "add_class": {
                 "align": "align_img"

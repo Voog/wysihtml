@@ -716,10 +716,20 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
       };
     })(),
 
+    // Integers. Does not work with floating point numbers and units
     numbers: (function() {
       var REG_EXP = /\D/g;
       return function(attributeValue) {
         attributeValue = (attributeValue || "").replace(REG_EXP, "");
+        return attributeValue || null;
+      };
+    })(),
+
+    // Useful for with/height attributes where floating points and percentages are allowed
+    dimension: (function() {
+      var REG_EXP = /\D*(\d+)(\.\d+)?\s?(%)?\D*/;
+      return function(attributeValue) {
+        attributeValue = (attributeValue || "").replace(REG_EXP, "$1$2$3");
         return attributeValue || null;
       };
     })(),
