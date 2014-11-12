@@ -1,0 +1,132 @@
+*wysihtml5x 0.4.17* (November 6, 2014)
+* Updated rangy and added as node package
+* Updated qUnit for testing
+* Fixes some selection issues with webkit and autolinking
+* Refactored composer.observer for readability
+
+*wysihtml5x 0.4.16* (October 23, 2014)
+* Fix copy being broken for plain/text
+* Change deleting and selection behaviour of uneditable containers
+
+*wysihtml5x 0.4.15* (September 17, 2014)
+* Fixes copying incorrrect source (spans, styles etc.) from texteditor in webkit and adds ability to add separate ruleset for paste cleanup if source origin is editor itself
+
+*wysihtml5x 0.4.14* (September 10, 2014)
+* Adds ability for check_attributes parameter in cleanup rules to define attributes whose name is beginning with string (ex: "data-*")
+* Toolbar buttons active and disabled classes can be configured
+* Paste logic rewrite. Pasted data is now precaught and separate rulesets can be defined for pasted data.
+
+*wysihtml5x 0.4.13* (August 11, 2014)
+* Adds option for parser to keep comments
+* Fixes list insertion problems in IE
+* Fixes some leaking varaibles reduces browser error messages
+* Updates rangy to latest (1.3alpha.20140804)
+
+*wysihtml5x 0.4.12* (July 03, 2014)
+* Fixes some placeholder problems targeting Firefox and Safari.
+
+*wysihtml5x 0.4.11* (July 03, 2014)
+* Tests are now made with up to date Qunit (tanks @Waxolunist)
+* Fixes an error that placeholder will not be displayed when whitespace present in editor
+
+*wysihtml5x 0.4.10* (June 27, 2014)
+* Solve inline formating issues when applying multiple styles
+* Add a special case when deleting into heading with caret
+
+*wysihtml5x 0.4.9* (June 17, 2014)
+* Prevent possible errors when uneditable element is passed through in parser
+* getValue api changed so passing no parameter will parse and remove all possible internals on result. Takes two parameters getValue(true /* parse content */, true /* ensure removal of all internals and selection markers */)
+
+*wysihtml5x 0.4.8* (June 9, 2014)
+*Improvements in list indent outdent handling
+* Add insertBlockQuote command and remove blockquote creation from formatBlock
+
+*wysihtml5x 0.4.7* (June 2, 2014)
+* Fixes mayor bug that prevents deleting some elements.
+
+*wysihtml5x 0.4.6* (June 2, 2014)
+* Added "hasVisibleContent" to parser check methods to clean up empty elements
+* Added list indent and outdent commands
+* TAB key handling is now optional and can be turned off
+* Minor bug fixes
+
+*wysihtml5x 0.4.5* (May 6, 2014)
+* Added "add_style" to parser rules
+* Added function "any" as parser class parameter to pass all classes
+* Some errors fixed
+
+*wysihtml5x 0.4.4* (Apr 25, 2014)
+* Adds TAB key support
+* Improves list handling and adds possibility to create nested lists
+* Improved behaviour of commands that rely on formatInline
+* Added text alignment with style commands (alignLeftStyle, alignRightStyle, alignCenterStyle)
+* Changes to grunt build rather than makefile
+* Updated to newer rangy 1.3alpha
+* Dropped Old Opera 12 support
+* Minor bug fixes
+
+*wysihtml5x 0.4.3* (Mar 02, 2014)
+* Adds command "formatCode"
+* Fixes some IE8 mayor bugs
+
+*wysihtml5x 0.4.2* (Feb 13, 2014)
+* Adds cell selection events "tableselectstart", "tableselectchange"
+* Fixes configuration file issue of overriding link target attribute
+* Add bower support
+
+*wysihtml5x 0.4.1* (Jan 28, 2014)
+* "createTable" command has one additional parameter "tableStyle" accepting CSS string
+* Selecting more than one table cell removes conflicting text selection
+* Table api has now canMerge function for checking if cell merging is allowed on cells selected
+* Method "any" added to Parser rules check_attributes enabling all attributes values to pass
+* Various bugs fixed
+
+*wysihtml5x 0.4.0* (Dec 12, 2013)
+* Changed syntax of background and foreground color with style commands
+* Anchor creting and removing logic changed
+* Default build is without internal toolbar functions and build with "-toolbar" suffix contains default toolbar functions
+
+*wysihtml5x 0.4.0-beta2* (Nov 7, 2013)
+* Support for contenteditable without iframe sandbox when initiated on div instead of textarea
+* Table creation and handling commands added
+* Improved parser with options to: unwrap tag instead of remove, keep defined styles, complex object type definitions for allowing elements.
+* Ability to add uneditable area inside editor text flow (useful when building modules like video tools, advanced image editor etc.)
+* Improved formatblock handling
+* Ability for user to remove formating with only collapsed caret. (without having to select exactly whole text)
+* Minor performance fixes
+* Ability to use inline styles if needed
+
+*wysihtml5 0.3.0* (May 18, 2012)
+
+* Support for query command groups in toolbar
+* Don't overwrite title attribute on img and a tags (thx to @bobanj, #65)
+* Fix copying of attributes (eg. spellcheck="false")
+* Allow toolbar button other than anchors
+* Fix another keyboard issue on Windows (#46)
+* Improve insertUnorderedList and insertOrderedList commands
+* Now possible to specify text of a hyperlink (thx to @jhollingworth, #45)
+
+*wysihtml5 0.3.0 RC 2* (March 29, 2012)
+
+* Changed License from GPL to MIT
+* Now possible to use multiple editors on one page (#20)
+* Fixed random IE error happening when retrieving currentStyle (#21)
+* Fixed Safari context menu issue (#27)
+* Fixed weird issue in Chrome happening when the editor was initialized when the textarea has been inserted dynamically (#15)
+* Fixed issue happening with the polish keyboard layout (#16)
+* Make sure that the editor iframe uses same IE document mode as it's parent
+
+*wysihtml5 0.3.0 RC 1* (February 5, 2012)
+
+* Basic iOS support (thx @javan for bearing with me)
+* Proper undo/redo support for all browsers except IE
+* Added more events: beforecommand:composer, aftercommand:composer, undo:composer, redo:composer, show:dialog, save:dialog, cancel:dialog (thx to @martinnormark)
+* Fixed an annoying text pasting behavior
+* Allow nested toolbar buttons (thx to @kagd)
+* Updated rangy library to version 1.2.2
+* Improve handling of line breaks in list elements for even cleaner HTML output
+* The editor now also copies border-radius styles from the textarea to the rich text element (thx to @henningthies)
+
+*wysihtml5 0.2.0* (July 13, 2011)
+
+* Library agnostic (no Prototype library needed anymore)

@@ -1,3 +1,5 @@
 .tm_sync.config
 .idea
 .DS_Store
+node_modules
+local_assets
