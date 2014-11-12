@@ -7,20 +7,24 @@
  *    });
  */
 (function(wysihtml5) {
-
   wysihtml5.dom.delegate = function(container, selector, eventName, handler) {
-    return wysihtml5.dom.observe(container, eventName, function(event) {
-      var target    = event.target,
-          match     = wysihtml5.lang.array(container.querySelectorAll(selector));
+    var callback = function(event) {
+      var target = event.target,
+          element = (target.nodeType === 3) ? target.parentNode : target, // IE has .contains only seeing elements not textnodes
+          matches  = container.querySelectorAll(selector);
 
-      while (target && target !== container) {
-        if (match.contains(target)) {
-          handler.call(target, event);
-          break;
+      for (var i = 0, max = matches.length; i < max; i++) {
+        if (matches[i].contains(element)) {
+          handler.call(matches[i], event);
         }
-        target = target.parentNode;
       }
-    });
-  };
+    };
 
+    container.addEventListener(eventName, callback, false);
+    return {
+      stop: function() {
+        container.removeEventListener(eventName, callback, false);
+      }
+    };
+  };
 })(wysihtml5);
