@@ -73,7 +73,7 @@
         element = composer.element;
 
     if (selection.isCollapsed()) {
-      if (selection.caretIsInTheBeginnig('LI')) {
+      if (selection.caretIsInTheBeginnig('li')) {
         event.preventDefault();
         composer.commands.exec('outdentList');
       } else if (selection.caretIsInTheBeginnig()) {
@@ -122,7 +122,7 @@
   var handleTabKeyDown = function(composer, element) {
     if (!composer.selection.isCollapsed()) {
       composer.selection.deleteContents();
-    } else if (composer.selection.caretIsInTheBeginnig('LI')) {
+    } else if (composer.selection.caretIsInTheBeginnig('li')) {
       if (composer.commands.exec('indentList')) return;
     }
 
@@ -234,7 +234,7 @@
     if (this.config.uneditableContainerClassname) {
       // If uneditables is configured, makes clicking on uneditable move caret after clicked element (so it can be deleted like text)
       // If uneditable needs text selection itself event.stopPropagation can be used to prevent this behaviour
-      var uneditable = wysihtml5.dom.getParentElement(event.target, { className: this.config.uneditableContainerClassname }, false, this.element);
+      var uneditable = wysihtml5.dom.getParentElement(event.target, { query: "." + this.config.uneditableContainerClassname }, false, this.element);
       if (uneditable) {
         this.selection.setAfter(uneditable);
       }

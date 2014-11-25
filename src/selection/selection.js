@@ -289,6 +289,16 @@
       return nodes;
     },
 
+    filterElements: function(filter) {
+      var ranges = this.getOwnRanges(),
+          nodes = [], curNodes;
+      for (var i = 0, maxi = ranges.length; i < maxi; i++) {
+        curNodes = ranges[i].getNodes([1], filter);
+        nodes = nodes.concat(curNodes);
+      }
+      return nodes;
+    },
+
     containsUneditable: function() {
       var uneditables = this.getOwnUneditables(),
           selection = this.getSelection();
@@ -309,10 +319,10 @@
           startParent, endParent, uneditables, ev;
 
       if (this.unselectableClass) {
-        if ((startParent = wysihtml5.dom.getParentElement(range.startContainer, { className: this.unselectableClass }, false, this.contain))) {
+        if ((startParent = wysihtml5.dom.getParentElement(range.startContainer, { query: "." + this.unselectableClass }, false, this.contain))) {
           range.setStartBefore(startParent);
         }
-        if ((endParent = wysihtml5.dom.getParentElement(range.endContainer, { className: this.unselectableClass }, false, this.contain))) {
+        if ((endParent = wysihtml5.dom.getParentElement(range.endContainer, { query: "." + this.unselectableClass }, false, this.contain))) {
           range.setEndAfter(endParent);
         }
 
@@ -382,7 +392,7 @@
           curEl, parents = [];
 
       for (var i = 0, maxi = nodes.length; i < maxi; i++) {
-        curEl = (nodes[i].nodeName &&  nodes[i].nodeName === 'LI') ? nodes[i] : wysihtml5.dom.getParentElement(nodes[i], { nodeName: ['LI']}, false, this.contain);
+        curEl = (nodes[i].nodeName &&  nodes[i].nodeName === 'LI') ? nodes[i] : wysihtml5.dom.getParentElement(nodes[i], { query: 'li'}, false, this.contain);
         if (curEl) {
           parents.push(curEl);
         }
@@ -434,7 +444,7 @@
             node = selection.anchorNode,
             offset = selection.anchorOffset;
         if (ofNode && node) {
-          return (offset === 0 && (node.nodeName && node.nodeName === ofNode.toUpperCase() || wysihtml5.dom.getParentElement(node.parentNode, { nodeName: ofNode }, 1)));
+          return (offset === 0 && (node.nodeName && node.nodeName === ofNode.toUpperCase() || wysihtml5.dom.getParentElement(node.parentNode, { query: ofNode }, 1)));
         } else if (node) {
           return (offset === 0 && !this.getPreviousNode(node, true));
         }

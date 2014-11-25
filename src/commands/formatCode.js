@@ -44,7 +44,7 @@ wysihtml5.commands.formatCode = {
         selectedNode.firstChild && selectedNode.firstChild.nodeName && selectedNode.firstChild.nodeName == "CODE") {
       return selectedNode;
     } else {
-      return wysihtml5.dom.getParentElement(selectedNode, { nodeName: "CODE" }) && wysihtml5.dom.getParentElement(selectedNode, { nodeName: "PRE" });
+      return wysihtml5.dom.getParentElement(selectedNode, { query: "pre code" });
     }
   }
 };

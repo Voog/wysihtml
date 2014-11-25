@@ -8,7 +8,10 @@
     },
 
     state: function(composer, command) {
-      return wysihtml5.commands.formatBlock.state(composer, "formatBlock", null, null, null, STYLE_STR, REG_EXP);
+      return wysihtml5.commands.formatBlock.state(composer, "formatBlock", {
+        styleProperty: "textAlign",
+        styleValue: "left"
+      });
     }
   };
 })(wysihtml5);

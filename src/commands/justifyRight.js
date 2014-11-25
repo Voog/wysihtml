@@ -8,7 +8,7 @@
     },
 
     state: function(composer, command) {
-      return wysihtml5.commands.formatBlock.state(composer, "formatBlock", null, CLASS_NAME, REG_EXP);
+      return wysihtml5.commands.formatBlock.state(composer, "formatBlock", { query: "." + CLASS_NAME });
     }
   };
 })(wysihtml5);

@@ -1,9 +1,14 @@
 (function(wysihtml5) {
+
+  // 
+  var styleFloatProperty = ("styleFloat" in document.createElement("div").style) ? "styleFloat" : "cssFloat";
+
   var dom                     = wysihtml5.dom,
       // Following elements are grouped
       // when the caret is within a H1 and the H4 is invoked, the H1 should turn into H4
       // instead of creating a H4 within a H1 which would result in semantically invalid html
-      BLOCK_ELEMENTS_GROUP    = ["H1", "H2", "H3", "H4", "H5", "H6", "P", "PRE", "DIV"];
+      BLOCK_ELEMENTS_GROUP    = ["H1", "H2", "H3", "H4", "H5", "H6", "P", "PRE", "DIV"],
+      BLOCK_ELEMENTS_GROUP_QUERY = "h1, h2, h3, h4, h5, h6, p, pre, div";
 
   /**
    * Remove similiar classes (based on classRegExp)
@@ -158,7 +163,7 @@
         composer.selection.executeAndRestoreRangy(function() {
           for (var n = selectedNodes.length; n--;) {
             blockElement = dom.getParentElement(selectedNodes[n], {
-              nodeName: BLOCK_ELEMENTS_GROUP
+              query: BLOCK_ELEMENTS_GROUP_QUERY
             });
             if (blockElement == composer.element) {
               blockElement = null;
@@ -192,30 +197,27 @@
       });
     },
 
-    state: function(composer, command, nodeName, className, classRegExp, cssStyle, styleRegExp) {
-      var nodes = composer.selection.getSelectedOwnNodes(),
-          parents = [],
+    state: function(composer, command, properties) {
+      
+      if (typeof properties === "string") {
+        properties = {
+          query: properties
+        };
+      }
+
+      var nodes = composer.selection.filterElements((function (element) {
+            return wysihtml5.dom.domNode(element).test(properties);
+          }).bind(this)),
+          parentNodes = composer.selection.getSelectedOwnNodes(),
           parent;
 
-      nodeName = typeof(nodeName) === "string" ? nodeName.toUpperCase() : nodeName;
-
-      //var selectedNode = composer.selection.getSelectedNode();
-      for (var i = 0, maxi = nodes.length; i < maxi; i++) {
-        parent = dom.getParentElement(nodes[i], {
-          nodeName:     nodeName,
-          className:    className,
-          classRegExp:  classRegExp,
-          cssStyle:     cssStyle,
-          styleRegExp:  styleRegExp
-        });
-        if (parent && wysihtml5.lang.array(parents).indexOf(parent) == -1) {
-          parents.push(parent);
+      for (var i = 0, maxi = parentNodes.length; i < maxi; i++) {
+        parent = dom.getParentElement(parentNodes[i], properties, null, composer.element);
+        if (parent && nodes.indexOf(parent) === -1) {
+          nodes.push(parent);
         }
       }
-      if (parents.length == 0) {
-        return false;
-      }
-      return parents;
+      return (nodes.length === 0) ? false : nodes;
     }
 
 
