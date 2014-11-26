@@ -150,7 +150,8 @@ if (!Function.prototype.bind) {
 
 // Element.matches Adds ie8 support and unifies nonstandard function names in other browsers
 this.Element && function(ElementPrototype) {
-  ElementPrototype.matchesSelector = ElementPrototype.matchesSelector ||
+  ElementPrototype.matches = ElementPrototype.matches ||
+  ElementPrototype.matchesSelector ||
   ElementPrototype.mozMatchesSelector ||
   ElementPrototype.msMatchesSelector ||
   ElementPrototype.oMatchesSelector ||

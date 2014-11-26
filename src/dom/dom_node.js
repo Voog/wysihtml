@@ -121,7 +121,7 @@
               styles = (Array.isArray(properties.styleProperty)) ? properties.styleProperty : [properties.styleProperty];
           for (var j = 0, maxStyleP = styles.length; j < maxStyleP; j++) {
             // Some old IE-s have different property name for cssFloat
-            prop = (styles[j] === "cssFloat") ? styleFloatProperty : styles[j];
+            prop = wysihtml5.browser.fixStyleKey(styles[j]);
             if (node.style[prop]) {
               if (properties.styleValue) {
                 // Style value as additional parameter

@@ -382,6 +382,15 @@ wysihtml5.browser = (function() {
     */
     supportsModenPaste: function () {
       return !("clipboardData" in window);
+    },
+
+    // Unifies the property names of element.style by returning the suitable property name for current browser
+    // Input property key must be the standard
+    fixStyleKey: function(key) {
+      if (key === "cssFloat") {
+        return ("styleFloat" in document.createElement("div").style) ? "styleFloat" : "cssFloat";
+      }
+      return key;
     }
   };
 })();

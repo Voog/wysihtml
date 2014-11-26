@@ -175,7 +175,7 @@
      * @example
      *    selection.setBefore(myElement);
      */
-    setAfter: function(node) {
+    setAfter: function(node, notVisual) {
       var range = rangy.createRange(this.doc),
           originalScrollTop = this.doc.documentElement.scrollTop || this.doc.body.scrollTop || this.doc.defaultView.pageYOffset,
           originalScrollLeft = this.doc.documentElement.scrollLeft || this.doc.body.scrollLeft || this.doc.defaultView.pageXOffset,
@@ -190,7 +190,20 @@
       // Webkit fails to add selection if there are no textnodes in that region
       // (like an uneditable container at the end of content).
       if (!sel) {
-        this.creteTemporaryCaretSpaceAfter(node);
+        if (notVisual) {
+          // If setAfter is used as internal between actions, self-removing caretPlaceholder has simpler implementation
+          // and remove itself in call stack end instead on user interaction 
+          var caretPlaceholder = this.doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
+          node.parentNode.insertBefore(caretPlaceholder, node.nextSibling);
+          this.selectNode(caretPlaceholder);
+          setTimeout(function() {
+            if (caretPlaceholder && caretPlaceholder.parentNode) {
+              caretPlaceholder.parentNode.removeChild(caretPlaceholder);
+            }
+          }, 0);
+        } else {
+          this.creteTemporaryCaretSpaceAfter(node);
+        }
       }
       return sel;
     },
@@ -292,8 +305,11 @@
     filterElements: function(filter) {
       var ranges = this.getOwnRanges(),
           nodes = [], curNodes;
+
       for (var i = 0, maxi = ranges.length; i < maxi; i++) {
-        curNodes = ranges[i].getNodes([1], filter);
+        curNodes = ranges[i].getNodes([1], function(element){
+          return filter(element, ranges[i]);
+        });
         nodes = nodes.concat(curNodes);
       }
       return nodes;
@@ -632,6 +648,24 @@
       var range = this.getRange();
       if (range) {
         range.insertNode(node);
+      }
+    },
+
+    splitElementAtCaret: function (element) {
+      var sel = this.getSelection(),
+          range, contentAfterRangeStart;
+
+      if (sel.rangeCount > 0) {
+        range = sel.getRangeAt(0).cloneRange(); // Create a copy of the selection range to work with
+
+        range.setEndAfter(element); // Place the end of the range after the element
+        contentAfterRangeStart = range.extractContents(); // Extract the contents of the element after the caret into a fragment
+        range.collapseAfter(element); // Collapse the range immediately after the element
+        range.insertNode(contentAfterRangeStart); // Insert the content
+
+        // Move the caret to the insertion point
+
+        this.setAfter(element, true);
       }
     },
 
