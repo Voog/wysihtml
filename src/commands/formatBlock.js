@@ -65,9 +65,7 @@
 
     if (firstOuterBlock) {
       // If selection starts inside un-nestable block, split-escape the unnestable point and insert node between
-      composer.selection.splitElementAtCaret(firstOuterBlock);
-      // Selection may change so should not use range directly
-      composer.selection.insertNode(element);
+      composer.selection.splitElementAtCaret(firstOuterBlock, element);
     } else {
       // Otherwise just insert
       r.insertNode(element);
@@ -87,7 +85,8 @@
       var doc = composer.doc,
           defaultNodeName = composer.config.useLineBreaks ? "DIV" : "P",
           newNodeName = options.nodeName || defaultNodeName,
-          currentBlockElements, blockElement, ranges;
+          newBlockElements = [],
+          currentBlockElements, blockElement, ranges, range;
           
 
       if (composer.selection.isCollapsed()) {
@@ -95,6 +94,7 @@
 
         // Create new block wrapper element
         blockElement = applyOptionsToElement(doc.createElement(newNodeName), options);
+        blockElement.appendChild(doc.createTextNode(wysihtml5.INVISIBLE_SPACE));
 
         // Find current selection unwrappable block level elements (if new node can not be wrapped)
         // And if found, split outermost block element (assumed last in list) at caret
@@ -102,11 +102,14 @@
           query: (newNodeName === "DIV") ? BLOCK_ELEMENTS : UNNESTABLE_BLOCK_ELEMENTS
         });
         if (currentBlockElements.length > 0) {
-          composer.selection.splitElementAtCaret(currentBlockElements.pop());
+          // Split outer block element and insert the new element
+          composer.selection.splitElementAtCaret(currentBlockElements.pop(), blockElement);
+        } else {
+          // Insert the new element
+          composer.selection.insertNode(blockElement);
         }
 
-        // Insert the new element
-        composer.selection.insertNode(blockElement);
+        composer.selection.selectNode(blockElement.firstChild);
 
       } else {
         // Selection is not collapsed
@@ -116,16 +119,21 @@
         for (var i = ranges.length; i--;) {
           // Create new block wrapper element (on every iteration)
           blockElement = applyOptionsToElement(doc.createElement(newNodeName), options);
+          newBlockElements.unshift(blockElement);
           // Wrap the current range with this block element
           wrapRangeWithElement(ranges[i], blockElement, composer);
         }
 
         // Remove empty block elements that may be left behind
         cleanup(composer.element);
+
+        // Restore correct selection
+        range = composer.selection.createRange();
+        range.setStartBefore(newBlockElements[0]);
+        range.setEndAfter(newBlockElements[newBlockElements.length - 1]);
+        composer.selection.setSelection(range);
       }
 
-      // Set correct selection
-      composer.selection.selectNode(blockElement);
     },
 
     state: function(composer, command, properties) {

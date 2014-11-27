@@ -651,7 +651,7 @@
       }
     },
 
-    splitElementAtCaret: function (element) {
+    splitElementAtCaret: function (element, insertNode) {
       var sel = this.getSelection(),
           range, contentAfterRangeStart;
 
@@ -660,12 +660,11 @@
 
         range.setEndAfter(element); // Place the end of the range after the element
         contentAfterRangeStart = range.extractContents(); // Extract the contents of the element after the caret into a fragment
-        range.collapseAfter(element); // Collapse the range immediately after the element
-        range.insertNode(contentAfterRangeStart); // Insert the content
 
-        // Move the caret to the insertion point
+        element.parentNode.insertBefore(contentAfterRangeStart, element.nextSibling);
+        element.parentNode.insertBefore(insertNode, element.nextSibling);
 
-        this.setAfter(element, true);
+        range.selectNode(insertNode);
       }
     },
 
