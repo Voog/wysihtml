@@ -1,3 +1,4 @@
+// TODO: improve so that blockquote would not be added inside h1-6 and p where it is not actually allowed
 (function(wysihtml5) {
 
   wysihtml5.commands.insertBlockQuote = {

@@ -1,10 +1,15 @@
+/* Formatblock
+ * Is used to insert block level elements 
+ * It tries to solve the case that some block elements should not contain other block level elements (h1-6, p, ...)
+ * 
+*/
 (function(wysihtml5) {
 
   var dom = wysihtml5.dom,
       // When the caret is within a H1 and the H4 is invoked, the H1 should turn into H4
       // instead of creating a H4 within a H1 which would result in semantically invalid html
       UNNESTABLE_BLOCK_ELEMENTS = "h1, h2, h3, h4, h5, h6, p, pre, pre > code";
-      BLOCK_ELEMENTS = "h1, h2, h3, h4, h5, h6, p, pre, div, pre > code";
+      BLOCK_ELEMENTS = "h1, h2, h3, h4, h5, h6, p, pre, div, blockquote, pre > code";
 
   // Removes empty block level elements
   function cleanup (container) {
@@ -14,6 +19,10 @@
         elements[i].parentNode.removeChild(elements[i]);
       }
     }
+  }
+
+  function defaultNodeName(composer) {
+    return composer.config.useLineBreaks ? "DIV" : "P";
   }
 
   // The outermost un-nestable block element parent of from node
@@ -31,45 +40,114 @@
     return block;
   }
 
-  // Formats an element according to options nodeName, className, style 
-  function applyOptionsToElement(element, options) {
+  // Formats an element according to options nodeName, className, styleProperty, styleValue
+  // If element is not defined, creates new element
+  function applyOptionsToElement(element, options, composer) {
+
+    if (!element) {
+      element = composer.doc.createElement(options.nodeName || defaultNodeName(composer));
+      // Add invisible space as otherwise webkit cannot set selection or range to it correctly
+      element.appendChild(composer.doc.createTextNode(wysihtml5.INVISIBLE_SPACE));
+    }
+
     if (options.nodeName && element.nodeName !== options.nodeName) {
       element = dom.renameElement(element, options.nodeName);
     }
     if (options.className) {
       element.classList.add(options.className);
     }
-    if (options.style) {
-      element.style[wysihtml5.browser.fixStyleKey(options.style.prop)] = options.style.val;
+    if (options.styleProperty && typeof options.styleValue !== "undefined") {
+      element.style[wysihtml5.browser.fixStyleKey(options.styleProperty)] = options.styleValue;
     }
     return element;
   }
 
-  // Wrap the range with a block level element
-  // If element is one of unnestable block elements (ex: h2 inside h1), split nodes and insert between so nesting does not occur
-  function wrapRangeWithElement(range, element, composer) {
-    var r = range.cloneRange(),
-        rangeStartContainer = r.startContainer,
-        content = r.extractContents(), // removes the contents of selection from dom to documentfragment
-        contentBlocks = (element.matches(UNNESTABLE_BLOCK_ELEMENTS)) ? content.querySelectorAll(UNNESTABLE_BLOCK_ELEMENTS) : [], // Find unnestable block elements in extracted contents (must be unwrapped) 
-        firstOuterBlock = findOuterBlock(rangeStartContainer, composer.element); // The outermost un-nestable block element parent of selection start
-        
-    // Removes un-nestable block level elements from inside content
+  // Unwraps block level elements from inside content
+  // Useful as not all block level elements can contain other block-levels
+  function unwrapBlocksFromContent (element) {
+    var contentBlocks = element.querySelectorAll(BLOCK_ELEMENTS) || []; // Find unnestable block elements in extracted contents
+
     for (var i = contentBlocks.length; i--;) {
-      contentBlocks[i].parentNode.insertBefore(composer.doc.createElement('BR'), contentBlocks[i].nextSibling);
+      if (!contentBlocks[i].nextSibling || contentBlocks[i].nextSibling.nodeType !== 1 || contentBlocks[i].nextSibling.nodeName !== 'BR') {
+        contentBlocks[i].parentNode.insertBefore(contentBlocks[i].ownerDocument.createElement('BR'), contentBlocks[i].nextSibling);
+      }
       wysihtml5.dom.unwrap(contentBlocks[i]);
     }
+  }
 
-    // Wrap contents with given wrapper element
-    element.appendChild(content);
+  // Wrap the range with a block level element
+  // If element is one of unnestable block elements (ex: h2 inside h1), split nodes and insert between so nesting does not occur
+  function wrapRangeWithElement(range, options, defaultName, composer) {
+    var r = range.cloneRange(),
+        rangeStartContainer = r.startContainer,
+        content = r.extractContents(),
+        fragment = composer.doc.createDocumentFragment(),
+        defaultOptions = wysihtml5.lang.object(options).clone(true),
+        firstOuterBlock = findOuterBlock(rangeStartContainer, composer.element), // The outermost un-nestable block element parent of selection start
+        wrapper, blocks;
+
+    defaultOptions.nodeName = defaultOptions.nodeName || defaultName || defaultNodeName(composer);
+
+    while(content.firstChild) {
+      if (content.firstChild.nodeType == 1 && content.firstChild.matches(BLOCK_ELEMENTS)) {
+        applyOptionsToElement(content.firstChild, options, composer);
+        if (content.firstChild.matches(UNNESTABLE_BLOCK_ELEMENTS)) {
+          unwrapBlocksFromContent(content.firstChild);
+        }
+        fragment.appendChild(content.firstChild);
+      } else {
+        wrapper = applyOptionsToElement(null, defaultOptions, composer);
+        while(content.firstChild && (content.firstChild.nodeType !== 1 || !content.firstChild.matches(BLOCK_ELEMENTS))) {
+          if (content.firstChild.nodeType == 1 && wrapper.matches(UNNESTABLE_BLOCK_ELEMENTS)) {
+            unwrapBlocksFromContent(content.firstChild);
+          }
+          wrapper.appendChild(content.firstChild);
+        }
+        fragment.appendChild(wrapper);
+      }
+    }
+
+    blocks = wysihtml5.lang.array(fragment.childNodes).get();
 
     if (firstOuterBlock) {
       // If selection starts inside un-nestable block, split-escape the unnestable point and insert node between
-      composer.selection.splitElementAtCaret(firstOuterBlock, element);
+      composer.selection.splitElementAtCaret(firstOuterBlock, fragment);
     } else {
       // Otherwise just insert
-      r.insertNode(element);
+      r.insertNode(fragment);
     }
+
+    return blocks;
+  }
+
+  // If no nodename given try to find closest block level element and if found use it's nodeName in options
+  function getOptionsWithNodeName(options, composer) {
+    if (!options.nodeName) {
+      var correctedOptions = wysihtml5.lang.object(options).clone(true),
+          element = composer.selection.getOwnRanges()[0].startContainer;
+
+      correctedOptions.nodeName = getParentBlockNodeName(element, composer) || defaultNodeName(composer);
+      return correctedOptions;
+    } else {
+      return options;
+    }
+  }
+
+  function getParentBlockNodeName(element, composer) {
+    var parentNode = wysihtml5.dom.getParentElement(element, {
+          query: BLOCK_ELEMENTS
+        }, null, composer.element);
+
+    return (parentNode) ? parentNode.nodeName : null;
+  }
+
+  // Used for removing styleValue in options, as it will return all elements with appropriate style property then
+  function withoutStyleValue(options) {
+    var valuelessOptions = wysihtml5.lang.object(options).clone(true);
+    if (typeof valuelessOptions.styleValue !== "undefined") {
+      delete valuelessOptions.styleValue;
+    }
+    return valuelessOptions;
   }
 
   wysihtml5.commands.formatBlock = {
@@ -83,29 +161,27 @@
       }
 
       var doc = composer.doc,
+
           defaultNodeName = composer.config.useLineBreaks ? "DIV" : "P",
           newNodeName = options.nodeName || defaultNodeName,
-          newBlockElements = [],
-          currentBlockElements, blockElement, ranges, range;
-          
 
+          newBlockElements = [],
+
+          shouldSplitElement, blockElement, ranges, range;
+          
       if (composer.selection.isCollapsed()) {
         // Selection is caret
 
-        // Create new block wrapper element
-        blockElement = applyOptionsToElement(doc.createElement(newNodeName), options);
-        blockElement.appendChild(doc.createTextNode(wysihtml5.INVISIBLE_SPACE));
+        // Create new block wrapper element (For node creation nodeName is needed)
+        blockElement = applyOptionsToElement(null, getOptionsWithNodeName(options, composer), composer);
 
-        // Find current selection unwrappable block level elements (if new node can not be wrapped)
-        // And if found, split outermost block element (assumed last in list) at caret
-        currentBlockElements = this.state(composer, command, {
-          query: (newNodeName === "DIV") ? BLOCK_ELEMENTS : UNNESTABLE_BLOCK_ELEMENTS
-        });
-        if (currentBlockElements.length > 0) {
-          // Split outer block element and insert the new element
-          composer.selection.splitElementAtCaret(currentBlockElements.pop(), blockElement);
+        // Find current selection states unwrappable block level elements (blocks-levels can not be inserted into those)
+        // If found, split outermost block element (assumed last in list) at caret.
+        // Then insert new element  
+        shouldSplitElement = this.state(composer, command, blockElement.matches(UNNESTABLE_BLOCK_ELEMENTS) ? { query:  UNNESTABLE_BLOCK_ELEMENTS } : withoutStyleValue(options));
+        if (shouldSplitElement.length > 0) {
+          composer.selection.splitElementAtCaret(shouldSplitElement.pop(), blockElement);
         } else {
-          // Insert the new element
           composer.selection.insertNode(blockElement);
         }
 
@@ -117,11 +193,7 @@
         // Get all selection ranges of current composer and iterate
         ranges = composer.selection.getOwnRanges();
         for (var i = ranges.length; i--;) {
-          // Create new block wrapper element (on every iteration)
-          blockElement = applyOptionsToElement(doc.createElement(newNodeName), options);
-          newBlockElements.unshift(blockElement);
-          // Wrap the current range with this block element
-          wrapRangeWithElement(ranges[i], blockElement, composer);
+          newBlockElements = newBlockElements.concat(wrapRangeWithElement(ranges[i], options, getParentBlockNodeName(ranges[i].startContainer, composer), composer));
         }
 
         // Remove empty block elements that may be left behind

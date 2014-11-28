@@ -653,7 +653,8 @@
 
     splitElementAtCaret: function (element, insertNode) {
       var sel = this.getSelection(),
-          range, contentAfterRangeStart;
+          range, contentAfterRangeStart,
+          firstChild, lastChild;
 
       if (sel.rangeCount > 0) {
         range = sel.getRangeAt(0).cloneRange(); // Create a copy of the selection range to work with
@@ -662,9 +663,18 @@
         contentAfterRangeStart = range.extractContents(); // Extract the contents of the element after the caret into a fragment
 
         element.parentNode.insertBefore(contentAfterRangeStart, element.nextSibling);
+
+        firstChild = insertNode.firstChild;
+        lastChild = insertNode.lastChild;
+
         element.parentNode.insertBefore(insertNode, element.nextSibling);
 
-        range.selectNode(insertNode);
+        // Select inserted node contents
+        if (firstChild && lastChild) {
+           range.setStartBefore(firstChild);
+           range.setEndAfter(lastChild);
+           this.setSelection(range);
+        }
       }
     },
 
