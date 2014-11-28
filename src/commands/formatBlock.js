@@ -152,7 +152,9 @@
 
   wysihtml5.commands.formatBlock = {
     exec: function(composer, command, options) {
-      
+      var newBlockElements = [],
+          shouldSplitElement, blockElement, ranges, range;
+
       // If properties is passed as a string, look for tag with that tagName/query 
       if (typeof options === "string") {
         options = {
@@ -160,17 +162,7 @@
         };
       }
 
-      var doc = composer.doc,
-
-          defaultNodeName = composer.config.useLineBreaks ? "DIV" : "P",
-          newNodeName = options.nodeName || defaultNodeName,
-
-          newBlockElements = [],
-
-          shouldSplitElement, blockElement, ranges, range;
-          
       if (composer.selection.isCollapsed()) {
-        // Selection is caret
 
         // Create new block wrapper element (For node creation nodeName is needed)
         blockElement = applyOptionsToElement(null, getOptionsWithNodeName(options, composer), composer);
@@ -184,11 +176,11 @@
         } else {
           composer.selection.insertNode(blockElement);
         }
-
+        
+        // Restore correct selection
         composer.selection.selectNode(blockElement.firstChild);
 
       } else {
-        // Selection is not collapsed
 
         // Get all selection ranges of current composer and iterate
         ranges = composer.selection.getOwnRanges();
