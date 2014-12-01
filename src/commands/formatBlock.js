@@ -12,8 +12,12 @@
       BLOCK_ELEMENTS = "h1, h2, h3, h4, h5, h6, p, pre, div, blockquote, pre > code";
 
   // Removes empty block level elements
-  function cleanup (container) {
-    var elements = container.querySelectorAll(BLOCK_ELEMENTS);
+  function cleanup(composer) {
+    var container = composer.element,
+        allElements = container.querySelectorAll(BLOCK_ELEMENTS),
+        uneditables = container.querySelectorAll(composer.config.uneditableContainerClassname),
+        elements = wysihtml5.lang.array(allElements).without(uneditables);
+
     for (var i = elements.length; i--;) {
       if (elements[i].innerHTML.trim() === "") {
         elements[i].parentNode.removeChild(elements[i]);
@@ -42,6 +46,7 @@
 
   // Formats an element according to options nodeName, className, styleProperty, styleValue
   // If element is not defined, creates new element
+  // if opotions is null, remove format instead
   function applyOptionsToElement(element, options, composer) {
 
     if (!element) {
@@ -82,28 +87,57 @@
         rangeStartContainer = r.startContainer,
         content = r.extractContents(),
         fragment = composer.doc.createDocumentFragment(),
-        defaultOptions = wysihtml5.lang.object(options).clone(true),
+        defaultOptions = (options) ? wysihtml5.lang.object(options).clone(true) : null,
         firstOuterBlock = findOuterBlock(rangeStartContainer, composer.element), // The outermost un-nestable block element parent of selection start
-        wrapper, blocks;
+        wrapper, blocks, children;
 
-    defaultOptions.nodeName = defaultOptions.nodeName || defaultName || defaultNodeName(composer);
+    if (defaultOptions) {
+      defaultOptions.nodeName = defaultOptions.nodeName || defaultName || defaultNodeName(composer);
+    }
 
     while(content.firstChild) {
+      
       if (content.firstChild.nodeType == 1 && content.firstChild.matches(BLOCK_ELEMENTS)) {
-        applyOptionsToElement(content.firstChild, options, composer);
-        if (content.firstChild.matches(UNNESTABLE_BLOCK_ELEMENTS)) {
-          unwrapBlocksFromContent(content.firstChild);
-        }
-        fragment.appendChild(content.firstChild);
-      } else {
-        wrapper = applyOptionsToElement(null, defaultOptions, composer);
-        while(content.firstChild && (content.firstChild.nodeType !== 1 || !content.firstChild.matches(BLOCK_ELEMENTS))) {
-          if (content.firstChild.nodeType == 1 && wrapper.matches(UNNESTABLE_BLOCK_ELEMENTS)) {
+        
+        if (options) {
+          // Escape(split) block formatting at caret
+          applyOptionsToElement(content.firstChild, options, composer);
+          if (content.firstChild.matches(UNNESTABLE_BLOCK_ELEMENTS)) {
             unwrapBlocksFromContent(content.firstChild);
           }
-          wrapper.appendChild(content.firstChild);
+          fragment.appendChild(content.firstChild);
+        
+        } else {
+          // Split block formating and aad new block to wrap caret
+          unwrapBlocksFromContent(content.firstChild);
+          children = wysihtml5.dom.unwrap(content.firstChild);
+          for (var c = 0, cmax = children.length; c > cmax; c++) {
+            fragment.appendChild(children[c]);
+          }
+          fragment.appendChild(composer.doc.createElement('BR'));
         }
-        fragment.appendChild(wrapper);
+        
+      } else {
+
+        if (defaultOptions) {
+          // Wrap subsequent non-block nodes inside new block element
+          wrapper = applyOptionsToElement(null, defaultOptions, composer);
+          while(content.firstChild && (content.firstChild.nodeType !== 1 || !content.firstChild.matches(BLOCK_ELEMENTS))) {
+            if (content.firstChild.nodeType == 1 && wrapper.matches(UNNESTABLE_BLOCK_ELEMENTS)) {
+              unwrapBlocksFromContent(content.firstChild);
+            }
+            wrapper.appendChild(content.firstChild);
+          }
+          fragment.appendChild(wrapper);
+        
+        } else {
+          // Escape(split) block formatting at selection 
+          if (content.firstChild.nodeType == 1) {
+            unwrapBlocksFromContent(content.firstChild);
+          }
+          fragment.appendChild(content.firstChild);
+        }
+        
       }
     }
 
@@ -123,10 +157,13 @@
   // If no nodename given try to find closest block level element and if found use it's nodeName in options
   function getOptionsWithNodeName(options, composer) {
     if (!options.nodeName) {
-      var correctedOptions = wysihtml5.lang.object(options).clone(true),
+      var correctedOptions = (options) ? wysihtml5.lang.object(options).clone(true) : null,
           element = composer.selection.getOwnRanges()[0].startContainer;
 
-      correctedOptions.nodeName = getParentBlockNodeName(element, composer) || defaultNodeName(composer);
+      if (correctedOptions) {
+        correctedOptions.nodeName = getParentBlockNodeName(element, composer) || defaultNodeName(composer);
+      }
+
       return correctedOptions;
     } else {
       return options;
@@ -141,19 +178,31 @@
     return (parentNode) ? parentNode.nodeName : null;
   }
 
-  // Used for removing styleValue in options, as it will return all elements with appropriate style property then
-  function withoutStyleValue(options) {
+  // Removes explicit values from options that are needed for new node creation, but should be removed for similar elements detection.
+  // Removes styleValue, as it will return all elements with appropriate style property.
+  // Removes className if classRegExp or query defined (will allow more precise targeting of similar classes).
+  // Removes nodeName if query is defined.
+  function withoutExplicitValues(options) {
     var valuelessOptions = wysihtml5.lang.object(options).clone(true);
     if (typeof valuelessOptions.styleValue !== "undefined") {
       delete valuelessOptions.styleValue;
     }
+    
+    if (typeof valuelessOptions.className !== "undefined" && (typeof valuelessOptions.query !== "undefined" || typeof valuelessOptions.classRegExp !== "undefined")) {
+      delete valuelessOptions.className;
+    }
+
+    if (typeof valuelessOptions.nodeName !== "undefined" && typeof valuelessOptions.query !== "undefined") {
+      delete valuelessOptions.nodeName;
+    }
+
     return valuelessOptions;
   }
 
   wysihtml5.commands.formatBlock = {
     exec: function(composer, command, options) {
       var newBlockElements = [],
-          shouldSplitElement, blockElement, ranges, range;
+          shouldSplitElement, insertElement, ranges, range;
 
       // If properties is passed as a string, look for tag with that tagName/query 
       if (typeof options === "string") {
@@ -165,20 +214,28 @@
       if (composer.selection.isCollapsed()) {
 
         // Create new block wrapper element (For node creation nodeName is needed)
-        blockElement = applyOptionsToElement(null, getOptionsWithNodeName(options, composer), composer);
-
+        // If options is null (means plaintext/remove-format), there will be no wrapper (inserts invisible space to fix webkit caret issues)
         // Find current selection states unwrappable block level elements (blocks-levels can not be inserted into those)
-        // If found, split outermost block element (assumed last in list) at caret.
-        // Then insert new element  
-        shouldSplitElement = this.state(composer, command, blockElement.matches(UNNESTABLE_BLOCK_ELEMENTS) ? { query:  UNNESTABLE_BLOCK_ELEMENTS } : withoutStyleValue(options));
-        if (shouldSplitElement.length > 0) {
-          composer.selection.splitElementAtCaret(shouldSplitElement.pop(), blockElement);
+        // If found, split.
+        if (options) {
+          insertElement = applyOptionsToElement(null, getOptionsWithNodeName(options, composer), composer);
+          // outermost block element (assumed last in list) at caret.
+          // blockQuote is a special case here. Tag that cannot be inside other blocks, but can contain others
+          shouldSplitElement = this.state(composer, command, insertElement.matches(UNNESTABLE_BLOCK_ELEMENTS + ', blockquote') ? { query:  UNNESTABLE_BLOCK_ELEMENTS + ', blockquote' } : withoutExplicitValues(options));
         } else {
-          composer.selection.insertNode(blockElement);
+          insertElement = composer.doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
+          shouldSplitElement = [findOuterBlock(composer.selection.getOwnRanges()[0].startContainer, composer.element)];
+        }
+        
+        // Split split block element is found and then insert new element 
+        if (shouldSplitElement.length > 0) {
+          composer.selection.splitElementAtCaret(shouldSplitElement.pop(), insertElement);
+        } else {
+          composer.selection.insertNode(insertElement);
         }
         
         // Restore correct selection
-        composer.selection.selectNode(blockElement.firstChild);
+        composer.selection.selectNode(insertElement.firstChild || insertElement);
 
       } else {
 
@@ -189,7 +246,7 @@
         }
 
         // Remove empty block elements that may be left behind
-        cleanup(composer.element);
+        cleanup(composer);
 
         // Restore correct selection
         range = composer.selection.createRange();

@@ -721,7 +721,7 @@
 
       tempElement.className = nodeOptions.className;
 
-      this.composer.commands.exec("formatBlock", nodeOptions.nodeName, nodeOptions.className);
+      this.composer.commands.exec("formatBlock", nodeOptions);
       tempDivElements = this.contain.querySelectorAll("." + nodeOptions.className);
       if (tempDivElements[0]) {
         tempDivElements[0].parentNode.insertBefore(tempElement, tempDivElements[0]);

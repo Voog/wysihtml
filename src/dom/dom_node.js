@@ -85,16 +85,23 @@
         Properties for filtering element:
         {
           query: selector string,
+          nodeName: string (uppercase),
+          className: string,
           classRegExp: regex,
           styleProperty: string or [],
           styleValue: string, [] or regex
         }
 
         Example:
-        var node = wysihtml5.dom.domNode(element).test({nodeName})
+        var node = wysihtml5.dom.domNode(element).test({})
       */
       test: function(properties) {
         var prop;
+
+        // retuern false if properties object is not defined
+        if (!properties) {
+          return false;
+        }
 
         // Only element nodes can be tested for these properties
         if (node.nodeType !== 1) {
@@ -107,9 +114,17 @@
           }
         }
 
+        if (properties.nodeName && node.nodeName !== properties.nodeName) {
+          return false;
+        }
+
+        if (properties.className && !node.classList.contains(properties.className)) {
+          return false;
+        }
+
         // classRegExp check (useful for classname begins with logic)
         if (properties.classRegExp) {
-          var matches = (node.className || "").match(classRegExp) || [];
+          var matches = (node.className || "").match(properties.classRegExp) || [];
           if (matches.length === 0) {
             return false;
           }
