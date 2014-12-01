@@ -76,7 +76,7 @@
 
   // Unwraps block level elements from inside content
   // Useful as not all block level elements can contain other block-levels
-  function unwrapBlocksFromContent (element) {
+  function unwrapBlocksFromContent(element) {
     var contentBlocks = element.querySelectorAll(BLOCK_ELEMENTS) || []; // Find unnestable block elements in extracted contents
 
     for (var i = contentBlocks.length; i--;) {
@@ -177,6 +177,7 @@
     }
   }
 
+  // Find closest block level element
   function getParentBlockNodeName(element, composer) {
     var parentNode = wysihtml5.dom.getParentElement(element, {
           query: BLOCK_ELEMENTS

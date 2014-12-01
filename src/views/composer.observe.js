@@ -34,40 +34,6 @@
     }
   };
 
-  var deleteAroundEditable = function(selection, uneditable, element) {
-    // merge node with previous node from uneditable
-    var prevNode = selection.getPreviousNode(uneditable, true),
-        curNode = selection.getSelectedNode();
-
-    if (curNode.nodeType !== 1 && curNode.parentNode !== element) { curNode = curNode.parentNode; }
-    if (prevNode) {
-      if (curNode.nodeType == 1) {
-        var first = curNode.firstChild;
-
-        if (prevNode.nodeType == 1) {
-          while (curNode.firstChild) {
-            prevNode.appendChild(curNode.firstChild);
-          }
-        } else {
-          while (curNode.firstChild) {
-            uneditable.parentNode.insertBefore(curNode.firstChild, uneditable);
-          }
-        }
-        if (curNode.parentNode) {
-          curNode.parentNode.removeChild(curNode);
-        }
-        selection.setBefore(first);
-      } else {
-        if (prevNode.nodeType == 1) {
-          prevNode.appendChild(curNode);
-        } else {
-          uneditable.parentNode.insertBefore(curNode, uneditable);
-        }
-        selection.setBefore(curNode);
-      }
-    }
-  };
-
   var handleDeleteKeyPress = function(event, composer) {
     var selection = composer.selection,
         element = composer.element;
