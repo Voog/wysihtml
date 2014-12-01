@@ -58,12 +58,19 @@
     if (options.nodeName && element.nodeName !== options.nodeName) {
       element = dom.renameElement(element, options.nodeName);
     }
+
+    // Remove similar classes before applying className
+    if (options.classRegExp) {
+      element.className = element.className.replace(options.classRegExp, "");
+    }
     if (options.className) {
       element.classList.add(options.className);
     }
+
     if (options.styleProperty && typeof options.styleValue !== "undefined") {
       element.style[wysihtml5.browser.fixStyleKey(options.styleProperty)] = options.styleValue;
     }
+
     return element;
   }
 
@@ -238,7 +245,6 @@
         composer.selection.selectNode(insertElement.firstChild || insertElement);
 
       } else {
-
         // Get all selection ranges of current composer and iterate
         ranges = composer.selection.getOwnRanges();
         for (var i = ranges.length; i--;) {
