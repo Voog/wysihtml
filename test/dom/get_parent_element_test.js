@@ -11,12 +11,12 @@ test("Basic test - nodeName only", function() {
   var listItem = this.container.querySelector("li"),
       textNode = listItem.firstChild,
       list     = this.container.querySelector("ul");
-  equal(wysihtml5.dom.getParentElement(listItem, { nodeName: "LI" }), listItem);
-  equal(wysihtml5.dom.getParentElement(listItem, { nodeName: ["LI", "UL"] }), listItem);
+  equal(wysihtml5.dom.getParentElement(listItem, { query: "li" }), listItem);
+  equal(wysihtml5.dom.getParentElement(listItem, { query: "li, ul" }), listItem);
+  equal(wysihtml5.dom.getParentElement(listItem, { query: "ul" }), list);
   equal(wysihtml5.dom.getParentElement(listItem, { nodeName: "UL" }), list);
-  equal(wysihtml5.dom.getParentElement(textNode, { nodeName: "UL" }), list);
-  equal(wysihtml5.dom.getParentElement(listItem, { nodeName: "ul" }), null);
-  equal(wysihtml5.dom.getParentElement(listItem, { nodeName: "SPAN" }), null);
+  equal(wysihtml5.dom.getParentElement(textNode, { query: "ul" }), list);
+  equal(wysihtml5.dom.getParentElement(listItem, { query: "span" }), null);
 });
 
 
@@ -46,14 +46,14 @@ test("Basic test - nodeName + className", function() {
   equal(result, spanElement);
   
   result = wysihtml5.dom.getParentElement(textNode, {
-    nodeName:   ["STRONG", "SPAN"],
+    query:   "strong, span",
     className:  "wysiwyg-color-green",
     classRegExp: /wysiwyg-color-[a-z]+/g
   });
   equal(result, spanElement);
   
   result = wysihtml5.dom.getParentElement(textNode, {
-    nodeName:   ["STRONG"],
+    nodeName:   "STRONG",
     className:  "wysiwyg-color-green",
     classRegExp: /wysiwyg-color-[a-z]+/g
   });
@@ -69,13 +69,6 @@ test("Basic test - nodeName + className", function() {
   result = wysihtml5.dom.getParentElement(textNode, {
     nodeName:   "SPAN",
     className:  "wysiwyg-color-blue",
-    classRegExp: /wysiwyg-color-[a-z]+/g
-  });
-  equal(result, null);
-  
-  result = wysihtml5.dom.getParentElement(textNode, {
-    nodeName:   "SPAN",
-    className:  "wysiwyg-color-red",
     classRegExp: /wysiwyg-color-[a-z]+/g
   });
   equal(result, null);

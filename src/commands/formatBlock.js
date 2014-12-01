@@ -23,6 +23,8 @@
         elements[i].parentNode.removeChild(elements[i]);
       }
     }
+
+    wysihtml5.dom.removeInvisibleSpaces(composer.element);
   }
 
   function defaultNodeName(composer) {
