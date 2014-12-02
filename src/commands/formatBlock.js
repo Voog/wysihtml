@@ -298,6 +298,7 @@
 
     },
 
+    // If properties as null is passed returns status describing all block level elements
     state: function(composer, command, properties) {
       
       // If properties is passed as a string, look for tag with that tagName/query 
@@ -308,14 +309,14 @@
       }
 
       var nodes = composer.selection.filterElements((function (element) { // Finds matching elements inside selection
-            return wysihtml5.dom.domNode(element).test(properties);
+            return wysihtml5.dom.domNode(element).test(properties || { query: BLOCK_ELEMENTS });
           }).bind(this)),
           parentNodes = composer.selection.getSelectedOwnNodes(),
           parent;
 
       // Finds matching elements that are parents of selection and adds to nodes list
       for (var i = 0, maxi = parentNodes.length; i < maxi; i++) {
-        parent = dom.getParentElement(parentNodes[i], properties, null, composer.element);
+        parent = dom.getParentElement(parentNodes[i], properties || { query: BLOCK_ELEMENTS }, null, composer.element);
         if (parent && nodes.indexOf(parent) === -1) {
           nodes.push(parent);
         }
