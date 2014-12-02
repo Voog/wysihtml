@@ -105,7 +105,7 @@
 
     // Constructs a self removing whitespace (ain absolute positioned span) for placing selection caret when normal methods fail.
     // Webkit has an issue with placing caret into places where there are no textnodes near by.
-    creteTemporaryCaretSpaceAfter: function (node) {
+    createTemporaryCaretSpaceAfter: function (node) {
       var caretPlaceholder = this.doc.createElement('span'),
           caretPlaceholderText = this.doc.createTextNode(wysihtml5.INVISIBLE_SPACE),
           placeholderRemover = (function(event) {
@@ -202,7 +202,7 @@
             }
           }, 0);
         } else {
-          this.creteTemporaryCaretSpaceAfter(node);
+          this.createTemporaryCaretSpaceAfter(node);
         }
       }
       return sel;

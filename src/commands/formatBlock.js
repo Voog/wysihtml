@@ -23,8 +23,6 @@
         elements[i].parentNode.removeChild(elements[i]);
       }
     }
-
-    wysihtml5.dom.removeInvisibleSpaces(composer.element);
   }
 
   function defaultNodeName(composer) {
@@ -32,12 +30,12 @@
   }
 
   // The outermost un-nestable block element parent of from node
-  function findOuterBlock(node, container) {
+  function findOuterBlock(node, container, allBlocks) {
     var n = node;
         block = null;
         
     while (n && container && n !== container) {
-      if (n.nodeType === 1 && n.matches(UNNESTABLE_BLOCK_ELEMENTS)) {
+      if (n.nodeType === 1 && n.matches(allBlocks ? BLOCK_ELEMENTS : UNNESTABLE_BLOCK_ELEMENTS)) {
         block = n;
       }
       n = n.parentNode;
@@ -83,7 +81,9 @@
 
     for (var i = contentBlocks.length; i--;) {
       if (!contentBlocks[i].nextSibling || contentBlocks[i].nextSibling.nodeType !== 1 || contentBlocks[i].nextSibling.nodeName !== 'BR') {
-        contentBlocks[i].parentNode.insertBefore(contentBlocks[i].ownerDocument.createElement('BR'), contentBlocks[i].nextSibling);
+        if (contentBlocks[i].innerHTML.trim() !== "") {
+          contentBlocks[i].parentNode.insertBefore(contentBlocks[i].ownerDocument.createElement('BR'), contentBlocks[i].nextSibling);
+        }
       }
       wysihtml5.dom.unwrap(contentBlocks[i]);
     }
@@ -97,7 +97,7 @@
         content = r.extractContents(),
         fragment = composer.doc.createDocumentFragment(),
         defaultOptions = (options) ? wysihtml5.lang.object(options).clone(true) : null,
-        firstOuterBlock = findOuterBlock(rangeStartContainer, composer.element), // The outermost un-nestable block element parent of selection start
+        firstOuterBlock = findOuterBlock(rangeStartContainer, composer.element, defaultName === "BLOCKQUOTE"), // The outermost un-nestable block element parent of selection start
         wrapper, blocks, children;
 
     if (defaultOptions) {
@@ -123,12 +123,14 @@
           for (var c = 0, cmax = children.length; c > cmax; c++) {
             fragment.appendChild(children[c]);
           }
-          fragment.appendChild(composer.doc.createElement('BR'));
+          if (fragment.childNodes.length > 0) {
+            fragment.appendChild(composer.doc.createElement('BR'));
+          }
         }
         
       } else {
 
-        if (defaultOptions) {
+        if (options) {
           // Wrap subsequent non-block nodes inside new block element
           wrapper = applyOptionsToElement(null, defaultOptions, composer);
           while(content.firstChild && (content.firstChild.nodeType !== 1 || !content.firstChild.matches(BLOCK_ELEMENTS))) {
@@ -212,13 +214,27 @@
   wysihtml5.commands.formatBlock = {
     exec: function(composer, command, options) {
       var newBlockElements = [],
-          shouldSplitElement, insertElement, ranges, range;
+          shouldSplitElement, insertElement,
+          ranges, range, parent, bookmark, sel;
 
       // If properties is passed as a string, look for tag with that tagName/query 
       if (typeof options === "string") {
         options = {
           nodeName: options.toUpperCase()
         };
+      }
+
+      // Expand selection so it will cover closest block if option caretSelectsBlock is true and selection is collapsed
+      if (options && options.caretSelectsBlock && composer.selection.isCollapsed()) {
+        parent = wysihtml5.dom.getParentElement(composer.selection.getOwnRanges()[0].startContainer, {
+          query: BLOCK_ELEMENTS
+        }, null, composer.element);
+        if (parent) {
+          bookmark = rangy.saveSelection(composer.doc.defaultView || composer.doc.parentWindow);
+          range = composer.selection.createRange();
+          range.selectNode(parent);
+          composer.selection.setSelection(range);
+        }
       }
 
       if (composer.selection.isCollapsed()) {
@@ -244,6 +260,8 @@
           composer.selection.insertNode(insertElement);
         }
         
+        cleanup(composer);
+
         // Restore correct selection
         composer.selection.selectNode(insertElement.firstChild || insertElement);
 
@@ -256,12 +274,17 @@
 
         // Remove empty block elements that may be left behind
         cleanup(composer);
+        wysihtml5.dom.removeInvisibleSpaces(composer.element);
 
         // Restore correct selection
-        range = composer.selection.createRange();
-        range.setStartBefore(newBlockElements[0]);
-        range.setEndAfter(newBlockElements[newBlockElements.length - 1]);
-        composer.selection.setSelection(range);
+        if (bookmark) {
+          rangy.restoreSelection(bookmark);
+        } else {
+          range = composer.selection.createRange();
+          range.setStartBefore(newBlockElements[0]);
+          range.setEndAfter(newBlockElements[newBlockElements.length - 1]);
+          composer.selection.setSelection(range);
+        }
       }
 
     },

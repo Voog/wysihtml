@@ -2,7 +2,8 @@
 
   var nodeOptions = {
     className: "wysiwyg-text-align-center",
-    classRegExp: /wysiwyg-text-align-[0-9a-z]+/g
+    classRegExp: /wysiwyg-text-align-[0-9a-z]+/g,
+    caretSelectsBlock: true
   };
 
   wysihtml5.commands.justifyCenter = {

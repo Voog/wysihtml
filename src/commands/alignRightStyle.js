@@ -2,7 +2,8 @@
   
   var nodeOptions = {
     styleProperty: "textAlign",
-    styleValue: "right"
+    styleValue: "right",
+    caretSelectsBlock: true
   };
 
   wysihtml5.commands.alignRightStyle = {
