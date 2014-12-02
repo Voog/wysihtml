@@ -3,7 +3,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=Edge">
 <meta charset="utf-8">
 
-<title>wysihtml5 - Advanced Demo</title>
+<title>WysiHtml FormatBlock Test</title>
 <link rel="stylesheet" href="formatblock-files/stylesheet.css" type="text/css" media="screen" title="no title" charset="utf-8">
 
 
@@ -111,7 +111,7 @@
     
   }
   
-  pre code {
+  pre {
     background: #ddd;
     padding: 10px;
     white-space: pre;
@@ -143,11 +143,20 @@
     color: black;
   }
   .toolbar .block { 
-    padding: 2px 0.4em;
+    padding: 1.5em 0.4em 0.2em 0.4em;
     display: inline-block;
     background: #222;
     border-radius: 3px;
     margin: 0px 1px 1px 0;
+    position: relative;
+  }
+
+  .toolbar .block-title {
+    font-size: 9px;
+    position: absolute;
+    text-transform: uppercase;
+    color: #ccc;
+    top:2px;
   }
   
   div[data-wysihtml5-dialog="createTable"], div[data-wysihtml5-dialog="foreColorStyle"], div[data-wysihtml5-dialog="bgColorStyle"] {
@@ -213,21 +222,12 @@
   }
 </style>
 <div class="wrap">
-  <h1>wysihtml5 - Advanced Editor Example</h1>
+  <h1>WysiHtml FormatBlock Test</h1>
 
   <div class="ewrapper" contentEditable="false">
     <div class="toolbar" style="display: none;">
-      <!--div class="block">
-        <a data-wysihtml5-command="bold" title="CTRL+B">bold</a>
-        <a data-wysihtml5-command="italic" title="CTRL+I">italic</a>
-        <a data-wysihtml5-command="underline" title="CTRL+U">underline</a>
-      </div>
       <div class="block">
-        <a data-wysihtml5-command="createLink">link</a>
-        <a data-wysihtml5-command="removeLink"><s>link</s></a>
-        <a data-wysihtml5-command="insertImage">image</a>
-      </div-->
-      <div class="block">
+        <div class="block-title">Formating</div>
         <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h1">h1</a>
         <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h2">h2</a>
         <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h3">h3</a>
@@ -235,110 +235,14 @@
         <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="pre">pre</a>
         <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="blockquote">blockquote</a>
         <a data-wysihtml5-command="formatBlock">plaintext</a>
-        <a data-wysihtml5-command="formatCode" data-wysihtml5-command-value="language-html">code</a>
-      </div>
-      <!--div class="block">
-        <a data-wysihtml5-command="fontSize" data-wysihtml5-command-value="x-small">x-small</a> 
-        <a data-wysihtml5-command="fontSize" data-wysihtml5-command-value="small">small</a> 
-        <a data-wysihtml5-command="fontSize" data-wysihtml5-command-value="large">large</a> 
+        <!--a data-wysihtml5-command="formatCode" data-wysihtml5-command-value="language-html">code</a-->
       </div>
       <div class="block">
-        <a data-wysihtml5-command="insertUnorderedList">&bull; List</a>
-        <a data-wysihtml5-command="insertOrderedList">1. List</a>
-      </div-->
-      <div class="block">
-        <a data-wysihtml5-command="alignLeftStyle">alignLeft</a>
-        <a data-wysihtml5-command="alignRightStyle">alignRight</a>
-        <a data-wysihtml5-command="alignCenterStyle">alignCenter</a>
+        <div class="block-title">Alignment</div>
+        <a data-wysihtml5-command="alignLeftStyle">Left</a>
+        <a data-wysihtml5-command="alignCenterStyle">Center</a>
+        <a data-wysihtml5-command="alignRightStyle">Right</a>
       </div>
-      <div class="block">
-        <a data-wysihtml5-command="justifyLeft">justifyLeft</a>
-        <a data-wysihtml5-command="justifyRight">justifyRight</a>
-        <a data-wysihtml5-command="justifyFull">justifyFull</a>
-      </div>
-      <!--div class="block">
-        <a data-wysihtml5-command="outdentList">&lt;-</a>
-        <a data-wysihtml5-command="indentList">-&gt;</a>
-      </div>
-    
-      <div class="block">
-        <a data-wysihtml5-command="foreColorStyle">Color</a>
-        <div data-wysihtml5-dialog="foreColorStyle" style="display: none;">
-          Color:
-          <input type="text" data-wysihtml5-dialog-field="color" value="rgba(0,0,0,1)" />
-          <a data-wysihtml5-dialog-action="save">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel">Cancel</a>
-        </div>
-      </div>
-      
-      <div class="block">
-        <a data-wysihtml5-command="bgColorStyle">BG Color</a>
-        <div data-wysihtml5-dialog="bgColorStyle" style="display: none;">
-          Color:
-          <input type="text" data-wysihtml5-dialog-field="color" value="rgba(0,0,0,1)" />
-          <a data-wysihtml5-dialog-action="save">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel">Cancel</a>
-        </div>
-      </div>
-      
-      <div class="block">
-        <a data-wysihtml5-command="fontSizeStyle">Size</a>
-        <div data-wysihtml5-dialog="fontSizeStyle" style="display: none;">
-          Size:
-          <input type="text" data-wysihtml5-dialog-field="size" style="width: 60px;" value="" />
-          <a data-wysihtml5-dialog-action="save">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel">Cancel</a>
-        </div>
-      </div>
-      
-      <div class="block">
-        <a data-wysihtml5-command="undo">undo</a>
-        <a data-wysihtml5-command="redo">redo</a>
-      </div>
-    
-      <div class="block">
-        <a data-wysihtml5-action="showSource">HTML</a>
-      </div>
-
-      <div class="block">
-        <a data-wysihtml5-command="createTable">Table</a>
-        <div data-wysihtml5-dialog="createTable" style="display: none;">
-          Rows: <input type="text" data-wysihtml5-dialog-field="rows" /><br/>
-          Cols: <input type="text" data-wysihtml5-dialog-field="cols" /><br/>
-          <a data-wysihtml5-dialog-action="save">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel">Cancel</a>
-        </div>
-      </div>
-      <div class="block" data-wysihtml5-hiddentools="table" style="display: none;">
-        <a data-wysihtml5-command="mergeTableCells">Merge</a>
-        <a data-wysihtml5-command="addTableCells" data-wysihtml5-command-value="above">row-before</a>
-        <a data-wysihtml5-command="addTableCells" data-wysihtml5-command-value="below">row-after</a>
-        <a data-wysihtml5-command="addTableCells" data-wysihtml5-command-value="before">col-before</a>
-        <a data-wysihtml5-command="addTableCells" data-wysihtml5-command-value="after">col-after</a>
-      
-        <a data-wysihtml5-command="deleteTableCells" data-wysihtml5-command-value="row">delete row</a>
-        <a data-wysihtml5-command="deleteTableCells" data-wysihtml5-command-value="column">delete col</a>
-      
-      </div>
-    
-      <div data-wysihtml5-dialog="createLink" style="display: none;">
-        <label>
-          Link:
-          <input data-wysihtml5-dialog-field="href" value="http://">
-        </label>
-        <a data-wysihtml5-dialog-action="save">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel">Cancel</a>
-      </div>
-      <div data-wysihtml5-dialog="insertImage" style="display: none;">
-        <label>
-          Image:
-          <input data-wysihtml5-dialog-field="src" value="http://">
-        </label>
-        <label>
-          Align:
-          <select data-wysihtml5-dialog-field="className">
-            <option value="">default</option>
-            <option value="wysiwyg-float-left">left</option>
-            <option value="wysiwyg-float-right">right</option>
-          </select>
-        </label>
-        <a data-wysihtml5-dialog-action="save">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel">Cancel</a>
-      </div-->
     </div><!-- toolbar -->
   
     <div class="editable" data-placeholder="Enter text ..." id="theform">
