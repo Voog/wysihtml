@@ -92,17 +92,18 @@
   // Wrap the range with a block level element
   // If element is one of unnestable block elements (ex: h2 inside h1), split nodes and insert between so nesting does not occur
   function wrapRangeWithElement(range, options, defaultName, composer) {
+    var defaultOptions = (options) ? wysihtml5.lang.object(options).clone(true) : null;
+    if (defaultOptions) {
+      defaultOptions.nodeName = defaultOptions.nodeName || defaultName || defaultNodeName(composer);
+    }
+
     var r = range.cloneRange(),
         rangeStartContainer = r.startContainer,
         content = r.extractContents(),
         fragment = composer.doc.createDocumentFragment(),
-        defaultOptions = (options) ? wysihtml5.lang.object(options).clone(true) : null,
-        firstOuterBlock = findOuterBlock(rangeStartContainer, composer.element, defaultName === "BLOCKQUOTE"), // The outermost un-nestable block element parent of selection start
+        splitAllBlocks = !defaultOptions || (defaultName === "BLOCKQUOTE" && defaultOptions.nodeName && defaultOptions.nodeName === "BLOCKQUOTE"),
+        firstOuterBlock = findOuterBlock(rangeStartContainer, composer.element, splitAllBlocks), // The outermost un-nestable block element parent of selection start
         wrapper, blocks, children;
-
-    if (defaultOptions) {
-      defaultOptions.nodeName = defaultOptions.nodeName || defaultName || defaultNodeName(composer);
-    }
 
     while(content.firstChild) {
       
@@ -254,14 +255,15 @@
           shouldSplitElement = this.state(composer, command, insertElement.matches(splitQuery) ? { query:  splitQuery } : withoutExplicitValues(options));
         } else {
           insertElement = composer.doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
-          shouldSplitElement = findOuterBlock(composer.selection.getOwnRanges()[0].startContainer, composer.element);
+          shouldSplitElement = findOuterBlock(composer.selection.getOwnRanges()[0].startContainer, composer.element, true);
+
           if (shouldSplitElement) {
             shouldSplitElement = [shouldSplitElement];
           }
         }
         
         // Split split block element is found and then insert new element 
-        if (shouldSplitElement.length > 0) {
+        if (shouldSplitElement && shouldSplitElement.length > 0) {
           composer.selection.splitElementAtCaret(shouldSplitElement.pop(), insertElement);
         } else {
           composer.selection.insertNode(insertElement);
