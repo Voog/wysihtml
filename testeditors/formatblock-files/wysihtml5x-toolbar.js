@@ -11636,6 +11636,7 @@ wysihtml5.Commands = Base.extend(
 
     },
 
+    // If properties as null is passed returns status describing all block level elements
     state: function(composer, command, properties) {
       
       // If properties is passed as a string, look for tag with that tagName/query 
@@ -11646,14 +11647,14 @@ wysihtml5.Commands = Base.extend(
       }
 
       var nodes = composer.selection.filterElements((function (element) { // Finds matching elements inside selection
-            return wysihtml5.dom.domNode(element).test(properties);
+            return wysihtml5.dom.domNode(element).test(properties || { query: BLOCK_ELEMENTS });
           }).bind(this)),
           parentNodes = composer.selection.getSelectedOwnNodes(),
           parent;
 
       // Finds matching elements that are parents of selection and adds to nodes list
       for (var i = 0, maxi = parentNodes.length; i < maxi; i++) {
-        parent = dom.getParentElement(parentNodes[i], properties, null, composer.element);
+        parent = dom.getParentElement(parentNodes[i], properties || { query: BLOCK_ELEMENTS }, null, composer.element);
         if (parent && nodes.indexOf(parent) === -1) {
           nodes.push(parent);
         }
@@ -14670,11 +14671,14 @@ wysihtml5.views.View = Base.extend(
           group,
           name,
           value,
-          dialog;
+          dialog,
+          tracksBlankValue;
+
       for (; i<length; i++) {
         link    = links[i];
         name    = link.getAttribute("data-wysihtml5-" + type);
         value   = link.getAttribute("data-wysihtml5-" + type + "-value");
+        tracksBlankValue   = link.getAttribute("data-wysihtml5-" + type + "-blank-value");
         group   = this.container.querySelector("[data-wysihtml5-" + type + "-group='" + name + "']");
         dialog  = this._getDialog(link, name);
 
@@ -14683,6 +14687,7 @@ wysihtml5.views.View = Base.extend(
           group:  group,
           name:   name,
           value:  value,
+          tracksBlankValue: tracksBlankValue,
           dialog: dialog,
           state:  false
         };
@@ -14843,8 +14848,9 @@ wysihtml5.views.View = Base.extend(
 
     _updateLinkStates: function() {
 
-      var commandMapping    = this.commandMapping,
-          actionMapping     = this.actionMapping,
+      var commandMapping      = this.commandMapping,
+          commandblankMapping = this.commandblankMapping,
+          actionMapping       = this.actionMapping,
           i,
           state,
           action,
@@ -14868,39 +14874,47 @@ wysihtml5.views.View = Base.extend(
             dom.removeClass(command.group, CLASS_NAME_COMMAND_DISABLED);
           }
         }
-        if (command.state === state) {
+        if (command.state === state && !command.tracksBlankValue) {
           continue;
         }
 
         command.state = state;
         if (state) {
-          dom.addClass(command.link, CLASS_NAME_COMMAND_ACTIVE);
-          if (command.group) {
-            dom.addClass(command.group, CLASS_NAME_COMMAND_ACTIVE);
-          }
-          if (command.dialog) {
-            if (typeof(state) === "object" || wysihtml5.lang.object(state).isArray()) {
+          if (command.tracksBlankValue) {
+            dom.removeClass(command.link, CLASS_NAME_COMMAND_ACTIVE);
+          } else {
+            dom.addClass(command.link, CLASS_NAME_COMMAND_ACTIVE);
+            if (command.group) {
+              dom.addClass(command.group, CLASS_NAME_COMMAND_ACTIVE);
+            }
+            if (command.dialog) {
+              if (typeof(state) === "object" || wysihtml5.lang.object(state).isArray()) {
 
-              if (!command.dialog.multiselect && wysihtml5.lang.object(state).isArray()) {
-                // Grab first and only object/element in state array, otherwise convert state into boolean
-                // to avoid showing a dialog for multiple selected elements which may have different attributes
-                // eg. when two links with different href are selected, the state will be an array consisting of both link elements
-                // but the dialog interface can only update one
-                state = state.length === 1 ? state[0] : true;
-                command.state = state;
+                if (!command.dialog.multiselect && wysihtml5.lang.object(state).isArray()) {
+                  // Grab first and only object/element in state array, otherwise convert state into boolean
+                  // to avoid showing a dialog for multiple selected elements which may have different attributes
+                  // eg. when two links with different href are selected, the state will be an array consisting of both link elements
+                  // but the dialog interface can only update one
+                  state = state.length === 1 ? state[0] : true;
+                  command.state = state;
+                }
+                command.dialog.show(state);
+              } else {
+                command.dialog.hide();
               }
-              command.dialog.show(state);
-            } else {
-              command.dialog.hide();
             }
           }
         } else {
-          dom.removeClass(command.link, CLASS_NAME_COMMAND_ACTIVE);
-          if (command.group) {
-            dom.removeClass(command.group, CLASS_NAME_COMMAND_ACTIVE);
-          }
-          if (command.dialog) {
-            command.dialog.hide();
+          if (command.tracksBlankValue) {
+            dom.addClass(command.link, CLASS_NAME_COMMAND_ACTIVE);
+          } else {
+            dom.removeClass(command.link, CLASS_NAME_COMMAND_ACTIVE);
+            if (command.group) {
+              dom.removeClass(command.group, CLASS_NAME_COMMAND_ACTIVE);
+            }
+            if (command.dialog) {
+              command.dialog.hide();
+            }
           }
         }
       }
