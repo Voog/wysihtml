@@ -51,6 +51,7 @@ module.exports = function(grunt) {
     "src/dom/compare_document_position.js",
     "src/dom/unwrap.js",
     "src/dom/get_pasted_html.js",
+    "src/dom/remove_invisible_spaces.js",
     "src/quirks/clean_pasted_html.js",
     "src/quirks/ensure_proper_clearing.js",
     "src/quirks/get_correct_inner_html.js",

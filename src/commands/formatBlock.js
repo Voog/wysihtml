@@ -19,7 +19,7 @@
         elements = wysihtml5.lang.array(allElements).without(uneditables);
 
     for (var i = elements.length; i--;) {
-      if (elements[i].innerHTML.trim() === "") {
+      if (elements[i].innerHTML === "") {
         elements[i].parentNode.removeChild(elements[i]);
       }
     }
@@ -215,7 +215,7 @@
     exec: function(composer, command, options) {
       var newBlockElements = [],
           shouldSplitElement, insertElement,
-          ranges, range, parent, bookmark, sel;
+          ranges, range, parent, bookmark, sel, splitQuery;
 
       // If properties is passed as a string, look for tag with that tagName/query 
       if (typeof options === "string") {
@@ -247,10 +247,17 @@
           insertElement = applyOptionsToElement(null, getOptionsWithNodeName(options, composer), composer);
           // outermost block element (assumed last in list) at caret.
           // blockQuote is a special case here. Tag that cannot be inside other blocks, but can contain others
-          shouldSplitElement = this.state(composer, command, insertElement.matches(UNNESTABLE_BLOCK_ELEMENTS + ', blockquote') ? { query:  UNNESTABLE_BLOCK_ELEMENTS + ', blockquote' } : withoutExplicitValues(options));
+          splitQuery = UNNESTABLE_BLOCK_ELEMENTS;
+          if (options && options.nodeName && options.nodeName === "BLOCKQUOTE") {
+            splitQuery += ', blockquote';
+          }
+          shouldSplitElement = this.state(composer, command, insertElement.matches(splitQuery) ? { query:  splitQuery } : withoutExplicitValues(options));
         } else {
           insertElement = composer.doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
-          shouldSplitElement = [findOuterBlock(composer.selection.getOwnRanges()[0].startContainer, composer.element)];
+          shouldSplitElement = findOuterBlock(composer.selection.getOwnRanges()[0].startContainer, composer.element);
+          if (shouldSplitElement) {
+            shouldSplitElement = [shouldSplitElement];
+          }
         }
         
         // Split split block element is found and then insert new element 
