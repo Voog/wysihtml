@@ -228,7 +228,6 @@
         // Make sure that caret is visible in node by inserting a zero width no breaking space
         try { node.innerHTML = wysihtml5.INVISIBLE_SPACE; } catch(e) {}
       }
-
       if (canHaveHTML) {
         range.selectNodeContents(node);
       } else {
@@ -872,7 +871,7 @@
     getNodes: function(nodeType, filter) {
       var range = this.getRange();
       if (range) {
-        return range.getNodes([nodeType], filter);
+        return range.getNodes(Array.isArray(nodeType) ? nodeType : [nodeType], filter);
       } else {
         return [];
       }

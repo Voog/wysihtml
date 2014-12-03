@@ -3,7 +3,7 @@
   var nodeOptions = {
     styleProperty: "textAlign",
     styleValue: "center",
-    caretSelectsBlock: true
+    toggle: true
   };
 
   wysihtml5.commands.alignCenterStyle = {

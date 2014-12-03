@@ -3,7 +3,7 @@
   var nodeOptions = {
     styleProperty: "textAlign",
     styleValue: "left",
-    caretSelectsBlock: true
+    toggle: true
   };
 
   wysihtml5.commands.alignLeftStyle = {

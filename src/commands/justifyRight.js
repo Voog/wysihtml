@@ -3,7 +3,7 @@
   var nodeOptions = {
     className: "wysiwyg-text-align-right",
     classRegExp: /wysiwyg-text-align-[0-9a-z]+/g,
-    caretSelectsBlock: true
+    toggle: true
   };
 
   wysihtml5.commands.justifyRight = {
