@@ -31,7 +31,7 @@
 
   // The outermost un-nestable block element parent of from node
   function findOuterBlock(node, container, allBlocks) {
-    var n = node;
+    var n = node,
         block = null;
         
     while (n && container && n !== container) {
