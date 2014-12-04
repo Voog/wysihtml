@@ -15,7 +15,7 @@ wysihtml5.quirks.tableCellsSelection = function(editable, editor) {
     function init () {
 
         dom.observe(editable, "mousedown", function(event) {
-          var target = wysihtml5.dom.getParentElement(event.target, { nodeName: ["TD", "TH"] });
+          var target = wysihtml5.dom.getParentElement(event.target, { query: "td, th" });
           if (target) {
               handleSelectionMousedown(target);
           }
@@ -28,7 +28,7 @@ wysihtml5.quirks.tableCellsSelection = function(editable, editor) {
       select.start = target;
       select.end = target;
       select.cells = [target];
-      select.table = dom.getParentElement(select.start, { nodeName: ["TABLE"] });
+      select.table = dom.getParentElement(select.start, { query: "table" });
 
       if (select.table) {
         removeCellSelections();
@@ -59,11 +59,11 @@ wysihtml5.quirks.tableCellsSelection = function(editable, editor) {
 
     function handleMouseMove (event) {
       var curTable = null,
-          cell = dom.getParentElement(event.target, { nodeName: ["TD","TH"] }),
+          cell = dom.getParentElement(event.target, { nodeName: "td, th" }),
           oldEnd;
 
       if (cell && select.table && select.start) {
-        curTable =  dom.getParentElement(cell, { nodeName: ["TABLE"] });
+        curTable =  dom.getParentElement(cell, { query: "table" });
         if (curTable && curTable === select.table) {
           removeCellSelections();
           oldEnd = select.end;
@@ -92,7 +92,7 @@ wysihtml5.quirks.tableCellsSelection = function(editable, editor) {
     function bindSideclick () {
         var sideClickHandler = dom.observe(editable.ownerDocument, "click", function(event) {
           sideClickHandler.stop();
-          if (dom.getParentElement(event.target, { nodeName: ["TABLE"] }) != select.table) {
+          if (dom.getParentElement(event.target, { query: "table" }) != select.table) {
               removeCellSelections();
               select.table = null;
               select.start = null;
@@ -105,7 +105,7 @@ wysihtml5.quirks.tableCellsSelection = function(editable, editor) {
     function selectCells (start, end) {
         select.start = start;
         select.end = end;
-        select.table = dom.getParentElement(select.start, { nodeName: ["TABLE"] });
+        select.table = dom.getParentElement(select.start, { query: "table" });
         selectedCells = dom.table.getCellsBetween(select.start, select.end);
         addSelections(selectedCells);
         bindSideclick();

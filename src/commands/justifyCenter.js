@@ -1,14 +1,19 @@
 (function(wysihtml5) {
-  var CLASS_NAME  = "wysiwyg-text-align-center",
-      REG_EXP     = /wysiwyg-text-align-[0-9a-z]+/g;
+
+  var nodeOptions = {
+    className: "wysiwyg-text-align-center",
+    classRegExp: /wysiwyg-text-align-[0-9a-z]+/g,
+    toggle: true
+  };
 
   wysihtml5.commands.justifyCenter = {
     exec: function(composer, command) {
-      return wysihtml5.commands.formatBlock.exec(composer, "formatBlock", null, CLASS_NAME, REG_EXP);
+      return wysihtml5.commands.formatBlock.exec(composer, "formatBlock", nodeOptions);
     },
 
     state: function(composer, command) {
-      return wysihtml5.commands.formatBlock.state(composer, "formatBlock", null, CLASS_NAME, REG_EXP);
+      return wysihtml5.commands.formatBlock.state(composer, "formatBlock", nodeOptions);
     }
   };
+  
 })(wysihtml5);

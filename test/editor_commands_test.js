@@ -126,10 +126,39 @@ if (wysihtml5.browser.supported()) {
   
 // formatblock (alignment, headings, paragraph, pre, blockquote)
     asyncTest("Format block", function() {
-       expect(12);
+       expect(14);
       var that = this,
-          editor = new wysihtml5.Editor(this.editableArea1),
+          parserRules = {
+              tags: {
+                h1: true,
+                h2: true,
+                p: true,
+                div: true,
+                br: true
+              }
+            },
+          editor = new wysihtml5.Editor(this.editableArea1, {
+            parserRules: parserRules
+          }),
           text = "once upon a time<br>there was an unformated text<br>spanning many lines.";
+
+      var prepareMutipleBlocks = function(shiftEnds) {
+        var text2 = "<h1>once upon a time</h1><p>there was a formated text</p>spanning many lines.";
+        editor.setValue(text2, true);
+        var heading = editor.editableElement.querySelector('h1'),
+            paragraph = editor.editableElement.querySelector('p'),
+            range = editor.composer.selection.createRange();
+
+        if (!shiftEnds) {
+          range.setStartBefore(heading);
+          range.setEndAfter(paragraph);
+        } else {
+          range.setStart(heading.firstChild, 5);
+          range.setEnd(paragraph.firstChild, 5);
+        }
+
+        editor.composer.selection.setSelection(range);
+      };
         
       editor.on("load", function() {
         var editableElement   = that.editableArea1;
@@ -137,51 +166,68 @@ if (wysihtml5.browser.supported()) {
         editor.composer.selection.selectNode(editor.editableElement);
         editor.composer.commands.exec('justifyRight');
         equal(editableElement.innerHTML.toLowerCase(), '<div class="wysiwyg-text-align-right">' + text + '</div>', "Text corectly wrapped in one aligning div");
-    
-        editor.composer.commands.exec('justifyRight');
-        equal(editableElement.innerHTML.toLowerCase(), text, "Aligning div correctly removed");
-        
-        editor.composer.selection.selectNode(editor.editableElement);
-        editor.composer.selection.getSelection().collapseToStart();
 
-        editor.composer.commands.exec('justifyRight');
-        editor.composer.selection.getSelection().collapseToStart();
-        equal(editableElement.innerHTML.toLowerCase(), '<div class="wysiwyg-text-align-right">once upon a time</div>there was an unformated text<br>spanning many lines.', "Only first line correctly wrapped in aligning div");
-        
-        var node = editor.editableElement.querySelectorAll('.wysiwyg-text-align-right');
-        editor.composer.selection.selectNode(node[0].childNodes[0]);
-        editor.composer.commands.exec('justifyLeft');
-        equal(editableElement.innerHTML.toLowerCase(), '<div class="wysiwyg-text-align-left">once upon a time</div>there was an unformated text<br>spanning many lines.', "First line wrapper class changed correctly");
-        
-        editor.composer.commands.exec('formatBlock', "h1");
-        equal(editableElement.innerHTML.toLowerCase(), '<h1 class="wysiwyg-text-align-left">once upon a time</h1>there was an unformated text<br>spanning many lines.', "Alignment div changed to heading ok");
-        
-        editor.composer.commands.exec('formatBlock', "h1");
-        equal(editableElement.innerHTML.toLowerCase(), '<div class="wysiwyg-text-align-left">once upon a time</div>there was an unformated text<br>spanning many lines.', "heading back to div ok");
-        
-        editor.composer.commands.exec('justifyRight');
-        editor.composer.commands.exec('formatBlock', "h1");
-        editor.composer.commands.exec('justifyRight');
-        equal(editableElement.innerHTML.toLowerCase(), '<h1>once upon a time</h1>there was an unformated text<br>spanning many lines.', "heading alignment removed sucessfully");
-        
-        editor.composer.commands.exec('justifyRight');
-        editor.composer.commands.exec('formatBlock', "p");
-        editor.composer.commands.exec('justifyRight');
-        equal(editableElement.innerHTML.toLowerCase(), '<p>once upon a time</p>there was an unformated text<br>spanning many lines.', "heading alignment removed sucessfully");
+        editor.composer.selection.selectNode(editor.editableElement.querySelector('.wysiwyg-text-align-right'));
+        editor.composer.commands.exec('formatBlock');
+        equal(editableElement.innerHTML.toLowerCase(), text, "Aligning div correctly removed");
 
         editor.setValue(text, true);
         editor.composer.selection.selectNode(editor.editableElement);
         editor.composer.commands.exec('alignRightStyle');
         equal(editableElement.innerHTML.toLowerCase(), '<div style="text-align: right;">' + text + '</div>', "Text corectly wrapped in one aligning div with style");
 
-        editor.composer.commands.exec('alignCenterStyle');
-        equal(editableElement.innerHTML.toLowerCase(), '<div style="text-align: center;">' + text + '</div>', "Alignment (style) changed correctly to center");
+        editor.setValue(text, true);
+        editor.composer.selection.selectNode(editor.editableElement);
+        editor.composer.selection.getSelection().collapseToStart();
+        editor.composer.commands.exec('justifyRight');
+        equal(editableElement.innerHTML.toLowerCase(), '<div class="wysiwyg-text-align-right">once upon a time</div><br>there was an unformated text<br>spanning many lines.', "Only first line correctly wrapped in aligning div");
 
-        editor.composer.commands.exec('alignLeftStyle');
-        equal(editableElement.innerHTML.toLowerCase(), '<div style="text-align: left;">' + text + '</div>', "Alignment (style) changed correctly to left");
+        var node = editor.editableElement.querySelector('.wysiwyg-text-align-right').firstChild;
+        editor.composer.selection.selectNode(node);
+        editor.composer.commands.exec('justifyLeft');
+        equal(editableElement.innerHTML.toLowerCase(), '<div class="wysiwyg-text-align-left">once upon a time</div><br>there was an unformated text<br>spanning many lines.', "First line wrapper class changed correctly");
+        
+        editor.composer.commands.exec('formatBlock', "h1");
+        equal(editableElement.innerHTML.toLowerCase(), '<h1 class="wysiwyg-text-align-left">once upon a time</h1><br>there was an unformated text<br>spanning many lines.', "Alignment div changed to heading ok");
+        
+        editor.composer.commands.exec('justifyRight');
+        editor.composer.commands.exec('formatBlock', "h1");
+        editor.composer.commands.exec('justifyRight');
+        equal(editableElement.innerHTML.toLowerCase(), '<h1>once upon a time</h1><br>there was an unformated text<br>spanning many lines.', "heading alignment removed sucessfully");
+     
+        
+        editor.composer.commands.exec('alignRightStyle');
+        editor.composer.commands.exec('alignRightStyle');
+        equal(editableElement.innerHTML.toLowerCase(), '<h1>once upon a time</h1><br>there was an unformated text<br>spanning many lines.', "heading alignment with style removed sucessfully");
+        
+        editor.composer.commands.exec('formatBlock', "p");
+        equal(editableElement.innerHTML.toLowerCase(), '<p>once upon a time</p><br>there was an unformated text<br>spanning many lines.', "heading changed to paragraph");
 
-        editor.composer.commands.exec('alignLeftStyle');
-        equal(editableElement.innerHTML.toLowerCase(), text, "Alignment (style) correctly removed");
+        
+        // Tests covering multiple block elements
+
+        prepareMutipleBlocks();
+        editor.composer.commands.exec('formatBlock', "h2");
+        equal(editableElement.innerHTML.toLowerCase(), '<h2>once upon a time</h2><h2>there was a formated text</h2>spanning many lines.', "Two block elements changed to heading 2");
+
+        prepareMutipleBlocks();
+        editor.composer.commands.exec('formatBlock', null);
+        equal(editableElement.innerHTML.toLowerCase(), 'once upon a time<br>there was a formated text<br>spanning many lines.', "Two block elements removed");
+
+        prepareMutipleBlocks(true);
+        editor.composer.commands.exec('formatBlock', "h2");
+        equal(editableElement.innerHTML.toLowerCase(), '<h1>once </h1><h2>upon a time</h2><h2>there</h2><p> was a formated text</p>spanning many lines.', "Selection covering 2 blocks escaped to heading 2");
+
+        prepareMutipleBlocks(true);
+        editor.composer.commands.exec('formatBlock');
+        equal(editableElement.innerHTML.toLowerCase(), '<h1>once </h1>upon a time<br>there<br><p> was a formated text</p>spanning many lines.', "Format removed from Selection covering 2 blocks");
+
+
+        prepareMutipleBlocks(true);
+        editor.composer.commands.exec('formatBlock', "h1");
+        editor.composer.commands.exec('formatBlock', "h2");
+        equal(editableElement.innerHTML.toLowerCase(), '<h1>once </h1><h2>upon a time</h2><h2>there</h2><p> was a formated text</p>spanning many lines.', "Selection covering multiple blocks preserved fot subsequent modifications");
+
 
         start();
       });
@@ -371,7 +417,7 @@ if (wysihtml5.browser.supported()) {
         equal(editableElement.innerHTML.toLowerCase(), "test<blockquote><h1>heading</h1></blockquote>test" , "Blockquote created.");
 
         editor.composer.commands.exec('insertBlockQuote');
-        equal(editableElement.innerHTML.toLowerCase(), "test<br><h1>heading</h1><br>test" , "Blockquote removed and line breaks added.");
+        equal(editableElement.innerHTML.toLowerCase(), "test<h1>heading</h1>test" , "Blockquote removed.");
 
         start();
       });

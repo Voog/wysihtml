@@ -26,8 +26,8 @@ wysihtml5.commands.outdentList = {
           if (listNode.tagName === 'OL' || listNode.tagName === 'UL') {
             found = true;
 
-            outerListNode = wysihtml5.dom.getParentElement(listNode.parentNode, { nodeName: ['OL', 'UL']}, false, composer.element);
-            outerLiNode = wysihtml5.dom.getParentElement(listNode.parentNode, { nodeName: ['LI']}, false, composer.element);
+            outerListNode = wysihtml5.dom.getParentElement(listNode.parentNode, { query: 'ol, ul' }, false, composer.element);
+            outerLiNode = wysihtml5.dom.getParentElement(listNode.parentNode, { query: 'li' }, false, composer.element);
 
             if (outerListNode && outerLiNode) {
 

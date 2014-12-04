@@ -34,46 +34,12 @@
     }
   };
 
-  var deleteAroundEditable = function(selection, uneditable, element) {
-    // merge node with previous node from uneditable
-    var prevNode = selection.getPreviousNode(uneditable, true),
-        curNode = selection.getSelectedNode();
-
-    if (curNode.nodeType !== 1 && curNode.parentNode !== element) { curNode = curNode.parentNode; }
-    if (prevNode) {
-      if (curNode.nodeType == 1) {
-        var first = curNode.firstChild;
-
-        if (prevNode.nodeType == 1) {
-          while (curNode.firstChild) {
-            prevNode.appendChild(curNode.firstChild);
-          }
-        } else {
-          while (curNode.firstChild) {
-            uneditable.parentNode.insertBefore(curNode.firstChild, uneditable);
-          }
-        }
-        if (curNode.parentNode) {
-          curNode.parentNode.removeChild(curNode);
-        }
-        selection.setBefore(first);
-      } else {
-        if (prevNode.nodeType == 1) {
-          prevNode.appendChild(curNode);
-        } else {
-          uneditable.parentNode.insertBefore(curNode, uneditable);
-        }
-        selection.setBefore(curNode);
-      }
-    }
-  };
-
   var handleDeleteKeyPress = function(event, composer) {
     var selection = composer.selection,
         element = composer.element;
 
     if (selection.isCollapsed()) {
-      if (selection.caretIsInTheBeginnig('LI')) {
+      if (selection.caretIsInTheBeginnig('li')) {
         event.preventDefault();
         composer.commands.exec('outdentList');
       } else if (selection.caretIsInTheBeginnig()) {
@@ -122,7 +88,7 @@
   var handleTabKeyDown = function(composer, element) {
     if (!composer.selection.isCollapsed()) {
       composer.selection.deleteContents();
-    } else if (composer.selection.caretIsInTheBeginnig('LI')) {
+    } else if (composer.selection.caretIsInTheBeginnig('li')) {
       if (composer.commands.exec('indentList')) return;
     }
 
@@ -234,7 +200,7 @@
     if (this.config.uneditableContainerClassname) {
       // If uneditables is configured, makes clicking on uneditable move caret after clicked element (so it can be deleted like text)
       // If uneditable needs text selection itself event.stopPropagation can be used to prevent this behaviour
-      var uneditable = wysihtml5.dom.getParentElement(event.target, { className: this.config.uneditableContainerClassname }, false, this.element);
+      var uneditable = wysihtml5.dom.getParentElement(event.target, { query: "." + this.config.uneditableContainerClassname }, false, this.element);
       if (uneditable) {
         this.selection.setAfter(uneditable);
       }

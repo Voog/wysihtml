@@ -18,7 +18,7 @@
     var TableModifyerByCell = function (cell, table) {
         if (cell) {
             this.cell = cell;
-            this.table = api.getParentElement(cell, { nodeName: ["TABLE"] });
+            this.table = api.getParentElement(cell, { query: "table" });
         } else if (table) {
             this.table = table;
             this.cell = this.table.querySelectorAll('th, td')[0];
@@ -297,7 +297,7 @@
             for (var cidx = 0, cmax = this.map[idx.row].length; cidx < cmax; cidx++) {
                 c = this.map[idx.row][cidx];
                 if (c.isReal) {
-                    r = api.getParentElement(c.el, { nodeName: ["TR"] });
+                    r = api.getParentElement(c.el, { query: "tr" });
                     if (r) {
                         return r;
                     }
@@ -305,7 +305,7 @@
             }
 
             if (r === null && force) {
-                r = api.getParentElement(this.map[idx.row][idx.col].el, { nodeName: ["TR"] }) || null;
+                r = api.getParentElement(this.map[idx.row][idx.col].el, { query: "tr" }) || null;
             }
 
             return r;
@@ -325,7 +325,7 @@
             } else {
                 var rr = this.table.ownerDocument.createElement('tr');
                 rr.appendChild(new_cells);
-                insertAfter(api.getParentElement(c.el, { nodeName: ["TR"] }), rr);
+                insertAfter(api.getParentElement(c.el, { query: "tr" }), rr);
             }
         },
 
@@ -597,7 +597,7 @@
 
         // Removes the row of selected cell
         removeRow: function() {
-            var oldRow = api.getParentElement(this.cell, { nodeName: ["TR"] });
+            var oldRow = api.getParentElement(this.cell, { query: "tr" });
             if (oldRow) {
                 this.setTableMap();
                 this.idx = this.getMapIndex(this.cell);
@@ -679,7 +679,7 @@
                         insertAfter(this.getRealRowEl(true), newRow);
                     break;
                     case 'above':
-                        var cr = api.getParentElement(this.map[this.idx.row][this.idx.col].el, { nodeName: ["TR"] });
+                        var cr = api.getParentElement(this.map[this.idx.row][this.idx.col].el, { query: "tr" });
                         if (cr) {
                             cr.parentNode.insertBefore(newRow, cr);
                         }
@@ -778,7 +778,7 @@
 
         handleCellAddWithRowspan: function (cell, ridx, where) {
             var addRowsNr = parseInt(api.getAttribute(this.cell, 'rowspan'), 10) - 1,
-                crow = api.getParentElement(cell.el, { nodeName: ["TR"] }),
+                crow = api.getParentElement(cell.el, { query: "tr" }),
                 cType = cell.el.tagName.toLowerCase(),
                 cidx, temp_r_cells,
                 doc = this.table.ownerDocument,
