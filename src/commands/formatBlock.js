@@ -113,6 +113,51 @@
     }
   }
 
+  // Fix ranges that visually cover whole block element to actually cover the block
+  function fixRangeCoverage(range, composer) {
+    var node;
+
+    if (range.startContainer && range.startContainer.nodeType === 1 && range.startContainer === range.endContainer) {
+      if (range.startContainer.firstChild === range.startContainer.lastChild && range.endOffset === 1) {
+        if (range.startContainer !== composer.element) {
+          range.setStartBefore(range.startContainer);
+          range.setEndAfter(range.endContainer);
+        }
+      }
+      return;
+    }
+
+    if (range.startContainer && range.startContainer.nodeType === 1 && range.endContainer.nodeType === 3) {
+      if (range.startContainer.firstChild === range.endContainer && range.endOffset === 1) {
+        if (range.startContainer !== composer.element) {
+          range.setEndAfter(range.startContainer);
+        }
+      }
+      return;
+    }
+
+    if (range.endContainer && range.endContainer.nodeType === 1 && range.startContainer.nodeType === 3) {
+      if (range.endContainer.firstChild === range.startContainer && range.endOffset === 1) {
+        if (range.endContainer !== composer.element) {
+          range.setStartBefore(range.endContainer);
+        }
+      }
+      return;
+    }
+
+
+    if (range.startContainer && range.startContainer.nodeType === 3 && range.startContainer === range.endContainer && range.startContainer.parentNode) {
+      if (range.startContainer.parentNode.firstChild === range.startContainer && range.startContainer.parentNode.lastChild === range.startContainer) {
+        node = range.startContainer.parentNode;
+        if (node !== composer.element) {
+          range.setStartBefore(node);
+          range.setEndAfter(node);
+        }
+      }
+      return;
+    }
+  }
+
   // Wrap the range with a block level element
   // If element is one of unnestable block elements (ex: h2 inside h1), split nodes and insert between so nesting does not occur
   function wrapRangeWithElement(range, options, defaultName, composer) {
@@ -120,6 +165,7 @@
     if (defaultOptions) {
       defaultOptions.nodeName = defaultOptions.nodeName || defaultName || defaultNodeName(composer);
     }
+    fixRangeCoverage(range, composer);
 
     var r = range.cloneRange(),
         rangeStartContainer = r.startContainer,
@@ -261,10 +307,10 @@
       }
 
       // Remove state if toggle set and state on and selection is collapsed
-      if (options && options.toggle && composer.selection.isCollapsed()) {
-        bookmark = rangy.saveSelection(composer.doc.defaultView || composer.doc.parentWindow);
+      if (options && options.toggle) {
         state = this.state(composer, command, options);
         if (state) {
+          bookmark = rangy.saveSelection(composer.doc.defaultView || composer.doc.parentWindow);
           for (var j in state) {
             removeOptionsFromElement(state[j], options, composer);
           }
