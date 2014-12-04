@@ -85,9 +85,16 @@
     if (options.className) {
       element.classList.remove(options.className);
     }
+
     if (options.classRegExp) {
       element.className = element.className.replace(options.classRegExp, "");
     }
+
+    // Clean up blank class attribute
+    if (element.getAttribute('class') !== null && element.getAttribute('class').trim() === "") {
+      element.removeAttribute('class');
+    }
+
     if (options.nodeName && element.nodeName === options.nodeName) {
       style = element.getAttribute('style');
       if (!style || style.trim() === '') {
@@ -95,6 +102,11 @@
       } else {
         element = dom.renameElement(element, defaultNodeName(composer));
       }
+    }
+
+    // Clean up blank style attribute
+    if (element.getAttribute('style') !== null && element.getAttribute('style').trim() === "") {
+      element.removeAttribute('style');
     }
   }
 
@@ -105,7 +117,7 @@
 
     for (var i = contentBlocks.length; i--;) {
       if (!contentBlocks[i].nextSibling || contentBlocks[i].nextSibling.nodeType !== 1 || contentBlocks[i].nextSibling.nodeName !== 'BR') {
-        if (contentBlocks[i].innerHTML.trim() !== "") {
+        if ((contentBlocks[i].innerHTML || contentBlocks[i].nodeValue).trim() !== "") {
           contentBlocks[i].parentNode.insertBefore(contentBlocks[i].ownerDocument.createElement('BR'), contentBlocks[i].nextSibling);
         }
       }
@@ -147,7 +159,7 @@
 
 
     if (range.startContainer && range.startContainer.nodeType === 3 && range.startContainer === range.endContainer && range.startContainer.parentNode) {
-      if (range.startContainer.parentNode.firstChild === range.startContainer && range.startContainer.parentNode.lastChild === range.startContainer) {
+      if (range.startContainer.parentNode.firstChild === range.startContainer && range.endOffset == range.endContainer.length && range.startOffset === 0) {
         node = range.startContainer.parentNode;
         if (node !== composer.element) {
           range.setStartBefore(node);
@@ -199,12 +211,13 @@
               fragment.appendChild(content.firstChild);
             
             } else {
-              // Split block formating and aad new block to wrap caret
+              // Split block formating and add new block to wrap caret
               unwrapBlocksFromContent(content.firstChild);
               children = wysihtml5.dom.unwrap(content.firstChild);
-              for (var c = 0, cmax = children.length; c > cmax; c++) {
+              for (var c = 0, cmax = children.length; c < cmax; c++) {
                 fragment.appendChild(children[c]);
               }
+
               if (fragment.childNodes.length > 0) {
                 fragment.appendChild(composer.doc.createElement('BR'));
               }
