@@ -1,3 +1,13 @@
+*wysihtml5x 0.5.0-beta1* (December 4, 2014)
+* formatBlock update 
+	* Selections apply format to selection not its parent block, 
+	* Removed toggle functionality from many formatBlock commands (h1-6, p, pre ...) and added plaintext state to formatblock instead.
+	* Code modernization
+	* Changes API!
+* Allow tel: scheme in links
+* Fixed atributeless A tags
+* Added "dimension" to checkattributes methods (for with/height attributes where floating point numbrs and percentages are allowed) 
+
 *wysihtml5x 0.4.17* (November 6, 2014)
 * Updated rangy and added as node package
 * Updated qUnit for testing
