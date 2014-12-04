@@ -261,22 +261,6 @@
     return blocks;
   }
 
-  // If no nodename given try to find closest block level element and if found use it's nodeName in options
-  function getOptionsWithNodeName(options, composer) {
-    if (!options.nodeName) {
-      var correctedOptions = (options) ? wysihtml5.lang.object(options).clone(true) : null,
-          element = composer.selection.getOwnRanges()[0].startContainer;
-
-      if (correctedOptions) {
-        correctedOptions.nodeName = getParentBlockNodeName(element, composer) || defaultNodeName(composer);
-      }
-
-      return correctedOptions;
-    } else {
-      return options;
-    }
-  }
-
   // Find closest block level element
   function getParentBlockNodeName(element, composer) {
     var parentNode = wysihtml5.dom.getParentElement(element, {
@@ -284,27 +268,6 @@
         }, null, composer.element);
 
     return (parentNode) ? parentNode.nodeName : null;
-  }
-
-  // Removes explicit values from options that are needed for new node creation, but should be removed for similar elements detection.
-  // Removes styleValue, as it will return all elements with appropriate style property.
-  // Removes className if classRegExp or query defined (will allow more precise targeting of similar classes).
-  // Removes nodeName if query is defined.
-  function withoutExplicitValues(options) {
-    var valuelessOptions = wysihtml5.lang.object(options).clone(true);
-    if (typeof valuelessOptions.styleValue !== "undefined") {
-      delete valuelessOptions.styleValue;
-    }
-    
-    if (typeof valuelessOptions.className !== "undefined" && (typeof valuelessOptions.query !== "undefined" || typeof valuelessOptions.classRegExp !== "undefined")) {
-      delete valuelessOptions.className;
-    }
-
-    if (typeof valuelessOptions.nodeName !== "undefined" && typeof valuelessOptions.query !== "undefined") {
-      delete valuelessOptions.nodeName;
-    }
-
-    return valuelessOptions;
   }
 
   wysihtml5.commands.formatBlock = {
