@@ -1,3 +1,11 @@
+# NOTICE! This repository will be transferred to https://github.com/Voog/wysihtml
+
+As Edicy is in the process of rebranding to a new name - Voog, in the following weeks this repository will be relocated to https://github.com/Voog/wysihtml
+
+We will also detach this repository from being a fork of xing/wysihtml5 and continue as a separate repository. xing/wysihtml5 is no longer a supported repository. Thus causes problems with wrongly targeted pull requests and some confusion with user submitted issues. Also this fork has deviated already from xing/wysihtml5 enough to make both forks largely incompatible.
+
+Kind regards from Voog team.
+
 # wysihtml5x
 
 wysihtml5x is an extended and less strict approach on xing/wysihtml5 open source rich text editor based on HTML5 technology.
