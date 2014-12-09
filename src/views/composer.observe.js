@@ -244,7 +244,7 @@
           parent.parentNode.removeChild(parent);
         }
         setTimeout(function() {
-          wysihtml5.quirks.redraw(element);
+          wysihtml5.quirks.redraw(this.element);
         }, 0);
       }
     }
@@ -252,7 +252,7 @@
     if (this.config.handleTabKey && keyCode === wysihtml5.TAB_KEY) {
       // TAB key handling
       event.preventDefault();
-      handleTabKeyDown(this, element);
+      handleTabKeyDown(this, this.element);
     }
 
   };
