@@ -376,7 +376,7 @@ if ("document" in self) {
 }
 
 ;/**
- * @license wysihtml5x v0.5.0-beta
+ * @license wysihtml5x v0.5.0-beta1
  * https://github.com/Edicy/wysihtml5
  *
  * Author: Christopher Blum (https://github.com/tiff)
@@ -387,7 +387,7 @@ if ("document" in self) {
  *
  */
 var wysihtml5 = {
-  version: "0.5.0-beta",
+  version: "0.5.0-beta1",
 
   // namespaces
   commands:   {},
@@ -11368,7 +11368,7 @@ wysihtml5.Commands = Base.extend(
 
   // The outermost un-nestable block element parent of from node
   function findOuterBlock(node, container, allBlocks) {
-    var n = node;
+    var n = node,
         block = null;
         
     while (n && container && n !== container) {
@@ -11422,9 +11422,16 @@ wysihtml5.Commands = Base.extend(
     if (options.className) {
       element.classList.remove(options.className);
     }
+
     if (options.classRegExp) {
       element.className = element.className.replace(options.classRegExp, "");
     }
+
+    // Clean up blank class attribute
+    if (element.getAttribute('class') !== null && element.getAttribute('class').trim() === "") {
+      element.removeAttribute('class');
+    }
+
     if (options.nodeName && element.nodeName === options.nodeName) {
       style = element.getAttribute('style');
       if (!style || style.trim() === '') {
@@ -11432,6 +11439,11 @@ wysihtml5.Commands = Base.extend(
       } else {
         element = dom.renameElement(element, defaultNodeName(composer));
       }
+    }
+
+    // Clean up blank style attribute
+    if (element.getAttribute('style') !== null && element.getAttribute('style').trim() === "") {
+      element.removeAttribute('style');
     }
   }
 
@@ -11442,11 +11454,56 @@ wysihtml5.Commands = Base.extend(
 
     for (var i = contentBlocks.length; i--;) {
       if (!contentBlocks[i].nextSibling || contentBlocks[i].nextSibling.nodeType !== 1 || contentBlocks[i].nextSibling.nodeName !== 'BR') {
-        if (contentBlocks[i].innerHTML.trim() !== "") {
+        if ((contentBlocks[i].innerHTML || contentBlocks[i].nodeValue).trim() !== "") {
           contentBlocks[i].parentNode.insertBefore(contentBlocks[i].ownerDocument.createElement('BR'), contentBlocks[i].nextSibling);
         }
       }
       wysihtml5.dom.unwrap(contentBlocks[i]);
+    }
+  }
+
+  // Fix ranges that visually cover whole block element to actually cover the block
+  function fixRangeCoverage(range, composer) {
+    var node;
+
+    if (range.startContainer && range.startContainer.nodeType === 1 && range.startContainer === range.endContainer) {
+      if (range.startContainer.firstChild === range.startContainer.lastChild && range.endOffset === 1) {
+        if (range.startContainer !== composer.element) {
+          range.setStartBefore(range.startContainer);
+          range.setEndAfter(range.endContainer);
+        }
+      }
+      return;
+    }
+
+    if (range.startContainer && range.startContainer.nodeType === 1 && range.endContainer.nodeType === 3) {
+      if (range.startContainer.firstChild === range.endContainer && range.endOffset === 1) {
+        if (range.startContainer !== composer.element) {
+          range.setEndAfter(range.startContainer);
+        }
+      }
+      return;
+    }
+
+    if (range.endContainer && range.endContainer.nodeType === 1 && range.startContainer.nodeType === 3) {
+      if (range.endContainer.firstChild === range.startContainer && range.endOffset === 1) {
+        if (range.endContainer !== composer.element) {
+          range.setStartBefore(range.endContainer);
+        }
+      }
+      return;
+    }
+
+
+    if (range.startContainer && range.startContainer.nodeType === 3 && range.startContainer === range.endContainer && range.startContainer.parentNode) {
+      if (range.startContainer.parentNode.firstChild === range.startContainer && range.endOffset == range.endContainer.length && range.startOffset === 0) {
+        node = range.startContainer.parentNode;
+        if (node !== composer.element) {
+          range.setStartBefore(node);
+          range.setEndAfter(node);
+        }
+      }
+      return;
     }
   }
 
@@ -11457,6 +11514,7 @@ wysihtml5.Commands = Base.extend(
     if (defaultOptions) {
       defaultOptions.nodeName = defaultOptions.nodeName || defaultName || defaultNodeName(composer);
     }
+    fixRangeCoverage(range, composer);
 
     var r = range.cloneRange(),
         rangeStartContainer = r.startContainer,
@@ -11490,12 +11548,13 @@ wysihtml5.Commands = Base.extend(
               fragment.appendChild(content.firstChild);
             
             } else {
-              // Split block formating and aad new block to wrap caret
+              // Split block formating and add new block to wrap caret
               unwrapBlocksFromContent(content.firstChild);
               children = wysihtml5.dom.unwrap(content.firstChild);
-              for (var c = 0, cmax = children.length; c > cmax; c++) {
+              for (var c = 0, cmax = children.length; c < cmax; c++) {
                 fragment.appendChild(children[c]);
               }
+
               if (fragment.childNodes.length > 0) {
                 fragment.appendChild(composer.doc.createElement('BR'));
               }
@@ -11539,22 +11598,6 @@ wysihtml5.Commands = Base.extend(
     return blocks;
   }
 
-  // If no nodename given try to find closest block level element and if found use it's nodeName in options
-  function getOptionsWithNodeName(options, composer) {
-    if (!options.nodeName) {
-      var correctedOptions = (options) ? wysihtml5.lang.object(options).clone(true) : null,
-          element = composer.selection.getOwnRanges()[0].startContainer;
-
-      if (correctedOptions) {
-        correctedOptions.nodeName = getParentBlockNodeName(element, composer) || defaultNodeName(composer);
-      }
-
-      return correctedOptions;
-    } else {
-      return options;
-    }
-  }
-
   // Find closest block level element
   function getParentBlockNodeName(element, composer) {
     var parentNode = wysihtml5.dom.getParentElement(element, {
@@ -11562,27 +11605,6 @@ wysihtml5.Commands = Base.extend(
         }, null, composer.element);
 
     return (parentNode) ? parentNode.nodeName : null;
-  }
-
-  // Removes explicit values from options that are needed for new node creation, but should be removed for similar elements detection.
-  // Removes styleValue, as it will return all elements with appropriate style property.
-  // Removes className if classRegExp or query defined (will allow more precise targeting of similar classes).
-  // Removes nodeName if query is defined.
-  function withoutExplicitValues(options) {
-    var valuelessOptions = wysihtml5.lang.object(options).clone(true);
-    if (typeof valuelessOptions.styleValue !== "undefined") {
-      delete valuelessOptions.styleValue;
-    }
-    
-    if (typeof valuelessOptions.className !== "undefined" && (typeof valuelessOptions.query !== "undefined" || typeof valuelessOptions.classRegExp !== "undefined")) {
-      delete valuelessOptions.className;
-    }
-
-    if (typeof valuelessOptions.nodeName !== "undefined" && typeof valuelessOptions.query !== "undefined") {
-      delete valuelessOptions.nodeName;
-    }
-
-    return valuelessOptions;
   }
 
   wysihtml5.commands.formatBlock = {
@@ -11598,10 +11620,10 @@ wysihtml5.Commands = Base.extend(
       }
 
       // Remove state if toggle set and state on and selection is collapsed
-      if (options && options.toggle && composer.selection.isCollapsed()) {
-        bookmark = rangy.saveSelection(composer.doc.defaultView || composer.doc.parentWindow);
+      if (options && options.toggle) {
         state = this.state(composer, command, options);
         if (state) {
+          bookmark = rangy.saveSelection(composer.doc.defaultView || composer.doc.parentWindow);
           for (var j in state) {
             removeOptionsFromElement(state[j], options, composer);
           }
