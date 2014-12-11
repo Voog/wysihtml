@@ -1,5 +1,5 @@
 {
-  "name": "wysihtml5x",
+  "name": "wysihtml",
   "version": "0.4.17",
   "main": [
     "dist/wysihtml5x.min.js",
