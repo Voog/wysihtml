@@ -1,5 +1,5 @@
 {
-  "name": "wysihtml5x",
+  "name": "wysihtml",
   "version": "0.5.0-beta1",
   "devDependencies": {
     "grunt": "~0.4.4",
@@ -14,7 +14,7 @@
   "dependencies": {
     "rangy": "^1.3.0-alpha.20140921"
   },
-  "description": "h1. wysihtml5x 0.4.17",
+  "description": "h1. wysihtml 0.5.0-beata1",
   "main": "Gruntfile.js",
   "directories": {
     "example": "examples",
@@ -25,12 +25,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/Edicy/wysihtml5"
+    "url": "git://github.com/Voog/wysihtml"
   },
-  "author": "XING AG",
+  "author": "VOOG, XING AG",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Edicy/wysihtml5/issues"
+    "url": "https://github.com/Voog/wysihtml/issues"
   },
-  "homepage": "https://github.com/Edicy/wysihtml5"
+  "homepage": "https://github.com/Voog/wysihtml"
 }
