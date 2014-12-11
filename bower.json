@@ -1,9 +1,9 @@
 {
   "name": "wysihtml",
-  "version": "0.5.0-beta1",
+  "version": "0.5.0-beta2",
   "main": [
-    "dist/wysihtml5x.min.js",
-    "dist/wysihtml5x-toolbar.min.js"
+    "dist/wysihtml.min.js",
+    "dist/wysihtml-toolbar.min.js"
   ],
   "dependencies": {
   },
