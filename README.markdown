@@ -63,4 +63,4 @@ This builds both minified and development versions, including one with toolbar s
 
 ## Contributors
 
-See the [list of contributors here](https://github.com/Edicy/wysihtml5/graphs/contributors).
+See the [list of contributors here](https://github.com/Voog/wysihtml/graphs/contributors).
