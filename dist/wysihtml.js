@@ -1,7 +1,7 @@
 // TODO: in future try to replace most inline compability checks with polyfills for code readability 
 
 // IE8 SUPPORT BLOCK
-// You can compile wuthout all this if IE8 is not needed
+// You can compile without all this if IE8 is not needed
 
 // String trim for ie8
 if (!String.prototype.trim) {
@@ -321,9 +321,10 @@ if ("document" in self) {
 
     }(self));
 
-  } else {
+  } else if ("DOMTokenList" in window) {
     // There is full or partial native classList support, so just check if we need
     // to normalize the add/remove and toggle APIs.
+    // DOMTokenList is expected to exist (removes conflicts with multiple polyfills present on site)
 
     (function() {
       "use strict";
@@ -376,7 +377,7 @@ if ("document" in self) {
 }
 
 ;/**
- * @license wysihtml5x v0.5.0-beta2
+ * @license wysihtml5x v0.5.0-beta3
  * https://github.com/Edicy/wysihtml5
  *
  * Author: Christopher Blum (https://github.com/tiff)
@@ -387,7 +388,7 @@ if ("document" in self) {
  *
  */
 var wysihtml5 = {
-  version: "0.5.0-beta2",
+  version: "0.5.0-beta3",
 
   // namespaces
   commands:   {},
@@ -9001,21 +9002,19 @@ wysihtml5.quirks.ensureProperClearing = (function() {
             cells: null,
             select: selectCells
         },
-        selection_class = "wysiwyg-tmp-selected-cell",
-        moveHandler = null,
-        upHandler = null;
+        selection_class = "wysiwyg-tmp-selected-cell";
 
     function init () {
-
-        dom.observe(editable, "mousedown", function(event) {
-          var target = wysihtml5.dom.getParentElement(event.target, { query: "td, th" });
-          if (target) {
-              handleSelectionMousedown(target);
-          }
-        });
-
+        editable.addEventListener("mousedown", handleMouseDown);
         return select;
     }
+
+    var handleMouseDown = function(event) {
+      var target = wysihtml5.dom.getParentElement(event.target, { query: "td, th" });
+      if (target) {
+          handleSelectionMousedown(target);
+      }
+    };
 
     function handleSelectionMousedown (target) {
       select.start = target;
@@ -9026,8 +9025,8 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       if (select.table) {
         removeCellSelections();
         dom.addClass(target, selection_class);
-        moveHandler = dom.observe(editable, "mousemove", handleMouseMove);
-        upHandler = dom.observe(editable, "mouseup", handleMouseUp);
+        editable.addEventListener("mousemove", handleMouseMove);
+        editable.addEventListener("mouseup", handleMouseUp);
         editor.fire("tableselectstart").fire("tableselectstart:composer");
       }
     }
@@ -9052,7 +9051,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
 
     function handleMouseMove (event) {
       var curTable = null,
-          cell = dom.getParentElement(event.target, { nodeName: "td, th" }),
+          cell = dom.getParentElement(event.target, { query: "td, th" }),
           oldEnd;
 
       if (cell && select.table && select.start) {
@@ -9074,25 +9073,27 @@ wysihtml5.quirks.ensureProperClearing = (function() {
     }
 
     function handleMouseUp (event) {
-      moveHandler.stop();
-      upHandler.stop();
+      editable.removeEventListener("mousemove", handleMouseMove);
+      editable.removeEventListener("mouseup", handleMouseUp);
       editor.fire("tableselect").fire("tableselect:composer");
       setTimeout(function() {
         bindSideclick();
       },0);
     }
 
+    var sideClickHandler = function(event) {
+      editable.ownerDocument.removeEventListener("click", sideClickHandler);
+      if (dom.getParentElement(event.target, { query: "table" }) != select.table) {
+          removeCellSelections();
+          select.table = null;
+          select.start = null;
+          select.end = null;
+          editor.fire("tableunselect").fire("tableunselect:composer");
+      }
+    };
+
     function bindSideclick () {
-        var sideClickHandler = dom.observe(editable.ownerDocument, "click", function(event) {
-          sideClickHandler.stop();
-          if (dom.getParentElement(event.target, { query: "table" }) != select.table) {
-              removeCellSelections();
-              select.table = null;
-              select.start = null;
-              select.end = null;
-              editor.fire("tableunselect").fire("tableunselect:composer");
-          }
-        });
+      editable.ownerDocument.addEventListener("click", sideClickHandler);
     }
 
     function selectCells (start, end) {
@@ -12965,7 +12966,14 @@ wysihtml5.views.View = Base.extend(
     },
 
     cleanUp: function() {
-        this.parent.parse(this.element);
+      var bookmark;
+      if (this.selection) {
+        bookmark = rangy.saveSelection(this.doc.defaultView || this.doc.parentWindow);
+      }
+      this.parent.parse(this.element);
+      if (bookmark) {
+        rangy.restoreSelection(bookmark);
+      }
     },
 
     show: function() {
