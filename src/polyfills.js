@@ -1,7 +1,7 @@
 // TODO: in future try to replace most inline compability checks with polyfills for code readability 
 
 // IE8 SUPPORT BLOCK
-// You can compile wuthout all this if IE8 is not needed
+// You can compile without all this if IE8 is not needed
 
 // String trim for ie8
 if (!String.prototype.trim) {
@@ -321,9 +321,10 @@ if ("document" in self) {
 
     }(self));
 
-  } else {
+  } else if ("DOMTokenList" in window) {
     // There is full or partial native classList support, so just check if we need
     // to normalize the add/remove and toggle APIs.
+    // DOMTokenList is expected to exist (removes conflicts with multiple polyfills present on site)
 
     (function() {
       "use strict";
