@@ -8,21 +8,19 @@ wysihtml5.quirks.tableCellsSelection = function(editable, editor) {
             cells: null,
             select: selectCells
         },
-        selection_class = "wysiwyg-tmp-selected-cell",
-        moveHandler = null,
-        upHandler = null;
+        selection_class = "wysiwyg-tmp-selected-cell";
 
     function init () {
-
-        dom.observe(editable, "mousedown", function(event) {
-          var target = wysihtml5.dom.getParentElement(event.target, { query: "td, th" });
-          if (target) {
-              handleSelectionMousedown(target);
-          }
-        });
-
+        editable.addEventListener("mousedown", handleMouseDown);
         return select;
     }
+
+    var handleMouseDown = function(event) {
+      var target = wysihtml5.dom.getParentElement(event.target, { query: "td, th" });
+      if (target) {
+          handleSelectionMousedown(target);
+      }
+    };
 
     function handleSelectionMousedown (target) {
       select.start = target;
@@ -33,8 +31,8 @@ wysihtml5.quirks.tableCellsSelection = function(editable, editor) {
       if (select.table) {
         removeCellSelections();
         dom.addClass(target, selection_class);
-        moveHandler = dom.observe(editable, "mousemove", handleMouseMove);
-        upHandler = dom.observe(editable, "mouseup", handleMouseUp);
+        editable.addEventListener("mousemove", handleMouseMove);
+        editable.addEventListener("mouseup", handleMouseUp);
         editor.fire("tableselectstart").fire("tableselectstart:composer");
       }
     }
@@ -59,7 +57,7 @@ wysihtml5.quirks.tableCellsSelection = function(editable, editor) {
 
     function handleMouseMove (event) {
       var curTable = null,
-          cell = dom.getParentElement(event.target, { nodeName: "td, th" }),
+          cell = dom.getParentElement(event.target, { query: "td, th" }),
           oldEnd;
 
       if (cell && select.table && select.start) {
@@ -81,25 +79,27 @@ wysihtml5.quirks.tableCellsSelection = function(editable, editor) {
     }
 
     function handleMouseUp (event) {
-      moveHandler.stop();
-      upHandler.stop();
+      editable.removeEventListener("mousemove", handleMouseMove);
+      editable.removeEventListener("mouseup", handleMouseUp);
       editor.fire("tableselect").fire("tableselect:composer");
       setTimeout(function() {
         bindSideclick();
       },0);
     }
 
+    var sideClickHandler = function(event) {
+      editable.ownerDocument.removeEventListener("click", sideClickHandler);
+      if (dom.getParentElement(event.target, { query: "table" }) != select.table) {
+          removeCellSelections();
+          select.table = null;
+          select.start = null;
+          select.end = null;
+          editor.fire("tableunselect").fire("tableunselect:composer");
+      }
+    };
+
     function bindSideclick () {
-        var sideClickHandler = dom.observe(editable.ownerDocument, "click", function(event) {
-          sideClickHandler.stop();
-          if (dom.getParentElement(event.target, { query: "table" }) != select.table) {
-              removeCellSelections();
-              select.table = null;
-              select.start = null;
-              select.end = null;
-              editor.fire("tableunselect").fire("tableunselect:composer");
-          }
-        });
+      editable.ownerDocument.addEventListener("click", sideClickHandler);
     }
 
     function selectCells (start, end) {
