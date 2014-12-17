@@ -49,7 +49,14 @@
     },
 
     cleanUp: function() {
-        this.parent.parse(this.element);
+      var bookmark;
+      if (this.selection) {
+        bookmark = rangy.saveSelection(this.doc.defaultView || this.doc.parentWindow);
+      }
+      this.parent.parse(this.element);
+      if (bookmark) {
+        rangy.restoreSelection(bookmark);
+      }
     },
 
     show: function() {
