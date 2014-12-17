@@ -3,7 +3,7 @@
 wysihtml is an extended and less strict approach on xing/wysihtml5 open source rich text editor based on HTML5 technology.
 The code is completely library agnostic: No jQuery, Prototype or similar is required.
 
-This project was initiated and is supported by the [XING AG](https://www.xing.com). Thanks!
+This project is supported by the [VOOG](https://voog.com).
 
 ## Features
 
@@ -35,23 +35,6 @@ Extended features not present in xing/wysihtml5:
 
 The rich text editing interface is supported in IE8+, FF 3.5+, Safari 4+, Safari on iOS 5+, Opera 11+ and Chrome.
 **Graceful Degradation:** Users with other browsers will see the textarea and are still able to write plain HTML by themselves.
-
-## Companies using wysihtml5
-
-* [Basecamp](http://basecamp.com) - Leading web-based project management and collaboration tool
-* [XING](https://www.xing.com) - Business Social Network with more than 12 million members
-* [Qype](http://www.qype.com) - Largest user-generated local review site in Europe
-* and many more ...
-
-## Research
-
-Before starting wysihtml5 we spent a lot of time investigating the different browsers and their behaviors.
-
-Check this repository: https://github.com/tiff/wysihtml5-tests
-
-A compatibility table for rich text query commands can be found here: http://tifftiff.de/contenteditable/compliance_test.html
-
-A pure native rich text editor with HTML validator and live source preview is here: http://tifftiff.de/contenteditable/editor.html
 
 ## Development
 
