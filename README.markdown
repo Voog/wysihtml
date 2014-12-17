@@ -1,9 +1,9 @@
 # wysihtml
 
-wysihtml is an extended and less strict approach on xing/wysihtml5 open source rich text editor based on HTML5 technology.
+wysihtml is an extended and less strict approach on [xing/wysihtml5](https://github.com/xing/wysihtml5) open source rich text editor based on HTML5 technology.
 The code is completely library agnostic: No jQuery, Prototype or similar is required.
 
-This project is supported by the [VOOG](https://voog.com).
+This project is supported by the [Voog](https://voog.com).
 
 ## Features
 
