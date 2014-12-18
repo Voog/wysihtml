@@ -5,6 +5,14 @@ The code is completely library agnostic: No jQuery, Prototype or similar is requ
 
 This project is supported by [Voog](http://voog.com).
 
+## Demos
+* wysihtml.com: http://wysihtml.com
+* Simple demo: http://voog.github.com/wysihtml/examples/simple.html
+* Advanced demo: http://voog.github.com/wysihtml/examples/advanced.html
+* Editable GitHub page: http://voog.github.com/wysihtml
+* Or try it on a working app: http://voog.com
+ 
+
 ## Features
 
 * Auto linking of urls as-you-type.
