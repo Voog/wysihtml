@@ -255,7 +255,7 @@ var wysihtml5ParserRules = {
             "check_attributes": {
                 "width": "dimension",
                 "alt": "alt",
-                "src": "src", // if you compiled master manually then change this from 'url' to 'src'
+                "src": "any", // if you compiled master manually then change this from 'url' to 'src'
                 "height": "dimension",
                 "id": "any"
             },
