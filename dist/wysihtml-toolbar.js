@@ -12646,7 +12646,25 @@ wysihtml5.commands.formatCode = {
     return newList;
   }
 
-};;/**
+};;wysihtml5.commands.subscript = {
+  exec: function(composer, command) {
+    wysihtml5.commands.formatInline.execWithToggle(composer, command, "sub");
+  },
+
+  state: function(composer, command) {
+    return wysihtml5.commands.formatInline.state(composer, command, "sub");
+  }
+};
+;wysihtml5.commands.superscript = {
+  exec: function(composer, command) {
+    wysihtml5.commands.formatInline.execWithToggle(composer, command, "sup");
+  },
+
+  state: function(composer, command) {
+    return wysihtml5.commands.formatInline.state(composer, command, "sup");
+  }
+};
+;/**
  * Undo Manager for wysihtml5
  * slightly inspired by http://rniwa.com/editing/undomanager.html#the-undomanager-interface
  */
