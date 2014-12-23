@@ -557,6 +557,12 @@ var wysihtml5ParserRules = {
         },
         "header": {
             "rename_tag": "div"
+        },
+        "sub": {
+            "rename_tag": "sub"
+        },
+        "sup": {
+            "rename_tag": "sup"
         }
     }
 };
