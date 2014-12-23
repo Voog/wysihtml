@@ -277,9 +277,7 @@ var wysihtml5ParserRules = {
         "bgsound": {
             "remove": 1
         },
-        "sup": {
-            "unwrap": 1
-        },
+        "sup": {},
         "address": {
             "unwrap": 1
         },
@@ -627,9 +625,7 @@ var wysihtml5ParserRules = {
             "unwrap": 1
         },
         "p": wysihtml5ParserRulesDefaults.blockLevelEl,
-        "sub": {
-            "unwrap": 1
-        },
+        "sub": {},
         "comment": {
             "remove": 1
         },

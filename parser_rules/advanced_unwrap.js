@@ -304,9 +304,7 @@ var wysihtml5ParserRules = {
         "bgsound": {
             "remove": 1
         },
-        "sup": {
-            "unwrap": 1
-        },
+        "sup": {},
         "address": {
             "unwrap": 1
         },
@@ -648,9 +646,7 @@ var wysihtml5ParserRules = {
                 "align": "align_text"
             }
         },
-        "sub": {
-            "unwrap": 1
-        },
+        "sub": {},
         "comment": {
             "remove": 1
         },

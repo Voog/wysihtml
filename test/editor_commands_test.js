@@ -423,6 +423,37 @@ if (wysihtml5.browser.supported()) {
       });
     });
 
+  // sub/super script
+    asyncTest("Create subscript / superscript", function() {
+      expect(2);
+      var that = this,
+        editor = new wysihtml5.Editor(this.editableArea1, {
+          parserRules: {
+            tags: {
+              sub: true,
+              sup: true
+            }
+          }
+        }),
+        text = "this is a text";
+
+      editor.on("load", function() {
+        var editableElement   = that.editableArea1;
+
+        editor.setValue(text, true);
+        editor.composer.selection.selectNode(editor.editableElement);
+        editor.composer.commands.exec('subscript');
+        equal(editableElement.innerHTML.toLowerCase(), "<sub>" + text + "</sub>" , "Subscript added sucessfully.");
+
+        editor.setValue(text, true);
+        editor.composer.selection.selectNode(editor.editableElement);
+        editor.composer.commands.exec('superscript');
+        equal(editableElement.innerHTML.toLowerCase(), "<sup>" + text + "</sup>" , "Superscript added sucessfully.");
+
+        start();
+      });
+    });
+
 
   
 }

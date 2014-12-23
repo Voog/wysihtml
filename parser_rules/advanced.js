@@ -223,9 +223,6 @@ var wysihtml5ParserRules = {
         "bgsound": {
             "remove": 1
         },
-        "sup": {
-            "rename_tag": "span"
-        },
         "address": {
             "rename_tag": "div"
         },
@@ -543,9 +540,7 @@ var wysihtml5ParserRules = {
                 "align": "align_text"
             }
         },
-        "sub": {
-            "rename_tag": "span"
-        },
+        "sub": {},
         "comment": {
             "remove": 1
         },
@@ -558,11 +553,6 @@ var wysihtml5ParserRules = {
         "header": {
             "rename_tag": "div"
         },
-        "sub": {
-            "rename_tag": "sub"
-        },
-        "sup": {
-            "rename_tag": "sup"
-        }
+        "sup": {}
     }
 };
