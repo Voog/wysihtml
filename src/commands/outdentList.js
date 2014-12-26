@@ -1,78 +1,81 @@
-wysihtml5.commands.outdentList = {
-  exec: function(composer, command, value) {
-    var listEls = composer.selection.getSelectionParentsByTag('LI');
-    if (listEls) {
-      return this.tryToPullLiLevel(listEls, composer);
-    }
-    return false;
-  },
+(function(wysihtml5){
 
-  state: function(composer, command) {
+  wysihtml5.commands.outdentList = {
+    exec: function(composer, command, value) {
+      var listEls = composer.selection.getSelectionParentsByTag('LI');
+      if (listEls) {
+        return this.tryToPullLiLevel(listEls, composer);
+      }
       return false;
-  },
+    },
 
-  tryToPullLiLevel: function(liNodes, composer) {
-    var listNode, outerListNode, outerLiNode, list, prevLi, liNode, afterList,
-        found = false,
-        that = this;
+    state: function(composer, command) {
+        return false;
+    },
 
-    composer.selection.executeAndRestoreRangy(function() {
+    tryToPullLiLevel: function(liNodes, composer) {
+      var listNode, outerListNode, outerLiNode, list, prevLi, liNode, afterList,
+          found = false,
+          that = this;
 
-      for (var i = liNodes.length; i--;) {
-        liNode = liNodes[i];
-        if (liNode.parentNode) {
-          listNode = liNode.parentNode;
+      composer.selection.executeAndRestoreRangy(function() {
 
-          if (listNode.tagName === 'OL' || listNode.tagName === 'UL') {
-            found = true;
+        for (var i = liNodes.length; i--;) {
+          liNode = liNodes[i];
+          if (liNode.parentNode) {
+            listNode = liNode.parentNode;
 
-            outerListNode = wysihtml5.dom.getParentElement(listNode.parentNode, { query: 'ol, ul' }, false, composer.element);
-            outerLiNode = wysihtml5.dom.getParentElement(listNode.parentNode, { query: 'li' }, false, composer.element);
+            if (listNode.tagName === 'OL' || listNode.tagName === 'UL') {
+              found = true;
 
-            if (outerListNode && outerLiNode) {
+              outerListNode = wysihtml5.dom.getParentElement(listNode.parentNode, { query: 'ol, ul' }, false, composer.element);
+              outerLiNode = wysihtml5.dom.getParentElement(listNode.parentNode, { query: 'li' }, false, composer.element);
 
-              if (liNode.nextSibling) {
-                afterList = that.getAfterList(listNode, liNode);
-                liNode.appendChild(afterList);
+              if (outerListNode && outerLiNode) {
+
+                if (liNode.nextSibling) {
+                  afterList = that.getAfterList(listNode, liNode);
+                  liNode.appendChild(afterList);
+                }
+                outerListNode.insertBefore(liNode, outerLiNode.nextSibling);
+
+              } else {
+
+                if (liNode.nextSibling) {
+                  afterList = that.getAfterList(listNode, liNode);
+                  liNode.appendChild(afterList);
+                }
+
+                for (var j = liNode.childNodes.length; j--;) {
+                  listNode.parentNode.insertBefore(liNode.childNodes[j], listNode.nextSibling);
+                }
+
+                listNode.parentNode.insertBefore(document.createElement('br'), listNode.nextSibling);
+                liNode.parentNode.removeChild(liNode);
+
               }
-              outerListNode.insertBefore(liNode, outerLiNode.nextSibling);
 
-            } else {
-
-              if (liNode.nextSibling) {
-                afterList = that.getAfterList(listNode, liNode);
-                liNode.appendChild(afterList);
+              // cleanup
+              if (listNode.childNodes.length === 0) {
+                  listNode.parentNode.removeChild(listNode);
               }
-
-              for (var j = liNode.childNodes.length; j--;) {
-                listNode.parentNode.insertBefore(liNode.childNodes[j], listNode.nextSibling);
-              }
-
-              listNode.parentNode.insertBefore(document.createElement('br'), listNode.nextSibling);
-              liNode.parentNode.removeChild(liNode);
-
-            }
-
-            // cleanup
-            if (listNode.childNodes.length === 0) {
-                listNode.parentNode.removeChild(listNode);
             }
           }
         }
+
+      });
+      return found;
+    },
+
+    getAfterList: function(listNode, liNode) {
+      var nodeName = listNode.nodeName,
+          newList = document.createElement(nodeName);
+
+      while (liNode.nextSibling) {
+        newList.appendChild(liNode.nextSibling);
       }
-
-    });
-    return found;
-  },
-
-  getAfterList: function(listNode, liNode) {
-    var nodeName = listNode.nodeName,
-        newList = document.createElement(nodeName);
-
-    while (liNode.nextSibling) {
-      newList.appendChild(liNode.nextSibling);
+      return newList;
     }
-    return newList;
-  }
 
-};
+  };
+}(wysihtml5));
