@@ -738,7 +738,45 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
       return function(attributeValue) {
         return attributeValue;
       };
-    })()
+    })(),
+
+    liquidURL: (function(){
+      var URL_REG_EXP = /^https?:\/\//i;
+      var LIQUID_REG_EXP = /({{.*?}}|{%.*?%})/g;
+      return function(attributeValue){
+        var matchedURL = attributeValue.match(URL_REG_EXP);
+        var matchedLiquid = attributeValue.match(LIQUID_REG_EXP);
+        var newURL = attributeValue;
+        var i = 0;
+
+        // if there is no value, return null
+        if (!attributeValue) {
+          return null;
+        }
+
+        // if we only have a liquid template like href="{{modle.url}}", just return it
+        if(matchedLiquid && !matchedURL) {
+          return newURL;
+        }
+
+        // if the attributeValue begins with a forward slash, remove it
+        if (attributeValue.charAt(0) === '/') {
+          newURL = newURL.slice(1, attributeValue.length);
+        }
+
+        // if there is no matched url, add http:// by default
+        if(!matchedURL){
+          newURL = "http://" + attributeValue;
+        }
+
+        // Ensure that the URL is lowercase
+        newURL.replace(matchedURL, function(match){
+          match.toLowerCase();
+        });
+
+        return newURL;
+      }
+    }())
   };
 
   // ------------ style converter (converts an html attribute to a style) ------------ \\
