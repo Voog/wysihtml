@@ -375,4 +375,3 @@ if ("document" in self) {
   }
 
 }
-

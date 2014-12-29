@@ -366,24 +366,24 @@
     },
 
     getAdjacentMergeableTextNode: function(node, forward) {
-        var isTextNode = (node.nodeType == wysihtml5.TEXT_NODE);
-        var el = isTextNode ? node.parentNode : node;
-        var adjacentNode;
-        var propName = forward ? "nextSibling" : "previousSibling";
-        if (isTextNode) {
-          // Can merge if the node's previous/next sibling is a text node
-          adjacentNode = node[propName];
-          if (adjacentNode && adjacentNode.nodeType == wysihtml5.TEXT_NODE) {
-            return adjacentNode;
-          }
-        } else {
-          // Compare element with its sibling
-          adjacentNode = el[propName];
-          if (adjacentNode && this.areElementsMergeable(node, adjacentNode)) {
-            return adjacentNode[forward ? "firstChild" : "lastChild"];
-          }
+      var isTextNode = (node.nodeType == wysihtml5.TEXT_NODE);
+      var el = isTextNode ? node.parentNode : node;
+      var adjacentNode;
+      var propName = forward ? "nextSibling" : "previousSibling";
+      if (isTextNode) {
+        // Can merge if the node's previous/next sibling is a text node
+        adjacentNode = node[propName];
+        if (adjacentNode && adjacentNode.nodeType == wysihtml5.TEXT_NODE) {
+          return adjacentNode;
         }
-        return null;
+      } else {
+        // Compare element with its sibling
+        adjacentNode = el[propName];
+        if (adjacentNode && this.areElementsMergeable(node, adjacentNode)) {
+          return adjacentNode[forward ? "firstChild" : "lastChild"];
+        }
+      }
+      return null;
     },
 
     areElementsMergeable: function(el1, el2) {
@@ -461,83 +461,83 @@
     },
 
     applyToRange: function(range) {
-        var textNodes;
-        for (var ri = range.length; ri--;) {
-            textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
+      var textNodes;
+      for (var ri = range.length; ri--;) {
+          textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
 
-            if (!textNodes.length) {
-              try {
-                var node = this.createContainer(range[ri].endContainer.ownerDocument);
-                range[ri].surroundContents(node);
-                this.selectNode(range[ri], node);
-                return;
-              } catch(e) {}
-            }
-
-            range[ri].splitBoundaries();
-            textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
-            if (textNodes.length) {
-              var textNode;
-
-              for (var i = 0, len = textNodes.length; i < len; ++i) {
-                textNode = textNodes[i];
-                if (!this.getMatchingAncestor(textNode).element) {
-                  this.applyToTextNode(textNode);
-                }
-              }
-
-              range[ri].setStart(textNodes[0], 0);
-              textNode = textNodes[textNodes.length - 1];
-              range[ri].setEnd(textNode, textNode.length);
-
-              if (this.normalize) {
-                this.postApply(textNodes, range[ri]);
-              }
-            }
-
+        if (!textNodes.length) {
+          try {
+            var node = this.createContainer(range[ri].endContainer.ownerDocument);
+            range[ri].surroundContents(node);
+            this.selectNode(range[ri], node);
+            return;
+          } catch(e) {}
         }
+
+        range[ri].splitBoundaries();
+        textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
+        if (textNodes.length) {
+          var textNode;
+
+          for (var i = 0, len = textNodes.length; i < len; ++i) {
+            textNode = textNodes[i];
+            if (!this.getMatchingAncestor(textNode).element) {
+              this.applyToTextNode(textNode);
+            }
+          }
+
+          range[ri].setStart(textNodes[0], 0);
+          textNode = textNodes[textNodes.length - 1];
+          range[ri].setEnd(textNode, textNode.length);
+
+          if (this.normalize) {
+            this.postApply(textNodes, range[ri]);
+          }
+        }
+
+      }
     },
 
     undoToRange: function(range) {
       var textNodes, textNode, ancestorWithClass, ancestorWithStyle, ancestor;
       for (var ri = range.length; ri--;) {
 
+        textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
+        if (textNodes.length) {
+          range[ri].splitBoundaries();
           textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
-          if (textNodes.length) {
-            range[ri].splitBoundaries();
-            textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
-          } else {
-            var doc = range[ri].endContainer.ownerDocument,
-                node = doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
-            range[ri].insertNode(node);
-            range[ri].selectNode(node);
-            textNodes = [node];
-          }
+        } else {
+          var doc = range[ri].endContainer.ownerDocument,
+              node = doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
+          range[ri].insertNode(node);
+          range[ri].selectNode(node);
+          textNodes = [node];
+        }
 
-          for (var i = 0, len = textNodes.length; i < len; ++i) {
-            if (range[ri].isValid()) {
-              textNode = textNodes[i];
+        for (var i = 0, len = textNodes.length; i < len; ++i) {
+          if (range[ri].isValid()) {
+            textNode = textNodes[i];
 
-              ancestor = this.getMatchingAncestor(textNode);
-              if (ancestor.type === "style") {
-                this.undoToTextNode(textNode, range[ri], false, ancestor.element);
-              } else if (ancestor.element) {
-                this.undoToTextNode(textNode, range[ri], ancestor.element);
-              }
+            ancestor = this.getMatchingAncestor(textNode);
+            if (ancestor.type === "style") {
+              this.undoToTextNode(textNode, range[ri], false, ancestor.element);
+            } else if (ancestor.element) {
+              this.undoToTextNode(textNode, range[ri], ancestor.element);
             }
           }
+        }
 
-          if (len == 1) {
-            this.selectNode(range[ri], textNodes[0]);
-          } else {
-            range[ri].setStart(textNodes[0], 0);
-            textNode = textNodes[textNodes.length - 1];
-            range[ri].setEnd(textNode, textNode.length);
+        if (len == 1) {
+          this.selectNode(range[ri], textNodes[0]);
+        } else {
+          range[ri].setStart(textNodes[0], 0);
+          textNode = textNodes[textNodes.length - 1];
+          range[ri].setEnd(textNode, textNode.length);
 
-            if (this.normalize) {
-              this.postApply(textNodes, range[ri]);
-            }
+          if (this.normalize) {
+            this.postApply(textNodes, range[ri]);
           }
+        }
 
       }
     },

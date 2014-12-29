@@ -362,6 +362,5 @@
       return (nodes.length === 0) ? false : nodes;
     }
 
-
   };
 })(wysihtml5);

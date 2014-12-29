@@ -1,5 +1,4 @@
 // does a selector query on element or array of elements
-
 wysihtml5.dom.query = function(elements, query) {
     var ret = [],
         q;

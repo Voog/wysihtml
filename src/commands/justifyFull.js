@@ -1,4 +1,3 @@
-
 (function(wysihtml5) {
 
   var nodeOptions = {
