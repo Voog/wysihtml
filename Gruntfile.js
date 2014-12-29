@@ -148,11 +148,18 @@ module.exports = function(grunt) {
           'dist/<%= pkg.name %>-toolbar.min.js': 'dist/<%= pkg.name %>-toolbar.js'
         }
       }
+    },
+    open: {
+        test: {
+            path: 'test/index.html'
+        }
     }
   });
 
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-uglify');
+  grunt.loadNpmTasks('grunt-open');
 
   grunt.registerTask('default', ['concat', 'uglify']);
+  grunt.registerTask('test', ['open:test']);
 };
