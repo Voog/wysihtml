@@ -114,10 +114,10 @@ wysihtml5.commands.insertList = (function(wysihtml5) {
           }),
           isEmpty, list;
 
-      // This space causes new lists to never break on enter 
+      // This space causes new lists to never break on enter
       var INVISIBLE_SPACE_REG_EXP = /\uFEFF/g;
       tempElement.innerHTML = tempElement.innerHTML.replace(wysihtml5.INVISIBLE_SPACE_REG_EXP, "");
-      
+
       if (tempElement) {
         isEmpty = wysihtml5.lang.array(["", "<br>", wysihtml5.INVISIBLE_SPACE]).contains(tempElement.innerHTML);
         list = wysihtml5.dom.convertToList(tempElement, nodeName.toLowerCase(), composer.parent.config.uneditableContainerClassname);
