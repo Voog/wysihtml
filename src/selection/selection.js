@@ -943,36 +943,36 @@
       if (r) { ranges.push(r); }
 
       if (this.unselectableClass && this.contain && r) {
-          var uneditables = this.getOwnUneditables(),
-              tmpRange;
-          if (uneditables.length > 0) {
-            for (var i = 0, imax = uneditables.length; i < imax; i++) {
-              tmpRanges = [];
-              for (var j = 0, jmax = ranges.length; j < jmax; j++) {
-                if (ranges[j]) {
-                  switch (ranges[j].compareNode(uneditables[i])) {
-                    case 2:
-                      // all selection inside uneditable. remove
-                    break;
-                    case 3:
-                      //section begins before and ends after uneditable. spilt
-                      tmpRange = ranges[j].cloneRange();
-                      tmpRange.setEndBefore(uneditables[i]);
-                      tmpRanges.push(tmpRange);
+        var uneditables = this.getOwnUneditables(),
+            tmpRange;
+        if (uneditables.length > 0) {
+          for (var i = 0, imax = uneditables.length; i < imax; i++) {
+            tmpRanges = [];
+            for (var j = 0, jmax = ranges.length; j < jmax; j++) {
+              if (ranges[j]) {
+                switch (ranges[j].compareNode(uneditables[i])) {
+                  case 2:
+                    // all selection inside uneditable. remove
+                  break;
+                  case 3:
+                    //section begins before and ends after uneditable. spilt
+                    tmpRange = ranges[j].cloneRange();
+                    tmpRange.setEndBefore(uneditables[i]);
+                    tmpRanges.push(tmpRange);
 
-                      tmpRange = ranges[j].cloneRange();
-                      tmpRange.setStartAfter(uneditables[i]);
-                      tmpRanges.push(tmpRange);
-                    break;
-                    default:
-                      // in all other cases uneditable does not touch selection. dont modify
-                      tmpRanges.push(ranges[j]);
-                  }
+                    tmpRange = ranges[j].cloneRange();
+                    tmpRange.setStartAfter(uneditables[i]);
+                    tmpRanges.push(tmpRange);
+                  break;
+                  default:
+                    // in all other cases uneditable does not touch selection. dont modify
+                    tmpRanges.push(ranges[j]);
                 }
-                ranges = tmpRanges;
               }
+              ranges = tmpRanges;
             }
           }
+        }
       }
       return ranges;
     },

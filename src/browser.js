@@ -372,7 +372,7 @@ wysihtml5.browser = (function() {
     },
 
     supportsMutationEvents: function() {
-        return ("MutationEvent" in window);
+      return ("MutationEvent" in window);
     },
 
     /**
