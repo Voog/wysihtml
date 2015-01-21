@@ -45,22 +45,34 @@
       } else if (selection.caretIsInTheBeginnig()) {
         event.preventDefault();
       } else {
-
         if (selection.caretIsFirstInSelection() &&
             selection.getPreviousNode() &&
             selection.getPreviousNode().nodeName &&
             (/^H\d$/gi).test(selection.getPreviousNode().nodeName)
         ) {
           var prevNode = selection.getPreviousNode();
-          event.preventDefault();
           if ((/^\s*$/).test(prevNode.textContent || prevNode.innerText)) {
             // heading is empty
+            event.preventDefault();
             prevNode.parentNode.removeChild(prevNode);
           } else {
-            var range = prevNode.ownerDocument.createRange();
-            range.selectNodeContents(prevNode);
-            range.collapse(false);
-            selection.setSelection(range);
+            if (prevNode.lastChild) {
+              var selNode = prevNode.lastChild,
+                  curNode = wysihtml5.dom.getParentElement(selection.getSelectedNode(), { query: "h1, h2, h3, h4, h5, h6, p, pre, div, blockquote" }, false, composer.element);
+              if (prevNode) {
+                if (curNode) {
+                  event.preventDefault();
+                  while (curNode.firstChild) {
+                    prevNode.appendChild(curNode.firstChild);
+                  }
+                  selection.setAfter(selNode);
+                } else if (selection.getSelectedNode().nodeType === 3) {
+                  event.preventDefault();
+                  prevNode.appendChild(selection.getSelectedNode());
+                  selection.setAfter(selNode);
+                }
+              }
+            }
           }
         }
 
