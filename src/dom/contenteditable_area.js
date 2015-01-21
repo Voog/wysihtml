@@ -6,7 +6,7 @@
       },
 
       getWindow: function() {
-        return this.element.ownerDocument.defaultView;
+        return this.element.ownerDocument.defaultView || this.element.ownerDocument.parentWindow;
       },
 
       getDocument: function() {
@@ -33,29 +33,19 @@
 
       // initiates an allready existent contenteditable
       _bindElement: function(contentEditable) {
-        contentEditable.className = (contentEditable.className && contentEditable.className != '') ? contentEditable.className + " wysihtml5-sandbox" : "wysihtml5-sandbox";
+        contentEditable.className = (contentEditable.className && contentEditable.className !== '') ? contentEditable.className + " wysihtml5-sandbox" : "wysihtml5-sandbox";
         this._loadElement(contentEditable, true);
         return contentEditable;
       },
 
       _loadElement: function(element, contentExists) {
-          var that = this;
+        var that = this;
+
         if (!contentExists) {
-            var sandboxHtml = this._getHtml();
-            element.innerHTML = sandboxHtml;
+            var innerHtml = this._getHtml();
+            element.innerHTML = innerHtml;
         }
 
-        this.getWindow = function() { return element.ownerDocument.defaultView; };
-        this.getDocument = function() { return element.ownerDocument; };
-
-        // Catch js errors and pass them to the parent's onerror event
-        // addEventListener("error") doesn't work properly in some browsers
-        // TODO: apparently this doesn't work in IE9!
-        // TODO: figure out and bind the errors logic for contenteditble mode
-        /*iframeWindow.onerror = function(errorMessage, fileName, lineNumber) {
-          throw new Error("wysihtml5.Sandbox: " + errorMessage, fileName, lineNumber);
-        }
-        */
         this.loaded = true;
         // Trigger the callback
         setTimeout(function() { that.callback(that); }, 0);

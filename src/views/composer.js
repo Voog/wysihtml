@@ -172,6 +172,7 @@
     _create: function() {
       var that = this;
       this.doc                = this.sandbox.getDocument();
+      this.win                = this.sandbox.getWindow();
       this.element            = (this.config.contentEditableMode) ? this.sandbox.getContentEditable() : this.doc.body;
       if (!this.config.noTextarea) {
           this.textarea           = this.parent.textarea;

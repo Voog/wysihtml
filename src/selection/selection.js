@@ -30,6 +30,24 @@
       return ret;
   }
 
+  function getScrollPos(doc, win) {
+    var pos = {};
+    
+    if (typeof win.pageYOffset !== "undefined") {
+      pos.y = win.pageYOffset;
+    } else {
+      pos.y = (doc.documentElement || doc.body.parentNode || doc.body).scrollTop;
+    }
+
+    if (typeof win.pageXOffset !== "undefined") {
+      pos.x = win.pageXOffset;
+    } else {
+      pos.x = (doc.documentElement || doc.body.parentNode || doc.body).scrollLeft;
+    }
+
+    return pos;
+  }
+
   // Should fix the obtained ranges that cannot surrond contents normally to apply changes upon
   // Being considerate to firefox that sets range start start out of span and end inside on doubleclick initiated selection
   function expandRangeToSurround(range) {
@@ -61,6 +79,7 @@
       this.editor   = editor;
       this.composer = editor.composer;
       this.doc      = this.composer.doc;
+      this.win      = this.composer.win;
       this.contain = contain;
       this.unselectableClass = unselectableClass || false;
     },
@@ -174,38 +193,55 @@
      * @param {Object} node The element or text node where to position the caret in front of
      * @example
      *    selection.setBefore(myElement);
+     * callback is an optional parameter accepting a function to execute when selection ahs been set
      */
-    setAfter: function(node, notVisual) {
+    setAfter: function(node, notVisual, callback) {
       var range = rangy.createRange(this.doc),
-          originalScrollTop = this.doc.documentElement.scrollTop || this.doc.body.scrollTop || this.doc.defaultView.pageYOffset,
-          originalScrollLeft = this.doc.documentElement.scrollLeft || this.doc.body.scrollLeft || this.doc.defaultView.pageXOffset,
+          fixWebkitSelection = function() {
+            // Webkit fails to add selection if there are no textnodes in that region
+            // (like an uneditable container at the end of content).
+            if (!sel) {
+              if (notVisual) {
+                // If setAfter is used as internal between actions, self-removing caretPlaceholder has simpler implementation
+                // and remove itself in call stack end instead on user interaction 
+                var caretPlaceholder = this.doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
+                node.parentNode.insertBefore(caretPlaceholder, node.nextSibling);
+                this.selectNode(caretPlaceholder);
+                setTimeout(function() {
+                  if (caretPlaceholder && caretPlaceholder.parentNode) {
+                    caretPlaceholder.parentNode.removeChild(caretPlaceholder);
+                  }
+                }, 0);
+              } else {
+                this.createTemporaryCaretSpaceAfter(node);
+              }
+            }
+          },
           sel;
 
       range.setStartAfter(node);
       range.setEndAfter(node);
-      this.composer.element.focus();
-      this.doc.defaultView.scrollTo(originalScrollLeft, originalScrollTop);
-      sel = this.setSelection(range);
 
-      // Webkit fails to add selection if there are no textnodes in that region
-      // (like an uneditable container at the end of content).
-      if (!sel) {
-        if (notVisual) {
-          // If setAfter is used as internal between actions, self-removing caretPlaceholder has simpler implementation
-          // and remove itself in call stack end instead on user interaction 
-          var caretPlaceholder = this.doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
-          node.parentNode.insertBefore(caretPlaceholder, node.nextSibling);
-          this.selectNode(caretPlaceholder);
-          setTimeout(function() {
-            if (caretPlaceholder && caretPlaceholder.parentNode) {
-              caretPlaceholder.parentNode.removeChild(caretPlaceholder);
-            }
-          }, 0);
-        } else {
-          this.createTemporaryCaretSpaceAfter(node);
+      // In IE contenteditable must be focused before we can set selection
+      // thus setting the focus if activeElement is not this composer
+      if (!document.activeElement || document.activeElement !== this.composer.element) {
+        var scrollPos = getScrollPos(this.doc, this.win);
+        this.composer.element.focus();
+        this.win.scrollTo(scrollPos.x, scrollPos.y);
+        setTimeout(function() {
+          sel = this.setSelection(range);
+          fixWebkitSelection();
+          if (callback) {
+            callback(sel);
+          }
+        }.bind(this), 0);
+      } else {
+        sel = this.setSelection(range);
+        fixWebkitSelection();
+        if (callback) {
+          callback(sel);
         }
       }
-      return sel;
     },
 
     /**
