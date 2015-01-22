@@ -286,7 +286,7 @@
       if (options && options.toggle) {
         state = this.state(composer, command, options);
         if (state) {
-          bookmark = rangy.saveSelection(composer.doc.defaultView || composer.doc.parentWindow);
+          bookmark = rangy.saveSelection(composer.win);
           for (var j in state) {
             removeOptionsFromElement(state[j], options, composer);
           }
@@ -301,12 +301,12 @@
             query: BLOCK_ELEMENTS
           }, null, composer.element);
           if (parent) {
-            bookmark = rangy.saveSelection(composer.doc.defaultView || composer.doc.parentWindow);
+            bookmark = rangy.saveSelection(composer.win);
             range = composer.selection.createRange();
             range.selectNode(parent);
             composer.selection.setSelection(range);
           } else if (!composer.isEmpty()) {
-            bookmark = rangy.saveSelection(composer.doc.defaultView || composer.doc.parentWindow);
+            bookmark = rangy.saveSelection(composer.win);
             composer.selection.selectLine();
           }
         }

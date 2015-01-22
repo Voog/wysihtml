@@ -51,7 +51,7 @@
     cleanUp: function() {
       var bookmark;
       if (this.selection) {
-        bookmark = rangy.saveSelection(this.doc.defaultView || this.doc.parentWindow);
+        bookmark = rangy.saveSelection(this.win);
       }
       this.parent.parse(this.element);
       if (bookmark) {

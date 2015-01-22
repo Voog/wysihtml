@@ -526,9 +526,7 @@
 
     // TODO: Figure out a method from following 2 that would work universally
     executeAndRestoreRangy: function(method, restoreScrollPosition) {
-      var win = this.doc.defaultView || this.doc.parentWindow,
-          sel = rangy.saveSelection(win);
-
+      var sel = rangy.saveSelection(this.win);
       if (!sel) {
         method();
       } else {
@@ -810,8 +808,7 @@
      * See https://developer.mozilla.org/en/DOM/Selection/modify
      */
     _selectLine_W3C: function() {
-      var win       = this.doc.defaultView,
-          selection = win.getSelection();
+      var selection = this.win.getSelection();
       selection.modify("move", "left", "lineboundary");
       selection.modify("extend", "right", "lineboundary");
     },
@@ -820,8 +817,7 @@
     toLineBoundary: function (location, collapse) {
       collapse = (typeof collapse === 'undefined') ? false : collapse;
       if (wysihtml5.browser.supportsSelectionModify()) {
-        var win = this.doc.defaultView,
-            selection = win.getSelection();
+        var selection = this.win.getSelection();
 
         selection.modify("extend", location, "lineboundary");
         if (collapse) {
@@ -996,15 +992,14 @@
     },
 
     getSelection: function() {
-      return rangy.getSelection(this.doc.defaultView || this.doc.parentWindow);
+      return rangy.getSelection(this.win);
     },
 
     // Sets selection in document to a given range
     // Set selection method detects if it fails to set any selection in document and returns null on fail
     // (especially needed in webkit where some ranges just can not create selection for no reason)
     setSelection: function(range) {
-      var win       = this.doc.defaultView || this.doc.parentWindow,
-          selection = rangy.getSelection(win);
+      var selection = rangy.getSelection(this.win);
       selection.setSingleRange(range);
       return (selection && selection.anchorNode && selection.focusNode) ? selection : null;
     },
