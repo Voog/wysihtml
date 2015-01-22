@@ -203,8 +203,7 @@
      *  - Observes for paste and drop
      */
     _initParser: function() {
-      var that = this,
-          oldHtml,
+      var oldHtml,
           cleanHtml;
 
       if (wysihtml5.browser.supportsModenPaste()) {
@@ -212,20 +211,23 @@
           event.preventDefault();
           oldHtml = wysihtml5.dom.getPastedHtml(event);
           if (oldHtml) {
-            that._cleanAndPaste(oldHtml);
+            this._cleanAndPaste(oldHtml);
           }
-        });
+        }.bind(this));
 
       } else {
         this.on("beforepaste:composer", function(event) {
           event.preventDefault();
-          wysihtml5.dom.getPastedHtmlWithDiv(that.composer, function(pastedHTML) {
-            if (pastedHTML) {
-              that._cleanAndPaste(pastedHTML);
-            }
-          });
-        });
+          var scrollPos = this.composer.getScrollPos();
 
+          wysihtml5.dom.getPastedHtmlWithDiv(this.composer, function(pastedHTML) {
+            if (pastedHTML) {
+              this._cleanAndPaste(pastedHTML);
+            }
+            this.composer.setScrollPos(scrollPos);
+          }.bind(this));
+
+        }.bind(this));
       }
     },
 

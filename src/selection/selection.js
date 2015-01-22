@@ -30,24 +30,6 @@
       return ret;
   }
 
-  function getScrollPos(doc, win) {
-    var pos = {};
-    
-    if (typeof win.pageYOffset !== "undefined") {
-      pos.y = win.pageYOffset;
-    } else {
-      pos.y = (doc.documentElement || doc.body.parentNode || doc.body).scrollTop;
-    }
-
-    if (typeof win.pageXOffset !== "undefined") {
-      pos.x = win.pageXOffset;
-    } else {
-      pos.x = (doc.documentElement || doc.body.parentNode || doc.body).scrollLeft;
-    }
-
-    return pos;
-  }
-
   // Should fix the obtained ranges that cannot surrond contents normally to apply changes upon
   // Being considerate to firefox that sets range start start out of span and end inside on doubleclick initiated selection
   function expandRangeToSurround(range) {
@@ -225,9 +207,9 @@
       // In IE contenteditable must be focused before we can set selection
       // thus setting the focus if activeElement is not this composer
       if (!document.activeElement || document.activeElement !== this.composer.element) {
-        var scrollPos = getScrollPos(this.doc, this.win);
+        var scrollPos = this.composer.getScrollPos();
         this.composer.element.focus();
-        this.win.scrollTo(scrollPos.x, scrollPos.y);
+        this.composer.setScrollPos(scrollPos);
         setTimeout(function() {
           sel = this.setSelection(range);
           fixWebkitSelection();

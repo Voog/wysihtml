@@ -107,6 +107,32 @@
       }
     },
 
+    getScrollPos: function() {
+      if (this.doc && this.win) {
+        var pos = {};
+
+        if (typeof this.win.pageYOffset !== "undefined") {
+          pos.y = this.win.pageYOffset;
+        } else {
+          pos.y = (this.doc.documentElement || this.doc.body.parentNode || this.doc.body).scrollTop;
+        }
+
+        if (typeof this.win.pageXOffset !== "undefined") {
+          pos.x = this.win.pageXOffset;
+        } else {
+          pos.x = (this.doc.documentElement || this.doc.body.parentNode || this.doc.body).scrollLeft;
+        }
+
+        return pos;
+      }
+    },
+
+    setScrollPos: function(pos) {
+      if (pos && typeof pos.x !== "undefined" && typeof pos.y !== "undefined") {
+        this.win.scrollTo(pos.x, pos.y);
+      }
+    },
+
     getTextContent: function() {
       return dom.getTextContent(this.element);
     },
