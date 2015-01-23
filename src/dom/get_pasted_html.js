@@ -22,13 +22,17 @@ wysihtml5.dom.getPastedHtml = function(event) {
 wysihtml5.dom.getPastedHtmlWithDiv = function (composer, f) {
   var selBookmark = composer.selection.getBookmark(),
       doc = composer.element.ownerDocument,
-      cleanerDiv = doc.createElement('DIV');
+      cleanerDiv = doc.createElement('DIV'),
+      scrollPos = composer.getScrollPos();
   
   doc.body.appendChild(cleanerDiv);
 
   cleanerDiv.style.width = "1px";
   cleanerDiv.style.height = "1px";
   cleanerDiv.style.overflow = "hidden";
+  cleanerDiv.style.position = "absolute";
+  cleanerDiv.style.top = scrollPos.y + "px";
+  cleanerDiv.style.left = scrollPos.x + "px";
 
   cleanerDiv.setAttribute('contenteditable', 'true');
   cleanerDiv.focus();
