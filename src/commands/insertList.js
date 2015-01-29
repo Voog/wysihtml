@@ -135,7 +135,7 @@ wysihtml5.commands.insertList = (function(wysihtml5) {
           selectedNode  = composer.selection.getSelectedNode(),
           list          = findListEl(selectedNode, nodeName, composer);
 
-      if (!list.el) {
+      if (!list.el) {
         if (composer.commands.support(cmd)) {
           doc.execCommand(cmd, false, null);
         } else {
