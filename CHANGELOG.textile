@@ -1,3 +1,7 @@
+*wysihtml5x 0.5.0-beta4* (January 29, 2015)
+* Adds sub- and superscript commands
+* Fixes errors mainly with IE8 and 9
+
 *wysihtml5x 0.5.0-beta3* (December 17, 2014)
 * Fixes IE9 error if classList polyfill present allready
 * Fix #78 Preserve cursor position on editor.cleanUp()
