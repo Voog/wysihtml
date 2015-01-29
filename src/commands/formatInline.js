@@ -31,6 +31,50 @@
  *   output:
  *      <span>ab|c</span> de|<b>fgh</b>
  */
+
+(function(wysihtml5) {
+
+  function isVisibleTextNode(node) {
+    if (node.data && (/[^\s]/g).test(node.data)) {
+      return true;
+    }
+    return false;
+  }
+
+  function getWrapNode(textNode, options) {
+    return textNode.ownerDocument.createElement(options.toUpperCase());
+  }
+
+  function formatTextNode(textNode, options) {
+    var wrapNode = getWrapNode(textNode, options);
+
+    textNodes[i].parentNode.insertBefore(wrapNode, textNode);
+    wrapNode.appendChild(textNode);
+  }
+  
+  wysihtml5.commands.formatInline = {
+    exec: function(composer, command, options) {
+      var textNodes = composer.selection.getOwnNodes([3]),
+          wrapNode;
+      for (var i = textNodes.length; i--;) {
+        formatTextNode(textNodes[i], options);
+      }
+
+    },
+
+    execWithToggle: function(composer, command, options) {
+      this.exec(composer, command, options);
+    },
+
+    state: function(composer, command) {
+      return false;
+    }
+  };
+
+})(wysihtml5);
+
+
+/*
 (function(wysihtml5) {
   var // Treat <b> as <strong> and vice versa
       ALIAS_MAPPING = {
@@ -148,3 +192,4 @@
     }
   };
 })(wysihtml5);
+*/

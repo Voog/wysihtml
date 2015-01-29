@@ -891,6 +891,23 @@
       }
     },
 
+    // Gets all the elements in selection with nodeType
+    // Ignores the elements not belonging to current editable area
+    // If filter is defined nodes must pass the filter function with true to be included in list
+    getOwnNodes: function(nodeType, filter) {
+      var ranges = this.getOwnRanges(),
+          nodes = [];
+
+      for (var r = 0, rmax = ranges.length; r < rmax; r++) {
+        if (ranges[r]) {
+          ranges[r].splitBoundaries();
+          nodes = nodes.concat(ranges[r].getNodes(Array.isArray(nodeType) ? nodeType : [nodeType], filter));
+        }
+      }
+
+      return nodes;
+    },
+
     fixRangeOverflow: function(range) {
       if (this.contain && this.contain.firstChild && range) {
         var containment = range.compareNode(this.contain);
