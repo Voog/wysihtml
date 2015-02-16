@@ -3,11 +3,13 @@
   wysihtml5.dom.domNode = function(node) {
     var defaultNodeTypes = [wysihtml5.ELEMENT_NODE, wysihtml5.TEXT_NODE];
 
-    var _isBlankText = function(node) {
-      return node.nodeType === wysihtml5.TEXT_NODE && (/^\s*$/g).test(node.data);
-    };
-
     return {
+
+      is: {
+        emptyTextNode: function() {
+          return node.nodeType === wysihtml5.TEXT_NODE && (/^\s*$/g).test(node.data);
+        }
+      },
 
       // var node = wysihtml5.dom.domNode(element).prev({nodeTypes: [1,3], ignoreBlankTexts: true});
       prev: function(options) {
@@ -20,7 +22,7 @@
 
         if (
           (!wysihtml5.lang.array(types).contains(prevNode.nodeType)) || // nodeTypes check.
-          (options && options.ignoreBlankTexts && _isBlankText(prevNode)) // Blank text nodes bypassed if set
+          (options && options.ignoreBlankTexts && wysihtml5.dom.domNode(prevNode).is.emptyTextNode()) // Blank text nodes bypassed if set
         ) {
           return wysihtml5.dom.domNode(prevNode).prev(options);
         }
@@ -39,7 +41,7 @@
 
         if (
           (!wysihtml5.lang.array(types).contains(nextNode.nodeType)) || // nodeTypes check.
-          (options && options.ignoreBlankTexts && _isBlankText(nextNode)) // blank text nodes bypassed if set
+          (options && options.ignoreBlankTexts && wysihtml5.dom.domNode(prevNode).is.emptyTextNode()) // blank text nodes bypassed if set
         ) {
           return wysihtml5.dom.domNode(nextNode).next(options);
         }

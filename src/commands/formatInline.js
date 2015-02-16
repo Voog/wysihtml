@@ -34,6 +34,15 @@
 
 (function(wysihtml5) {
 
+  var defaultTag = "SPAN",
+      INLINE_ELEMENTS = "b, big, i, small, tt, abbr, acronym, cite, code, dfn, em, kbd, strong, samp, var, a, bdo, br, q, span, sub, sup, button, label, textarea",
+      queryAliasMap = {
+        "b": "b, strong",
+        "strong": "b, strong",
+        "em": "em, i",
+        "i": "em, i"
+      };
+
   function isVisibleTextNode(node) {
     if (node.data && (/[^\s]/g).test(node.data)) {
       return true;
@@ -48,14 +57,30 @@
   function formatTextNode(textNode, options) {
     var wrapNode = getWrapNode(textNode, options);
 
-    textNodes[i].parentNode.insertBefore(wrapNode, textNode);
+    textNode.parentNode.insertBefore(wrapNode, textNode);
     wrapNode.appendChild(textNode);
   }
-  
+
+  function formatTextRange(range, composer, options) {
+    var wrapNode = getWrapNode(range.endContainer, options);
+
+    range.surroundContents(wrapNode);
+    composer.selection.selectNode(wrapNode);
+  }
+
   wysihtml5.commands.formatInline = {
     exec: function(composer, command, options) {
-      var textNodes = composer.selection.getOwnNodes([3]),
-          wrapNode;
+      var caretNode = composer.selection.isCollapsed() && composer.selection.getSelectedNode(),
+          textNodes = composer.selection.getOwnNodes([3], function(node) {
+            // Exclude empty nodes except caret node
+            return (!wysihtml5.dom.domNode(node).is.emptyTextNode() || caretNode === node);
+          });
+
+      if (!textNodes.length) {
+        formatTextRange(composer.selection.getOwnRanges()[0], composer, options);
+        return;
+      }
+
       for (var i = textNodes.length; i--;) {
         formatTextNode(textNodes[i], options);
       }
@@ -66,8 +91,34 @@
       this.exec(composer, command, options);
     },
 
-    state: function(composer, command) {
-      return false;
+    state: function(composer, command, properties) {
+      // If properties is passed as a string, look for tag with that tagName/query
+      if (typeof properties === "string") {
+        properties = {
+          query: queryAliasMap[properties.toLowerCase()] ? queryAliasMap[properties.toLowerCase()] : properties
+        };
+      } else if (properties.nodeName) {
+        if (queryAliasMap[properties.nodeName.toLowerCase()]) {
+          properties.query = queryAliasMap[properties.nodeName.toLowerCase()];
+          delete properties.nodeName;
+        }
+      }
+
+      var nodes = composer.selection.filterElements((function (element) { // Finds matching elements inside selection
+            return wysihtml5.dom.domNode(element).test(properties || { query: INLINE_ELEMENTS });
+          }).bind(this)),
+          parentNodes = composer.selection.getSelectedOwnNodes(),
+          parent;
+
+      // Finds matching elements that are parents of selection and adds to nodes list
+      for (var i = 0, maxi = parentNodes.length; i < maxi; i++) {
+        parent = wysihtml5.dom.getParentElement(parentNodes[i], properties || { query: INLINE_ELEMENTS }, null, composer.element);
+        if (parent && nodes.indexOf(parent) === -1) {
+          nodes.push(parent);
+        }
+      }
+
+      return (nodes.length === 0) ? false : nodes;
     }
   };
 
