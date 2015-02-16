@@ -41,7 +41,7 @@
 
         if (
           (!wysihtml5.lang.array(types).contains(nextNode.nodeType)) || // nodeTypes check.
-          (options && options.ignoreBlankTexts && wysihtml5.dom.domNode(prevNode).is.emptyTextNode()) // blank text nodes bypassed if set
+          (options && options.ignoreBlankTexts && wysihtml5.dom.domNode(nextNode).is.emptyTextNode()) // blank text nodes bypassed if set
         ) {
           return wysihtml5.dom.domNode(nextNode).next(options);
         }
