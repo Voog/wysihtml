@@ -11,7 +11,7 @@ This project is supported by [Voog](http://voog.com).
 * Advanced demo: http://voog.github.com/wysihtml/examples/advanced.html
 * Editable GitHub page: http://voog.github.com/wysihtml
 * Or try it on a working app: http://voog.com
- 
+
 
 ## Features
 

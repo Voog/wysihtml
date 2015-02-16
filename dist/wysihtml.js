@@ -375,9 +375,8 @@ if ("document" in self) {
   }
 
 }
-
 ;/**
- * @license wysihtml5x v0.5.0-beta3
+ * @license wysihtml5x v0.5.0-beta4
  * https://github.com/Edicy/wysihtml5
  *
  * Author: Christopher Blum (https://github.com/tiff)
@@ -388,7 +387,7 @@ if ("document" in self) {
  *
  */
 var wysihtml5 = {
-  version: "0.5.0-beta3",
+  version: "0.5.0-beta4",
 
   // namespaces
   commands:   {},
@@ -4927,7 +4926,7 @@ wysihtml5.browser = (function() {
     },
 
     supportsMutationEvents: function() {
-        return ("MutationEvent" in window);
+      return ("MutationEvent" in window);
     },
 
     /**
@@ -5878,7 +5877,8 @@ wysihtml5.dom.copyAttributes = function(attributesToCopy) {
 
     };
   };
-})(wysihtml5);;/**
+})(wysihtml5);
+;/**
  * Returns the given html wrapped in a div element
  *
  * Fixing IE's inability to treat unknown elements (HTML5 section, article, ...) correctly
@@ -5972,7 +5972,8 @@ wysihtml5.dom.getParentElement = (function() {
     return null;
   };
 
-})();;/**
+})();
+;/**
  * Get element's style for a specific css property
  *
  * @param {Element} element The element on which to retrieve the style
@@ -6057,7 +6058,8 @@ wysihtml5.dom.getStyle = (function() {
     }
   }
   return all;
-};;/**
+};
+;/**
  * High performant way to check whether an element with a specific tag name is in the given document
  * Optimized for being heavily executed
  * Unleashes the power of live node lists
@@ -7181,7 +7183,11 @@ wysihtml5.dom.renameElement = function(element, newNodeName) {
     newElement.appendChild(firstChild);
   }
   wysihtml5.dom.copyAttributes(["align", "className"]).from(element).to(newElement);
-  element.parentNode.replaceChild(newElement, element);
+  
+  if (element.parentNode) {
+    element.parentNode.replaceChild(newElement, element);
+  }
+
   return newElement;
 };
 ;/**
@@ -7567,7 +7573,7 @@ wysihtml5.dom.replaceWithChildNodes = function(node) {
       },
 
       getWindow: function() {
-        return this.element.ownerDocument.defaultView;
+        return this.element.ownerDocument.defaultView || this.element.ownerDocument.parentWindow;
       },
 
       getDocument: function() {
@@ -7594,29 +7600,19 @@ wysihtml5.dom.replaceWithChildNodes = function(node) {
 
       // initiates an allready existent contenteditable
       _bindElement: function(contentEditable) {
-        contentEditable.className = (contentEditable.className && contentEditable.className != '') ? contentEditable.className + " wysihtml5-sandbox" : "wysihtml5-sandbox";
+        contentEditable.className = (contentEditable.className && contentEditable.className !== '') ? contentEditable.className + " wysihtml5-sandbox" : "wysihtml5-sandbox";
         this._loadElement(contentEditable, true);
         return contentEditable;
       },
 
       _loadElement: function(element, contentExists) {
-          var that = this;
+        var that = this;
+
         if (!contentExists) {
-            var sandboxHtml = this._getHtml();
-            element.innerHTML = sandboxHtml;
+            var innerHtml = this._getHtml();
+            element.innerHTML = innerHtml;
         }
 
-        this.getWindow = function() { return element.ownerDocument.defaultView; };
-        this.getDocument = function() { return element.ownerDocument; };
-
-        // Catch js errors and pass them to the parent's onerror event
-        // addEventListener("error") doesn't work properly in some browsers
-        // TODO: apparently this doesn't work in IE9!
-        // TODO: figure out and bind the errors logic for contenteditble mode
-        /*iframeWindow.onerror = function(errorMessage, fileName, lineNumber) {
-          throw new Error("wysihtml5.Sandbox: " + errorMessage, fileName, lineNumber);
-        }
-        */
         this.loaded = true;
         // Trigger the callback
         setTimeout(function() { that.callback(that); }, 0);
@@ -7741,7 +7737,6 @@ wysihtml5.dom.replaceWithChildNodes = function(node) {
     };
   }
 })(wysihtml5.dom);
-
 ;/**
  * Get a set of attribute from one element
  *
@@ -7805,7 +7800,8 @@ wysihtml5.dom.getAttributes = function(node) {
     }
   }
   return attributes;
-};;/**
+};
+;/**
    * Check whether the given node is a proper loaded image
    * FIXME: Returns undefined when unknown (Chrome, Safari)
 */
@@ -7821,884 +7817,881 @@ wysihtml5.dom.isLoadedImage = function (node) {
 };
 ;(function(wysihtml5) {
 
-    var api = wysihtml5.dom;
+  var api = wysihtml5.dom;
 
-    var MapCell = function(cell) {
-      this.el = cell;
-      this.isColspan= false;
-      this.isRowspan= false;
-      this.firstCol= true;
-      this.lastCol= true;
-      this.firstRow= true;
-      this.lastRow= true;
-      this.isReal= true;
-      this.spanCollection= [];
-      this.modified = false;
-    };
+  var MapCell = function(cell) {
+    this.el = cell;
+    this.isColspan= false;
+    this.isRowspan= false;
+    this.firstCol= true;
+    this.lastCol= true;
+    this.firstRow= true;
+    this.lastRow= true;
+    this.isReal= true;
+    this.spanCollection= [];
+    this.modified = false;
+  };
 
-    var TableModifyerByCell = function (cell, table) {
-        if (cell) {
-            this.cell = cell;
-            this.table = api.getParentElement(cell, { query: "table" });
-        } else if (table) {
-            this.table = table;
-            this.cell = this.table.querySelectorAll('th, td')[0];
+  var TableModifyerByCell = function (cell, table) {
+    if (cell) {
+      this.cell = cell;
+      this.table = api.getParentElement(cell, { query: "table" });
+    } else if (table) {
+      this.table = table;
+      this.cell = this.table.querySelectorAll('th, td')[0];
+    }
+  };
+
+  function queryInList(list, query) {
+    var ret = [],
+      q;
+    for (var e = 0, len = list.length; e < len; e++) {
+      q = list[e].querySelectorAll(query);
+      if (q) {
+        for(var i = q.length; i--; ret.unshift(q[i]));
+      }
+    }
+    return ret;
+  }
+
+  function removeElement(el) {
+    el.parentNode.removeChild(el);
+  }
+
+  function insertAfter(referenceNode, newNode) {
+    referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
+  }
+
+  function nextNode(node, tag) {
+    var element = node.nextSibling;
+    while (element.nodeType !=1) {
+      element = element.nextSibling;
+      if (!tag || tag == element.tagName.toLowerCase()) {
+        return element;
+      }
+    }
+    return null;
+  }
+
+  TableModifyerByCell.prototype = {
+
+    addSpannedCellToMap: function(cell, map, r, c, cspan, rspan) {
+      var spanCollect = [],
+        rmax = r + ((rspan) ? parseInt(rspan, 10) - 1 : 0),
+        cmax = c + ((cspan) ? parseInt(cspan, 10) - 1 : 0);
+
+      for (var rr = r; rr <= rmax; rr++) {
+        if (typeof map[rr] == "undefined") { map[rr] = []; }
+        for (var cc = c; cc <= cmax; cc++) {
+          map[rr][cc] = new MapCell(cell);
+          map[rr][cc].isColspan = (cspan && parseInt(cspan, 10) > 1);
+          map[rr][cc].isRowspan = (rspan && parseInt(rspan, 10) > 1);
+          map[rr][cc].firstCol = cc == c;
+          map[rr][cc].lastCol = cc == cmax;
+          map[rr][cc].firstRow = rr == r;
+          map[rr][cc].lastRow = rr == rmax;
+          map[rr][cc].isReal = cc == c && rr == r;
+          map[rr][cc].spanCollection = spanCollect;
+
+          spanCollect.push(map[rr][cc]);
         }
-    };
+      }
+    },
 
-    function queryInList(list, query) {
-        var ret = [],
-            q;
-        for (var e = 0, len = list.length; e < len; e++) {
-            q = list[e].querySelectorAll(query);
-            if (q) {
-                for(var i = q.length; i--; ret.unshift(q[i]));
-            }
+    setCellAsModified: function(cell) {
+      cell.modified = true;
+      if (cell.spanCollection.length > 0) {
+        for (var s = 0, smax = cell.spanCollection.length; s < smax; s++) {
+        cell.spanCollection[s].modified = true;
         }
-        return ret;
-    }
+      }
+    },
 
-    function removeElement(el) {
-        el.parentNode.removeChild(el);
-    }
+    setTableMap: function() {
+      var map = [];
+      var tableRows = this.getTableRows(),
+        ridx, row, cells, cidx, cell,
+        c,
+        cspan, rspan;
 
-    function insertAfter(referenceNode, newNode) {
-        referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
-    }
+      for (ridx = 0; ridx < tableRows.length; ridx++) {
+        row = tableRows[ridx];
+        cells = this.getRowCells(row);
+        c = 0;
+        if (typeof map[ridx] == "undefined") { map[ridx] = []; }
+        for (cidx = 0; cidx < cells.length; cidx++) {
+          cell = cells[cidx];
 
-    function nextNode(node, tag) {
-        var element = node.nextSibling;
-        while (element.nodeType !=1) {
-            element = element.nextSibling;
-            if (!tag || tag == element.tagName.toLowerCase()) {
-                return element;
-            }
-        }
-        return null;
-    }
+          // If cell allready set means it is set by col or rowspan,
+          // so increase cols index until free col is found
+          while (typeof map[ridx][c] != "undefined") { c++; }
 
-    TableModifyerByCell.prototype = {
+          cspan = api.getAttribute(cell, 'colspan');
+          rspan = api.getAttribute(cell, 'rowspan');
 
-        addSpannedCellToMap: function(cell, map, r, c, cspan, rspan) {
-            var spanCollect = [],
-                rmax = r + ((rspan) ? parseInt(rspan, 10) - 1 : 0),
-                cmax = c + ((cspan) ? parseInt(cspan, 10) - 1 : 0);
-
-            for (var rr = r; rr <= rmax; rr++) {
-                if (typeof map[rr] == "undefined") { map[rr] = []; }
-                for (var cc = c; cc <= cmax; cc++) {
-                    map[rr][cc] = new MapCell(cell);
-                    map[rr][cc].isColspan = (cspan && parseInt(cspan, 10) > 1);
-                    map[rr][cc].isRowspan = (rspan && parseInt(rspan, 10) > 1);
-                    map[rr][cc].firstCol = cc == c;
-                    map[rr][cc].lastCol = cc == cmax;
-                    map[rr][cc].firstRow = rr == r;
-                    map[rr][cc].lastRow = rr == rmax;
-                    map[rr][cc].isReal = cc == c && rr == r;
-                    map[rr][cc].spanCollection = spanCollect;
-
-                    spanCollect.push(map[rr][cc]);
-                }
-            }
-        },
-
-        setCellAsModified: function(cell) {
-            cell.modified = true;
-            if (cell.spanCollection.length > 0) {
-              for (var s = 0, smax = cell.spanCollection.length; s < smax; s++) {
-                cell.spanCollection[s].modified = true;
-              }
-            }
-        },
-
-        setTableMap: function() {
-            var map = [];
-            var tableRows = this.getTableRows(),
-                ridx, row, cells, cidx, cell,
-                c,
-                cspan, rspan;
-
-            for (ridx = 0; ridx < tableRows.length; ridx++) {
-                row = tableRows[ridx];
-                cells = this.getRowCells(row);
-                c = 0;
-                if (typeof map[ridx] == "undefined") { map[ridx] = []; }
-                for (cidx = 0; cidx < cells.length; cidx++) {
-                    cell = cells[cidx];
-
-                    // If cell allready set means it is set by col or rowspan,
-                    // so increase cols index until free col is found
-                    while (typeof map[ridx][c] != "undefined") { c++; }
-
-                    cspan = api.getAttribute(cell, 'colspan');
-                    rspan = api.getAttribute(cell, 'rowspan');
-
-                    if (cspan || rspan) {
-                        this.addSpannedCellToMap(cell, map, ridx, c, cspan, rspan);
-                        c = c + ((cspan) ? parseInt(cspan, 10) : 1);
-                    } else {
-                        map[ridx][c] = new MapCell(cell);
-                        c++;
-                    }
-                }
-            }
-            this.map = map;
-            return map;
-        },
-
-        getRowCells: function(row) {
-            var inlineTables = this.table.querySelectorAll('table'),
-                inlineCells = (inlineTables) ? queryInList(inlineTables, 'th, td') : [],
-                allCells = row.querySelectorAll('th, td'),
-                tableCells = (inlineCells.length > 0) ? wysihtml5.lang.array(allCells).without(inlineCells) : allCells;
-
-            return tableCells;
-        },
-
-        getTableRows: function() {
-          var inlineTables = this.table.querySelectorAll('table'),
-              inlineRows = (inlineTables) ? queryInList(inlineTables, 'tr') : [],
-              allRows = this.table.querySelectorAll('tr'),
-              tableRows = (inlineRows.length > 0) ? wysihtml5.lang.array(allRows).without(inlineRows) : allRows;
-
-          return tableRows;
-        },
-
-        getMapIndex: function(cell) {
-          var r_length = this.map.length,
-              c_length = (this.map && this.map[0]) ? this.map[0].length : 0;
-
-          for (var r_idx = 0;r_idx < r_length; r_idx++) {
-              for (var c_idx = 0;c_idx < c_length; c_idx++) {
-                  if (this.map[r_idx][c_idx].el === cell) {
-                      return {'row': r_idx, 'col': c_idx};
-                  }
-              }
+          if (cspan || rspan) {
+            this.addSpannedCellToMap(cell, map, ridx, c, cspan, rspan);
+            c = c + ((cspan) ? parseInt(cspan, 10) : 1);
+          } else {
+            map[ridx][c] = new MapCell(cell);
+            c++;
           }
-          return false;
-        },
+        }
+      }
+      this.map = map;
+      return map;
+    },
 
-        getElementAtIndex: function(idx) {
-            this.setTableMap();
-            if (this.map[idx.row] && this.map[idx.row][idx.col] && this.map[idx.row][idx.col].el) {
-                return this.map[idx.row][idx.col].el;
+    getRowCells: function(row) {
+      var inlineTables = this.table.querySelectorAll('table'),
+        inlineCells = (inlineTables) ? queryInList(inlineTables, 'th, td') : [],
+        allCells = row.querySelectorAll('th, td'),
+        tableCells = (inlineCells.length > 0) ? wysihtml5.lang.array(allCells).without(inlineCells) : allCells;
+
+      return tableCells;
+    },
+
+    getTableRows: function() {
+      var inlineTables = this.table.querySelectorAll('table'),
+        inlineRows = (inlineTables) ? queryInList(inlineTables, 'tr') : [],
+        allRows = this.table.querySelectorAll('tr'),
+        tableRows = (inlineRows.length > 0) ? wysihtml5.lang.array(allRows).without(inlineRows) : allRows;
+
+      return tableRows;
+    },
+
+    getMapIndex: function(cell) {
+      var r_length = this.map.length,
+        c_length = (this.map && this.map[0]) ? this.map[0].length : 0;
+
+      for (var r_idx = 0;r_idx < r_length; r_idx++) {
+        for (var c_idx = 0;c_idx < c_length; c_idx++) {
+          if (this.map[r_idx][c_idx].el === cell) {
+            return {'row': r_idx, 'col': c_idx};
+          }
+        }
+      }
+      return false;
+    },
+
+    getElementAtIndex: function(idx) {
+      this.setTableMap();
+      if (this.map[idx.row] && this.map[idx.row][idx.col] && this.map[idx.row][idx.col].el) {
+        return this.map[idx.row][idx.col].el;
+      }
+      return null;
+    },
+
+    getMapElsTo: function(to_cell) {
+      var els = [];
+      this.setTableMap();
+      this.idx_start = this.getMapIndex(this.cell);
+      this.idx_end = this.getMapIndex(to_cell);
+
+      // switch indexes if start is bigger than end
+      if (this.idx_start.row > this.idx_end.row || (this.idx_start.row == this.idx_end.row && this.idx_start.col > this.idx_end.col)) {
+        var temp_idx = this.idx_start;
+        this.idx_start = this.idx_end;
+        this.idx_end = temp_idx;
+      }
+      if (this.idx_start.col > this.idx_end.col) {
+        var temp_cidx = this.idx_start.col;
+        this.idx_start.col = this.idx_end.col;
+        this.idx_end.col = temp_cidx;
+      }
+
+      if (this.idx_start != null && this.idx_end != null) {
+        for (var row = this.idx_start.row, maxr = this.idx_end.row; row <= maxr; row++) {
+          for (var col = this.idx_start.col, maxc = this.idx_end.col; col <= maxc; col++) {
+            els.push(this.map[row][col].el);
+          }
+        }
+      }
+      return els;
+    },
+
+    orderSelectionEnds: function(secondcell) {
+      this.setTableMap();
+      this.idx_start = this.getMapIndex(this.cell);
+      this.idx_end = this.getMapIndex(secondcell);
+
+      // switch indexes if start is bigger than end
+      if (this.idx_start.row > this.idx_end.row || (this.idx_start.row == this.idx_end.row && this.idx_start.col > this.idx_end.col)) {
+        var temp_idx = this.idx_start;
+        this.idx_start = this.idx_end;
+        this.idx_end = temp_idx;
+      }
+      if (this.idx_start.col > this.idx_end.col) {
+        var temp_cidx = this.idx_start.col;
+        this.idx_start.col = this.idx_end.col;
+        this.idx_end.col = temp_cidx;
+      }
+
+      return {
+        "start": this.map[this.idx_start.row][this.idx_start.col].el,
+        "end": this.map[this.idx_end.row][this.idx_end.col].el
+      };
+    },
+
+    createCells: function(tag, nr, attrs) {
+      var doc = this.table.ownerDocument,
+        frag = doc.createDocumentFragment(),
+        cell;
+      for (var i = 0; i < nr; i++) {
+        cell = doc.createElement(tag);
+
+        if (attrs) {
+          for (var attr in attrs) {
+            if (attrs.hasOwnProperty(attr)) {
+              cell.setAttribute(attr, attrs[attr]);
             }
-            return null;
-        },
+          }
+        }
 
-        getMapElsTo: function(to_cell) {
-            var els = [];
-            this.setTableMap();
-            this.idx_start = this.getMapIndex(this.cell);
-            this.idx_end = this.getMapIndex(to_cell);
+        // add non breaking space
+        cell.appendChild(document.createTextNode("\u00a0"));
+        frag.appendChild(cell);
+      }
+      return frag;
+    },
 
-            // switch indexes if start is bigger than end
-            if (this.idx_start.row > this.idx_end.row || (this.idx_start.row == this.idx_end.row && this.idx_start.col > this.idx_end.col)) {
-                var temp_idx = this.idx_start;
-                this.idx_start = this.idx_end;
-                this.idx_end = temp_idx;
-            }
-            if (this.idx_start.col > this.idx_end.col) {
-                var temp_cidx = this.idx_start.col;
-                this.idx_start.col = this.idx_end.col;
-                this.idx_end.col = temp_cidx;
-            }
+    // Returns next real cell (not part of spanned cell unless first) on row if selected index is not real. I no real cells -1 will be returned
+    correctColIndexForUnreals: function(col, row) {
+      var r = this.map[row],
+        corrIdx = -1;
+      for (var i = 0, max = col; i < col; i++) {
+        if (r[i].isReal){
+          corrIdx++;
+        }
+      }
+      return corrIdx;
+    },
 
-            if (this.idx_start != null && this.idx_end != null) {
-                for (var row = this.idx_start.row, maxr = this.idx_end.row; row <= maxr; row++) {
-                    for (var col = this.idx_start.col, maxc = this.idx_end.col; col <= maxc; col++) {
-                        els.push(this.map[row][col].el);
-                    }
-                }
-            }
-            return els;
-        },
+    getLastNewCellOnRow: function(row, rowLimit) {
+      var cells = this.getRowCells(row),
+        cell, idx;
 
-        orderSelectionEnds: function(secondcell) {
-            this.setTableMap();
-            this.idx_start = this.getMapIndex(this.cell);
-            this.idx_end = this.getMapIndex(secondcell);
+      for (var cidx = 0, cmax = cells.length; cidx < cmax; cidx++) {
+        cell = cells[cidx];
+        idx = this.getMapIndex(cell);
+        if (idx === false || (typeof rowLimit != "undefined" && idx.row != rowLimit)) {
+          return cell;
+        }
+      }
+      return null;
+    },
 
-            // switch indexes if start is bigger than end
-            if (this.idx_start.row > this.idx_end.row || (this.idx_start.row == this.idx_end.row && this.idx_start.col > this.idx_end.col)) {
-                var temp_idx = this.idx_start;
-                this.idx_start = this.idx_end;
-                this.idx_end = temp_idx;
-            }
-            if (this.idx_start.col > this.idx_end.col) {
-                var temp_cidx = this.idx_start.col;
-                this.idx_start.col = this.idx_end.col;
-                this.idx_end.col = temp_cidx;
-            }
+    removeEmptyTable: function() {
+      var cells = this.table.querySelectorAll('td, th');
+      if (!cells || cells.length == 0) {
+        removeElement(this.table);
+        return true;
+      } else {
+        return false;
+      }
+    },
 
-            return {
-                "start": this.map[this.idx_start.row][this.idx_start.col].el,
-                "end": this.map[this.idx_end.row][this.idx_end.col].el
-            };
-        },
+    // Splits merged cell on row to unique cells
+    splitRowToCells: function(cell) {
+      if (cell.isColspan) {
+        var colspan = parseInt(api.getAttribute(cell.el, 'colspan') || 1, 10),
+          cType = cell.el.tagName.toLowerCase();
+        if (colspan > 1) {
+          var newCells = this.createCells(cType, colspan -1);
+          insertAfter(cell.el, newCells);
+        }
+        cell.el.removeAttribute('colspan');
+      }
+    },
 
-        createCells: function(tag, nr, attrs) {
-            var doc = this.table.ownerDocument,
-                frag = doc.createDocumentFragment(),
-                cell;
-            for (var i = 0; i < nr; i++) {
-                cell = doc.createElement(tag);
+    getRealRowEl: function(force, idx) {
+      var r = null,
+        c = null;
 
-                if (attrs) {
-                    for (var attr in attrs) {
-                        if (attrs.hasOwnProperty(attr)) {
-                            cell.setAttribute(attr, attrs[attr]);
-                        }
-                    }
-                }
+      idx = idx || this.idx;
 
-                // add non breaking space
-                cell.appendChild(document.createTextNode("\u00a0"));
-
-                frag.appendChild(cell);
-            }
-            return frag;
-        },
-
-        // Returns next real cell (not part of spanned cell unless first) on row if selected index is not real. I no real cells -1 will be returned
-        correctColIndexForUnreals: function(col, row) {
-            var r = this.map[row],
-                corrIdx = -1;
-            for (var i = 0, max = col; i < col; i++) {
-                if (r[i].isReal){
-                    corrIdx++;
-                }
-            }
-            return corrIdx;
-        },
-
-        getLastNewCellOnRow: function(row, rowLimit) {
-            var cells = this.getRowCells(row),
-                cell, idx;
-
-            for (var cidx = 0, cmax = cells.length; cidx < cmax; cidx++) {
-                cell = cells[cidx];
-                idx = this.getMapIndex(cell);
-                if (idx === false || (typeof rowLimit != "undefined" && idx.row != rowLimit)) {
-                    return cell;
-                }
-            }
-            return null;
-        },
-
-        removeEmptyTable: function() {
-            var cells = this.table.querySelectorAll('td, th');
-            if (!cells || cells.length == 0) {
-                removeElement(this.table);
-                return true;
-            } else {
-                return false;
-            }
-        },
-
-        // Splits merged cell on row to unique cells
-        splitRowToCells: function(cell) {
-            if (cell.isColspan) {
-                var colspan = parseInt(api.getAttribute(cell.el, 'colspan') || 1, 10),
-                    cType = cell.el.tagName.toLowerCase();
-                if (colspan > 1) {
-                    var newCells = this.createCells(cType, colspan -1);
-                    insertAfter(cell.el, newCells);
-                }
-                cell.el.removeAttribute('colspan');
-            }
-        },
-
-        getRealRowEl: function(force, idx) {
-            var r = null,
-                c = null;
-
-            idx = idx || this.idx;
-
-            for (var cidx = 0, cmax = this.map[idx.row].length; cidx < cmax; cidx++) {
-                c = this.map[idx.row][cidx];
-                if (c.isReal) {
-                    r = api.getParentElement(c.el, { query: "tr" });
-                    if (r) {
-                        return r;
-                    }
-                }
-            }
-
-            if (r === null && force) {
-                r = api.getParentElement(this.map[idx.row][idx.col].el, { query: "tr" }) || null;
-            }
-
+      for (var cidx = 0, cmax = this.map[idx.row].length; cidx < cmax; cidx++) {
+        c = this.map[idx.row][cidx];
+        if (c.isReal) {
+          r = api.getParentElement(c.el, { query: "tr" });
+          if (r) {
             return r;
-        },
+          }
+        }
+      }
 
-        injectRowAt: function(row, col, colspan, cType, c) {
-            var r = this.getRealRowEl(false, {'row': row, 'col': col}),
-                new_cells = this.createCells(cType, colspan);
+      if (r === null && force) {
+        r = api.getParentElement(this.map[idx.row][idx.col].el, { query: "tr" }) || null;
+      }
 
-            if (r) {
-                var n_cidx = this.correctColIndexForUnreals(col, row);
-                if (n_cidx >= 0) {
-                    insertAfter(this.getRowCells(r)[n_cidx], new_cells);
-                } else {
-                    r.insertBefore(new_cells, r.firstChild);
+      return r;
+    },
+
+    injectRowAt: function(row, col, colspan, cType, c) {
+      var r = this.getRealRowEl(false, {'row': row, 'col': col}),
+        new_cells = this.createCells(cType, colspan);
+
+      if (r) {
+        var n_cidx = this.correctColIndexForUnreals(col, row);
+        if (n_cidx >= 0) {
+          insertAfter(this.getRowCells(r)[n_cidx], new_cells);
+        } else {
+          r.insertBefore(new_cells, r.firstChild);
+        }
+      } else {
+        var rr = this.table.ownerDocument.createElement('tr');
+        rr.appendChild(new_cells);
+        insertAfter(api.getParentElement(c.el, { query: "tr" }), rr);
+      }
+    },
+
+    canMerge: function(to) {
+      this.to = to;
+      this.setTableMap();
+      this.idx_start = this.getMapIndex(this.cell);
+      this.idx_end = this.getMapIndex(this.to);
+
+      // switch indexes if start is bigger than end
+      if (this.idx_start.row > this.idx_end.row || (this.idx_start.row == this.idx_end.row && this.idx_start.col > this.idx_end.col)) {
+        var temp_idx = this.idx_start;
+        this.idx_start = this.idx_end;
+        this.idx_end = temp_idx;
+      }
+      if (this.idx_start.col > this.idx_end.col) {
+        var temp_cidx = this.idx_start.col;
+        this.idx_start.col = this.idx_end.col;
+        this.idx_end.col = temp_cidx;
+      }
+
+      for (var row = this.idx_start.row, maxr = this.idx_end.row; row <= maxr; row++) {
+        for (var col = this.idx_start.col, maxc = this.idx_end.col; col <= maxc; col++) {
+          if (this.map[row][col].isColspan || this.map[row][col].isRowspan) {
+            return false;
+          }
+        }
+      }
+      return true;
+    },
+
+    decreaseCellSpan: function(cell, span) {
+      var nr = parseInt(api.getAttribute(cell.el, span), 10) - 1;
+      if (nr >= 1) {
+        cell.el.setAttribute(span, nr);
+      } else {
+        cell.el.removeAttribute(span);
+        if (span == 'colspan') {
+          cell.isColspan = false;
+        }
+        if (span == 'rowspan') {
+          cell.isRowspan = false;
+        }
+        cell.firstCol = true;
+        cell.lastCol = true;
+        cell.firstRow = true;
+        cell.lastRow = true;
+        cell.isReal = true;
+      }
+    },
+
+    removeSurplusLines: function() {
+      var row, cell, ridx, rmax, cidx, cmax, allRowspan;
+
+      this.setTableMap();
+      if (this.map) {
+        ridx = 0;
+        rmax = this.map.length;
+        for (;ridx < rmax; ridx++) {
+          row = this.map[ridx];
+          allRowspan = true;
+          cidx = 0;
+          cmax = row.length;
+          for (; cidx < cmax; cidx++) {
+            cell = row[cidx];
+            if (!(api.getAttribute(cell.el, "rowspan") && parseInt(api.getAttribute(cell.el, "rowspan"), 10) > 1 && cell.firstRow !== true)) {
+              allRowspan = false;
+              break;
+            }
+          }
+          if (allRowspan) {
+            cidx = 0;
+            for (; cidx < cmax; cidx++) {
+              this.decreaseCellSpan(row[cidx], 'rowspan');
+            }
+          }
+        }
+
+        // remove rows without cells
+        var tableRows = this.getTableRows();
+        ridx = 0;
+        rmax = tableRows.length;
+        for (;ridx < rmax; ridx++) {
+          row = tableRows[ridx];
+          if (row.childNodes.length == 0 && (/^\s*$/.test(row.textContent || row.innerText))) {
+            removeElement(row);
+          }
+        }
+      }
+    },
+
+    fillMissingCells: function() {
+      var r_max = 0,
+        c_max = 0,
+        prevcell = null;
+
+      this.setTableMap();
+      if (this.map) {
+
+        // find maximal dimensions of broken table
+        r_max = this.map.length;
+        for (var ridx = 0; ridx < r_max; ridx++) {
+          if (this.map[ridx].length > c_max) { c_max = this.map[ridx].length; }
+        }
+
+        for (var row = 0; row < r_max; row++) {
+          for (var col = 0; col < c_max; col++) {
+            if (this.map[row] && !this.map[row][col]) {
+              if (col > 0) {
+                this.map[row][col] = new MapCell(this.createCells('td', 1));
+                prevcell = this.map[row][col-1];
+                if (prevcell && prevcell.el && prevcell.el.parent) { // if parent does not exist element is removed from dom
+                  insertAfter(this.map[row][col-1].el, this.map[row][col].el);
                 }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    rectify: function() {
+      if (!this.removeEmptyTable()) {
+        this.removeSurplusLines();
+        this.fillMissingCells();
+        return true;
+      } else {
+        return false;
+      }
+    },
+
+    unmerge: function() {
+      if (this.rectify()) {
+        this.setTableMap();
+        this.idx = this.getMapIndex(this.cell);
+
+        if (this.idx) {
+          var thisCell = this.map[this.idx.row][this.idx.col],
+            colspan = (api.getAttribute(thisCell.el, "colspan")) ? parseInt(api.getAttribute(thisCell.el, "colspan"), 10) : 1,
+            cType = thisCell.el.tagName.toLowerCase();
+
+          if (thisCell.isRowspan) {
+            var rowspan = parseInt(api.getAttribute(thisCell.el, "rowspan"), 10);
+            if (rowspan > 1) {
+              for (var nr = 1, maxr = rowspan - 1; nr <= maxr; nr++){
+                this.injectRowAt(this.idx.row + nr, this.idx.col, colspan, cType, thisCell);
+              }
+            }
+            thisCell.el.removeAttribute('rowspan');
+          }
+          this.splitRowToCells(thisCell);
+        }
+      }
+    },
+
+    // merges cells from start cell (defined in creating obj) to "to" cell
+    merge: function(to) {
+      if (this.rectify()) {
+        if (this.canMerge(to)) {
+          var rowspan = this.idx_end.row - this.idx_start.row + 1,
+            colspan = this.idx_end.col - this.idx_start.col + 1;
+
+          for (var row = this.idx_start.row, maxr = this.idx_end.row; row <= maxr; row++) {
+            for (var col = this.idx_start.col, maxc = this.idx_end.col; col <= maxc; col++) {
+
+              if (row == this.idx_start.row && col == this.idx_start.col) {
+                if (rowspan > 1) {
+                  this.map[row][col].el.setAttribute('rowspan', rowspan);
+                }
+                if (colspan > 1) {
+                  this.map[row][col].el.setAttribute('colspan', colspan);
+                }
+              } else {
+                // transfer content
+                if (!(/^\s*<br\/?>\s*$/.test(this.map[row][col].el.innerHTML.toLowerCase()))) {
+                  this.map[this.idx_start.row][this.idx_start.col].el.innerHTML += ' ' + this.map[row][col].el.innerHTML;
+                }
+                removeElement(this.map[row][col].el);
+              }
+
+            }
+          }
+          this.rectify();
+        } else {
+          if (window.console) {
+            console.log('Do not know how to merge allready merged cells.');
+          }
+        }
+      }
+    },
+
+    // Decreases rowspan of a cell if it is done on first cell of rowspan row (real cell)
+    // Cell is moved to next row (if it is real)
+    collapseCellToNextRow: function(cell) {
+      var cellIdx = this.getMapIndex(cell.el),
+        newRowIdx = cellIdx.row + 1,
+        newIdx = {'row': newRowIdx, 'col': cellIdx.col};
+
+      if (newRowIdx < this.map.length) {
+
+        var row = this.getRealRowEl(false, newIdx);
+        if (row !== null) {
+          var n_cidx = this.correctColIndexForUnreals(newIdx.col, newIdx.row);
+          if (n_cidx >= 0) {
+            insertAfter(this.getRowCells(row)[n_cidx], cell.el);
+          } else {
+            var lastCell = this.getLastNewCellOnRow(row, newRowIdx);
+            if (lastCell !== null) {
+              insertAfter(lastCell, cell.el);
             } else {
-                var rr = this.table.ownerDocument.createElement('tr');
-                rr.appendChild(new_cells);
-                insertAfter(api.getParentElement(c.el, { query: "tr" }), rr);
+              row.insertBefore(cell.el, row.firstChild);
             }
-        },
+          }
+          if (parseInt(api.getAttribute(cell.el, 'rowspan'), 10) > 2) {
+            cell.el.setAttribute('rowspan', parseInt(api.getAttribute(cell.el, 'rowspan'), 10) - 1);
+          } else {
+            cell.el.removeAttribute('rowspan');
+          }
+        }
+      }
+    },
 
-        canMerge: function(to) {
-            this.to = to;
-            this.setTableMap();
-            this.idx_start = this.getMapIndex(this.cell);
-            this.idx_end = this.getMapIndex(this.to);
+    // Removes a cell when removing a row
+    // If is rowspan cell then decreases the rowspan
+    // and moves cell to next row if needed (is first cell of rowspan)
+    removeRowCell: function(cell) {
+      if (cell.isReal) {
+        if (cell.isRowspan) {
+          this.collapseCellToNextRow(cell);
+        } else {
+          removeElement(cell.el);
+        }
+      } else {
+        if (parseInt(api.getAttribute(cell.el, 'rowspan'), 10) > 2) {
+          cell.el.setAttribute('rowspan', parseInt(api.getAttribute(cell.el, 'rowspan'), 10) - 1);
+        } else {
+          cell.el.removeAttribute('rowspan');
+        }
+      }
+    },
 
-            // switch indexes if start is bigger than end
-            if (this.idx_start.row > this.idx_end.row || (this.idx_start.row == this.idx_end.row && this.idx_start.col > this.idx_end.col)) {
-                var temp_idx = this.idx_start;
-                this.idx_start = this.idx_end;
-                this.idx_end = temp_idx;
+    getRowElementsByCell: function() {
+      var cells = [];
+      this.setTableMap();
+      this.idx = this.getMapIndex(this.cell);
+      if (this.idx !== false) {
+        var modRow = this.map[this.idx.row];
+        for (var cidx = 0, cmax = modRow.length; cidx < cmax; cidx++) {
+          if (modRow[cidx].isReal) {
+            cells.push(modRow[cidx].el);
+          }
+        }
+      }
+      return cells;
+    },
+
+    getColumnElementsByCell: function() {
+      var cells = [];
+      this.setTableMap();
+      this.idx = this.getMapIndex(this.cell);
+      if (this.idx !== false) {
+        for (var ridx = 0, rmax = this.map.length; ridx < rmax; ridx++) {
+          if (this.map[ridx][this.idx.col] && this.map[ridx][this.idx.col].isReal) {
+            cells.push(this.map[ridx][this.idx.col].el);
+          }
+        }
+      }
+      return cells;
+    },
+
+    // Removes the row of selected cell
+    removeRow: function() {
+      var oldRow = api.getParentElement(this.cell, { query: "tr" });
+      if (oldRow) {
+        this.setTableMap();
+        this.idx = this.getMapIndex(this.cell);
+        if (this.idx !== false) {
+          var modRow = this.map[this.idx.row];
+          for (var cidx = 0, cmax = modRow.length; cidx < cmax; cidx++) {
+            if (!modRow[cidx].modified) {
+              this.setCellAsModified(modRow[cidx]);
+              this.removeRowCell(modRow[cidx]);
             }
-            if (this.idx_start.col > this.idx_end.col) {
-                var temp_cidx = this.idx_start.col;
-                this.idx_start.col = this.idx_end.col;
-                this.idx_end.col = temp_cidx;
+          }
+        }
+        removeElement(oldRow);
+      }
+    },
+
+    removeColCell: function(cell) {
+      if (cell.isColspan) {
+        if (parseInt(api.getAttribute(cell.el, 'colspan'), 10) > 2) {
+          cell.el.setAttribute('colspan', parseInt(api.getAttribute(cell.el, 'colspan'), 10) - 1);
+        } else {
+          cell.el.removeAttribute('colspan');
+        }
+      } else if (cell.isReal) {
+        removeElement(cell.el);
+      }
+    },
+
+    removeColumn: function() {
+      this.setTableMap();
+      this.idx = this.getMapIndex(this.cell);
+      if (this.idx !== false) {
+        for (var ridx = 0, rmax = this.map.length; ridx < rmax; ridx++) {
+          if (!this.map[ridx][this.idx.col].modified) {
+            this.setCellAsModified(this.map[ridx][this.idx.col]);
+            this.removeColCell(this.map[ridx][this.idx.col]);
+          }
+        }
+      }
+    },
+
+    // removes row or column by selected cell element
+    remove: function(what) {
+      if (this.rectify()) {
+        switch (what) {
+          case 'row':
+            this.removeRow();
+          break;
+          case 'column':
+            this.removeColumn();
+          break;
+        }
+        this.rectify();
+      }
+    },
+
+    addRow: function(where) {
+      var doc = this.table.ownerDocument;
+
+      this.setTableMap();
+      this.idx = this.getMapIndex(this.cell);
+      if (where == "below" && api.getAttribute(this.cell, 'rowspan')) {
+        this.idx.row = this.idx.row + parseInt(api.getAttribute(this.cell, 'rowspan'), 10) - 1;
+      }
+
+      if (this.idx !== false) {
+        var modRow = this.map[this.idx.row],
+          newRow = doc.createElement('tr');
+
+        for (var ridx = 0, rmax = modRow.length; ridx < rmax; ridx++) {
+          if (!modRow[ridx].modified) {
+            this.setCellAsModified(modRow[ridx]);
+            this.addRowCell(modRow[ridx], newRow, where);
+          }
+        }
+
+        switch (where) {
+          case 'below':
+            insertAfter(this.getRealRowEl(true), newRow);
+          break;
+          case 'above':
+            var cr = api.getParentElement(this.map[this.idx.row][this.idx.col].el, { query: "tr" });
+            if (cr) {
+              cr.parentNode.insertBefore(newRow, cr);
             }
+          break;
+        }
+      }
+    },
 
-            for (var row = this.idx_start.row, maxr = this.idx_end.row; row <= maxr; row++) {
-                for (var col = this.idx_start.col, maxc = this.idx_end.col; col <= maxc; col++) {
-                    if (this.map[row][col].isColspan || this.map[row][col].isRowspan) {
-                        return false;
-                    }
-                }
+    addRowCell: function(cell, row, where) {
+      var colSpanAttr = (cell.isColspan) ? {"colspan" : api.getAttribute(cell.el, 'colspan')} : null;
+      if (cell.isReal) {
+        if (where != 'above' && cell.isRowspan) {
+          cell.el.setAttribute('rowspan', parseInt(api.getAttribute(cell.el,'rowspan'), 10) + 1);
+        } else {
+          row.appendChild(this.createCells('td', 1, colSpanAttr));
+        }
+      } else {
+        if (where != 'above' && cell.isRowspan && cell.lastRow) {
+          row.appendChild(this.createCells('td', 1, colSpanAttr));
+        } else if (c.isRowspan) {
+          cell.el.attr('rowspan', parseInt(api.getAttribute(cell.el, 'rowspan'), 10) + 1);
+        }
+      }
+    },
+
+    add: function(where) {
+      if (this.rectify()) {
+        if (where == 'below' || where == 'above') {
+          this.addRow(where);
+        }
+        if (where == 'before' || where == 'after') {
+          this.addColumn(where);
+        }
+      }
+    },
+
+    addColCell: function (cell, ridx, where) {
+      var doAdd,
+        cType = cell.el.tagName.toLowerCase();
+
+      // defines add cell vs expand cell conditions
+      // true means add
+      switch (where) {
+        case "before":
+          doAdd = (!cell.isColspan || cell.firstCol);
+        break;
+        case "after":
+          doAdd = (!cell.isColspan || cell.lastCol || (cell.isColspan && c.el == this.cell));
+        break;
+      }
+
+      if (doAdd){
+        // adds a cell before or after current cell element
+        switch (where) {
+          case "before":
+            cell.el.parentNode.insertBefore(this.createCells(cType, 1), cell.el);
+          break;
+          case "after":
+            insertAfter(cell.el, this.createCells(cType, 1));
+          break;
+        }
+
+        // handles if cell has rowspan
+        if (cell.isRowspan) {
+          this.handleCellAddWithRowspan(cell, ridx+1, where);
+        }
+
+      } else {
+        // expands cell
+        cell.el.setAttribute('colspan',  parseInt(api.getAttribute(cell.el, 'colspan'), 10) + 1);
+      }
+    },
+
+    addColumn: function(where) {
+      var row, modCell;
+
+      this.setTableMap();
+      this.idx = this.getMapIndex(this.cell);
+      if (where == "after" && api.getAttribute(this.cell, 'colspan')) {
+        this.idx.col = this.idx.col + parseInt(api.getAttribute(this.cell, 'colspan'), 10) - 1;
+      }
+
+      if (this.idx !== false) {
+        for (var ridx = 0, rmax = this.map.length; ridx < rmax; ridx++ ) {
+          row = this.map[ridx];
+          if (row[this.idx.col]) {
+            modCell = row[this.idx.col];
+            if (!modCell.modified) {
+              this.setCellAsModified(modCell);
+              this.addColCell(modCell, ridx , where);
             }
-            return true;
-        },
+          }
+        }
+      }
+    },
 
-        decreaseCellSpan: function(cell, span) {
-            var nr = parseInt(api.getAttribute(cell.el, span), 10) - 1;
-            if (nr >= 1) {
-                cell.el.setAttribute(span, nr);
-            } else {
-                cell.el.removeAttribute(span);
-                if (span == 'colspan') {
-                    cell.isColspan = false;
-                }
-                if (span == 'rowspan') {
-                    cell.isRowspan = false;
-                }
-                cell.firstCol = true;
-                cell.lastCol = true;
-                cell.firstRow = true;
-                cell.lastRow = true;
-                cell.isReal = true;
-            }
-        },
+    handleCellAddWithRowspan: function (cell, ridx, where) {
+      var addRowsNr = parseInt(api.getAttribute(this.cell, 'rowspan'), 10) - 1,
+        crow = api.getParentElement(cell.el, { query: "tr" }),
+        cType = cell.el.tagName.toLowerCase(),
+        cidx, temp_r_cells,
+        doc = this.table.ownerDocument,
+        nrow;
 
-        removeSurplusLines: function() {
-            var row, cell, ridx, rmax, cidx, cmax, allRowspan;
-
-            this.setTableMap();
-            if (this.map) {
-                ridx = 0;
-                rmax = this.map.length;
-                for (;ridx < rmax; ridx++) {
-                    row = this.map[ridx];
-                    allRowspan = true;
-                    cidx = 0;
-                    cmax = row.length;
-                    for (; cidx < cmax; cidx++) {
-                        cell = row[cidx];
-                        if (!(api.getAttribute(cell.el, "rowspan") && parseInt(api.getAttribute(cell.el, "rowspan"), 10) > 1 && cell.firstRow !== true)) {
-                            allRowspan = false;
-                            break;
-                        }
-                    }
-                    if (allRowspan) {
-                        cidx = 0;
-                        for (; cidx < cmax; cidx++) {
-                            this.decreaseCellSpan(row[cidx], 'rowspan');
-                        }
-                    }
-                }
-
-                // remove rows without cells
-                var tableRows = this.getTableRows();
-                ridx = 0;
-                rmax = tableRows.length;
-                for (;ridx < rmax; ridx++) {
-                    row = tableRows[ridx];
-                    if (row.childNodes.length == 0 && (/^\s*$/.test(row.textContent || row.innerText))) {
-                        removeElement(row);
-                    }
-                }
-            }
-        },
-
-        fillMissingCells: function() {
-            var r_max = 0,
-                c_max = 0,
-                prevcell = null;
-
-            this.setTableMap();
-            if (this.map) {
-
-                // find maximal dimensions of broken table
-                r_max = this.map.length;
-                for (var ridx = 0; ridx < r_max; ridx++) {
-                    if (this.map[ridx].length > c_max) { c_max = this.map[ridx].length; }
-                }
-
-                for (var row = 0; row < r_max; row++) {
-                    for (var col = 0; col < c_max; col++) {
-                        if (this.map[row] && !this.map[row][col]) {
-                            if (col > 0) {
-                                this.map[row][col] = new MapCell(this.createCells('td', 1));
-                                prevcell = this.map[row][col-1];
-                                if (prevcell && prevcell.el && prevcell.el.parent) { // if parent does not exist element is removed from dom
-                                    insertAfter(this.map[row][col-1].el, this.map[row][col].el);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-
-        rectify: function() {
-            if (!this.removeEmptyTable()) {
-                this.removeSurplusLines();
-                this.fillMissingCells();
-                return true;
-            } else {
-                return false;
-            }
-        },
-
-        unmerge: function() {
-            if (this.rectify()) {
-                this.setTableMap();
-                this.idx = this.getMapIndex(this.cell);
-
-                if (this.idx) {
-                    var thisCell = this.map[this.idx.row][this.idx.col],
-                        colspan = (api.getAttribute(thisCell.el, "colspan")) ? parseInt(api.getAttribute(thisCell.el, "colspan"), 10) : 1,
-                        cType = thisCell.el.tagName.toLowerCase();
-
-                    if (thisCell.isRowspan) {
-                        var rowspan = parseInt(api.getAttribute(thisCell.el, "rowspan"), 10);
-                        if (rowspan > 1) {
-                            for (var nr = 1, maxr = rowspan - 1; nr <= maxr; nr++){
-                                this.injectRowAt(this.idx.row + nr, this.idx.col, colspan, cType, thisCell);
-                            }
-                        }
-                        thisCell.el.removeAttribute('rowspan');
-                    }
-                    this.splitRowToCells(thisCell);
-                }
-            }
-        },
-
-        // merges cells from start cell (defined in creating obj) to "to" cell
-        merge: function(to) {
-            if (this.rectify()) {
-                if (this.canMerge(to)) {
-                    var rowspan = this.idx_end.row - this.idx_start.row + 1,
-                        colspan = this.idx_end.col - this.idx_start.col + 1;
-
-                    for (var row = this.idx_start.row, maxr = this.idx_end.row; row <= maxr; row++) {
-                        for (var col = this.idx_start.col, maxc = this.idx_end.col; col <= maxc; col++) {
-
-                            if (row == this.idx_start.row && col == this.idx_start.col) {
-                                if (rowspan > 1) {
-                                    this.map[row][col].el.setAttribute('rowspan', rowspan);
-                                }
-                                if (colspan > 1) {
-                                    this.map[row][col].el.setAttribute('colspan', colspan);
-                                }
-                            } else {
-                                // transfer content
-                                if (!(/^\s*<br\/?>\s*$/.test(this.map[row][col].el.innerHTML.toLowerCase()))) {
-                                    this.map[this.idx_start.row][this.idx_start.col].el.innerHTML += ' ' + this.map[row][col].el.innerHTML;
-                                }
-                                removeElement(this.map[row][col].el);
-                            }
-                        }
-                    }
-                    this.rectify();
-                } else {
-                    if (window.console) {
-                        console.log('Do not know how to merge allready merged cells.');
-                    }
-                }
-            }
-        },
-
-        // Decreases rowspan of a cell if it is done on first cell of rowspan row (real cell)
-        // Cell is moved to next row (if it is real)
-        collapseCellToNextRow: function(cell) {
-            var cellIdx = this.getMapIndex(cell.el),
-                newRowIdx = cellIdx.row + 1,
-                newIdx = {'row': newRowIdx, 'col': cellIdx.col};
-
-            if (newRowIdx < this.map.length) {
-
-                var row = this.getRealRowEl(false, newIdx);
-                if (row !== null) {
-                    var n_cidx = this.correctColIndexForUnreals(newIdx.col, newIdx.row);
-                    if (n_cidx >= 0) {
-                        insertAfter(this.getRowCells(row)[n_cidx], cell.el);
-                    } else {
-                        var lastCell = this.getLastNewCellOnRow(row, newRowIdx);
-                        if (lastCell !== null) {
-                            insertAfter(lastCell, cell.el);
-                        } else {
-                            row.insertBefore(cell.el, row.firstChild);
-                        }
-                    }
-                    if (parseInt(api.getAttribute(cell.el, 'rowspan'), 10) > 2) {
-                        cell.el.setAttribute('rowspan', parseInt(api.getAttribute(cell.el, 'rowspan'), 10) - 1);
-                    } else {
-                        cell.el.removeAttribute('rowspan');
-                    }
-                }
-            }
-        },
-
-        // Removes a cell when removing a row
-        // If is rowspan cell then decreases the rowspan
-        // and moves cell to next row if needed (is first cell of rowspan)
-        removeRowCell: function(cell) {
-            if (cell.isReal) {
-               if (cell.isRowspan) {
-                   this.collapseCellToNextRow(cell);
-               } else {
-                   removeElement(cell.el);
-               }
-            } else {
-                if (parseInt(api.getAttribute(cell.el, 'rowspan'), 10) > 2) {
-                    cell.el.setAttribute('rowspan', parseInt(api.getAttribute(cell.el, 'rowspan'), 10) - 1);
-                } else {
-                    cell.el.removeAttribute('rowspan');
-                }
-            }
-        },
-
-        getRowElementsByCell: function() {
-            var cells = [];
-            this.setTableMap();
-            this.idx = this.getMapIndex(this.cell);
-            if (this.idx !== false) {
-                var modRow = this.map[this.idx.row];
-                for (var cidx = 0, cmax = modRow.length; cidx < cmax; cidx++) {
-                    if (modRow[cidx].isReal) {
-                        cells.push(modRow[cidx].el);
-                    }
-                }
-            }
-            return cells;
-        },
-
-        getColumnElementsByCell: function() {
-            var cells = [];
-            this.setTableMap();
-            this.idx = this.getMapIndex(this.cell);
-            if (this.idx !== false) {
-                for (var ridx = 0, rmax = this.map.length; ridx < rmax; ridx++) {
-                    if (this.map[ridx][this.idx.col] && this.map[ridx][this.idx.col].isReal) {
-                        cells.push(this.map[ridx][this.idx.col].el);
-                    }
-                }
-            }
-            return cells;
-        },
-
-        // Removes the row of selected cell
-        removeRow: function() {
-            var oldRow = api.getParentElement(this.cell, { query: "tr" });
-            if (oldRow) {
-                this.setTableMap();
-                this.idx = this.getMapIndex(this.cell);
-                if (this.idx !== false) {
-                    var modRow = this.map[this.idx.row];
-                    for (var cidx = 0, cmax = modRow.length; cidx < cmax; cidx++) {
-                        if (!modRow[cidx].modified) {
-                            this.setCellAsModified(modRow[cidx]);
-                            this.removeRowCell(modRow[cidx]);
-                        }
-                    }
-                }
-                removeElement(oldRow);
-            }
-        },
-
-        removeColCell: function(cell) {
-            if (cell.isColspan) {
-                if (parseInt(api.getAttribute(cell.el, 'colspan'), 10) > 2) {
-                    cell.el.setAttribute('colspan', parseInt(api.getAttribute(cell.el, 'colspan'), 10) - 1);
-                } else {
-                    cell.el.removeAttribute('colspan');
-                }
-            } else if (cell.isReal) {
-                removeElement(cell.el);
-            }
-        },
-
-        removeColumn: function() {
-            this.setTableMap();
-            this.idx = this.getMapIndex(this.cell);
-            if (this.idx !== false) {
-                for (var ridx = 0, rmax = this.map.length; ridx < rmax; ridx++) {
-                    if (!this.map[ridx][this.idx.col].modified) {
-                        this.setCellAsModified(this.map[ridx][this.idx.col]);
-                        this.removeColCell(this.map[ridx][this.idx.col]);
-                    }
-                }
-            }
-        },
-
-        // removes row or column by selected cell element
-        remove: function(what) {
-            if (this.rectify()) {
-                switch (what) {
-                    case 'row':
-                        this.removeRow();
-                    break;
-                    case 'column':
-                        this.removeColumn();
-                    break;
-                }
-                this.rectify();
-            }
-        },
-
-        addRow: function(where) {
-            var doc = this.table.ownerDocument;
-
-            this.setTableMap();
-            this.idx = this.getMapIndex(this.cell);
-            if (where == "below" && api.getAttribute(this.cell, 'rowspan')) {
-                this.idx.row = this.idx.row + parseInt(api.getAttribute(this.cell, 'rowspan'), 10) - 1;
-            }
-
-            if (this.idx !== false) {
-                var modRow = this.map[this.idx.row],
-                    newRow = doc.createElement('tr');
-
-                for (var ridx = 0, rmax = modRow.length; ridx < rmax; ridx++) {
-                    if (!modRow[ridx].modified) {
-                        this.setCellAsModified(modRow[ridx]);
-                        this.addRowCell(modRow[ridx], newRow, where);
-                    }
-                }
-
-                switch (where) {
-                    case 'below':
-                        insertAfter(this.getRealRowEl(true), newRow);
-                    break;
-                    case 'above':
-                        var cr = api.getParentElement(this.map[this.idx.row][this.idx.col].el, { query: "tr" });
-                        if (cr) {
-                            cr.parentNode.insertBefore(newRow, cr);
-                        }
-                    break;
-                }
-            }
-        },
-
-        addRowCell: function(cell, row, where) {
-            var colSpanAttr = (cell.isColspan) ? {"colspan" : api.getAttribute(cell.el, 'colspan')} : null;
-            if (cell.isReal) {
-                if (where != 'above' && cell.isRowspan) {
-                    cell.el.setAttribute('rowspan', parseInt(api.getAttribute(cell.el,'rowspan'), 10) + 1);
-                } else {
-                    row.appendChild(this.createCells('td', 1, colSpanAttr));
-                }
-            } else {
-                if (where != 'above' && cell.isRowspan && cell.lastRow) {
-                    row.appendChild(this.createCells('td', 1, colSpanAttr));
-                } else if (c.isRowspan) {
-                    cell.el.attr('rowspan', parseInt(api.getAttribute(cell.el, 'rowspan'), 10) + 1);
-                }
-            }
-        },
-
-        add: function(where) {
-            if (this.rectify()) {
-                if (where == 'below' || where == 'above') {
-                    this.addRow(where);
-                }
-                if (where == 'before' || where == 'after') {
-                    this.addColumn(where);
-                }
-            }
-        },
-
-        addColCell: function (cell, ridx, where) {
-            var doAdd,
-                cType = cell.el.tagName.toLowerCase();
-
-            // defines add cell vs expand cell conditions
-            // true means add
+      for (var i = 0; i < addRowsNr; i++) {
+        cidx = this.correctColIndexForUnreals(this.idx.col, (ridx + i));
+        crow = nextNode(crow, 'tr');
+        if (crow) {
+          if (cidx > 0) {
             switch (where) {
-                case "before":
-                    doAdd = (!cell.isColspan || cell.firstCol);
-                break;
-                case "after":
-                    doAdd = (!cell.isColspan || cell.lastCol || (cell.isColspan && c.el == this.cell));
-                break;
-            }
-
-            if (doAdd){
-                // adds a cell before or after current cell element
-                switch (where) {
-                    case "before":
-                        cell.el.parentNode.insertBefore(this.createCells(cType, 1), cell.el);
-                    break;
-                    case "after":
-                        insertAfter(cell.el, this.createCells(cType, 1));
-                    break;
-                }
-
-                // handles if cell has rowspan
-                if (cell.isRowspan) {
-                    this.handleCellAddWithRowspan(cell, ridx+1, where);
-                }
-
-            } else {
-                // expands cell
-                cell.el.setAttribute('colspan',  parseInt(api.getAttribute(cell.el, 'colspan'), 10) + 1);
-            }
-        },
-
-        addColumn: function(where) {
-            var row, modCell;
-
-            this.setTableMap();
-            this.idx = this.getMapIndex(this.cell);
-            if (where == "after" && api.getAttribute(this.cell, 'colspan')) {
-              this.idx.col = this.idx.col + parseInt(api.getAttribute(this.cell, 'colspan'), 10) - 1;
-            }
-
-            if (this.idx !== false) {
-                for (var ridx = 0, rmax = this.map.length; ridx < rmax; ridx++ ) {
-                    row = this.map[ridx];
-                    if (row[this.idx.col]) {
-                        modCell = row[this.idx.col];
-                        if (!modCell.modified) {
-                            this.setCellAsModified(modCell);
-                            this.addColCell(modCell, ridx , where);
-                        }
-                    }
-                }
-            }
-        },
-
-        handleCellAddWithRowspan: function (cell, ridx, where) {
-            var addRowsNr = parseInt(api.getAttribute(this.cell, 'rowspan'), 10) - 1,
-                crow = api.getParentElement(cell.el, { query: "tr" }),
-                cType = cell.el.tagName.toLowerCase(),
-                cidx, temp_r_cells,
-                doc = this.table.ownerDocument,
-                nrow;
-
-            for (var i = 0; i < addRowsNr; i++) {
-                cidx = this.correctColIndexForUnreals(this.idx.col, (ridx + i));
-                crow = nextNode(crow, 'tr');
-                if (crow) {
-                    if (cidx > 0) {
-                        switch (where) {
-                            case "before":
-                                temp_r_cells = this.getRowCells(crow);
-                                if (cidx > 0 && this.map[ridx + i][this.idx.col].el != temp_r_cells[cidx] && cidx == temp_r_cells.length - 1) {
-                                     insertAfter(temp_r_cells[cidx], this.createCells(cType, 1));
-                                } else {
-                                    temp_r_cells[cidx].parentNode.insertBefore(this.createCells(cType, 1), temp_r_cells[cidx]);
-                                }
-
-                            break;
-                            case "after":
-                                insertAfter(this.getRowCells(crow)[cidx], this.createCells(cType, 1));
-                            break;
-                        }
-                    } else {
-                        crow.insertBefore(this.createCells(cType, 1), crow.firstChild);
-                    }
+              case "before":
+                temp_r_cells = this.getRowCells(crow);
+                if (cidx > 0 && this.map[ridx + i][this.idx.col].el != temp_r_cells[cidx] && cidx == temp_r_cells.length - 1) {
+                   insertAfter(temp_r_cells[cidx], this.createCells(cType, 1));
                 } else {
-                    nrow = doc.createElement('tr');
-                    nrow.appendChild(this.createCells(cType, 1));
-                    this.table.appendChild(nrow);
+                  temp_r_cells[cidx].parentNode.insertBefore(this.createCells(cType, 1), temp_r_cells[cidx]);
                 }
+
+              break;
+              case "after":
+                insertAfter(this.getRowCells(crow)[cidx], this.createCells(cType, 1));
+              break;
             }
+          } else {
+            crow.insertBefore(this.createCells(cType, 1), crow.firstChild);
+          }
+        } else {
+          nrow = doc.createElement('tr');
+          nrow.appendChild(this.createCells(cType, 1));
+          this.table.appendChild(nrow);
         }
-    };
+      }
+    }
+  };
 
-    api.table = {
-        getCellsBetween: function(cell1, cell2) {
-            var c1 = new TableModifyerByCell(cell1);
-            return c1.getMapElsTo(cell2);
-        },
+  api.table = {
+    getCellsBetween: function(cell1, cell2) {
+      var c1 = new TableModifyerByCell(cell1);
+      return c1.getMapElsTo(cell2);
+    },
 
-        addCells: function(cell, where) {
-            var c = new TableModifyerByCell(cell);
-            c.add(where);
-        },
+    addCells: function(cell, where) {
+      var c = new TableModifyerByCell(cell);
+      c.add(where);
+    },
 
-        removeCells: function(cell, what) {
-            var c = new TableModifyerByCell(cell);
-            c.remove(what);
-        },
+    removeCells: function(cell, what) {
+      var c = new TableModifyerByCell(cell);
+      c.remove(what);
+    },
 
-        mergeCellsBetween: function(cell1, cell2) {
-            var c1 = new TableModifyerByCell(cell1);
-            c1.merge(cell2);
-        },
+    mergeCellsBetween: function(cell1, cell2) {
+      var c1 = new TableModifyerByCell(cell1);
+      c1.merge(cell2);
+    },
 
-        unmergeCell: function(cell) {
-            var c = new TableModifyerByCell(cell);
-            c.unmerge();
-        },
+    unmergeCell: function(cell) {
+      var c = new TableModifyerByCell(cell);
+      c.unmerge();
+    },
 
-        orderSelectionEnds: function(cell, cell2) {
-            var c = new TableModifyerByCell(cell);
-            return c.orderSelectionEnds(cell2);
-        },
+    orderSelectionEnds: function(cell, cell2) {
+      var c = new TableModifyerByCell(cell);
+      return c.orderSelectionEnds(cell2);
+    },
 
-        indexOf: function(cell) {
-            var c = new TableModifyerByCell(cell);
-            c.setTableMap();
-            return c.getMapIndex(cell);
-        },
+    indexOf: function(cell) {
+      var c = new TableModifyerByCell(cell);
+      c.setTableMap();
+      return c.getMapIndex(cell);
+    },
 
-        findCell: function(table, idx) {
-            var c = new TableModifyerByCell(null, table);
-            return c.getElementAtIndex(idx);
-        },
+    findCell: function(table, idx) {
+      var c = new TableModifyerByCell(null, table);
+      return c.getElementAtIndex(idx);
+    },
 
-        findRowByCell: function(cell) {
-            var c = new TableModifyerByCell(cell);
-            return c.getRowElementsByCell();
-        },
+    findRowByCell: function(cell) {
+      var c = new TableModifyerByCell(cell);
+      return c.getRowElementsByCell();
+    },
 
-        findColumnByCell: function(cell) {
-            var c = new TableModifyerByCell(cell);
-            return c.getColumnElementsByCell();
-        },
+    findColumnByCell: function(cell) {
+      var c = new TableModifyerByCell(cell);
+      return c.getColumnElementsByCell();
+    },
 
-        canMerge: function(cell1, cell2) {
-            var c = new TableModifyerByCell(cell1);
-            return c.canMerge(cell2);
-        }
-    };
-
-
+    canMerge: function(cell1, cell2) {
+      var c = new TableModifyerByCell(cell1);
+      return c.canMerge(cell2);
+    }
+  };
 
 })(wysihtml5);
 ;// does a selector query on element or array of elements
-
 wysihtml5.dom.query = function(elements, query) {
     var ret = [],
         q;
@@ -8795,7 +8788,8 @@ wysihtml5.dom.unwrap = function(node) {
     node.parentNode.removeChild(node);
   }
   return children;
-};;/* 
+};
+;/* 
  * Methods for fetching pasted html before it gets inserted into content
 **/
 
@@ -8819,28 +8813,40 @@ wysihtml5.dom.getPastedHtml = function(event) {
 wysihtml5.dom.getPastedHtmlWithDiv = function (composer, f) {
   var selBookmark = composer.selection.getBookmark(),
       doc = composer.element.ownerDocument,
-      cleanerDiv = doc.createElement('DIV');
+      cleanerDiv = doc.createElement('DIV'),
+      scrollPos = composer.getScrollPos();
   
   doc.body.appendChild(cleanerDiv);
 
   cleanerDiv.style.width = "1px";
   cleanerDiv.style.height = "1px";
   cleanerDiv.style.overflow = "hidden";
+  cleanerDiv.style.position = "absolute";
+  cleanerDiv.style.top = scrollPos.y + "px";
+  cleanerDiv.style.left = scrollPos.x + "px";
 
   cleanerDiv.setAttribute('contenteditable', 'true');
   cleanerDiv.focus();
 
   setTimeout(function () {
+    var html;
+
     composer.selection.setBookmark(selBookmark);
-    f(cleanerDiv.innerHTML);
+    html = cleanerDiv.innerHTML;
+    if (html && (/^<br\/?>$/i).test(html.trim())) {
+      html = false;
+    }
+    f(html);
     cleanerDiv.parentNode.removeChild(cleanerDiv);
   }, 0);
-};;wysihtml5.dom.removeInvisibleSpaces = function(node) {
+};
+;wysihtml5.dom.removeInvisibleSpaces = function(node) {
   var textNodes = wysihtml5.dom.getTextNodes(node);
   for (var n = textNodes.length; n--;) {
     textNodes[n].nodeValue = textNodes[n].nodeValue.replace(wysihtml5.INVISIBLE_SPACE_REG_EXP, "");
   }
-};;/**
+};
+;/**
  * Fix most common html formatting misbehaviors of browsers implementation when inserting
  * content via copy & paste contentEditable
  *
@@ -8916,7 +8922,8 @@ wysihtml5.quirks.cleanPastedHTML = (function() {
     return newHtml;
   };
 
-})();;/**
+})();
+;/**
  * IE and Opera leave an empty paragraph in the contentEditable element after clearing it
  *
  * @param {Object} contentEditableElement The contentEditable element to observe for clearing events
@@ -8994,119 +9001,119 @@ wysihtml5.quirks.ensureProperClearing = (function() {
 })(wysihtml5);
 ;wysihtml5.quirks.tableCellsSelection = function(editable, editor) {
 
-    var dom = wysihtml5.dom,
-        select = {
-            table: null,
-            start: null,
-            end: null,
-            cells: null,
-            select: selectCells
-        },
-        selection_class = "wysiwyg-tmp-selected-cell";
+  var dom = wysihtml5.dom,
+    select = {
+      table: null,
+      start: null,
+      end: null,
+      cells: null,
+      select: selectCells
+    },
+    selection_class = "wysiwyg-tmp-selected-cell";
 
-    function init () {
-        editable.addEventListener("mousedown", handleMouseDown);
-        return select;
+  function init () {
+    editable.addEventListener("mousedown", handleMouseDown);
+    return select;
+  }
+
+  var handleMouseDown = function(event) {
+    var target = wysihtml5.dom.getParentElement(event.target, { query: "td, th" });
+    if (target) {
+      handleSelectionMousedown(target);
     }
+  };
 
-    var handleMouseDown = function(event) {
-      var target = wysihtml5.dom.getParentElement(event.target, { query: "td, th" });
-      if (target) {
-          handleSelectionMousedown(target);
+  function handleSelectionMousedown (target) {
+    select.start = target;
+    select.end = target;
+    select.cells = [target];
+    select.table = dom.getParentElement(select.start, { query: "table" });
+
+    if (select.table) {
+      removeCellSelections();
+      dom.addClass(target, selection_class);
+      editable.addEventListener("mousemove", handleMouseMove);
+      editable.addEventListener("mouseup", handleMouseUp);
+      editor.fire("tableselectstart").fire("tableselectstart:composer");
+    }
+  }
+
+  // remove all selection classes
+  function removeCellSelections () {
+    if (editable) {
+      var selectedCells = editable.querySelectorAll('.' + selection_class);
+      if (selectedCells.length > 0) {
+        for (var i = 0; i < selectedCells.length; i++) {
+          dom.removeClass(selectedCells[i], selection_class);
+        }
       }
-    };
+    }
+  }
 
-    function handleSelectionMousedown (target) {
-      select.start = target;
-      select.end = target;
-      select.cells = [target];
-      select.table = dom.getParentElement(select.start, { query: "table" });
+  function addSelections (cells) {
+    for (var i = 0; i < cells.length; i++) {
+      dom.addClass(cells[i], selection_class);
+    }
+  }
 
-      if (select.table) {
+  function handleMouseMove (event) {
+    var curTable = null,
+      cell = dom.getParentElement(event.target, { query: "td, th" }),
+      oldEnd;
+
+    if (cell && select.table && select.start) {
+      curTable =  dom.getParentElement(cell, { query: "table" });
+      if (curTable && curTable === select.table) {
         removeCellSelections();
-        dom.addClass(target, selection_class);
-        editable.addEventListener("mousemove", handleMouseMove);
-        editable.addEventListener("mouseup", handleMouseUp);
-        editor.fire("tableselectstart").fire("tableselectstart:composer");
-      }
-    }
-
-    // remove all selection classes
-    function removeCellSelections () {
-        if (editable) {
-            var selectedCells = editable.querySelectorAll('.' + selection_class);
-            if (selectedCells.length > 0) {
-              for (var i = 0; i < selectedCells.length; i++) {
-                  dom.removeClass(selectedCells[i], selection_class);
-              }
-            }
+        oldEnd = select.end;
+        select.end = cell;
+        select.cells = dom.table.getCellsBetween(select.start, cell);
+        if (select.cells.length > 1) {
+          editor.composer.selection.deselect();
         }
-    }
-
-    function addSelections (cells) {
-      for (var i = 0; i < cells.length; i++) {
-        dom.addClass(cells[i], selection_class);
-      }
-    }
-
-    function handleMouseMove (event) {
-      var curTable = null,
-          cell = dom.getParentElement(event.target, { query: "td, th" }),
-          oldEnd;
-
-      if (cell && select.table && select.start) {
-        curTable =  dom.getParentElement(cell, { query: "table" });
-        if (curTable && curTable === select.table) {
-          removeCellSelections();
-          oldEnd = select.end;
-          select.end = cell;
-          select.cells = dom.table.getCellsBetween(select.start, cell);
-          if (select.cells.length > 1) {
-            editor.composer.selection.deselect();
-          }
-          addSelections(select.cells);
-          if (select.end !== oldEnd) {
-            editor.fire("tableselectchange").fire("tableselectchange:composer");
-          }
+        addSelections(select.cells);
+        if (select.end !== oldEnd) {
+          editor.fire("tableselectchange").fire("tableselectchange:composer");
         }
       }
     }
+  }
 
-    function handleMouseUp (event) {
-      editable.removeEventListener("mousemove", handleMouseMove);
-      editable.removeEventListener("mouseup", handleMouseUp);
-      editor.fire("tableselect").fire("tableselect:composer");
-      setTimeout(function() {
-        bindSideclick();
-      },0);
+  function handleMouseUp (event) {
+    editable.removeEventListener("mousemove", handleMouseMove);
+    editable.removeEventListener("mouseup", handleMouseUp);
+    editor.fire("tableselect").fire("tableselect:composer");
+    setTimeout(function() {
+      bindSideclick();
+    },0);
+  }
+
+  var sideClickHandler = function(event) {
+    editable.ownerDocument.removeEventListener("click", sideClickHandler);
+    if (dom.getParentElement(event.target, { query: "table" }) != select.table) {
+      removeCellSelections();
+      select.table = null;
+      select.start = null;
+      select.end = null;
+      editor.fire("tableunselect").fire("tableunselect:composer");
     }
+  };
 
-    var sideClickHandler = function(event) {
-      editable.ownerDocument.removeEventListener("click", sideClickHandler);
-      if (dom.getParentElement(event.target, { query: "table" }) != select.table) {
-          removeCellSelections();
-          select.table = null;
-          select.start = null;
-          select.end = null;
-          editor.fire("tableunselect").fire("tableunselect:composer");
-      }
-    };
+  function bindSideclick () {
+    editable.ownerDocument.addEventListener("click", sideClickHandler);
+  }
 
-    function bindSideclick () {
-      editable.ownerDocument.addEventListener("click", sideClickHandler);
-    }
+  function selectCells (start, end) {
+    select.start = start;
+    select.end = end;
+    select.table = dom.getParentElement(select.start, { query: "table" });
+    selectedCells = dom.table.getCellsBetween(select.start, select.end);
+    addSelections(selectedCells);
+    bindSideclick();
+    editor.fire("tableselect").fire("tableselect:composer");
+  }
 
-    function selectCells (start, end) {
-        select.start = start;
-        select.end = end;
-        select.table = dom.getParentElement(select.start, { query: "table" });
-        selectedCells = dom.table.getCellsBetween(select.start, select.end);
-        addSelections(selectedCells);
-        bindSideclick();
-        editor.fire("tableselect").fire("tableselect:composer");
-    }
-
-    return init();
+  return init();
 
 };
 ;(function(wysihtml5) {
@@ -9257,6 +9264,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       this.editor   = editor;
       this.composer = editor.composer;
       this.doc      = this.composer.doc;
+      this.win      = this.composer.win;
       this.contain = contain;
       this.unselectableClass = unselectableClass || false;
     },
@@ -9370,38 +9378,55 @@ wysihtml5.quirks.ensureProperClearing = (function() {
      * @param {Object} node The element or text node where to position the caret in front of
      * @example
      *    selection.setBefore(myElement);
+     * callback is an optional parameter accepting a function to execute when selection ahs been set
      */
-    setAfter: function(node, notVisual) {
+    setAfter: function(node, notVisual, callback) {
       var range = rangy.createRange(this.doc),
-          originalScrollTop = this.doc.documentElement.scrollTop || this.doc.body.scrollTop || this.doc.defaultView.pageYOffset,
-          originalScrollLeft = this.doc.documentElement.scrollLeft || this.doc.body.scrollLeft || this.doc.defaultView.pageXOffset,
+          fixWebkitSelection = function() {
+            // Webkit fails to add selection if there are no textnodes in that region
+            // (like an uneditable container at the end of content).
+            if (!sel) {
+              if (notVisual) {
+                // If setAfter is used as internal between actions, self-removing caretPlaceholder has simpler implementation
+                // and remove itself in call stack end instead on user interaction 
+                var caretPlaceholder = this.doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
+                node.parentNode.insertBefore(caretPlaceholder, node.nextSibling);
+                this.selectNode(caretPlaceholder);
+                setTimeout(function() {
+                  if (caretPlaceholder && caretPlaceholder.parentNode) {
+                    caretPlaceholder.parentNode.removeChild(caretPlaceholder);
+                  }
+                }, 0);
+              } else {
+                this.createTemporaryCaretSpaceAfter(node);
+              }
+            }
+          },
           sel;
 
       range.setStartAfter(node);
       range.setEndAfter(node);
-      this.composer.element.focus();
-      this.doc.defaultView.scrollTo(originalScrollLeft, originalScrollTop);
-      sel = this.setSelection(range);
 
-      // Webkit fails to add selection if there are no textnodes in that region
-      // (like an uneditable container at the end of content).
-      if (!sel) {
-        if (notVisual) {
-          // If setAfter is used as internal between actions, self-removing caretPlaceholder has simpler implementation
-          // and remove itself in call stack end instead on user interaction 
-          var caretPlaceholder = this.doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
-          node.parentNode.insertBefore(caretPlaceholder, node.nextSibling);
-          this.selectNode(caretPlaceholder);
-          setTimeout(function() {
-            if (caretPlaceholder && caretPlaceholder.parentNode) {
-              caretPlaceholder.parentNode.removeChild(caretPlaceholder);
-            }
-          }, 0);
-        } else {
-          this.createTemporaryCaretSpaceAfter(node);
+      // In IE contenteditable must be focused before we can set selection
+      // thus setting the focus if activeElement is not this composer
+      if (!document.activeElement || document.activeElement !== this.composer.element) {
+        var scrollPos = this.composer.getScrollPos();
+        this.composer.element.focus();
+        this.composer.setScrollPos(scrollPos);
+        setTimeout(function() {
+          sel = this.setSelection(range);
+          fixWebkitSelection();
+          if (callback) {
+            callback(sel);
+          }
+        }.bind(this), 0);
+      } else {
+        sel = this.setSelection(range);
+        fixWebkitSelection();
+        if (callback) {
+          callback(sel);
         }
       }
-      return sel;
     },
 
     /**
@@ -9704,9 +9729,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
 
     // TODO: Figure out a method from following 2 that would work universally
     executeAndRestoreRangy: function(method, restoreScrollPosition) {
-      var win = this.doc.defaultView || this.doc.parentWindow,
-          sel = rangy.saveSelection(win);
-
+      var sel = rangy.saveSelection(this.win);
       if (!sel) {
         method();
       } else {
@@ -9988,8 +10011,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
      * See https://developer.mozilla.org/en/DOM/Selection/modify
      */
     _selectLine_W3C: function() {
-      var win       = this.doc.defaultView,
-          selection = win.getSelection();
+      var selection = this.win.getSelection();
       selection.modify("move", "left", "lineboundary");
       selection.modify("extend", "right", "lineboundary");
     },
@@ -9998,8 +10020,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
     toLineBoundary: function (location, collapse) {
       collapse = (typeof collapse === 'undefined') ? false : collapse;
       if (wysihtml5.browser.supportsSelectionModify()) {
-        var win = this.doc.defaultView,
-            selection = win.getSelection();
+        var selection = this.win.getSelection();
 
         selection.modify("extend", location, "lineboundary");
         if (collapse) {
@@ -10139,50 +10160,49 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       if (r) { ranges.push(r); }
 
       if (this.unselectableClass && this.contain && r) {
-          var uneditables = this.getOwnUneditables(),
-              tmpRange;
-          if (uneditables.length > 0) {
-            for (var i = 0, imax = uneditables.length; i < imax; i++) {
-              tmpRanges = [];
-              for (var j = 0, jmax = ranges.length; j < jmax; j++) {
-                if (ranges[j]) {
-                  switch (ranges[j].compareNode(uneditables[i])) {
-                    case 2:
-                      // all selection inside uneditable. remove
-                    break;
-                    case 3:
-                      //section begins before and ends after uneditable. spilt
-                      tmpRange = ranges[j].cloneRange();
-                      tmpRange.setEndBefore(uneditables[i]);
-                      tmpRanges.push(tmpRange);
+        var uneditables = this.getOwnUneditables(),
+            tmpRange;
+        if (uneditables.length > 0) {
+          for (var i = 0, imax = uneditables.length; i < imax; i++) {
+            tmpRanges = [];
+            for (var j = 0, jmax = ranges.length; j < jmax; j++) {
+              if (ranges[j]) {
+                switch (ranges[j].compareNode(uneditables[i])) {
+                  case 2:
+                    // all selection inside uneditable. remove
+                  break;
+                  case 3:
+                    //section begins before and ends after uneditable. spilt
+                    tmpRange = ranges[j].cloneRange();
+                    tmpRange.setEndBefore(uneditables[i]);
+                    tmpRanges.push(tmpRange);
 
-                      tmpRange = ranges[j].cloneRange();
-                      tmpRange.setStartAfter(uneditables[i]);
-                      tmpRanges.push(tmpRange);
-                    break;
-                    default:
-                      // in all other cases uneditable does not touch selection. dont modify
-                      tmpRanges.push(ranges[j]);
-                  }
+                    tmpRange = ranges[j].cloneRange();
+                    tmpRange.setStartAfter(uneditables[i]);
+                    tmpRanges.push(tmpRange);
+                  break;
+                  default:
+                    // in all other cases uneditable does not touch selection. dont modify
+                    tmpRanges.push(ranges[j]);
                 }
-                ranges = tmpRanges;
               }
+              ranges = tmpRanges;
             }
           }
+        }
       }
       return ranges;
     },
 
     getSelection: function() {
-      return rangy.getSelection(this.doc.defaultView || this.doc.parentWindow);
+      return rangy.getSelection(this.win);
     },
 
     // Sets selection in document to a given range
     // Set selection method detects if it fails to set any selection in document and returns null on fail
     // (especially needed in webkit where some ranges just can not create selection for no reason)
     setSelection: function(range) {
-      var win       = this.doc.defaultView || this.doc.parentWindow,
-          selection = rangy.getSelection(win);
+      var selection = rangy.getSelection(this.win);
       selection.setSingleRange(range);
       return (selection && selection.anchorNode && selection.focusNode) ? selection : null;
     },
@@ -10620,24 +10640,24 @@ wysihtml5.quirks.ensureProperClearing = (function() {
     },
 
     getAdjacentMergeableTextNode: function(node, forward) {
-        var isTextNode = (node.nodeType == wysihtml5.TEXT_NODE);
-        var el = isTextNode ? node.parentNode : node;
-        var adjacentNode;
-        var propName = forward ? "nextSibling" : "previousSibling";
-        if (isTextNode) {
-          // Can merge if the node's previous/next sibling is a text node
-          adjacentNode = node[propName];
-          if (adjacentNode && adjacentNode.nodeType == wysihtml5.TEXT_NODE) {
-            return adjacentNode;
-          }
-        } else {
-          // Compare element with its sibling
-          adjacentNode = el[propName];
-          if (adjacentNode && this.areElementsMergeable(node, adjacentNode)) {
-            return adjacentNode[forward ? "firstChild" : "lastChild"];
-          }
+      var isTextNode = (node.nodeType == wysihtml5.TEXT_NODE);
+      var el = isTextNode ? node.parentNode : node;
+      var adjacentNode;
+      var propName = forward ? "nextSibling" : "previousSibling";
+      if (isTextNode) {
+        // Can merge if the node's previous/next sibling is a text node
+        adjacentNode = node[propName];
+        if (adjacentNode && adjacentNode.nodeType == wysihtml5.TEXT_NODE) {
+          return adjacentNode;
         }
-        return null;
+      } else {
+        // Compare element with its sibling
+        adjacentNode = el[propName];
+        if (adjacentNode && this.areElementsMergeable(node, adjacentNode)) {
+          return adjacentNode[forward ? "firstChild" : "lastChild"];
+        }
+      }
+      return null;
     },
 
     areElementsMergeable: function(el1, el2) {
@@ -10715,83 +10735,83 @@ wysihtml5.quirks.ensureProperClearing = (function() {
     },
 
     applyToRange: function(range) {
-        var textNodes;
-        for (var ri = range.length; ri--;) {
-            textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
+      var textNodes;
+      for (var ri = range.length; ri--;) {
+          textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
 
-            if (!textNodes.length) {
-              try {
-                var node = this.createContainer(range[ri].endContainer.ownerDocument);
-                range[ri].surroundContents(node);
-                this.selectNode(range[ri], node);
-                return;
-              } catch(e) {}
-            }
-
-            range[ri].splitBoundaries();
-            textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
-            if (textNodes.length) {
-              var textNode;
-
-              for (var i = 0, len = textNodes.length; i < len; ++i) {
-                textNode = textNodes[i];
-                if (!this.getMatchingAncestor(textNode).element) {
-                  this.applyToTextNode(textNode);
-                }
-              }
-
-              range[ri].setStart(textNodes[0], 0);
-              textNode = textNodes[textNodes.length - 1];
-              range[ri].setEnd(textNode, textNode.length);
-
-              if (this.normalize) {
-                this.postApply(textNodes, range[ri]);
-              }
-            }
-
+        if (!textNodes.length) {
+          try {
+            var node = this.createContainer(range[ri].endContainer.ownerDocument);
+            range[ri].surroundContents(node);
+            this.selectNode(range[ri], node);
+            return;
+          } catch(e) {}
         }
+
+        range[ri].splitBoundaries();
+        textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
+        if (textNodes.length) {
+          var textNode;
+
+          for (var i = 0, len = textNodes.length; i < len; ++i) {
+            textNode = textNodes[i];
+            if (!this.getMatchingAncestor(textNode).element) {
+              this.applyToTextNode(textNode);
+            }
+          }
+
+          range[ri].setStart(textNodes[0], 0);
+          textNode = textNodes[textNodes.length - 1];
+          range[ri].setEnd(textNode, textNode.length);
+
+          if (this.normalize) {
+            this.postApply(textNodes, range[ri]);
+          }
+        }
+
+      }
     },
 
     undoToRange: function(range) {
       var textNodes, textNode, ancestorWithClass, ancestorWithStyle, ancestor;
       for (var ri = range.length; ri--;) {
 
+        textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
+        if (textNodes.length) {
+          range[ri].splitBoundaries();
           textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
-          if (textNodes.length) {
-            range[ri].splitBoundaries();
-            textNodes = range[ri].getNodes([wysihtml5.TEXT_NODE]);
-          } else {
-            var doc = range[ri].endContainer.ownerDocument,
-                node = doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
-            range[ri].insertNode(node);
-            range[ri].selectNode(node);
-            textNodes = [node];
-          }
+        } else {
+          var doc = range[ri].endContainer.ownerDocument,
+              node = doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
+          range[ri].insertNode(node);
+          range[ri].selectNode(node);
+          textNodes = [node];
+        }
 
-          for (var i = 0, len = textNodes.length; i < len; ++i) {
-            if (range[ri].isValid()) {
-              textNode = textNodes[i];
+        for (var i = 0, len = textNodes.length; i < len; ++i) {
+          if (range[ri].isValid()) {
+            textNode = textNodes[i];
 
-              ancestor = this.getMatchingAncestor(textNode);
-              if (ancestor.type === "style") {
-                this.undoToTextNode(textNode, range[ri], false, ancestor.element);
-              } else if (ancestor.element) {
-                this.undoToTextNode(textNode, range[ri], ancestor.element);
-              }
+            ancestor = this.getMatchingAncestor(textNode);
+            if (ancestor.type === "style") {
+              this.undoToTextNode(textNode, range[ri], false, ancestor.element);
+            } else if (ancestor.element) {
+              this.undoToTextNode(textNode, range[ri], ancestor.element);
             }
           }
+        }
 
-          if (len == 1) {
-            this.selectNode(range[ri], textNodes[0]);
-          } else {
-            range[ri].setStart(textNodes[0], 0);
-            textNode = textNodes[textNodes.length - 1];
-            range[ri].setEnd(textNode, textNode.length);
+        if (len == 1) {
+          this.selectNode(range[ri], textNodes[0]);
+        } else {
+          range[ri].setStart(textNodes[0], 0);
+          textNode = textNodes[textNodes.length - 1];
+          range[ri].setEnd(textNode, textNode.length);
 
-            if (this.normalize) {
-              this.postApply(textNodes, range[ri]);
-            }
+          if (this.normalize) {
+            this.postApply(textNodes, range[ri]);
           }
+        }
 
       }
     },
@@ -10998,21 +11018,22 @@ wysihtml5.Commands = Base.extend(
     }
   }
 });
-;wysihtml5.commands.bold = {
-  exec: function(composer, command) {
-    wysihtml5.commands.formatInline.execWithToggle(composer, command, "b");
-  },
+;(function(wysihtml5){
+  wysihtml5.commands.bold = {
+    exec: function(composer, command) {
+      wysihtml5.commands.formatInline.execWithToggle(composer, command, "b");
+    },
 
-  state: function(composer, command) {
-    // element.ownerDocument.queryCommandState("bold") results:
-    // firefox: only <b>
-    // chrome:  <b>, <strong>, <h1>, <h2>, ...
-    // ie:      <b>, <strong>
-    // opera:   <b>, <strong>
-    return wysihtml5.commands.formatInline.state(composer, command, "b");
-  }
-};
-
+    state: function(composer, command) {
+      // element.ownerDocument.queryCommandState("bold") results:
+      // firefox: only <b>
+      // chrome:  <b>, <strong>, <h1>, <h2>, ...
+      // ie:      <b>, <strong>
+      // opera:   <b>, <strong>
+      return wysihtml5.commands.formatInline.state(composer, command, "b");
+    }
+  };
+}(wysihtml5));
 ;(function(wysihtml5) {
   var undef,
       NODE_NAME = "A",
@@ -11185,7 +11206,7 @@ wysihtml5.Commands = Base.extend(
 
   wysihtml5.commands.fontSize = {
     exec: function(composer, command, size) {
-        wysihtml5.commands.formatInline.execWithToggle(composer, command, "span", "wysiwyg-font-size-" + size, REG_EXP);
+      wysihtml5.commands.formatInline.execWithToggle(composer, command, "span", "wysiwyg-font-size-" + size, REG_EXP);
     },
 
     state: function(composer, command, size) {
@@ -11237,7 +11258,7 @@ wysihtml5.Commands = Base.extend(
 
   wysihtml5.commands.foreColor = {
     exec: function(composer, command, color) {
-        wysihtml5.commands.formatInline.execWithToggle(composer, command, "span", "wysiwyg-color-" + color, REG_EXP);
+      wysihtml5.commands.formatInline.execWithToggle(composer, command, "span", "wysiwyg-color-" + color, REG_EXP);
     },
 
     state: function(composer, command, color) {
@@ -11624,7 +11645,7 @@ wysihtml5.Commands = Base.extend(
       if (options && options.toggle) {
         state = this.state(composer, command, options);
         if (state) {
-          bookmark = rangy.saveSelection(composer.doc.defaultView || composer.doc.parentWindow);
+          bookmark = rangy.saveSelection(composer.win);
           for (var j in state) {
             removeOptionsFromElement(state[j], options, composer);
           }
@@ -11639,12 +11660,12 @@ wysihtml5.Commands = Base.extend(
             query: BLOCK_ELEMENTS
           }, null, composer.element);
           if (parent) {
-            bookmark = rangy.saveSelection(composer.doc.defaultView || composer.doc.parentWindow);
+            bookmark = rangy.saveSelection(composer.win);
             range = composer.selection.createRange();
             range.selectNode(parent);
             composer.selection.setSelection(range);
           } else if (!composer.isEmpty()) {
-            bookmark = rangy.saveSelection(composer.doc.defaultView || composer.doc.parentWindow);
+            bookmark = rangy.saveSelection(composer.win);
             composer.selection.selectLine();
           }
         }
@@ -11700,7 +11721,6 @@ wysihtml5.Commands = Base.extend(
       return (nodes.length === 0) ? false : nodes;
     }
 
-
   };
 })(wysihtml5);
 ;/* Formats block for as a <pre><code class="classname"></code></pre> block
@@ -11711,48 +11731,51 @@ wysihtml5.Commands = Base.extend(
  * editorInstance.composer.commands.exec("formatCode", "language-html");
 */
 
-wysihtml5.commands.formatCode = {
+(function(wysihtml5){
+  wysihtml5.commands.formatCode = {
 
-  exec: function(composer, command, classname) {
-    var pre = this.state(composer),
-        code, range, selectedNodes;
-    if (pre) {
-      // caret is already within a <pre><code>...</code></pre>
-      composer.selection.executeAndRestore(function() {
-        code = pre.querySelector("code");
-        wysihtml5.dom.replaceWithChildNodes(pre);
-        if (code) {
-          wysihtml5.dom.replaceWithChildNodes(code);
+    exec: function(composer, command, classname) {
+      var pre = this.state(composer),
+          code, range, selectedNodes;
+      if (pre) {
+        // caret is already within a <pre><code>...</code></pre>
+        composer.selection.executeAndRestore(function() {
+          code = pre.querySelector("code");
+          wysihtml5.dom.replaceWithChildNodes(pre);
+          if (code) {
+            wysihtml5.dom.replaceWithChildNodes(code);
+          }
+        });
+      } else {
+        // Wrap in <pre><code>...</code></pre>
+        range = composer.selection.getRange();
+        selectedNodes = range.extractContents();
+        pre = composer.doc.createElement("pre");
+        code = composer.doc.createElement("code");
+
+        if (classname) {
+          code.className = classname;
         }
-      });
-    } else {
-      // Wrap in <pre><code>...</code></pre>
-      range = composer.selection.getRange();
-      selectedNodes = range.extractContents();
-      pre = composer.doc.createElement("pre");
-      code = composer.doc.createElement("code");
 
-      if (classname) {
-        code.className = classname;
+        pre.appendChild(code);
+        code.appendChild(selectedNodes);
+        range.insertNode(pre);
+        composer.selection.selectNode(pre);
       }
+    },
 
-      pre.appendChild(code);
-      code.appendChild(selectedNodes);
-      range.insertNode(pre);
-      composer.selection.selectNode(pre);
+    state: function(composer) {
+      var selectedNode = composer.selection.getSelectedNode();
+      if (selectedNode && selectedNode.nodeName && selectedNode.nodeName == "PRE"&&
+          selectedNode.firstChild && selectedNode.firstChild.nodeName && selectedNode.firstChild.nodeName == "CODE") {
+        return selectedNode;
+      } else {
+        return wysihtml5.dom.getParentElement(selectedNode, { query: "pre code" });
+      }
     }
-  },
-
-  state: function(composer) {
-    var selectedNode = composer.selection.getSelectedNode();
-    if (selectedNode && selectedNode.nodeName && selectedNode.nodeName == "PRE"&&
-        selectedNode.firstChild && selectedNode.firstChild.nodeName && selectedNode.firstChild.nodeName == "CODE") {
-      return selectedNode;
-    } else {
-      return wysihtml5.dom.getParentElement(selectedNode, { query: "pre code" });
-    }
-  }
-};;/**
+  };
+}(wysihtml5));
+;/**
  * formatInline scenarios for tag "B" (| = caret, |foo| = selected text)
  *
  *   #1 caret in unformatted text:
@@ -11920,19 +11943,21 @@ wysihtml5.commands.formatCode = {
   };
 
 })(wysihtml5);
-;wysihtml5.commands.insertHTML = {
-  exec: function(composer, command, html) {
-    if (composer.commands.support(command)) {
-      composer.doc.execCommand(command, false, html);
-    } else {
-      composer.selection.insertHTML(html);
-    }
-  },
+;(function(wysihtml5){
+  wysihtml5.commands.insertHTML = {
+    exec: function(composer, command, html) {
+      if (composer.commands.support(command)) {
+        composer.doc.execCommand(command, false, html);
+      } else {
+        composer.selection.insertHTML(html);
+      }
+    },
 
-  state: function() {
-    return false;
-  }
-};
+    state: function() {
+      return false;
+    }
+  };
+}(wysihtml5));
 ;(function(wysihtml5) {
   var NODE_NAME = "IMG";
 
@@ -12062,24 +12087,28 @@ wysihtml5.commands.formatCode = {
     }
   };
 })(wysihtml5);
-;wysihtml5.commands.insertOrderedList = {
-  exec: function(composer, command) {
-    wysihtml5.commands.insertList.exec(composer, command, "OL");
-  },
+;(function(wysihtml5){
+  wysihtml5.commands.insertOrderedList = {
+    exec: function(composer, command) {
+      wysihtml5.commands.insertList.exec(composer, command, "OL");
+    },
 
-  state: function(composer, command) {
-    return wysihtml5.commands.insertList.state(composer, command, "OL");
-  }
-};
-;wysihtml5.commands.insertUnorderedList = {
-  exec: function(composer, command) {
-    wysihtml5.commands.insertList.exec(composer, command, "UL");
-  },
+    state: function(composer, command) {
+      return wysihtml5.commands.insertList.state(composer, command, "OL");
+    }
+  };
+}(wysihtml5));
+;(function(wysihtml5){
+  wysihtml5.commands.insertUnorderedList = {
+    exec: function(composer, command) {
+      wysihtml5.commands.insertList.exec(composer, command, "UL");
+    },
 
-  state: function(composer, command) {
-    return wysihtml5.commands.insertList.state(composer, command, "UL");
-  }
-};
+    state: function(composer, command) {
+      return wysihtml5.commands.insertList.state(composer, command, "UL");
+    }
+  };
+}(wysihtml5));
 ;wysihtml5.commands.insertList = (function(wysihtml5) {
 
   var isNode = function(node, name) {
@@ -12196,10 +12225,10 @@ wysihtml5.commands.formatCode = {
           }),
           isEmpty, list;
 
-      // This space causes new lists to never break on enter 
+      // This space causes new lists to never break on enter
       var INVISIBLE_SPACE_REG_EXP = /\uFEFF/g;
       tempElement.innerHTML = tempElement.innerHTML.replace(wysihtml5.INVISIBLE_SPACE_REG_EXP, "");
-      
+
       if (tempElement) {
         isEmpty = wysihtml5.lang.array(["", "<br>", wysihtml5.INVISIBLE_SPACE]).contains(tempElement.innerHTML);
         list = wysihtml5.dom.convertToList(tempElement, nodeName.toLowerCase(), composer.parent.config.uneditableContainerClassname);
@@ -12217,7 +12246,7 @@ wysihtml5.commands.formatCode = {
           selectedNode  = composer.selection.getSelectedNode(),
           list          = findListEl(selectedNode, nodeName, composer);
 
-      if (!list.el) {
+      if (!list.el) {
         if (composer.commands.support(cmd)) {
           doc.execCommand(cmd, false, null);
         } else {
@@ -12238,20 +12267,23 @@ wysihtml5.commands.formatCode = {
     }
   };
 
-})(wysihtml5);;wysihtml5.commands.italic = {
-  exec: function(composer, command) {
-    wysihtml5.commands.formatInline.execWithToggle(composer, command, "i");
-  },
+})(wysihtml5);
+;(function(wysihtml5){
+  wysihtml5.commands.italic = {
+    exec: function(composer, command) {
+      wysihtml5.commands.formatInline.execWithToggle(composer, command, "i");
+    },
 
-  state: function(composer, command) {
-    // element.ownerDocument.queryCommandState("italic") results:
-    // firefox: only <i>
-    // chrome:  <i>, <em>, <blockquote>, ...
-    // ie:      <i>, <em>
-    // opera:   only <i>
-    return wysihtml5.commands.formatInline.state(composer, command, "i");
-  }
-};
+    state: function(composer, command) {
+      // element.ownerDocument.queryCommandState("italic") results:
+      // firefox: only <i>
+      // chrome:  <i>, <em>, <blockquote>, ...
+      // ie:      <i>, <em>
+      // opera:   only <i>
+      return wysihtml5.commands.formatInline.state(composer, command, "i");
+    }
+  };
+}(wysihtml5));
 ;(function(wysihtml5) {
 
   var nodeOptions = {
@@ -12381,289 +12413,311 @@ wysihtml5.commands.formatCode = {
   };
 
 })(wysihtml5);
-;wysihtml5.commands.redo = {
-  exec: function(composer) {
-    return composer.undoManager.redo();
-  },
+;(function(wysihtml5){
+  wysihtml5.commands.redo = {
+    exec: function(composer) {
+      return composer.undoManager.redo();
+    },
 
-  state: function(composer) {
-    return false;
-  }
-};
-;wysihtml5.commands.underline = {
-  exec: function(composer, command) {
-    wysihtml5.commands.formatInline.execWithToggle(composer, command, "u");
-  },
+    state: function(composer) {
+      return false;
+    }
+  };
+}(wysihtml5));
+;(function(wysihtml5){
+  wysihtml5.commands.underline = {
+    exec: function(composer, command) {
+      wysihtml5.commands.formatInline.execWithToggle(composer, command, "u");
+    },
 
-  state: function(composer, command) {
-    return wysihtml5.commands.formatInline.state(composer, command, "u");
-  }
-};
-;wysihtml5.commands.undo = {
-  exec: function(composer) {
-    return composer.undoManager.undo();
-  },
+    state: function(composer, command) {
+      return wysihtml5.commands.formatInline.state(composer, command, "u");
+    }
+  };
+}(wysihtml5));
+;(function(wysihtml5){
+  wysihtml5.commands.undo = {
+    exec: function(composer) {
+      return composer.undoManager.undo();
+    },
 
-  state: function(composer) {
-    return false;
-  }
-};
-;wysihtml5.commands.createTable = {
-  exec: function(composer, command, value) {
+    state: function(composer) {
+      return false;
+    }
+  };
+}(wysihtml5));
+;(function(wysihtml5){
+  wysihtml5.commands.createTable = {
+    exec: function(composer, command, value) {
       var col, row, html;
       if (value && value.cols && value.rows && parseInt(value.cols, 10) > 0 && parseInt(value.rows, 10) > 0) {
-          if (value.tableStyle) {
-            html = "<table style=\"" + value.tableStyle + "\">";
-          } else {
-            html = "<table>";
+        if (value.tableStyle) {
+          html = "<table style=\"" + value.tableStyle + "\">";
+        } else {
+          html = "<table>";
+        }
+        html += "<tbody>";
+        for (row = 0; row < value.rows; row ++) {
+          html += '<tr>';
+          for (col = 0; col < value.cols; col ++) {
+            html += "<td>&nbsp;</td>";
           }
-          html += "<tbody>";
-          for (row = 0; row < value.rows; row ++) {
-              html += '<tr>';
-              for (col = 0; col < value.cols; col ++) {
-                  html += "<td>&nbsp;</td>";
-              }
-              html += '</tr>';
-          }
-          html += "</tbody></table>";
-          composer.commands.exec("insertHTML", html);
-          //composer.selection.insertHTML(html);
+          html += '</tr>';
+        }
+        html += "</tbody></table>";
+        composer.commands.exec("insertHTML", html);
+        //composer.selection.insertHTML(html);
       }
+    },
 
-
-  },
-
-  state: function(composer, command) {
+    state: function(composer, command) {
       return false;
-  }
-};
-;wysihtml5.commands.mergeTableCells = {
-  exec: function(composer, command) {
-      if (composer.tableSelection && composer.tableSelection.start && composer.tableSelection.end) {
-          if (this.state(composer, command)) {
-              wysihtml5.dom.table.unmergeCell(composer.tableSelection.start);
-          } else {
-              wysihtml5.dom.table.mergeCellsBetween(composer.tableSelection.start, composer.tableSelection.end);
-          }
-      }
-  },
+    }
+  };
 
-  state: function(composer, command) {
+}(wysihtml5));
+;(function(wysihtml5){
+  wysihtml5.commands.mergeTableCells = {
+    exec: function(composer, command) {
+      if (composer.tableSelection && composer.tableSelection.start && composer.tableSelection.end) {
+        if (this.state(composer, command)) {
+          wysihtml5.dom.table.unmergeCell(composer.tableSelection.start);
+        } else {
+          wysihtml5.dom.table.mergeCellsBetween(composer.tableSelection.start, composer.tableSelection.end);
+        }
+      }
+    },
+
+    state: function(composer, command) {
       if (composer.tableSelection) {
-          var start = composer.tableSelection.start,
-              end = composer.tableSelection.end;
-          if (start && end && start == end &&
-              ((
-                  wysihtml5.dom.getAttribute(start, "colspan") &&
-                  parseInt(wysihtml5.dom.getAttribute(start, "colspan"), 10) > 1
-              ) || (
-                  wysihtml5.dom.getAttribute(start, "rowspan") &&
-                  parseInt(wysihtml5.dom.getAttribute(start, "rowspan"), 10) > 1
-              ))
-          ) {
-              return [start];
-          }
-      }
-      return false;
-  }
-};
-;wysihtml5.commands.addTableCells = {
-  exec: function(composer, command, value) {
-      if (composer.tableSelection && composer.tableSelection.start && composer.tableSelection.end) {
-
-          // switches start and end if start is bigger than end (reverse selection)
-          var tableSelect = wysihtml5.dom.table.orderSelectionEnds(composer.tableSelection.start, composer.tableSelection.end);
-          if (value == "before" || value == "above") {
-              wysihtml5.dom.table.addCells(tableSelect.start, value);
-          } else if (value == "after" || value == "below") {
-              wysihtml5.dom.table.addCells(tableSelect.end, value);
-          }
-          setTimeout(function() {
-              composer.tableSelection.select(tableSelect.start, tableSelect.end);
-          },0);
-      }
-  },
-
-  state: function(composer, command) {
-      return false;
-  }
-};
-;wysihtml5.commands.deleteTableCells = {
-  exec: function(composer, command, value) {
-      if (composer.tableSelection && composer.tableSelection.start && composer.tableSelection.end) {
-          var tableSelect = wysihtml5.dom.table.orderSelectionEnds(composer.tableSelection.start, composer.tableSelection.end),
-              idx = wysihtml5.dom.table.indexOf(tableSelect.start),
-              selCell,
-              table = composer.tableSelection.table;
-
-          wysihtml5.dom.table.removeCells(tableSelect.start, value);
-          setTimeout(function() {
-              // move selection to next or previous if not present
-              selCell = wysihtml5.dom.table.findCell(table, idx);
-
-              if (!selCell){
-                  if (value == "row") {
-                      selCell = wysihtml5.dom.table.findCell(table, {
-                          "row": idx.row - 1,
-                          "col": idx.col
-                      });
-                  }
-
-                  if (value == "column") {
-                      selCell = wysihtml5.dom.table.findCell(table, {
-                          "row": idx.row,
-                          "col": idx.col - 1
-                      });
-                  }
-              }
-              if (selCell) {
-                  composer.tableSelection.select(selCell, selCell);
-              }
-          }, 0);
-
-      }
-  },
-
-  state: function(composer, command) {
-      return false;
-  }
-};
-;wysihtml5.commands.indentList = {
-  exec: function(composer, command, value) {
-    var listEls = composer.selection.getSelectionParentsByTag('LI');
-    if (listEls) {
-      return this.tryToPushLiLevel(listEls, composer.selection);
-    }
-    return false;
-  },
-
-  state: function(composer, command) {
-      return false;
-  },
-
-  tryToPushLiLevel: function(liNodes, selection) {
-    var listTag, list, prevLi, liNode, prevLiList,
-        found = false;
-
-    selection.executeAndRestoreRangy(function() {
-
-      for (var i = liNodes.length; i--;) {
-        liNode = liNodes[i];
-        listTag = (liNode.parentNode.nodeName === 'OL') ? 'OL' : 'UL';
-        list = liNode.ownerDocument.createElement(listTag);
-        prevLi = wysihtml5.dom.domNode(liNode).prev({nodeTypes: [wysihtml5.ELEMENT_NODE]});
-        prevLiList = (prevLi) ? prevLi.querySelector('ul, ol') : null;
-
-        if (prevLi) {
-          if (prevLiList) {
-            prevLiList.appendChild(liNode);
-          } else {
-            list.appendChild(liNode);
-            prevLi.appendChild(list);
-          }
-          found = true;
+        var start = composer.tableSelection.start,
+          end = composer.tableSelection.end;
+        if (start && end && start == end &&
+          ((
+            wysihtml5.dom.getAttribute(start, "colspan") &&
+            parseInt(wysihtml5.dom.getAttribute(start, "colspan"), 10) > 1
+          ) || (
+            wysihtml5.dom.getAttribute(start, "rowspan") &&
+            parseInt(wysihtml5.dom.getAttribute(start, "rowspan"), 10) > 1
+          ))
+        ) {
+          return [start];
         }
       }
-
-    });
-    return found;
-  }
-};
-;wysihtml5.commands.outdentList = {
-  exec: function(composer, command, value) {
-    var listEls = composer.selection.getSelectionParentsByTag('LI');
-    if (listEls) {
-      return this.tryToPullLiLevel(listEls, composer);
+      return false;
     }
-    return false;
+  };
+}(wysihtml5));
+;(function(wysihtml5){
+  wysihtml5.commands.addTableCells = {
+    exec: function(composer, command, value) {
+      if (composer.tableSelection && composer.tableSelection.start && composer.tableSelection.end) {
+
+        // switches start and end if start is bigger than end (reverse selection)
+        var tableSelect = wysihtml5.dom.table.orderSelectionEnds(composer.tableSelection.start, composer.tableSelection.end);
+        if (value == "before" || value == "above") {
+          wysihtml5.dom.table.addCells(tableSelect.start, value);
+        } else if (value == "after" || value == "below") {
+          wysihtml5.dom.table.addCells(tableSelect.end, value);
+        }
+        setTimeout(function() {
+          composer.tableSelection.select(tableSelect.start, tableSelect.end);
+        },0);
+      }
+    },
+
+    state: function(composer, command) {
+      return false;
+    }
+  };
+}(wysihtml5));
+;(function(wysihtml5){
+  wysihtml5.commands.deleteTableCells = {
+  exec: function(composer, command, value) {
+    if (composer.tableSelection && composer.tableSelection.start && composer.tableSelection.end) {
+      var tableSelect = wysihtml5.dom.table.orderSelectionEnds(composer.tableSelection.start, composer.tableSelection.end),
+        idx = wysihtml5.dom.table.indexOf(tableSelect.start),
+        selCell,
+        table = composer.tableSelection.table;
+
+      wysihtml5.dom.table.removeCells(tableSelect.start, value);
+      setTimeout(function() {
+        // move selection to next or previous if not present
+        selCell = wysihtml5.dom.table.findCell(table, idx);
+
+        if (!selCell){
+          if (value == "row") {
+            selCell = wysihtml5.dom.table.findCell(table, {
+              "row": idx.row - 1,
+              "col": idx.col
+            });
+          }
+
+          if (value == "column") {
+            selCell = wysihtml5.dom.table.findCell(table, {
+              "row": idx.row,
+              "col": idx.col - 1
+            });
+          }
+        }
+        if (selCell) {
+          composer.tableSelection.select(selCell, selCell);
+        }
+      }, 0);
+    }
   },
 
   state: function(composer, command) {
+    return false;
+  }
+  };
+}(wysihtml5));
+;(function(wysihtml5){
+  wysihtml5.commands.indentList = {
+    exec: function(composer, command, value) {
+      var listEls = composer.selection.getSelectionParentsByTag('LI');
+      if (listEls) {
+        return this.tryToPushLiLevel(listEls, composer.selection);
+      }
       return false;
-  },
+    },
 
-  tryToPullLiLevel: function(liNodes, composer) {
-    var listNode, outerListNode, outerLiNode, list, prevLi, liNode, afterList,
-        found = false,
-        that = this;
+    state: function(composer, command) {
+        return false;
+    },
 
-    composer.selection.executeAndRestoreRangy(function() {
+    tryToPushLiLevel: function(liNodes, selection) {
+      var listTag, list, prevLi, liNode, prevLiList,
+          found = false;
 
-      for (var i = liNodes.length; i--;) {
-        liNode = liNodes[i];
-        if (liNode.parentNode) {
-          listNode = liNode.parentNode;
+      selection.executeAndRestoreRangy(function() {
 
-          if (listNode.tagName === 'OL' || listNode.tagName === 'UL') {
-            found = true;
+        for (var i = liNodes.length; i--;) {
+          liNode = liNodes[i];
+          listTag = (liNode.parentNode.nodeName === 'OL') ? 'OL' : 'UL';
+          list = liNode.ownerDocument.createElement(listTag);
+          prevLi = wysihtml5.dom.domNode(liNode).prev({nodeTypes: [wysihtml5.ELEMENT_NODE]});
+          prevLiList = (prevLi) ? prevLi.querySelector('ul, ol') : null;
 
-            outerListNode = wysihtml5.dom.getParentElement(listNode.parentNode, { query: 'ol, ul' }, false, composer.element);
-            outerLiNode = wysihtml5.dom.getParentElement(listNode.parentNode, { query: 'li' }, false, composer.element);
-
-            if (outerListNode && outerLiNode) {
-
-              if (liNode.nextSibling) {
-                afterList = that.getAfterList(listNode, liNode);
-                liNode.appendChild(afterList);
-              }
-              outerListNode.insertBefore(liNode, outerLiNode.nextSibling);
-
+          if (prevLi) {
+            if (prevLiList) {
+              prevLiList.appendChild(liNode);
             } else {
-
-              if (liNode.nextSibling) {
-                afterList = that.getAfterList(listNode, liNode);
-                liNode.appendChild(afterList);
-              }
-
-              for (var j = liNode.childNodes.length; j--;) {
-                listNode.parentNode.insertBefore(liNode.childNodes[j], listNode.nextSibling);
-              }
-
-              listNode.parentNode.insertBefore(document.createElement('br'), listNode.nextSibling);
-              liNode.parentNode.removeChild(liNode);
-
+              list.appendChild(liNode);
+              prevLi.appendChild(list);
             }
+            found = true;
+          }
+        }
 
-            // cleanup
-            if (listNode.childNodes.length === 0) {
-                listNode.parentNode.removeChild(listNode);
+      });
+      return found;
+    }
+  };
+}(wysihtml5));
+;(function(wysihtml5){
+
+  wysihtml5.commands.outdentList = {
+    exec: function(composer, command, value) {
+      var listEls = composer.selection.getSelectionParentsByTag('LI');
+      if (listEls) {
+        return this.tryToPullLiLevel(listEls, composer);
+      }
+      return false;
+    },
+
+    state: function(composer, command) {
+        return false;
+    },
+
+    tryToPullLiLevel: function(liNodes, composer) {
+      var listNode, outerListNode, outerLiNode, list, prevLi, liNode, afterList,
+          found = false,
+          that = this;
+
+      composer.selection.executeAndRestoreRangy(function() {
+
+        for (var i = liNodes.length; i--;) {
+          liNode = liNodes[i];
+          if (liNode.parentNode) {
+            listNode = liNode.parentNode;
+
+            if (listNode.tagName === 'OL' || listNode.tagName === 'UL') {
+              found = true;
+
+              outerListNode = wysihtml5.dom.getParentElement(listNode.parentNode, { query: 'ol, ul' }, false, composer.element);
+              outerLiNode = wysihtml5.dom.getParentElement(listNode.parentNode, { query: 'li' }, false, composer.element);
+
+              if (outerListNode && outerLiNode) {
+
+                if (liNode.nextSibling) {
+                  afterList = that.getAfterList(listNode, liNode);
+                  liNode.appendChild(afterList);
+                }
+                outerListNode.insertBefore(liNode, outerLiNode.nextSibling);
+
+              } else {
+
+                if (liNode.nextSibling) {
+                  afterList = that.getAfterList(listNode, liNode);
+                  liNode.appendChild(afterList);
+                }
+
+                for (var j = liNode.childNodes.length; j--;) {
+                  listNode.parentNode.insertBefore(liNode.childNodes[j], listNode.nextSibling);
+                }
+
+                listNode.parentNode.insertBefore(document.createElement('br'), listNode.nextSibling);
+                liNode.parentNode.removeChild(liNode);
+
+              }
+
+              // cleanup
+              if (listNode.childNodes.length === 0) {
+                  listNode.parentNode.removeChild(listNode);
+              }
             }
           }
         }
+
+      });
+      return found;
+    },
+
+    getAfterList: function(listNode, liNode) {
+      var nodeName = listNode.nodeName,
+          newList = document.createElement(nodeName);
+
+      while (liNode.nextSibling) {
+        newList.appendChild(liNode.nextSibling);
       }
-
-    });
-    return found;
-  },
-
-  getAfterList: function(listNode, liNode) {
-    var nodeName = listNode.nodeName,
-        newList = document.createElement(nodeName);
-
-    while (liNode.nextSibling) {
-      newList.appendChild(liNode.nextSibling);
+      return newList;
     }
-    return newList;
-  }
 
-};;wysihtml5.commands.subscript = {
-  exec: function(composer, command) {
-    wysihtml5.commands.formatInline.execWithToggle(composer, command, "sub");
-  },
+  };
+}(wysihtml5));
+;(function(wysihtml5){
+  wysihtml5.commands.subscript = {
+    exec: function(composer, command) {
+      wysihtml5.commands.formatInline.execWithToggle(composer, command, "sub");
+    },
 
-  state: function(composer, command) {
-    return wysihtml5.commands.formatInline.state(composer, command, "sub");
-  }
-};
-;wysihtml5.commands.superscript = {
-  exec: function(composer, command) {
-    wysihtml5.commands.formatInline.execWithToggle(composer, command, "sup");
-  },
+    state: function(composer, command) {
+      return wysihtml5.commands.formatInline.state(composer, command, "sub");
+    }
+  };
+}(wysihtml5));
+;(function(wysihtml5){
+  wysihtml5.commands.superscript = {
+    exec: function(composer, command) {
+      wysihtml5.commands.formatInline.execWithToggle(composer, command, "sup");
+    },
 
-  state: function(composer, command) {
-    return wysihtml5.commands.formatInline.state(composer, command, "sup");
-  }
-};
+    state: function(composer, command) {
+      return wysihtml5.commands.formatInline.state(composer, command, "sup");
+    }
+  };
+}(wysihtml5));
 ;/**
  * Undo Manager for wysihtml5
  * slightly inspired by http://rniwa.com/editing/undomanager.html#the-undomanager-interface
@@ -12986,7 +13040,7 @@ wysihtml5.views.View = Base.extend(
     cleanUp: function() {
       var bookmark;
       if (this.selection) {
-        bookmark = rangy.saveSelection(this.doc.defaultView || this.doc.parentWindow);
+        bookmark = rangy.saveSelection(this.win);
       }
       this.parent.parse(this.element);
       if (bookmark) {
@@ -13039,6 +13093,32 @@ wysihtml5.views.View = Base.extend(
         } else {
           this.selection.setAfter(this.element.lastChild);
         }
+      }
+    },
+
+    getScrollPos: function() {
+      if (this.doc && this.win) {
+        var pos = {};
+
+        if (typeof this.win.pageYOffset !== "undefined") {
+          pos.y = this.win.pageYOffset;
+        } else {
+          pos.y = (this.doc.documentElement || this.doc.body.parentNode || this.doc.body).scrollTop;
+        }
+
+        if (typeof this.win.pageXOffset !== "undefined") {
+          pos.x = this.win.pageXOffset;
+        } else {
+          pos.x = (this.doc.documentElement || this.doc.body.parentNode || this.doc.body).scrollLeft;
+        }
+
+        return pos;
+      }
+    },
+
+    setScrollPos: function(pos) {
+      if (pos && typeof pos.x !== "undefined" && typeof pos.y !== "undefined") {
+        this.win.scrollTo(pos.x, pos.y);
       }
     },
 
@@ -13107,6 +13187,7 @@ wysihtml5.views.View = Base.extend(
     _create: function() {
       var that = this;
       this.doc                = this.sandbox.getDocument();
+      this.win                = this.sandbox.getWindow();
       this.element            = (this.config.contentEditableMode) ? this.sandbox.getContentEditable() : this.doc.body;
       if (!this.config.noTextarea) {
           this.textarea           = this.parent.textarea;
@@ -13646,22 +13727,34 @@ wysihtml5.views.View = Base.extend(
       } else if (selection.caretIsInTheBeginnig()) {
         event.preventDefault();
       } else {
-
         if (selection.caretIsFirstInSelection() &&
             selection.getPreviousNode() &&
             selection.getPreviousNode().nodeName &&
             (/^H\d$/gi).test(selection.getPreviousNode().nodeName)
         ) {
           var prevNode = selection.getPreviousNode();
-          event.preventDefault();
           if ((/^\s*$/).test(prevNode.textContent || prevNode.innerText)) {
             // heading is empty
+            event.preventDefault();
             prevNode.parentNode.removeChild(prevNode);
           } else {
-            var range = prevNode.ownerDocument.createRange();
-            range.selectNodeContents(prevNode);
-            range.collapse(false);
-            selection.setSelection(range);
+            if (prevNode.lastChild) {
+              var selNode = prevNode.lastChild,
+                  curNode = wysihtml5.dom.getParentElement(selection.getSelectedNode(), { query: "h1, h2, h3, h4, h5, h6, p, pre, div, blockquote" }, false, composer.element);
+              if (prevNode) {
+                if (curNode) {
+                  event.preventDefault();
+                  while (curNode.firstChild) {
+                    prevNode.appendChild(curNode.firstChild);
+                  }
+                  selection.setAfter(selNode);
+                } else if (selection.getSelectedNode().nodeType === 3) {
+                  event.preventDefault();
+                  prevNode.appendChild(selection.getSelectedNode());
+                  selection.setAfter(selNode);
+                }
+              }
+            }
           }
         }
 
@@ -14324,8 +14417,7 @@ wysihtml5.views.View = Base.extend(
      *  - Observes for paste and drop
      */
     _initParser: function() {
-      var that = this,
-          oldHtml,
+      var oldHtml,
           cleanHtml;
 
       if (wysihtml5.browser.supportsModenPaste()) {
@@ -14333,20 +14425,23 @@ wysihtml5.views.View = Base.extend(
           event.preventDefault();
           oldHtml = wysihtml5.dom.getPastedHtml(event);
           if (oldHtml) {
-            that._cleanAndPaste(oldHtml);
+            this._cleanAndPaste(oldHtml);
           }
-        });
+        }.bind(this));
 
       } else {
         this.on("beforepaste:composer", function(event) {
           event.preventDefault();
-          wysihtml5.dom.getPastedHtmlWithDiv(that.composer, function(pastedHTML) {
-            if (pastedHTML) {
-              that._cleanAndPaste(pastedHTML);
-            }
-          });
-        });
+          var scrollPos = this.composer.getScrollPos();
 
+          wysihtml5.dom.getPastedHtmlWithDiv(this.composer, function(pastedHTML) {
+            if (pastedHTML) {
+              this._cleanAndPaste(pastedHTML);
+            }
+            this.composer.setScrollPos(scrollPos);
+          }.bind(this));
+
+        }.bind(this));
       }
     },
 

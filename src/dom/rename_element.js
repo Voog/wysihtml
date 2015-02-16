@@ -30,6 +30,10 @@ wysihtml5.dom.renameElement = function(element, newNodeName) {
     newElement.appendChild(firstChild);
   }
   wysihtml5.dom.copyAttributes(["align", "className"]).from(element).to(newElement);
-  element.parentNode.replaceChild(newElement, element);
+  
+  if (element.parentNode) {
+    element.parentNode.replaceChild(newElement, element);
+  }
+
   return newElement;
 };

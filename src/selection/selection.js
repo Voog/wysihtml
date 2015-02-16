@@ -198,7 +198,7 @@
                 this.createTemporaryCaretSpaceAfter(node);
               }
             }
-          },
+          }.bind(this),
           sel;
 
       range.setStartAfter(node);
