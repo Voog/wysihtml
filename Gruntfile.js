@@ -4,8 +4,8 @@ module.exports = function(grunt) {
 
   // List required source files that will be built into wysihtml5x.js
   var base = [
-    "src/polyfills.js",
     "src/wysihtml5.js",
+    "src/polyfills.js",
     "node_modules/rangy/lib/rangy-core.js",
     "node_modules/rangy/lib/rangy-selectionsaverestore.js",
     "lib/base/base.js",

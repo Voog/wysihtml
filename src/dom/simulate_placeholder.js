@@ -33,7 +33,7 @@
           dom.removeClass(view.element, CLASS_NAME);
         },
         set = function() {
-          if (view.isEmpty()) {
+          if (view.isEmpty() && !view.placeholderSet) {
             view.placeholderSet = true;
             view.setValue(placeholderText);
             dom.addClass(view.element, CLASS_NAME);

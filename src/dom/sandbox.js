@@ -195,6 +195,10 @@
         this._unset(iframeDocument, "cookie", "", true);
       }
 
+      if (wysihtml5.polyfills) {
+        wysihtml5.polyfills(iframeWindow, iframeDocument);
+      }
+
       this.loaded = true;
 
       // Trigger the callback

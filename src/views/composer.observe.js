@@ -354,11 +354,5 @@
       this.parent.fire("unset_placeholder");
     }).bind(this), false);
 
-    // --------- IE 8+9 focus the editor when the iframe is clicked (without actually firing the 'focus' event on the <body>) ---------
-    if (!this.config.contentEditableMode && browser.hasIframeFocusIssue()) {
-      container.addEventListener("focus", handleIframeFocus.bind(this), false);
-      container.addEventListener("blur", handleIframeBlur.bind(this), false);
-    }
-
   };
 })(wysihtml5);
