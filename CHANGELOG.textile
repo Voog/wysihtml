@@ -1,3 +1,7 @@
+*wysihtml5x 0.5.0-beta5* (February 17, 2015)
+* Fixes IE and webkit erroneous handling
+* Corrects bower.json usage
+
 *wysihtml5x 0.5.0-beta4* (January 29, 2015)
 * Adds sub- and superscript commands
 * Fixes errors mainly with IE8 and 9
