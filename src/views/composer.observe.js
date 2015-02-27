@@ -35,11 +35,11 @@
   };
 
   // Override for giving user ability to delete last line break in table cell
-  var fixLastBrDeletionInTable = function(composer) {
+  var fixLastBrDeletionInTable = function(composer, force) {
     if (composer.selection.caretIsLastInSelection()) {
       var sel = composer.selection.getSelection(),
           aNode = sel.anchorNode;
-      if (aNode && aNode.nodeType === 1 && wysihtml5.dom.getParentElement(aNode, {query: 'td, th'}, false, composer.element)) {
+      if (aNode && aNode.nodeType === 1 && (wysihtml5.dom.getParentElement(aNode, {query: 'td, th'}, false, composer.element) || force)) {
         var nextNode = aNode.childNodes[sel.anchorOffset];
         if (nextNode && nextNode.nodeType === 1 & nextNode.nodeName === "BR") {
           nextNode.parentNode.removeChild(nextNode);
@@ -54,6 +54,9 @@
   var handleUneditableDeletion = function(composer) {
     var before = composer.selection.getBeforeSelection(true);
     if (before && (before.type === "element" || before.type === "leafnode") && before.node.nodeType === 1 && before.node.classList.contains(composer.config.uneditableContainerClassname)) {
+      if (fixLastBrDeletionInTable(composer, true)) {
+        return true;
+      }
       try {
         var ev = new CustomEvent("wysihtml5:uneditable:delete");
         before.node.dispatchEvent(ev);

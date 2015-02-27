@@ -147,6 +147,7 @@
             }
           };
 
+      caretPlaceholder.className = '_wysihtml5-temp-caret-fix';
       caretPlaceholder.style.position = 'absolute';
       caretPlaceholder.style.display = 'block';
       caretPlaceholder.style.minWidth = '1px';
@@ -182,7 +183,9 @@
           fixWebkitSelection = function() {
             // Webkit fails to add selection if there are no textnodes in that region
             // (like an uneditable container at the end of content).
-            if (!sel) {
+            var parent = node.parentNode,
+                lastSibling = parent ? parent.childNodes[parent.childNodes.length - 1] : null;
+            if (!sel || (lastSibling === node)) {
               if (notVisual) {
                 // If setAfter is used as internal between actions, self-removing caretPlaceholder has simpler implementation
                 // and remove itself in call stack end instead on user interaction 
@@ -489,7 +492,14 @@
       var sel = this.getSelection(),
           startNode = (sel.isBackwards()) ? sel.focusNode : sel.anchorNode,
           startOffset = (sel.isBackwards()) ? sel.focusOffset : sel.anchorOffset,
-          rng = this.createRange(), endNode;
+          rng = this.createRange(), endNode, inTmpCaret;
+
+      // Escape temproray helper nodes if selection in them
+      inTmpCaret = wysihtml5.dom.getParentElement(startNode, { query: '._wysihtml5-temp-caret-fix' }, 1);
+      if (inTmpCaret) {
+        startNode = inTmpCaret.parentNode;
+        startOffset = Array.prototype.indexOf.call(startNode.childNodes, inTmpCaret);
+      }
 
       if (startNode) {
         if (startOffset > 0) {
