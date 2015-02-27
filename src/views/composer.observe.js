@@ -39,7 +39,7 @@
     if (composer.selection.caretIsLastInSelection()) {
       var sel = composer.selection.getSelection(),
           aNode = sel.anchorNode;
-      if (aNode.nodeType === 1 && wysihtml5.dom.getParentElement(aNode, {query: 'td, th'}, false, composer.element)) {
+      if (aNode && aNode.nodeType === 1 && wysihtml5.dom.getParentElement(aNode, {query: 'td, th'}, false, composer.element)) {
         var nextNode = aNode.childNodes[sel.anchorOffset];
         if (nextNode && nextNode.nodeType === 1 & nextNode.nodeName === "BR") {
           nextNode.parentNode.removeChild(nextNode);
@@ -111,10 +111,6 @@
         // delete in the beginnig of LI will outdent not delete
         event.preventDefault();
         composer.commands.exec('outdentList');
-      } else if (selection.caretIsInTheBeginnig()) {
-        // If in the beginnig of editable area don't delete
-        // though browsers should handle this but not in all cases
-        event.preventDefault();
       } else {
         if (fixDeleteInTheBeginnigOfHeading(composer)) {
           event.preventDefault();
