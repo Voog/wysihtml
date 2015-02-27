@@ -42,7 +42,6 @@
       if (aNode.nodeType === 1 && wysihtml5.dom.getParentElement(aNode, {query: 'td, th'}, false, composer.element)) {
         var nextNode = aNode.childNodes[sel.anchorOffset];
         if (nextNode && nextNode.nodeType === 1 & nextNode.nodeName === "BR") {
-          event.preventDefault();
           nextNode.parentNode.removeChild(nextNode);
           return true;
         }
@@ -55,7 +54,6 @@
   var handleUneditableDeletion = function(composer) {
     var before = composer.selection.getBeforeSelection(true);
     if (before && (before.type === "element" || before.type === "leafnode") && before.node.nodeType === 1 && before.node.classList.contains(composer.config.uneditableContainerClassname)) {
-      event.preventDefault();
       try {
         var ev = new CustomEvent("wysihtml5:uneditable:delete");
         before.node.dispatchEvent(ev);
@@ -79,7 +77,6 @@
       var prevNode = selection.getPreviousNode();
       if ((/^\s*$/).test(prevNode.textContent || prevNode.innerText)) {
         // If heading is empty remove the heading node
-        event.preventDefault();
         prevNode.parentNode.removeChild(prevNode);
         return true;
       } else {
@@ -88,14 +85,12 @@
               curNode = wysihtml5.dom.getParentElement(selection.getSelectedNode(), { query: "h1, h2, h3, h4, h5, h6, p, pre, div, blockquote" }, false, composer.element);
           if (prevNode) {
             if (curNode) {
-              event.preventDefault();
               while (curNode.firstChild) {
                 prevNode.appendChild(curNode.firstChild);
               }
               selection.setAfter(selNode);
               return true;
             } else if (selection.getSelectedNode().nodeType === 3) {
-              event.preventDefault();
               prevNode.appendChild(selection.getSelectedNode());
               selection.setAfter(selNode);
               return true;
@@ -122,12 +117,15 @@
         event.preventDefault();
       } else {
         if (fixDeleteInTheBeginnigOfHeading(composer)) {
+          event.preventDefault();
           return;
         }
         if (fixLastBrDeletionInTable(composer)) {
+          event.preventDefault();
           return;
         }
         if (handleUneditableDeletion(composer)) {
+          event.preventDefault();
           return;
         }
       }

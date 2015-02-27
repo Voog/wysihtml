@@ -618,7 +618,7 @@
         }
         this.setSelection(newRange);
         for (var i = caretPlaceholder.length; i--;) {
-         caretPlaceholder[i].parentNode.removeChild(caretPlaceholder[i]);
+          caretPlaceholder[i].parentNode.removeChild(caretPlaceholder[i]);
         }
 
       } else {
