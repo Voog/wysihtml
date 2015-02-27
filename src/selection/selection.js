@@ -483,45 +483,62 @@
         }
     },
 
-    caretIsBeforeUneditable: function() {
-      var selection = this.getSelection(),
-          node = selection.anchorNode,
-          offset = selection.anchorOffset,
-          childNodes = [],
-          range, contentNodes, lastNode;
+    // Returns object describing node/text before selection
+    // If includePrevLeaves is true returns  also previous last leaf child if selection is in the beginning of current node
+    getBeforeSelection: function(includePrevLeaves) {
+      var sel = this.getSelection(),
+          startNode = (sel.isBackwards()) ? sel.focusNode : sel.anchorNode,
+          startOffset = (sel.isBackwards()) ? sel.focusOffset : sel.anchorOffset,
+          rng = this.createRange(), endNode;
 
-      if (node) {
-        if (offset === 0) {
-          var prevNode = this.getPreviousNode(node, true),
-              prevLeaf = prevNode ? wysihtml5.dom.domNode(prevNode).lastLeafNode((this.unselectableClass) ? {leafClasses: [this.unselectableClass]} : false) : null;
-          if (prevLeaf) {
-            var uneditables = this.getOwnUneditables();
-            for (var i = 0, maxi = uneditables.length; i < maxi; i++) {
-              if (prevLeaf === uneditables[i]) {
-                return uneditables[i];
-              }
-            }
+      if (startNode) {
+        if (startOffset > 0) {
+          if (startNode.nodeType === 3) {
+            rng.setStart(startNode, 0);
+            rng.setEnd(startNode, startOffset);
+            return {
+              type: "text",
+              range: rng,
+              offset : startOffset,
+              node: startNode
+            };
+          } else {
+            rng.setStartBefore(startNode.childNodes[0]);
+            endNode = startNode.childNodes[startOffset - 1];
+            rng.setEndAfter(endNode);
+            return {
+              type: "element",
+              range: rng,
+              offset : startOffset,
+              node: endNode
+            };
           }
         } else {
-          range = selection.getRangeAt(0);
-          range.setStart(range.startContainer, range.startOffset - 1);
-          // TODO: make getting children on range a separate funtion
-          if (range) {
-            contentNodes = range.getNodes([1,3]);
-            for (var n = 0, max = contentNodes.length; n < max; n++) {
-              if (contentNodes[n].parentNode && contentNodes[n].parentNode === node) {
-                childNodes.push(contentNodes[n]);
-              }
+          rng.setStartAndEnd(startNode, 0);
+
+          if (includePrevLeaves) {
+            var prevNode = this.getPreviousNode(startNode, true),
+              prevLeaf = prevNode ? wysihtml5.dom.domNode(prevNode).lastLeafNode() : null;
+
+            if (prevLeaf) {
+              return {
+                type: "leafnode",
+                range: rng,
+                offset : startOffset,
+                node: prevLeaf
+              };
             }
           }
-          lastNode = childNodes.length > 0 ? childNodes[childNodes.length -1] : null;
-          if (lastNode && lastNode.nodeType === 1 && wysihtml5.dom.hasClass(lastNode, this.unselectableClass)) {
-            return lastNode;
-          }
 
+          return {
+            type: "none",
+            range: rng,
+            offset : startOffset,
+            node: startNode
+          };
         }
       }
-      return false;
+      return null;
     },
 
     // TODO: Figure out a method from following 2 that would work universally

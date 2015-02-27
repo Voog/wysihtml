@@ -12,7 +12,7 @@
         for (row = 0; row < value.rows; row ++) {
           html += '<tr>';
           for (col = 0; col < value.cols; col ++) {
-            html += "<td>&nbsp;</td>";
+            html += "<td> </td>";
           }
           html += '</tr>';
         }

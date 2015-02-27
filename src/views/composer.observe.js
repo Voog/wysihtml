@@ -34,59 +34,101 @@
     }
   };
 
+  // Override for giving user ability to delete last line break in table cell
+  var fixLastBrDeletionInTable = function(composer) {
+    if (composer.selection.caretIsLastInSelection()) {
+      var sel = composer.selection.getSelection(),
+          aNode = sel.anchorNode;
+      if (aNode.nodeType === 1 && wysihtml5.dom.getParentElement(aNode, {query: 'td, th'}, false, composer.element)) {
+        var nextNode = aNode.childNodes[sel.anchorOffset];
+        if (nextNode && nextNode.nodeType === 1 & nextNode.nodeName === "BR") {
+          event.preventDefault();
+          nextNode.parentNode.removeChild(nextNode);
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+
+  // If found an uneditable before caret then notify it before deletion
+  var handleUneditableDeletion = function(composer) {
+    var before = composer.selection.getBeforeSelection(true);
+    if (before && (before.type === "element" || before.type === "leafnode") && before.node.nodeType === 1 && before.node.classList.contains(composer.config.uneditableContainerClassname)) {
+      event.preventDefault();
+      try {
+        var ev = new CustomEvent("wysihtml5:uneditable:delete");
+        before.node.dispatchEvent(ev);
+      } catch (err) {}
+      before.node.parentNode.removeChild(before.node);
+      return true;
+    }
+    return false;
+  };
+
+  // Deletion with caret in the beginning of headings needs special attention
+  // Heading does not concate text to previous block node correctly (browsers do unexpected miracles here especially webkit)
+  var fixDeleteInTheBeginnigOfHeading = function(composer) {
+    var selection = composer.selection;
+
+    if (selection.caretIsFirstInSelection() &&
+        selection.getPreviousNode() &&
+        selection.getPreviousNode().nodeName &&
+        (/^H\d$/gi).test(selection.getPreviousNode().nodeName)
+    ) {
+      var prevNode = selection.getPreviousNode();
+      if ((/^\s*$/).test(prevNode.textContent || prevNode.innerText)) {
+        // If heading is empty remove the heading node
+        event.preventDefault();
+        prevNode.parentNode.removeChild(prevNode);
+        return true;
+      } else {
+        if (prevNode.lastChild) {
+          var selNode = prevNode.lastChild,
+              curNode = wysihtml5.dom.getParentElement(selection.getSelectedNode(), { query: "h1, h2, h3, h4, h5, h6, p, pre, div, blockquote" }, false, composer.element);
+          if (prevNode) {
+            if (curNode) {
+              event.preventDefault();
+              while (curNode.firstChild) {
+                prevNode.appendChild(curNode.firstChild);
+              }
+              selection.setAfter(selNode);
+              return true;
+            } else if (selection.getSelectedNode().nodeType === 3) {
+              event.preventDefault();
+              prevNode.appendChild(selection.getSelectedNode());
+              selection.setAfter(selNode);
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
+  };
+
   var handleDeleteKeyPress = function(event, composer) {
     var selection = composer.selection,
         element = composer.element;
 
     if (selection.isCollapsed()) {
       if (selection.caretIsInTheBeginnig('li')) {
+        // delete in the beginnig of LI will outdent not delete
         event.preventDefault();
         composer.commands.exec('outdentList');
       } else if (selection.caretIsInTheBeginnig()) {
+        // If in the beginnig of editable area don't delete
+        // though browsers should handle this but not in all cases
         event.preventDefault();
       } else {
-        if (selection.caretIsFirstInSelection() &&
-            selection.getPreviousNode() &&
-            selection.getPreviousNode().nodeName &&
-            (/^H\d$/gi).test(selection.getPreviousNode().nodeName)
-        ) {
-          var prevNode = selection.getPreviousNode();
-          if ((/^\s*$/).test(prevNode.textContent || prevNode.innerText)) {
-            // heading is empty
-            event.preventDefault();
-            prevNode.parentNode.removeChild(prevNode);
-          } else {
-            if (prevNode.lastChild) {
-              var selNode = prevNode.lastChild,
-                  curNode = wysihtml5.dom.getParentElement(selection.getSelectedNode(), { query: "h1, h2, h3, h4, h5, h6, p, pre, div, blockquote" }, false, composer.element);
-              if (prevNode) {
-                if (curNode) {
-                  event.preventDefault();
-                  while (curNode.firstChild) {
-                    prevNode.appendChild(curNode.firstChild);
-                  }
-                  selection.setAfter(selNode);
-                } else if (selection.getSelectedNode().nodeType === 3) {
-                  event.preventDefault();
-                  prevNode.appendChild(selection.getSelectedNode());
-                  selection.setAfter(selNode);
-                }
-              }
-            }
-          }
+        if (fixDeleteInTheBeginnigOfHeading(composer)) {
+          return;
         }
-
-        var beforeUneditable = selection.caretIsBeforeUneditable();
-        // Do a special delete if caret would delete uneditable
-        if (beforeUneditable) {
-          event.preventDefault();
-          // If customevents present notify element of being deleted
-          // TODO: Investigate if browser support can be extended
-          try {
-            var ev = new CustomEvent("wysihtml5:uneditable:delete");
-            beforeUneditable.dispatchEvent(ev);
-          } catch (err) {}
-          beforeUneditable.parentNode.removeChild(beforeUneditable);
+        if (fixLastBrDeletionInTable(composer)) {
+          return;
+        }
+        if (handleUneditableDeletion(composer)) {
+          return;
         }
       }
     } else {
