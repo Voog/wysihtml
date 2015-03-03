@@ -1,5 +1,5 @@
 /**
- * @license wysihtml5x v0.5.0-beta5
+ * @license wysihtml5x v0.5.0-beta6
  * https://github.com/Edicy/wysihtml5
  *
  * Author: Christopher Blum (https://github.com/tiff)
@@ -10,7 +10,7 @@
  *
  */
 var wysihtml5 = {
-  version: "0.5.0-beta5",
+  version: "0.5.0-beta6",
 
   // namespaces
   commands:   {},
@@ -6692,7 +6692,7 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
   }
 
   function _checkAttribute(attributeName, attributeValue, methodName, nodeName) {
-    var method = attributeCheckMethods[methodName],
+    var method = wysihtml5.lang.object(methodName).isFunction() ? methodName : attributeCheckMethods[methodName],
         newAttributeValue;
 
     if (method) {
@@ -9304,6 +9304,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
             }
           };
 
+      caretPlaceholder.className = '_wysihtml5-temp-caret-fix';
       caretPlaceholder.style.position = 'absolute';
       caretPlaceholder.style.display = 'block';
       caretPlaceholder.style.minWidth = '1px';
@@ -9339,7 +9340,9 @@ wysihtml5.quirks.ensureProperClearing = (function() {
           fixWebkitSelection = function() {
             // Webkit fails to add selection if there are no textnodes in that region
             // (like an uneditable container at the end of content).
-            if (!sel) {
+            var parent = node.parentNode,
+                lastSibling = parent ? parent.childNodes[parent.childNodes.length - 1] : null;
+            if (!sel || (lastSibling === node && this.win.getComputedStyle(node).display === "block")) {
               if (notVisual) {
                 // If setAfter is used as internal between actions, self-removing caretPlaceholder has simpler implementation
                 // and remove itself in call stack end instead on user interaction 
@@ -9640,45 +9643,69 @@ wysihtml5.quirks.ensureProperClearing = (function() {
         }
     },
 
-    caretIsBeforeUneditable: function() {
-      var selection = this.getSelection(),
-          node = selection.anchorNode,
-          offset = selection.anchorOffset,
-          childNodes = [],
-          range, contentNodes, lastNode;
+    // Returns object describing node/text before selection
+    // If includePrevLeaves is true returns  also previous last leaf child if selection is in the beginning of current node
+    getBeforeSelection: function(includePrevLeaves) {
+      var sel = this.getSelection(),
+          startNode = (sel.isBackwards()) ? sel.focusNode : sel.anchorNode,
+          startOffset = (sel.isBackwards()) ? sel.focusOffset : sel.anchorOffset,
+          rng = this.createRange(), endNode, inTmpCaret;
 
-      if (node) {
-        if (offset === 0) {
-          var prevNode = this.getPreviousNode(node, true),
-              prevLeaf = prevNode ? wysihtml5.dom.domNode(prevNode).lastLeafNode((this.unselectableClass) ? {leafClasses: [this.unselectableClass]} : false) : null;
-          if (prevLeaf) {
-            var uneditables = this.getOwnUneditables();
-            for (var i = 0, maxi = uneditables.length; i < maxi; i++) {
-              if (prevLeaf === uneditables[i]) {
-                return uneditables[i];
-              }
-            }
+      // Escape temproray helper nodes if selection in them
+      inTmpCaret = wysihtml5.dom.getParentElement(startNode, { query: '._wysihtml5-temp-caret-fix' }, 1);
+      if (inTmpCaret) {
+        startNode = inTmpCaret.parentNode;
+        startOffset = Array.prototype.indexOf.call(startNode.childNodes, inTmpCaret);
+      }
+
+      if (startNode) {
+        if (startOffset > 0) {
+          if (startNode.nodeType === 3) {
+            rng.setStart(startNode, 0);
+            rng.setEnd(startNode, startOffset);
+            return {
+              type: "text",
+              range: rng,
+              offset : startOffset,
+              node: startNode
+            };
+          } else {
+            rng.setStartBefore(startNode.childNodes[0]);
+            endNode = startNode.childNodes[startOffset - 1];
+            rng.setEndAfter(endNode);
+            return {
+              type: "element",
+              range: rng,
+              offset : startOffset,
+              node: endNode
+            };
           }
         } else {
-          range = selection.getRangeAt(0);
-          range.setStart(range.startContainer, range.startOffset - 1);
-          // TODO: make getting children on range a separate funtion
-          if (range) {
-            contentNodes = range.getNodes([1,3]);
-            for (var n = 0, max = contentNodes.length; n < max; n++) {
-              if (contentNodes[n].parentNode && contentNodes[n].parentNode === node) {
-                childNodes.push(contentNodes[n]);
-              }
+          rng.setStartAndEnd(startNode, 0);
+
+          if (includePrevLeaves) {
+            var prevNode = this.getPreviousNode(startNode, true),
+              prevLeaf = prevNode ? wysihtml5.dom.domNode(prevNode).lastLeafNode() : null;
+
+            if (prevLeaf) {
+              return {
+                type: "leafnode",
+                range: rng,
+                offset : startOffset,
+                node: prevLeaf
+              };
             }
           }
-          lastNode = childNodes.length > 0 ? childNodes[childNodes.length -1] : null;
-          if (lastNode && lastNode.nodeType === 1 && wysihtml5.dom.hasClass(lastNode, this.unselectableClass)) {
-            return lastNode;
-          }
 
+          return {
+            type: "none",
+            range: rng,
+            offset : startOffset,
+            node: startNode
+          };
         }
       }
-      return false;
+      return null;
     },
 
     // TODO: Figure out a method from following 2 that would work universally
@@ -9758,7 +9785,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
         }
         this.setSelection(newRange);
         for (var i = caretPlaceholder.length; i--;) {
-         caretPlaceholder[i].parentNode.removeChild(caretPlaceholder[i]);
+          caretPlaceholder[i].parentNode.removeChild(caretPlaceholder[i]);
         }
 
       } else {
@@ -12414,7 +12441,7 @@ wysihtml5.Commands = Base.extend(
         for (row = 0; row < value.rows; row ++) {
           html += '<tr>';
           for (col = 0; col < value.cols; col ++) {
-            html += "<td>&nbsp;</td>";
+            html += "<td></td>";
           }
           html += '</tr>';
         }
@@ -13670,59 +13697,98 @@ wysihtml5.views.View = Base.extend(
     }
   };
 
+  // Override for giving user ability to delete last line break in table cell
+  var fixLastBrDeletionInTable = function(composer, force) {
+    if (composer.selection.caretIsLastInSelection()) {
+      var sel = composer.selection.getSelection(),
+          aNode = sel.anchorNode;
+      if (aNode && aNode.nodeType === 1 && (wysihtml5.dom.getParentElement(aNode, {query: 'td, th'}, false, composer.element) || force)) {
+        var nextNode = aNode.childNodes[sel.anchorOffset];
+        if (nextNode && nextNode.nodeType === 1 & nextNode.nodeName === "BR") {
+          nextNode.parentNode.removeChild(nextNode);
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+
+  // If found an uneditable before caret then notify it before deletion
+  var handleUneditableDeletion = function(composer) {
+    var before = composer.selection.getBeforeSelection(true);
+    if (before && (before.type === "element" || before.type === "leafnode") && before.node.nodeType === 1 && before.node.classList.contains(composer.config.uneditableContainerClassname)) {
+      if (fixLastBrDeletionInTable(composer, true)) {
+        return true;
+      }
+      try {
+        var ev = new CustomEvent("wysihtml5:uneditable:delete");
+        before.node.dispatchEvent(ev);
+      } catch (err) {}
+      before.node.parentNode.removeChild(before.node);
+      return true;
+    }
+    return false;
+  };
+
+  // Deletion with caret in the beginning of headings needs special attention
+  // Heading does not concate text to previous block node correctly (browsers do unexpected miracles here especially webkit)
+  var fixDeleteInTheBeginnigOfHeading = function(composer) {
+    var selection = composer.selection;
+
+    if (selection.caretIsFirstInSelection() &&
+        selection.getPreviousNode() &&
+        selection.getPreviousNode().nodeName &&
+        (/^H\d$/gi).test(selection.getPreviousNode().nodeName)
+    ) {
+      var prevNode = selection.getPreviousNode();
+      if ((/^\s*$/).test(prevNode.textContent || prevNode.innerText)) {
+        // If heading is empty remove the heading node
+        prevNode.parentNode.removeChild(prevNode);
+        return true;
+      } else {
+        if (prevNode.lastChild) {
+          var selNode = prevNode.lastChild,
+              curNode = wysihtml5.dom.getParentElement(selection.getSelectedNode(), { query: "h1, h2, h3, h4, h5, h6, p, pre, div, blockquote" }, false, composer.element);
+          if (prevNode) {
+            if (curNode) {
+              while (curNode.firstChild) {
+                prevNode.appendChild(curNode.firstChild);
+              }
+              selection.setAfter(selNode);
+              return true;
+            } else if (selection.getSelectedNode().nodeType === 3) {
+              prevNode.appendChild(selection.getSelectedNode());
+              selection.setAfter(selNode);
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
+  };
+
   var handleDeleteKeyPress = function(event, composer) {
     var selection = composer.selection,
         element = composer.element;
 
     if (selection.isCollapsed()) {
       if (selection.caretIsInTheBeginnig('li')) {
+        // delete in the beginnig of LI will outdent not delete
         event.preventDefault();
         composer.commands.exec('outdentList');
-      } else if (selection.caretIsInTheBeginnig()) {
-        event.preventDefault();
       } else {
-        if (selection.caretIsFirstInSelection() &&
-            selection.getPreviousNode() &&
-            selection.getPreviousNode().nodeName &&
-            (/^H\d$/gi).test(selection.getPreviousNode().nodeName)
-        ) {
-          var prevNode = selection.getPreviousNode();
-          if ((/^\s*$/).test(prevNode.textContent || prevNode.innerText)) {
-            // heading is empty
-            event.preventDefault();
-            prevNode.parentNode.removeChild(prevNode);
-          } else {
-            if (prevNode.lastChild) {
-              var selNode = prevNode.lastChild,
-                  curNode = wysihtml5.dom.getParentElement(selection.getSelectedNode(), { query: "h1, h2, h3, h4, h5, h6, p, pre, div, blockquote" }, false, composer.element);
-              if (prevNode) {
-                if (curNode) {
-                  event.preventDefault();
-                  while (curNode.firstChild) {
-                    prevNode.appendChild(curNode.firstChild);
-                  }
-                  selection.setAfter(selNode);
-                } else if (selection.getSelectedNode().nodeType === 3) {
-                  event.preventDefault();
-                  prevNode.appendChild(selection.getSelectedNode());
-                  selection.setAfter(selNode);
-                }
-              }
-            }
-          }
-        }
-
-        var beforeUneditable = selection.caretIsBeforeUneditable();
-        // Do a special delete if caret would delete uneditable
-        if (beforeUneditable) {
+        if (fixDeleteInTheBeginnigOfHeading(composer)) {
           event.preventDefault();
-          // If customevents present notify element of being deleted
-          // TODO: Investigate if browser support can be extended
-          try {
-            var ev = new CustomEvent("wysihtml5:uneditable:delete");
-            beforeUneditable.dispatchEvent(ev);
-          } catch (err) {}
-          beforeUneditable.parentNode.removeChild(beforeUneditable);
+          return;
+        }
+        if (fixLastBrDeletionInTable(composer)) {
+          event.preventDefault();
+          return;
+        }
+        if (handleUneditableDeletion(composer)) {
+          event.preventDefault();
+          return;
         }
       }
     } else {
@@ -14089,6 +14155,61 @@ wysihtml5.views.View = Base.extend(
     }
   });
 })(wysihtml5);
+;(function(wysihtml5) {
+
+  wysihtml5.views.SourceView = Base.extend(
+    /** @scope wysihtml5.views.SourceView.prototype */ {
+
+    constructor: function(editor, composer) {
+      this.editor   = editor;
+      this.composer = composer;
+
+      this._observe();
+    },
+
+    switchToTextarea: function(shouldParseHtml) {
+      var composerStyles = this.composer.win.getComputedStyle(this.composer.element),
+          width = parseFloat(composerStyles.width),
+          height = Math.max(parseFloat(composerStyles.height), 100);
+
+      if (!this.textarea) {
+        this.textarea = this.composer.doc.createElement('textarea');
+        this.textarea.className = "wysihtml5-source-view";
+      }
+      this.textarea.style.width = width + 'px';
+      this.textarea.style.height = height + 'px';
+      this.textarea.value = this.editor.getValue(shouldParseHtml, true);
+      this.composer.element.parentNode.insertBefore(this.textarea, this.composer.element);
+      this.editor.currentView = "source";
+      this.composer.element.style.display = 'none';
+    },
+
+    switchToComposer: function(shouldParseHtml) {
+      var textareaValue = this.textarea.value;
+      if (textareaValue) {
+        this.composer.setValue(textareaValue, shouldParseHtml);
+      } else {
+        this.composer.clear();
+        this.editor.fire("set_placeholder");
+      }
+      this.textarea.parentNode.removeChild(this.textarea);
+      this.editor.currentView = this.composer;
+      this.composer.element.style.display = '';
+    },
+
+    _observe: function() {
+      this.editor.on("change_view", function(view) {
+        if (view === "composer") {
+          this.switchToComposer(true);
+        } else if (view === "textarea") {
+          this.switchToTextarea(true);
+        }
+      }.bind(this));
+    }
+
+  });
+
+})(wysihtml5);
 ;wysihtml5.views.Textarea = wysihtml5.views.View.extend(
   /** @scope wysihtml5.views.Textarea.prototype */ {
   name: "textarea",
@@ -14281,7 +14402,9 @@ wysihtml5.views.View = Base.extend(
 
     handleBeforeLoad: function() {
         if (!this.config.noTextarea) {
-            this.synchronizer = new wysihtml5.views.Synchronizer(this, this.textarea, this.composer);
+          this.synchronizer = new wysihtml5.views.Synchronizer(this, this.textarea, this.composer);
+        } else {
+          this.sourceView = new wysihtml5.views.SourceView(this, this.composer);
         }
         if (this.config.toolbar) {
           this.toolbar = new wysihtml5.toolbar.Toolbar(this, this.config.toolbar, this.config.showToolbarAfterInit);
@@ -14847,12 +14970,10 @@ wysihtml5.views.View = Base.extend(
     execAction: function(action) {
       var editor = this.editor;
       if (action === "change_view") {
-        if (editor.textarea) {
-            if (editor.currentView === editor.textarea) {
-              editor.fire("change_view", "composer");
-            } else {
-              editor.fire("change_view", "textarea");
-            }
+        if (editor.currentView === editor.textarea || editor.currentView === "source") {
+          editor.fire("change_view", "composer");
+        } else {
+          editor.fire("change_view", "textarea");
         }
       }
       if (action == "showSource") {
@@ -14917,17 +15038,15 @@ wysihtml5.views.View = Base.extend(
 
       editor.on("change_view", function(currentView) {
         // Set timeout needed in order to let the blur event fire first
-        if (editor.textarea) {
-            setTimeout(function() {
-              that.commandsDisabled = (currentView !== "composer");
-              that._updateLinkStates();
-              if (that.commandsDisabled) {
-                dom.addClass(container, CLASS_NAME_COMMANDS_DISABLED);
-              } else {
-                dom.removeClass(container, CLASS_NAME_COMMANDS_DISABLED);
-              }
-            }, 0);
-        }
+          setTimeout(function() {
+            that.commandsDisabled = (currentView !== "composer");
+            that._updateLinkStates();
+            if (that.commandsDisabled) {
+              dom.addClass(container, CLASS_NAME_COMMANDS_DISABLED);
+            } else {
+              dom.removeClass(container, CLASS_NAME_COMMANDS_DISABLED);
+            }
+          }, 0);
       });
     },
 
@@ -15008,7 +15127,7 @@ wysihtml5.views.View = Base.extend(
         action = actionMapping[i];
 
         if (action.name === "change_view") {
-          action.state = this.editor.currentView === this.editor.textarea;
+          action.state = this.editor.currentView === this.editor.textarea || this.editor.currentView === "source";
           if (action.state) {
             dom.addClass(action.link, CLASS_NAME_ACTION_ACTIVE);
           } else {

@@ -1,3 +1,9 @@
+*wysihtml5x 0.5.0-beta6* (March 3, 2015)
+* Makes html editing view available for div (iframeless) mode
+* Parser rules check_attributes accepts now functions for more flexible custmizaton
+* Fixes last line break deletion in table cell
+* Created tables do not fill cells with non-breakable spaces anymore
+
 *wysihtml5x 0.5.0-beta5* (February 17, 2015)
 * Fixes IE and webkit erroneous handling
 * Corrects bower.json usage
