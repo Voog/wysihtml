@@ -185,7 +185,7 @@
             // (like an uneditable container at the end of content).
             var parent = node.parentNode,
                 lastSibling = parent ? parent.childNodes[parent.childNodes.length - 1] : null;
-            if (!sel || (lastSibling === node)) {
+            if (!sel || (lastSibling === node && this.win.getComputedStyle(node).display === "block")) {
               if (notVisual) {
                 // If setAfter is used as internal between actions, self-removing caretPlaceholder has simpler implementation
                 // and remove itself in call stack end instead on user interaction 
