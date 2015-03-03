@@ -465,7 +465,7 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
   }
 
   function _checkAttribute(attributeName, attributeValue, methodName, nodeName) {
-    var method = attributeCheckMethods[methodName],
+    var method = wysihtml5.lang.object(methodName).isFunction() ? methodName : attributeCheckMethods[methodName],
         newAttributeValue;
 
     if (method) {

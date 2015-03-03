@@ -113,6 +113,7 @@ if (wysihtml5.browser.supported()) {
       '<span><i title=""></i></span>'
     );
   });
+
   test("Attribute check of 'url' cleans up", function() {
     var rules = {
       tags: {
@@ -182,6 +183,29 @@ if (wysihtml5.browser.supported()) {
       '<a href="mailto:christopher@foobar.com"></a>' +
       '<a></a>' +
       '<a></a>'
+    );
+  });
+
+  test("Attribute check method of function works", function() {
+    var rules = {
+      tags: {
+        a: {
+          check_attributes: {
+            href: "href", 
+            title: function(val) {
+              return val + " foo";
+            }
+          }
+        }
+      }
+    };
+
+    this.equal(
+      this.sanitize(
+        '<a href="/foobar" title="A goose"></a>',
+        rules
+      ),
+      '<a href="/foobar" title="A goose foo"></a>'
     );
   });
 
