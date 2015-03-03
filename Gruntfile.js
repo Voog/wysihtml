@@ -104,6 +104,7 @@ module.exports = function(grunt) {
     "src/views/composer.style.js",
     "src/views/composer.observe.js",
     "src/views/synchronizer.js",
+    "src/views/sourceview.js",
     "src/views/textarea.js",
     "src/editor.js"
   ];

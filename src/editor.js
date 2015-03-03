@@ -119,7 +119,9 @@
 
     handleBeforeLoad: function() {
         if (!this.config.noTextarea) {
-            this.synchronizer = new wysihtml5.views.Synchronizer(this, this.textarea, this.composer);
+          this.synchronizer = new wysihtml5.views.Synchronizer(this, this.textarea, this.composer);
+        } else {
+          this.sourceView = new wysihtml5.views.SourceView(this, this.composer);
         }
         if (this.config.toolbar) {
           this.toolbar = new wysihtml5.toolbar.Toolbar(this, this.config.toolbar, this.config.showToolbarAfterInit);
