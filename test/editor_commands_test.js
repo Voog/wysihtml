@@ -298,6 +298,86 @@ if (wysihtml5.browser.supported()) {
           });
         });
 
+        asyncTest("Create link with class", function() {
+          expect(1);
+           
+          var that = this,
+              text = "text",
+              editor = new wysihtml5.Editor(this.editableArea1, 
+                      {
+                        parserRules: {
+                          classes: { 'mytxtlink': 1 }, 
+                          tags: { 'a': 
+                            { 'set_class': 'mytxtlink' }
+                          }
+                        }
+                      });
+
+          editor.on("load", function() {
+            var editableElement   = that.editableArea1;
+            editor.setValue(text, true);
+            editor.composer.selection.selectNode(editor.editableElement);
+            // Create
+            editor.composer.commands.exec('createLink', {
+              "href": "http://test.com", "title": "test"
+            });
+            that.equal(editableElement.innerHTML.toLowerCase(), '<a href="http://test.com" title="test" class="mytxtlink">' + text + '</a>', "Link added with class correctly");
+
+            start();
+          });
+        });
+
+       
+
+        // insertImage
+        asyncTest("Insert image", function() {
+          expect(1);
+           
+          var that = this,
+              editor = new wysihtml5.Editor(this.editableArea1);
+        
+          editor.on("load", function() {
+            var editableElement   = that.editableArea1;
+            editor.setValue('', true);
+            editor.composer.selection.selectNode(editor.editableElement);
+            // Create
+            editor.composer.commands.exec('insertImage', {
+              "src": "http://test.com/test.png"
+            });
+            that.equal(editableElement.innerHTML.toLowerCase(), '<img src="http://test.com/test.png"><br/>', "Image added correctly");
+            
+            start();
+          });
+        });
+
+        asyncTest("Insert image with class", function() {
+          expect(1);
+           
+          var that = this,
+              editor = new wysihtml5.Editor(this.editableArea1, 
+                      {
+                        parserRules: {
+                          classes: { 'mytxtimg': 1 }, 
+                          tags: { 'img': 
+                            { 'set_class': 'mytxtimg' }
+                          }
+                        }
+                      });
+        
+          editor.on("load", function() {
+            var editableElement   = that.editableArea1;
+            editor.setValue('', true);
+            editor.composer.selection.selectNode(editor.editableElement);
+            // Create
+            editor.composer.commands.exec('insertImage', "http://test.com/test.png");
+            that.equal(editableElement.innerHTML.toLowerCase(), '<img src="http://test.com/test.png" class="mytxtimg"><br/>', "Image added with class correctly");
+            
+            start();
+          });
+        });
+
+
+
   // create table
     asyncTest("Create table", function() {
        expect(1);
