@@ -55,13 +55,17 @@
         image.setAttribute(i === "className" ? "class" : i, value[i]);
       }
 
-      composer.selection.insertNode(image);
-      if (wysihtml5.browser.hasProblemsSettingCaretAfterImg()) {
-        textNode = doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
-        composer.selection.insertNode(textNode);
-        composer.selection.setAfter(textNode);
-      } else {
-        composer.selection.setAfter(image);
+      image = wysihtml5.dom.getAsDom(composer.parent.parse(image.outerHTML, true)).querySelector('img') ;
+
+      if (image) {
+        composer.selection.insertNode(image);
+        if (wysihtml5.browser.hasProblemsSettingCaretAfterImg()) {
+          textNode = doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
+          composer.selection.insertNode(textNode);
+          composer.selection.setAfter(textNode);
+        } else {
+          composer.selection.setAfter(image);
+        }
       }
     },
 

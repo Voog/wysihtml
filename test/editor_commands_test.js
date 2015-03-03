@@ -334,7 +334,17 @@ if (wysihtml5.browser.supported()) {
           expect(1);
            
           var that = this,
-              editor = new wysihtml5.Editor(this.editableArea1);
+              editor = new wysihtml5.Editor(this.editableArea1, {
+                        parserRules: {
+                          tags: {
+                            'img': {
+                              'check_attributes': {
+                                "src": "any"
+                              }
+                            }
+                          }
+                        }
+                      });
         
           editor.on("load", function() {
             var editableElement   = that.editableArea1;
@@ -354,12 +364,17 @@ if (wysihtml5.browser.supported()) {
           expect(1);
            
           var that = this,
-              editor = new wysihtml5.Editor(this.editableArea1, 
+              editor = new wysihtml5.Editor(this.editableArea1,
                       {
                         parserRules: {
-                          classes: { 'mytxtimg': 1 }, 
-                          tags: { 'img': 
-                            { 'set_class': 'mytxtimg' }
+                          classes: { 'mytxtimg': 1 },
+                          tags: {
+                            'img': {
+                              'set_class': 'mytxtimg',
+                              'check_attributes': {
+                                "src": "any"
+                              }
+                            }
                           }
                         }
                       });
