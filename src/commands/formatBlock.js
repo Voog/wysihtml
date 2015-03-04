@@ -287,7 +287,7 @@
         state = this.state(composer, command, options);
         if (state) {
           bookmark = rangy.saveSelection(composer.win);
-          for (var j in state) {
+          for (var j = 0, jmax = state.length; j < jmax; j++) {
             removeOptionsFromElement(state[j], options, composer);
           }
         }
@@ -310,7 +310,7 @@
             composer.selection.selectLine();
           }
         }
-      
+
         // And get all selection ranges of current composer and iterat
         ranges = composer.selection.getOwnRanges();
         for (var i = ranges.length; i--;) {
