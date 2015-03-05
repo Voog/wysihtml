@@ -186,12 +186,35 @@ if (wysihtml5.browser.supported()) {
     );
   });
 
+  test("Attribute check of 'any' works", function() {
+    var rules = {
+      tags: {
+        a: {
+          check_attributes: {
+            href: "href",
+            title: "any"
+          }
+        }
+      }
+    };
+
+    this.equal(
+      this.sanitize(
+        '<a href="/foobar" title="A goose"></a>'+
+        '<a href="/foobar" title></a>',
+        rules
+      ),
+      '<a href="/foobar" title="A goose"></a>'+
+      '<a href="/foobar"></a>'
+    );
+  });
+
   test("Attribute check method of function works", function() {
     var rules = {
       tags: {
         a: {
           check_attributes: {
-            href: "href", 
+            href: "href",
             title: function(val) {
               return val + " foo";
             }
@@ -206,6 +229,29 @@ if (wysihtml5.browser.supported()) {
         rules
       ),
       '<a href="/foobar" title="A goose foo"></a>'
+    );
+  });
+
+  test("Attribute check method of function can pass attributes without value", function() {
+    var rules = {
+      tags: {
+        a: {
+          check_attributes: {
+            href: "href",
+            title: function(val) {
+              return val || "";
+            }
+          }
+        }
+      }
+    };
+
+    this.equal(
+      this.sanitize(
+        '<a href="/foobar" title></a>',
+        rules
+      ),
+      '<a href="/foobar" title></a>'
     );
   });
 
