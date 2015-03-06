@@ -1,6 +1,6 @@
 /**
- * @license wysihtml5x v@VERSION
- * https://github.com/Edicy/wysihtml5
+ * @license wysihtml v@VERSION
+ * https://github.com/Voog/wysihtml
  *
  * Author: Christopher Blum (https://github.com/tiff)
  * Secondary author of extended features: Oliver Pulges (https://github.com/pulges)
