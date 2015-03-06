@@ -153,14 +153,17 @@
 
     _initContentEditableArea: function() {
         var that = this;
-
         if (this.config.noTextarea) {
             this.sandbox = new dom.ContentEditableArea(function() {
                 that._create();
-            }, {}, this.editableArea);
+            }, {
+              className: this.config.classNames.sandbox
+            }, this.editableArea);
         } else {
             this.sandbox = new dom.ContentEditableArea(function() {
                 that._create();
+            }, {
+              className: this.config.classNames.sandbox
             });
             this.editableArea = this.sandbox.getContentEditable();
             dom.insert(this.editableArea).after(this.textarea.element);
@@ -170,11 +173,11 @@
 
     _initSandbox: function() {
       var that = this;
-
       this.sandbox = new dom.Sandbox(function() {
         that._create();
       }, {
-        stylesheets:  this.config.stylesheets
+        stylesheets:  this.config.stylesheets,
+        className: this.config.classNames.sandbox
       });
       this.editableArea  = this.sandbox.getIframe();
 
@@ -208,7 +211,7 @@
       }
 
       // Make sure our selection handler is ready
-      this.selection = new wysihtml5.Selection(this.parent, this.element, this.config.uneditableContainerClassname);
+      this.selection = new wysihtml5.Selection(this.parent, this.element, this.config.classNames.uneditableContainer);
 
       // Make sure commands dispatcher is ready
       this.commands  = new wysihtml5.Commands(this.parent);
@@ -219,7 +222,7 @@
           ]).from(this.textarea.element).to(this.element);
       }
 
-      dom.addClass(this.element, this.config.composerClassName);
+      dom.addClass(this.element, this.config.classNames.composer);
       //
       // Make the editor look like the original textarea, by syncing styles
       if (this.config.style && !this.config.contentEditableMode) {
@@ -245,7 +248,7 @@
         ? this.config.placeholder
         : ((this.config.noTextarea) ? this.editableArea.getAttribute("data-placeholder") : this.textarea.element.getAttribute("placeholder"));
       if (placeholderText) {
-        dom.simulatePlaceholder(this.parent, this, placeholderText);
+        dom.simulatePlaceholder(this.parent, this, placeholderText, this.config.classNames.placeholder);
       }
 
       // Make sure that the browser avoids using inline styles whenever possible
@@ -297,7 +300,7 @@
         this.parent.on("newword:composer", function() {
           if (dom.getTextContent(that.element).match(dom.autoLink.URL_REG_EXP)) {
             var nodeWithSelection = that.selection.getSelectedNode(),
-                uneditables = that.element.querySelectorAll("." + that.config.uneditableContainerClassname),
+                uneditables = that.element.querySelectorAll("." + that.config.classNames.uneditableContainer),
                 isInUneditable = false;
 
             for (var i = uneditables.length; i--;) {
@@ -306,12 +309,12 @@
               }
             }
 
-            if (!isInUneditable) dom.autoLink(nodeWithSelection, [that.config.uneditableContainerClassname]);
+            if (!isInUneditable) dom.autoLink(nodeWithSelection, [that.config.classNames.uneditableContainer]);
           }
         });
 
         dom.observe(this.element, "blur", function() {
-          dom.autoLink(that.element, [that.config.uneditableContainerClassname]);
+          dom.autoLink(that.element, [that.config.classNames.uneditableContainer]);
         });
       }
 

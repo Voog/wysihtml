@@ -200,11 +200,11 @@ if (wysihtml5.browser.supported()) {
       var composerElement = that.editableArea;
       equal(wysihtml5.dom.getTextContent(composerElement), placeholderText, "Placeholder text correctly copied into textarea");
       
-      ok(wysihtml5.dom.hasClass(composerElement, "placeholder"), "Editor got 'placeholder' css class");
+      ok(wysihtml5.dom.hasClass(composerElement, "wysihtml5-placeholder"), "Editor got 'placeholder' css class");
       ok(editor.hasPlaceholderSet(), "'hasPlaceholderSet' returns correct value when placeholder is actually set");
       editor.fire("focus:composer");
       equal(wysihtml5.dom.getTextContent(composerElement), "", "Editor is empty after focus");
-      ok(!wysihtml5.dom.hasClass(composerElement, "placeholder"), "Editor hasn't got 'placeholder' css class");
+      ok(!wysihtml5.dom.hasClass(composerElement, "wysihtml5-placeholder"), "Editor hasn't got 'placeholder' css class");
       ok(!editor.hasPlaceholderSet(), "'hasPlaceholderSet' returns correct value when placeholder isn't actually set");
       editor.fire("blur:composer");
       equal(wysihtml5.dom.getTextContent(composerElement), placeholderText, "Editor restored placeholder text after unfocus");
@@ -213,14 +213,14 @@ if (wysihtml5.browser.supported()) {
       composerElement.innerHTML = "some content";
       editor.fire("blur:composer");
       equal(wysihtml5.dom.getTextContent(composerElement), "some content");
-      ok(!wysihtml5.dom.hasClass(composerElement, "placeholder"), "Editor hasn't got 'placeholder' css class");
+      ok(!wysihtml5.dom.hasClass(composerElement, "wysihtml5-placeholder"), "Editor hasn't got 'placeholder' css class");
       editor.fire("focus:composer");
       // Following html causes innerText and textContent to report an empty string
       var html = '<img>';
       composerElement.innerHTML = html;
       editor.fire("blur:composer");
       equal(composerElement.innerHTML.toLowerCase(), html, "HTML hasn't been cleared even though the innerText and textContent properties indicate empty content.");
-      ok(!wysihtml5.dom.hasClass(composerElement, "placeholder"), "Editor hasn't got 'placeholder' css class");
+      ok(!wysihtml5.dom.hasClass(composerElement, "wysihtml5-placeholder"), "Editor hasn't got 'placeholder' css class");
       start();
     });
   });
@@ -233,8 +233,10 @@ if (wysihtml5.browser.supported()) {
     
     var editor = new wysihtml5.Editor(this.editableArea, {
       parserRules:        { tags: { p: { rename_tag: "div" } } },
-      bodyClassName:      "editor-is-supported",
-      composerClassName:  "editor"
+      classNames: {
+        body:      "editor-is-supported",
+        composer:  "editor"
+      }
     });
     
     editor.on("load", function() {

@@ -16,6 +16,9 @@
       constructor: function(readyCallback, config, contentEditable) {
         this.callback = readyCallback || wysihtml5.EMPTY_FUNCTION;
         this.config   = wysihtml5.lang.object({}).merge(config).get();
+        if (!this.config.className) {
+          this.config.className = "wysihtml5-sandbox";
+        }
         if (contentEditable) {
             this.element = this._bindElement(contentEditable);
         } else {
@@ -26,7 +29,7 @@
       // creates a new contenteditable and initiates it
       _createElement: function() {
         var element = doc.createElement("div");
-        element.className = "wysihtml5-sandbox";
+        element.className = this.config.className;
         this._loadElement(element);
         return element;
       },

@@ -53,7 +53,7 @@
   // If found an uneditable before caret then notify it before deletion
   var handleUneditableDeletion = function(composer) {
     var before = composer.selection.getBeforeSelection(true);
-    if (before && (before.type === "element" || before.type === "leafnode") && before.node.nodeType === 1 && before.node.classList.contains(composer.config.uneditableContainerClassname)) {
+    if (before && (before.type === "element" || before.type === "leafnode") && before.node.nodeType === 1 && before.node.classList.contains(composer.config.classNames.uneditableContainer)) {
       if (fixLastBrDeletionInTable(composer, true)) {
         return true;
       }
@@ -218,7 +218,7 @@
       // Make sure that images are selected when clicking on them
       var target = event.target,
           allImages = this.element.querySelectorAll('img'),
-          notMyImages = this.element.querySelectorAll('.' + this.config.uneditableContainerClassname + ' img'),
+          notMyImages = this.element.querySelectorAll('.' + this.config.classNames.uneditableContainer + ' img'),
           myImages = wysihtml5.lang.array(allImages).without(notMyImages);
 
       if (target.nodeName === "IMG" && wysihtml5.lang.array(myImages).contains(target)) {
@@ -248,10 +248,10 @@
   };
 
   var handleClick = function(event) {
-    if (this.config.uneditableContainerClassname) {
+    if (this.config.classNames.uneditableContainer) {
       // If uneditables is configured, makes clicking on uneditable move caret after clicked element (so it can be deleted like text)
       // If uneditable needs text selection itself event.stopPropagation can be used to prevent this behaviour
-      var uneditable = wysihtml5.dom.getParentElement(event.target, { query: "." + this.config.uneditableContainerClassname }, false, this.element);
+      var uneditable = wysihtml5.dom.getParentElement(event.target, { query: "." + this.config.classNames.uneditableContainer }, false, this.element);
       if (uneditable) {
         this.selection.setAfter(uneditable);
       }

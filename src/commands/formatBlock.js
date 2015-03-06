@@ -15,7 +15,7 @@
   function cleanup(composer) {
     var container = composer.element,
         allElements = container.querySelectorAll(BLOCK_ELEMENTS),
-        uneditables = container.querySelectorAll(composer.config.uneditableContainerClassname),
+        uneditables = container.querySelectorAll(composer.config.classNames.uneditableContainer),
         elements = wysihtml5.lang.array(allElements).without(uneditables);
 
     for (var i = elements.length; i--;) {

@@ -55,6 +55,9 @@
     constructor: function(readyCallback, config) {
       this.callback = readyCallback || wysihtml5.EMPTY_FUNCTION;
       this.config   = wysihtml5.lang.object({}).merge(config).get();
+      if (!this.config.className) {
+        this.config.className = "wysihtml5-sandbox";
+      }
       this.editableArea   = this._createIframe();
     },
 
@@ -109,7 +112,7 @@
     _createIframe: function() {
       var that   = this,
           iframe = doc.createElement("iframe");
-      iframe.className = "wysihtml5-sandbox";
+      iframe.className = this.config.className;
       wysihtml5.dom.setAttributes({
         "security":           "restricted",
         "allowtransparency":  "true",

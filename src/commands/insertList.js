@@ -120,7 +120,7 @@ wysihtml5.commands.insertList = (function(wysihtml5) {
 
       if (tempElement) {
         isEmpty = wysihtml5.lang.array(["", "<br>", wysihtml5.INVISIBLE_SPACE]).contains(tempElement.innerHTML);
-        list = wysihtml5.dom.convertToList(tempElement, nodeName.toLowerCase(), composer.parent.config.uneditableContainerClassname);
+        list = wysihtml5.dom.convertToList(tempElement, nodeName.toLowerCase(), composer.parent.config.classNames.uneditableContainer);
         if (isEmpty) {
           composer.selection.selectNode(list.querySelector("li"), true);
         }
