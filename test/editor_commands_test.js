@@ -310,12 +310,12 @@ if (wysihtml5.browser.supported()) {
             expectText = '<table style="width: 100%;">' +
                            '<tbody>' +
                               '<tr>' +
-                                '<td></td>' +
-                                '<td></td>' +
+                                '<td><br></td>' +
+                                '<td><br></td>' +
                               '</tr>' +
                               '<tr>' +
-                                '<td></td>' +
-                                '<td></td>' +
+                                '<td><br></td>' +
+                                '<td><br></td>' +
                               '</tr>' +
                             '</tbody>' +
                           '</table>';
