@@ -412,7 +412,7 @@ if (wysihtml5.browser.supported()) {
     });
     
     editor.on("load", function() {
-      equal(editor.config.parserRules, parserRules, "Parser rules correctly set on config object");
+      deepEqual(editor.config.parserRules, parserRules, "Parser rules correctly set on config object");
       // Invoke parsing via second parameter of setValue()
       editor.setValue(input, true);
       equal(editor.getValue(false, false).toLowerCase(), output, "HTML got correctly parsed within setValue()");
@@ -432,7 +432,7 @@ if (wysihtml5.browser.supported()) {
       parserRules: parserRules,
       parser:      function(html, config) {
         equal(html.toLowerCase(), input, "HTML passed into parser is equal to the one which just got inserted");
-        equal(config.rules, parserRules, "Rules passed into parser are equal to those given to the editor");
+        deepEqual(config.rules, parserRules, "Rules passed into parser are equal to those given to the editor");
         equal(config.context, that.getIframeElement().contentWindow.document, "Context passed into parser is equal the document object of the editor's iframe");
         return html.replace(/\<script\>.*?\<\/script\>/gi, "");
       }
