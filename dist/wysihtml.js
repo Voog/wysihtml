@@ -1,6 +1,6 @@
 /**
- * @license wysihtml5x v0.5.0-beta6
- * https://github.com/Edicy/wysihtml5
+ * @license wysihtml v0.5.0-beta7
+ * https://github.com/Voog/wysihtml
  *
  * Author: Christopher Blum (https://github.com/tiff)
  * Secondary author of extended features: Oliver Pulges (https://github.com/pulges)
@@ -10,7 +10,7 @@
  *
  */
 var wysihtml5 = {
-  version: "0.5.0-beta6",
+  version: "0.5.0-beta7",
 
   // namespaces
   commands:   {},
@@ -5081,9 +5081,17 @@ wysihtml5.browser = (function() {
      *    wysihtml5.lang.object({ foo: 1, bar: 1 }).merge({ bar: 2, baz: 3 }).get();
      *    // => { foo: 1, bar: 2, baz: 3 }
      */
-    merge: function(otherObj) {
+    merge: function(otherObj, deep) {
       for (var i in otherObj) {
-        obj[i] = otherObj[i];
+        if (deep && wysihtml5.lang.object(otherObj[i]).isPlainObject() && (typeof obj[i] === "undefined" || wysihtml5.lang.object(obj[i]).isPlainObject())) {
+          if (typeof obj[i] === "undefined") {
+            obj[i] = wysihtml5.lang.object(otherObj[i]).clone(true);
+          } else {
+            wysihtml5.lang.object(obj[i]).merge(wysihtml5.lang.object(otherObj[i]).clone(true));
+          }
+        } else {
+          obj[i] = wysihtml5.lang.object(otherObj[i]).isPlainObject() ? wysihtml5.lang.object(otherObj[i]).clone(true) : otherObj[i];
+        }
       }
       return this;
     },
@@ -5138,7 +5146,7 @@ wysihtml5.browser = (function() {
     },
 
     isPlainObject: function () {
-      return Object.prototype.toString.call(obj) === '[object Object]';
+      return obj && Object.prototype.toString.call(obj) === '[object Object]';
     }
   };
 };
@@ -6696,11 +6704,9 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
         newAttributeValue;
 
     if (method) {
-      if (attributeValue || (attributeName === "alt" && nodeName == "IMG")) {
-        newAttributeValue = method(attributeValue);
-        if (typeof(newAttributeValue) === "string") {
-          return newAttributeValue;
-        }
+      newAttributeValue = method(attributeValue, nodeName);
+      if (typeof(newAttributeValue) === "string") {
+        return newAttributeValue;
       }
     }
 
@@ -6935,9 +6941,13 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
 
     alt: (function() {
       var REG_EXP = /[^ a-z0-9_\-]/gi;
-      return function(attributeValue) {
+      return function(attributeValue, nodeName) {
         if (!attributeValue) {
-          return "";
+          if (nodeName === "IMG") {
+            return "";
+          } else {
+            return null;
+          }
         }
         return attributeValue.replace(REG_EXP, "");
       };
@@ -6963,6 +6973,9 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
 
     any: (function() {
       return function(attributeValue) {
+        if (!attributeValue) {
+          return null;
+        }
         return attributeValue;
       };
     })()
@@ -7320,6 +7333,9 @@ wysihtml5.dom.replaceWithChildNodes = function(node) {
     constructor: function(readyCallback, config) {
       this.callback = readyCallback || wysihtml5.EMPTY_FUNCTION;
       this.config   = wysihtml5.lang.object({}).merge(config).get();
+      if (!this.config.className) {
+        this.config.className = "wysihtml5-sandbox";
+      }
       this.editableArea   = this._createIframe();
     },
 
@@ -7374,7 +7390,7 @@ wysihtml5.dom.replaceWithChildNodes = function(node) {
     _createIframe: function() {
       var that   = this,
           iframe = doc.createElement("iframe");
-      iframe.className = "wysihtml5-sandbox";
+      iframe.className = this.config.className;
       wysihtml5.dom.setAttributes({
         "security":           "restricted",
         "allowtransparency":  "true",
@@ -7537,6 +7553,9 @@ wysihtml5.dom.replaceWithChildNodes = function(node) {
       constructor: function(readyCallback, config, contentEditable) {
         this.callback = readyCallback || wysihtml5.EMPTY_FUNCTION;
         this.config   = wysihtml5.lang.object({}).merge(config).get();
+        if (!this.config.className) {
+          this.config.className = "wysihtml5-sandbox";
+        }
         if (contentEditable) {
             this.element = this._bindElement(contentEditable);
         } else {
@@ -7547,7 +7566,7 @@ wysihtml5.dom.replaceWithChildNodes = function(node) {
       // creates a new contenteditable and initiates it
       _createElement: function() {
         var element = doc.createElement("div");
-        element.className = "wysihtml5-sandbox";
+        element.className = this.config.className;
         this._loadElement(element);
         return element;
       },
@@ -7626,8 +7645,8 @@ wysihtml5.dom.replaceWithChildNodes = function(node) {
  *    wysihtml.dom.simulatePlaceholder(this, composer, "Foobar");
  */
 (function(dom) {
-  dom.simulatePlaceholder = function(editor, view, placeholderText) {
-    var CLASS_NAME = "placeholder",
+  dom.simulatePlaceholder = function(editor, view, placeholderText, placeholderClassName) {
+    var CLASS_NAME = placeholderClassName || "wysihtml5-placeholder",
         unset = function() {
           var composerIsVisible   = view.element.offsetWidth > 0 && view.element.offsetHeight > 0;
           if (view.hasPlaceholderSet()) {
@@ -11355,7 +11374,7 @@ wysihtml5.Commands = Base.extend(
   function cleanup(composer) {
     var container = composer.element,
         allElements = container.querySelectorAll(BLOCK_ELEMENTS),
-        uneditables = container.querySelectorAll(composer.config.uneditableContainerClassname),
+        uneditables = container.querySelectorAll(composer.config.classNames.uneditableContainer),
         elements = wysihtml5.lang.array(allElements).without(uneditables);
 
     for (var i = elements.length; i--;) {
@@ -11627,7 +11646,7 @@ wysihtml5.Commands = Base.extend(
         state = this.state(composer, command, options);
         if (state) {
           bookmark = rangy.saveSelection(composer.win);
-          for (var j in state) {
+          for (var j = 0, jmax = state.length; j < jmax; j++) {
             removeOptionsFromElement(state[j], options, composer);
           }
         }
@@ -11650,7 +11669,7 @@ wysihtml5.Commands = Base.extend(
             composer.selection.selectLine();
           }
         }
-      
+
         // And get all selection ranges of current composer and iterat
         ranges = composer.selection.getOwnRanges();
         for (var i = ranges.length; i--;) {
@@ -12212,7 +12231,7 @@ wysihtml5.Commands = Base.extend(
 
       if (tempElement) {
         isEmpty = wysihtml5.lang.array(["", "<br>", wysihtml5.INVISIBLE_SPACE]).contains(tempElement.innerHTML);
-        list = wysihtml5.dom.convertToList(tempElement, nodeName.toLowerCase(), composer.parent.config.uneditableContainerClassname);
+        list = wysihtml5.dom.convertToList(tempElement, nodeName.toLowerCase(), composer.parent.config.classNames.uneditableContainer);
         if (isEmpty) {
           composer.selection.selectNode(list.querySelector("li"), true);
         }
@@ -12441,7 +12460,7 @@ wysihtml5.Commands = Base.extend(
         for (row = 0; row < value.rows; row ++) {
           html += '<tr>';
           for (col = 0; col < value.cols; col ++) {
-            html += "<td></td>";
+            html += "<td><br></td>";
           }
           html += '</tr>';
         }
@@ -13123,14 +13142,17 @@ wysihtml5.views.View = Base.extend(
 
     _initContentEditableArea: function() {
         var that = this;
-
         if (this.config.noTextarea) {
             this.sandbox = new dom.ContentEditableArea(function() {
                 that._create();
-            }, {}, this.editableArea);
+            }, {
+              className: this.config.classNames.sandbox
+            }, this.editableArea);
         } else {
             this.sandbox = new dom.ContentEditableArea(function() {
                 that._create();
+            }, {
+              className: this.config.classNames.sandbox
             });
             this.editableArea = this.sandbox.getContentEditable();
             dom.insert(this.editableArea).after(this.textarea.element);
@@ -13140,11 +13162,11 @@ wysihtml5.views.View = Base.extend(
 
     _initSandbox: function() {
       var that = this;
-
       this.sandbox = new dom.Sandbox(function() {
         that._create();
       }, {
-        stylesheets:  this.config.stylesheets
+        stylesheets:  this.config.stylesheets,
+        className: this.config.classNames.sandbox
       });
       this.editableArea  = this.sandbox.getIframe();
 
@@ -13178,7 +13200,7 @@ wysihtml5.views.View = Base.extend(
       }
 
       // Make sure our selection handler is ready
-      this.selection = new wysihtml5.Selection(this.parent, this.element, this.config.uneditableContainerClassname);
+      this.selection = new wysihtml5.Selection(this.parent, this.element, this.config.classNames.uneditableContainer);
 
       // Make sure commands dispatcher is ready
       this.commands  = new wysihtml5.Commands(this.parent);
@@ -13189,7 +13211,7 @@ wysihtml5.views.View = Base.extend(
           ]).from(this.textarea.element).to(this.element);
       }
 
-      dom.addClass(this.element, this.config.composerClassName);
+      dom.addClass(this.element, this.config.classNames.composer);
       //
       // Make the editor look like the original textarea, by syncing styles
       if (this.config.style && !this.config.contentEditableMode) {
@@ -13215,7 +13237,7 @@ wysihtml5.views.View = Base.extend(
         ? this.config.placeholder
         : ((this.config.noTextarea) ? this.editableArea.getAttribute("data-placeholder") : this.textarea.element.getAttribute("placeholder"));
       if (placeholderText) {
-        dom.simulatePlaceholder(this.parent, this, placeholderText);
+        dom.simulatePlaceholder(this.parent, this, placeholderText, this.config.classNames.placeholder);
       }
 
       // Make sure that the browser avoids using inline styles whenever possible
@@ -13267,7 +13289,7 @@ wysihtml5.views.View = Base.extend(
         this.parent.on("newword:composer", function() {
           if (dom.getTextContent(that.element).match(dom.autoLink.URL_REG_EXP)) {
             var nodeWithSelection = that.selection.getSelectedNode(),
-                uneditables = that.element.querySelectorAll("." + that.config.uneditableContainerClassname),
+                uneditables = that.element.querySelectorAll("." + that.config.classNames.uneditableContainer),
                 isInUneditable = false;
 
             for (var i = uneditables.length; i--;) {
@@ -13276,12 +13298,12 @@ wysihtml5.views.View = Base.extend(
               }
             }
 
-            if (!isInUneditable) dom.autoLink(nodeWithSelection, [that.config.uneditableContainerClassname]);
+            if (!isInUneditable) dom.autoLink(nodeWithSelection, [that.config.classNames.uneditableContainer]);
           }
         });
 
         dom.observe(this.element, "blur", function() {
-          dom.autoLink(that.element, [that.config.uneditableContainerClassname]);
+          dom.autoLink(that.element, [that.config.classNames.uneditableContainer]);
         });
       }
 
@@ -13716,7 +13738,7 @@ wysihtml5.views.View = Base.extend(
   // If found an uneditable before caret then notify it before deletion
   var handleUneditableDeletion = function(composer) {
     var before = composer.selection.getBeforeSelection(true);
-    if (before && (before.type === "element" || before.type === "leafnode") && before.node.nodeType === 1 && before.node.classList.contains(composer.config.uneditableContainerClassname)) {
+    if (before && (before.type === "element" || before.type === "leafnode") && before.node.nodeType === 1 && before.node.classList.contains(composer.config.classNames.uneditableContainer)) {
       if (fixLastBrDeletionInTable(composer, true)) {
         return true;
       }
@@ -13881,7 +13903,7 @@ wysihtml5.views.View = Base.extend(
       // Make sure that images are selected when clicking on them
       var target = event.target,
           allImages = this.element.querySelectorAll('img'),
-          notMyImages = this.element.querySelectorAll('.' + this.config.uneditableContainerClassname + ' img'),
+          notMyImages = this.element.querySelectorAll('.' + this.config.classNames.uneditableContainer + ' img'),
           myImages = wysihtml5.lang.array(allImages).without(notMyImages);
 
       if (target.nodeName === "IMG" && wysihtml5.lang.array(myImages).contains(target)) {
@@ -13911,10 +13933,10 @@ wysihtml5.views.View = Base.extend(
   };
 
   var handleClick = function(event) {
-    if (this.config.uneditableContainerClassname) {
+    if (this.config.classNames.uneditableContainer) {
       // If uneditables is configured, makes clicking on uneditable move caret after clicked element (so it can be deleted like text)
       // If uneditable needs text selection itself event.stopPropagation can be used to prevent this behaviour
-      var uneditable = wysihtml5.dom.getParentElement(event.target, { query: "." + this.config.uneditableContainerClassname }, false, this.element);
+      var uneditable = wysihtml5.dom.getParentElement(event.target, { query: "." + this.config.classNames.uneditableContainer }, false, this.element);
       if (uneditable) {
         this.selection.setAfter(uneditable);
       }
@@ -14338,10 +14360,6 @@ wysihtml5.views.View = Base.extend(
     pasteParserRulesets: null,
     // Parser method to use when the user inserts content
     parser:               wysihtml5.dom.parse,
-    // Class name which should be set on the contentEditable element in the created sandbox iframe, can be styled via the 'stylesheets' option
-    composerClassName:    "wysihtml5-editor",
-    // Class name to add to the body when the wysihtml5 editor is supported
-    bodyClassName:        "wysihtml5-supported",
     // By default wysihtml5 will insert a <br> for line breaks, set this to false to use <p>
     useLineBreaks:        true,
     // Array (or single string) of stylesheet urls to be loaded in the editor's iframe
@@ -14354,9 +14372,18 @@ wysihtml5.views.View = Base.extend(
     cleanUp:              true,
     // Whether to use div instead of secure iframe
     contentEditableMode: false,
-    // Classname of container that editor should not touch and pass through
-    // Pass false to disable
-    uneditableContainerClassname: "wysihtml5-uneditable-container",
+    classNames: {
+      // Class name which should be set on the contentEditable element in the created sandbox iframe, can be styled via the 'stylesheets' option
+      composer: "wysihtml5-editor",
+      // Class name to add to the body when the wysihtml5 editor is supported
+      body: "wysihtml5-supported",
+      // classname added to editable area element (iframe/div) on creation
+      sandbox: "wysihtml5-sandbox",
+      // class on editable area with placeholder
+      placeholder: "wysihtml5-placeholder",
+      // Classname of container that editor should not touch and pass through
+      uneditableContainer: "wysihtml5-uneditable-container"
+    },
     // Browsers that support copied source handling will get a marking of the origin of the copied source (for determinig code cleanup rules on paste)
     // Also copied source is based directly on selection - 
     // (very useful for webkit based browsers where copy will otherwise contain a lot of code and styles based on whatever and not actually in selection).
@@ -14368,8 +14395,13 @@ wysihtml5.views.View = Base.extend(
     /** @scope wysihtml5.Editor.prototype */ {
     constructor: function(editableElement, config) {
       this.editableElement  = typeof(editableElement) === "string" ? document.getElementById(editableElement) : editableElement;
-      this.config           = wysihtml5.lang.object({}).merge(defaultConfig).merge(config).get();
+      this.config           = wysihtml5.lang.object({}).merge(defaultConfig).merge(config, true).get();
       this._isCompatible    = wysihtml5.browser.supported();
+
+      // make sure that rules override instead of extend
+      if (config && config.parserRules) {
+        this.config.parserRules = wysihtml5.lang.object(config.parserRules).clone(true);
+      }
 
       if (this.editableElement.nodeName.toLowerCase() != "textarea") {
           this.config.contentEditableMode = true;
@@ -14388,7 +14420,7 @@ wysihtml5.views.View = Base.extend(
       }
 
       // Add class name to body, to indicate that the editor is supported
-      wysihtml5.dom.addClass(document.body, this.config.bodyClassName);
+      wysihtml5.dom.addClass(document.body, this.config.classNames.body);
 
       this.composer = new wysihtml5.views.Composer(this, this.editableElement, this.config);
       this.currentView = this.composer;
@@ -14474,7 +14506,7 @@ wysihtml5.views.View = Base.extend(
         "rules": this.config.parserRules,
         "cleanUp": this.config.cleanUp,
         "context": parseContext,
-        "uneditableClass": this.config.uneditableContainerClassname,
+        "uneditableClass": this.config.classNames.uneditableContainer,
         "clearInternals" : clearInternals
       });
       if (typeof(htmlOrElement) === "object") {
@@ -14520,7 +14552,7 @@ wysihtml5.views.View = Base.extend(
       var cleanHtml = wysihtml5.quirks.cleanPastedHTML(oldHtml, {
         "referenceNode": this.composer.element,
         "rules": this.config.pasteParserRulesets || [{"set": this.config.parserRules}],
-        "uneditableClass": this.config.uneditableContainerClassname
+        "uneditableClass": this.config.classNames.uneditableContainer
       });
       this.composer.selection.deleteContents();
       this.composer.selection.insertHTML(cleanHtml);
