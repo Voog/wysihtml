@@ -58,8 +58,9 @@ wysihtml5.commands.insertList = (function(wysihtml5) {
     // <ul><li>foo</li><li>bar</li></ul>
     // becomes:
     // foo<br>bar<br>
-    composer.selection.executeAndRestore(function() {
-      var otherLists = getListsInSelection(otherNodeName, composer);
+
+    composer.selection.executeAndRestoreRangy(function() {
+      otherLists = getListsInSelection(otherNodeName, composer);
       if (otherLists.length) {
         for (var l = otherLists.length; l--;) {
           wysihtml5.dom.renameElement(otherLists[l], nodeName.toLowerCase());
@@ -81,7 +82,7 @@ wysihtml5.commands.insertList = (function(wysihtml5) {
     // becomes:
     // <ul><li>foo</li><li>bar</li></ul>
     // Also rename other lists in selection
-    composer.selection.executeAndRestore(function() {
+    composer.selection.executeAndRestoreRangy(function() {
       var renameLists = [el].concat(getListsInSelection(otherNodeName, composer));
 
       // All selection inner lists get renamed too

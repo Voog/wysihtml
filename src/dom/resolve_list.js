@@ -42,12 +42,15 @@
     var doc             = list.ownerDocument,
         fragment        = doc.createDocumentFragment(),
         previousSibling = wysihtml5.dom.domNode(list).prev({ignoreBlankTexts: true}),
+        nextSibling = wysihtml5.dom.domNode(list).next({ignoreBlankTexts: true}),
         firstChild,
         lastChild,
         isLastChild,
         shouldAppendLineBreak,
         paragraph,
-        listItem;
+        listItem,
+        lastListItem = list.lastElementChild || list.lastChild,
+        isLastItem;
 
     if (useLineBreaks) {
       // Insert line break if list is after a non-block element
@@ -57,10 +60,11 @@
 
       while (listItem = (list.firstElementChild || list.firstChild)) {
         lastChild = listItem.lastChild;
+        isLastItem = listItem === lastListItem;
         while (firstChild = listItem.firstChild) {
           isLastChild           = firstChild === lastChild;
           // This needs to be done before appending it to the fragment, as it otherwise will lose style information
-          shouldAppendLineBreak = isLastChild && !_isBlockElement(firstChild) && !_isLineBreak(firstChild);
+          shouldAppendLineBreak = (!isLastItem || (nextSibling && !_isBlockElement(nextSibling))) && isLastChild && !_isBlockElement(firstChild) && !_isLineBreak(firstChild);
           fragment.appendChild(firstChild);
           if (shouldAppendLineBreak) {
             _appendLineBreak(fragment);
