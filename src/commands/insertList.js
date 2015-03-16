@@ -21,7 +21,7 @@ wysihtml5.commands.insertList = (function(wysihtml5) {
         };
 
     if (node) {
-      var parentLi = wysihtml5.dom.getParentElement(node, { query: "li" }),
+      var parentLi = wysihtml5.dom.getParentElement(node, { query: "li" }, false, composer.element),
           otherNodeName = (nodeName === "UL") ? "OL" : "UL";
 
       if (isNode(node, nodeName)) {
@@ -135,6 +135,7 @@ wysihtml5.commands.insertList = (function(wysihtml5) {
           cmd           = (nodeName === "OL") ? "insertOrderedList" : "insertUnorderedList",
           selectedNode  = composer.selection.getSelectedNode(),
           list          = findListEl(selectedNode, nodeName, composer);
+
 
       if (!list.el) {
         if (composer.commands.support(cmd)) {
