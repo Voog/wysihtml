@@ -70,7 +70,7 @@ wysihtml5.lang.object = function(obj) {
     },
 
     isPlainObject: function () {
-      return obj && Object.prototype.toString.call(obj) === '[object Object]';
+      return obj && Object.prototype.toString.call(obj) === '[object Object]' && !(("Node" in window) ? obj instanceof Node : obj instanceof Element || obj instanceof Text);
     }
   };
 };

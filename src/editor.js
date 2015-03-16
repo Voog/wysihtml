@@ -90,12 +90,12 @@
     /** @scope wysihtml5.Editor.prototype */ {
     constructor: function(editableElement, config) {
       this.editableElement  = typeof(editableElement) === "string" ? document.getElementById(editableElement) : editableElement;
-      this.config           = wysihtml5.lang.object({}).merge(defaultConfig).merge(config, true).get();
+      this.config           = wysihtml5.lang.object({}).merge(defaultConfig).merge(config).get();
       this._isCompatible    = wysihtml5.browser.supported();
 
-      // make sure that rules override instead of extend
-      if (config && config.parserRules) {
-        this.config.parserRules = wysihtml5.lang.object(config.parserRules).clone(true);
+      // merge classNames
+      if (config && config.classNames) {
+        wysihtml5.lang.object(this.config.classNames).merge(config.classNames);
       }
 
       if (this.editableElement.nodeName.toLowerCase() != "textarea") {
