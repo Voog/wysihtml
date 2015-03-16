@@ -1,5 +1,5 @@
 /**
- * @license wysihtml v0.5.0-beta7
+ * @license wysihtml v0.5.0-beta8
  * https://github.com/Voog/wysihtml
  *
  * Author: Christopher Blum (https://github.com/tiff)
@@ -10,7 +10,7 @@
  *
  */
 var wysihtml5 = {
-  version: "0.5.0-beta7",
+  version: "0.5.0-beta8",
 
   // namespaces
   commands:   {},
@@ -4684,8 +4684,8 @@ wysihtml5.browser = (function() {
          // When inserting unordered or ordered lists in Firefox, Chrome or Safari, the current selection or line gets
          // converted into a list (<ul><li>...</li></ul>, <ol><li>...</li></ol>)
          // IE and Opera act a bit different here as they convert the entire content of the current block element into a list
-        "insertUnorderedList":  isIE(),
-        "insertOrderedList":    isIE()
+        "insertUnorderedList":  isIE(9, ">="),
+        "insertOrderedList":    isIE(9, ">=")
       };
 
       // Firefox throws errors for queryCommandSupported, so we have to build up our own object of supported commands
@@ -5146,7 +5146,7 @@ wysihtml5.browser = (function() {
     },
 
     isPlainObject: function () {
-      return obj && Object.prototype.toString.call(obj) === '[object Object]';
+      return obj && Object.prototype.toString.call(obj) === '[object Object]' && !(("Node" in window) ? obj instanceof Node : obj instanceof Element || obj instanceof Text);
     }
   };
 };
@@ -7227,12 +7227,15 @@ wysihtml5.dom.replaceWithChildNodes = function(node) {
     var doc             = list.ownerDocument,
         fragment        = doc.createDocumentFragment(),
         previousSibling = wysihtml5.dom.domNode(list).prev({ignoreBlankTexts: true}),
+        nextSibling = wysihtml5.dom.domNode(list).next({ignoreBlankTexts: true}),
         firstChild,
         lastChild,
         isLastChild,
         shouldAppendLineBreak,
         paragraph,
-        listItem;
+        listItem,
+        lastListItem = list.lastElementChild || list.lastChild,
+        isLastItem;
 
     if (useLineBreaks) {
       // Insert line break if list is after a non-block element
@@ -7242,10 +7245,11 @@ wysihtml5.dom.replaceWithChildNodes = function(node) {
 
       while (listItem = (list.firstElementChild || list.firstChild)) {
         lastChild = listItem.lastChild;
+        isLastItem = listItem === lastListItem;
         while (firstChild = listItem.firstChild) {
           isLastChild           = firstChild === lastChild;
           // This needs to be done before appending it to the fragment, as it otherwise will lose style information
-          shouldAppendLineBreak = isLastChild && !_isBlockElement(firstChild) && !_isLineBreak(firstChild);
+          shouldAppendLineBreak = (!isLastItem || (nextSibling && !_isBlockElement(nextSibling))) && isLastChild && !_isBlockElement(firstChild) && !_isLineBreak(firstChild);
           fragment.appendChild(firstChild);
           if (shouldAppendLineBreak) {
             _appendLineBreak(fragment);
@@ -8990,7 +8994,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
   }
 
   var handleMouseDown = function(event) {
-    var target = wysihtml5.dom.getParentElement(event.target, { query: "td, th" });
+    var target = wysihtml5.dom.getParentElement(event.target, { query: "td, th" }, false, editable);
     if (target) {
       handleSelectionMousedown(target);
     }
@@ -9000,7 +9004,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
     select.start = target;
     select.end = target;
     select.cells = [target];
-    select.table = dom.getParentElement(select.start, { query: "table" });
+    select.table = dom.getParentElement(select.start, { query: "table" }, false, editable);
 
     if (select.table) {
       removeCellSelections();
@@ -9031,11 +9035,11 @@ wysihtml5.quirks.ensureProperClearing = (function() {
 
   function handleMouseMove (event) {
     var curTable = null,
-      cell = dom.getParentElement(event.target, { query: "td, th" }),
+      cell = dom.getParentElement(event.target, { query: "td, th" }, false, editable),
       oldEnd;
 
     if (cell && select.table && select.start) {
-      curTable =  dom.getParentElement(cell, { query: "table" });
+      curTable =  dom.getParentElement(cell, { query: "table" }, false, editable);
       if (curTable && curTable === select.table) {
         removeCellSelections();
         oldEnd = select.end;
@@ -9063,7 +9067,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
 
   var sideClickHandler = function(event) {
     editable.ownerDocument.removeEventListener("click", sideClickHandler);
-    if (dom.getParentElement(event.target, { query: "table" }) != select.table) {
+    if (dom.getParentElement(event.target, { query: "table" }, false, editable) != select.table) {
       removeCellSelections();
       select.table = null;
       select.start = null;
@@ -9079,7 +9083,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
   function selectCells (start, end) {
     select.start = start;
     select.end = end;
-    select.table = dom.getParentElement(select.start, { query: "table" });
+    select.table = dom.getParentElement(select.start, { query: "table" }, false, editable);
     selectedCells = dom.table.getCellsBetween(select.start, select.end);
     addSelections(selectedCells);
     bindSideclick();
@@ -12132,7 +12136,7 @@ wysihtml5.Commands = Base.extend(
         };
 
     if (node) {
-      var parentLi = wysihtml5.dom.getParentElement(node, { query: "li" }),
+      var parentLi = wysihtml5.dom.getParentElement(node, { query: "li" }, false, composer.element),
           otherNodeName = (nodeName === "UL") ? "OL" : "UL";
 
       if (isNode(node, nodeName)) {
@@ -12169,8 +12173,9 @@ wysihtml5.Commands = Base.extend(
     // <ul><li>foo</li><li>bar</li></ul>
     // becomes:
     // foo<br>bar<br>
-    composer.selection.executeAndRestore(function() {
-      var otherLists = getListsInSelection(otherNodeName, composer);
+
+    composer.selection.executeAndRestoreRangy(function() {
+      otherLists = getListsInSelection(otherNodeName, composer);
       if (otherLists.length) {
         for (var l = otherLists.length; l--;) {
           wysihtml5.dom.renameElement(otherLists[l], nodeName.toLowerCase());
@@ -12192,7 +12197,7 @@ wysihtml5.Commands = Base.extend(
     // becomes:
     // <ul><li>foo</li><li>bar</li></ul>
     // Also rename other lists in selection
-    composer.selection.executeAndRestore(function() {
+    composer.selection.executeAndRestoreRangy(function() {
       var renameLists = [el].concat(getListsInSelection(otherNodeName, composer));
 
       // All selection inner lists get renamed too
@@ -12245,6 +12250,7 @@ wysihtml5.Commands = Base.extend(
           cmd           = (nodeName === "OL") ? "insertOrderedList" : "insertUnorderedList",
           selectedNode  = composer.selection.getSelectedNode(),
           list          = findListEl(selectedNode, nodeName, composer);
+
 
       if (!list.el) {
         if (composer.commands.support(cmd)) {
@@ -14395,12 +14401,12 @@ wysihtml5.views.View = Base.extend(
     /** @scope wysihtml5.Editor.prototype */ {
     constructor: function(editableElement, config) {
       this.editableElement  = typeof(editableElement) === "string" ? document.getElementById(editableElement) : editableElement;
-      this.config           = wysihtml5.lang.object({}).merge(defaultConfig).merge(config, true).get();
+      this.config           = wysihtml5.lang.object({}).merge(defaultConfig).merge(config).get();
       this._isCompatible    = wysihtml5.browser.supported();
 
-      // make sure that rules override instead of extend
-      if (config && config.parserRules) {
-        this.config.parserRules = wysihtml5.lang.object(config.parserRules).clone(true);
+      // merge classNames
+      if (config && config.classNames) {
+        wysihtml5.lang.object(this.config.classNames).merge(config.classNames);
       }
 
       if (this.editableElement.nodeName.toLowerCase() != "textarea") {

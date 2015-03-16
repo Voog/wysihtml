@@ -1,3 +1,8 @@
+*wysihtml5x 0.5.0-beta8* (March 16, 2015)
+* Fixes table cell selector escaping editable context
+* Fixes some list toggling issues
+* Fixes object merge for ie8 and its usage on init
+
 *wysihtml5x 0.5.0-beta7* (March 6, 2015)
 * Makes maine element classnames including placeholder configurable and prefixed (NB! .placeholder class is now .wysihtml5-placeholder)
 * Changes API by grouping class names under classNames option
