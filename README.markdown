@@ -36,7 +36,7 @@ This project is supported by [Voog](http://voog.com).
 * Improved formatblock handling.
 * Ability for user to remove formating with only collapsed caret without having to select exactly whole text.
 * Improved speed.
-* Anchor creting and removing logic changed to more universal.
+* Anchor creating and removing logic changed to more universal.
 * Default build is without internal toolbar functions and build with `-toolbar` suffix contains default toolbar functions.
 
 ## Browser Support
