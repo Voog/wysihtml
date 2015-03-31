@@ -155,12 +155,10 @@
     execAction: function(action) {
       var editor = this.editor;
       if (action === "change_view") {
-        if (editor.textarea) {
-            if (editor.currentView === editor.textarea) {
-              editor.fire("change_view", "composer");
-            } else {
-              editor.fire("change_view", "textarea");
-            }
+        if (editor.currentView === editor.textarea || editor.currentView === "source") {
+          editor.fire("change_view", "composer");
+        } else {
+          editor.fire("change_view", "textarea");
         }
       }
       if (action == "showSource") {
@@ -225,17 +223,15 @@
 
       editor.on("change_view", function(currentView) {
         // Set timeout needed in order to let the blur event fire first
-        if (editor.textarea) {
-            setTimeout(function() {
-              that.commandsDisabled = (currentView !== "composer");
-              that._updateLinkStates();
-              if (that.commandsDisabled) {
-                dom.addClass(container, CLASS_NAME_COMMANDS_DISABLED);
-              } else {
-                dom.removeClass(container, CLASS_NAME_COMMANDS_DISABLED);
-              }
-            }, 0);
-        }
+          setTimeout(function() {
+            that.commandsDisabled = (currentView !== "composer");
+            that._updateLinkStates();
+            if (that.commandsDisabled) {
+              dom.addClass(container, CLASS_NAME_COMMANDS_DISABLED);
+            } else {
+              dom.removeClass(container, CLASS_NAME_COMMANDS_DISABLED);
+            }
+          }, 0);
       });
     },
 
@@ -316,7 +312,7 @@
         action = actionMapping[i];
 
         if (action.name === "change_view") {
-          action.state = this.editor.currentView === this.editor.textarea;
+          action.state = this.editor.currentView === this.editor.textarea || this.editor.currentView === "source";
           if (action.state) {
             dom.addClass(action.link, CLASS_NAME_ACTION_ACTIVE);
           } else {

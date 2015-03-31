@@ -310,12 +310,12 @@ if (wysihtml5.browser.supported()) {
             expectText = '<table style="width: 100%;">' +
                            '<tbody>' +
                               '<tr>' +
-                                '<td>&nbsp;</td>' +
-                                '<td>&nbsp;</td>' +
+                                '<td><br></td>' +
+                                '<td><br></td>' +
                               '</tr>' +
                               '<tr>' +
-                                '<td>&nbsp;</td>' +
-                                '<td>&nbsp;</td>' +
+                                '<td><br></td>' +
+                                '<td><br></td>' +
                               '</tr>' +
                             '</tbody>' +
                           '</table>';
@@ -326,7 +326,7 @@ if (wysihtml5.browser.supported()) {
           rows: 2,
           tableStyle: "width: 100%;"
         });
-        equal(editableElement.innerHTML.toLowerCase(), expectText, "Text corectly wrapped in one aligning div");
+        equal(editableElement.innerHTML.toLowerCase(), expectText, "Table correctly created");
         start();
       });
     });

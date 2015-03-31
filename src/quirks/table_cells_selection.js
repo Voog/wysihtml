@@ -16,7 +16,7 @@ wysihtml5.quirks.tableCellsSelection = function(editable, editor) {
   }
 
   var handleMouseDown = function(event) {
-    var target = wysihtml5.dom.getParentElement(event.target, { query: "td, th" });
+    var target = wysihtml5.dom.getParentElement(event.target, { query: "td, th" }, false, editable);
     if (target) {
       handleSelectionMousedown(target);
     }
@@ -26,7 +26,7 @@ wysihtml5.quirks.tableCellsSelection = function(editable, editor) {
     select.start = target;
     select.end = target;
     select.cells = [target];
-    select.table = dom.getParentElement(select.start, { query: "table" });
+    select.table = dom.getParentElement(select.start, { query: "table" }, false, editable);
 
     if (select.table) {
       removeCellSelections();
@@ -57,11 +57,11 @@ wysihtml5.quirks.tableCellsSelection = function(editable, editor) {
 
   function handleMouseMove (event) {
     var curTable = null,
-      cell = dom.getParentElement(event.target, { query: "td, th" }),
+      cell = dom.getParentElement(event.target, { query: "td, th" }, false, editable),
       oldEnd;
 
     if (cell && select.table && select.start) {
-      curTable =  dom.getParentElement(cell, { query: "table" });
+      curTable =  dom.getParentElement(cell, { query: "table" }, false, editable);
       if (curTable && curTable === select.table) {
         removeCellSelections();
         oldEnd = select.end;
@@ -89,7 +89,7 @@ wysihtml5.quirks.tableCellsSelection = function(editable, editor) {
 
   var sideClickHandler = function(event) {
     editable.ownerDocument.removeEventListener("click", sideClickHandler);
-    if (dom.getParentElement(event.target, { query: "table" }) != select.table) {
+    if (dom.getParentElement(event.target, { query: "table" }, false, editable) != select.table) {
       removeCellSelections();
       select.table = null;
       select.start = null;
@@ -105,7 +105,7 @@ wysihtml5.quirks.tableCellsSelection = function(editable, editor) {
   function selectCells (start, end) {
     select.start = start;
     select.end = end;
-    select.table = dom.getParentElement(select.start, { query: "table" });
+    select.table = dom.getParentElement(select.start, { query: "table" }, false, editable);
     selectedCells = dom.table.getCellsBetween(select.start, select.end);
     addSelections(selectedCells);
     bindSideclick();

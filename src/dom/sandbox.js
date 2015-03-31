@@ -55,6 +55,9 @@
     constructor: function(readyCallback, config) {
       this.callback = readyCallback || wysihtml5.EMPTY_FUNCTION;
       this.config   = wysihtml5.lang.object({}).merge(config).get();
+      if (!this.config.className) {
+        this.config.className = "wysihtml5-sandbox";
+      }
       this.editableArea   = this._createIframe();
     },
 
@@ -109,7 +112,7 @@
     _createIframe: function() {
       var that   = this,
           iframe = doc.createElement("iframe");
-      iframe.className = "wysihtml5-sandbox";
+      iframe.className = this.config.className;
       wysihtml5.dom.setAttributes({
         "security":           "restricted",
         "allowtransparency":  "true",
@@ -193,6 +196,10 @@
         // This doesn't work in Safari 5
         // See http://stackoverflow.com/questions/992461/is-it-possible-to-override-document-cookie-in-webkit
         this._unset(iframeDocument, "cookie", "", true);
+      }
+
+      if (wysihtml5.polyfills) {
+        wysihtml5.polyfills(iframeWindow, iframeDocument);
       }
 
       this.loaded = true;

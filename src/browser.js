@@ -180,8 +180,8 @@ wysihtml5.browser = (function() {
          // When inserting unordered or ordered lists in Firefox, Chrome or Safari, the current selection or line gets
          // converted into a list (<ul><li>...</li></ul>, <ol><li>...</li></ol>)
          // IE and Opera act a bit different here as they convert the entire content of the current block element into a list
-        "insertUnorderedList":  isIE(),
-        "insertOrderedList":    isIE()
+        "insertUnorderedList":  isIE(9, ">="),
+        "insertOrderedList":    isIE(9, ">=")
       };
 
       // Firefox throws errors for queryCommandSupported, so we have to build up our own object of supported commands

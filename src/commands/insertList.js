@@ -21,7 +21,7 @@ wysihtml5.commands.insertList = (function(wysihtml5) {
         };
 
     if (node) {
-      var parentLi = wysihtml5.dom.getParentElement(node, { query: "li" }),
+      var parentLi = wysihtml5.dom.getParentElement(node, { query: "li" }, false, composer.element),
           otherNodeName = (nodeName === "UL") ? "OL" : "UL";
 
       if (isNode(node, nodeName)) {
@@ -58,8 +58,9 @@ wysihtml5.commands.insertList = (function(wysihtml5) {
     // <ul><li>foo</li><li>bar</li></ul>
     // becomes:
     // foo<br>bar<br>
-    composer.selection.executeAndRestore(function() {
-      var otherLists = getListsInSelection(otherNodeName, composer);
+
+    composer.selection.executeAndRestoreRangy(function() {
+      otherLists = getListsInSelection(otherNodeName, composer);
       if (otherLists.length) {
         for (var l = otherLists.length; l--;) {
           wysihtml5.dom.renameElement(otherLists[l], nodeName.toLowerCase());
@@ -81,7 +82,7 @@ wysihtml5.commands.insertList = (function(wysihtml5) {
     // becomes:
     // <ul><li>foo</li><li>bar</li></ul>
     // Also rename other lists in selection
-    composer.selection.executeAndRestore(function() {
+    composer.selection.executeAndRestoreRangy(function() {
       var renameLists = [el].concat(getListsInSelection(otherNodeName, composer));
 
       // All selection inner lists get renamed too
@@ -120,7 +121,7 @@ wysihtml5.commands.insertList = (function(wysihtml5) {
 
       if (tempElement) {
         isEmpty = wysihtml5.lang.array(["", "<br>", wysihtml5.INVISIBLE_SPACE]).contains(tempElement.innerHTML);
-        list = wysihtml5.dom.convertToList(tempElement, nodeName.toLowerCase(), composer.parent.config.uneditableContainerClassname);
+        list = wysihtml5.dom.convertToList(tempElement, nodeName.toLowerCase(), composer.parent.config.classNames.uneditableContainer);
         if (isEmpty) {
           composer.selection.selectNode(list.querySelector("li"), true);
         }
@@ -134,6 +135,7 @@ wysihtml5.commands.insertList = (function(wysihtml5) {
           cmd           = (nodeName === "OL") ? "insertOrderedList" : "insertUnorderedList",
           selectedNode  = composer.selection.getSelectedNode(),
           list          = findListEl(selectedNode, nodeName, composer);
+
 
       if (!list.el) {
         if (composer.commands.support(cmd)) {

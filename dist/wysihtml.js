@@ -1,383 +1,6 @@
-// TODO: in future try to replace most inline compability checks with polyfills for code readability 
-
-// IE8 SUPPORT BLOCK
-// You can compile without all this if IE8 is not needed
-
-// String trim for ie8
-if (!String.prototype.trim) {
-  (function() {
-    // Make sure we trim BOM and NBSP
-    var rtrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g;
-    String.prototype.trim = function() {
-      return this.replace(rtrim, '');
-    };
-  })();
-}
-
-// addEventListener, removeEventListener
-// TODO: make usage of wysihtml5.dom.observe obsolete
-(function() {
-  if (!Event.prototype.preventDefault) {
-    Event.prototype.preventDefault=function() {
-      this.returnValue=false;
-    };
-  }
-  if (!Event.prototype.stopPropagation) {
-    Event.prototype.stopPropagation=function() {
-      this.cancelBubble=true;
-    };
-  }
-  if (!Element.prototype.addEventListener) {
-    var eventListeners=[];
-    
-    var addEventListener=function(type,listener /*, useCapture (will be ignored) */) {
-      var self=this;
-      var wrapper=function(e) {
-        e.target=e.srcElement;
-        e.currentTarget=self;
-        if (listener.handleEvent) {
-          listener.handleEvent(e);
-        } else {
-          listener.call(self,e);
-        }
-      };
-      if (type=="DOMContentLoaded") {
-        var wrapper2=function(e) {
-          if (document.readyState=="complete") {
-            wrapper(e);
-          }
-        };
-        document.attachEvent("onreadystatechange",wrapper2);
-        eventListeners.push({object:this,type:type,listener:listener,wrapper:wrapper2});
-        
-        if (document.readyState=="complete") {
-          var e=new Event();
-          e.srcElement=window;
-          wrapper2(e);
-        }
-      } else {
-        this.attachEvent("on"+type,wrapper);
-        eventListeners.push({object:this,type:type,listener:listener,wrapper:wrapper});
-      }
-    };
-    var removeEventListener=function(type,listener /*, useCapture (will be ignored) */) {
-      var counter=0;
-      while (counter<eventListeners.length) {
-        var eventListener=eventListeners[counter];
-        if (eventListener.object==this && eventListener.type==type && eventListener.listener==listener) {
-          if (type=="DOMContentLoaded") {
-            this.detachEvent("onreadystatechange",eventListener.wrapper);
-          } else {
-            this.detachEvent("on"+type,eventListener.wrapper);
-          }
-          eventListeners.splice(counter, 1);
-          break;
-        }
-        ++counter;
-      }
-    };
-    Element.prototype.addEventListener=addEventListener;
-    Element.prototype.removeEventListener=removeEventListener;
-    if (HTMLDocument) {
-      HTMLDocument.prototype.addEventListener=addEventListener;
-      HTMLDocument.prototype.removeEventListener=removeEventListener;
-    }
-    if (Window) {
-      Window.prototype.addEventListener=addEventListener;
-      Window.prototype.removeEventListener=removeEventListener;
-    }
-  }
-})();
-
-// element.textContent polyfill.
-if (Object.defineProperty && Object.getOwnPropertyDescriptor && Object.getOwnPropertyDescriptor(Element.prototype, "textContent") && !Object.getOwnPropertyDescriptor(Element.prototype, "textContent").get) {
-	(function() {
-		var innerText = Object.getOwnPropertyDescriptor(Element.prototype, "innerText");
-		Object.defineProperty(Element.prototype, "textContent",
-			{
-				get: function() {
-					return innerText.get.call(this);
-				},
-				set: function(s) {
-					return innerText.set.call(this, s);
-				}
-			}
-		);
-	})();
-}
-
-// isArray polyfill for ie8
-if(!Array.isArray) {
-  Array.isArray = function(arg) {
-    return Object.prototype.toString.call(arg) === '[object Array]';
-  };
-}
-
-// Array indexOf for ie8
-if (!Array.prototype.indexOf) {
-  Array.prototype.indexOf = function(a,f) {
-    for(var c=this.length,r=-1,d=f>>>0; ~(c-d); r=this[--c]===a?c:r);
-    return r;
-  };
-}
-
-// Function.prototype.bind()
-// TODO: clean the code from variable 'that' as it can be confusing
-if (!Function.prototype.bind) {
-  Function.prototype.bind = function(oThis) {
-    if (typeof this !== 'function') {
-      // closest thing possible to the ECMAScript 5
-      // internal IsCallable function
-      throw new TypeError('Function.prototype.bind - what is trying to be bound is not callable');
-    }
-
-    var aArgs   = Array.prototype.slice.call(arguments, 1),
-        fToBind = this,
-        fNOP    = function() {},
-        fBound  = function() {
-          return fToBind.apply(this instanceof fNOP && oThis
-                 ? this
-                 : oThis,
-                 aArgs.concat(Array.prototype.slice.call(arguments)));
-        };
-
-    fNOP.prototype = this.prototype;
-    fBound.prototype = new fNOP();
-
-    return fBound;
-  };
-}
-
-// Element.matches Adds ie8 support and unifies nonstandard function names in other browsers
-this.Element && function(ElementPrototype) {
-  ElementPrototype.matches = ElementPrototype.matches ||
-  ElementPrototype.matchesSelector ||
-  ElementPrototype.mozMatchesSelector ||
-  ElementPrototype.msMatchesSelector ||
-  ElementPrototype.oMatchesSelector ||
-  ElementPrototype.webkitMatchesSelector ||
-  function (selector) {
-    var node = this, nodes = (node.parentNode || node.document).querySelectorAll(selector), i = -1;
-    while (nodes[++i] && nodes[i] != node);
-    return !!nodes[i];
-  };
-}(Element.prototype);
-
-// Element.classList for ie8-9 (toggle all IE)
-// source http://purl.eligrey.com/github/classList.js/blob/master/classList.js
-
-if ("document" in self) {
-  // Full polyfill for browsers with no classList support
-  if (!("classList" in document.createElement("_"))) {
-    (function(view) {
-      "use strict";
-      if (!('Element' in view)) return;
-
-      var
-        classListProp = "classList",
-        protoProp = "prototype",
-        elemCtrProto = view.Element[protoProp],
-        objCtr = Object,
-        strTrim = String[protoProp].trim || function() {
-          return this.replace(/^\s+|\s+$/g, "");
-        },
-        arrIndexOf = Array[protoProp].indexOf || function(item) {
-          var
-            i = 0,
-            len = this.length;
-          for (; i < len; i++) {
-            if (i in this && this[i] === item) {
-              return i;
-            }
-          }
-          return -1;
-        }, // Vendors: please allow content code to instantiate DOMExceptions
-        DOMEx = function(type, message) {
-          this.name = type;
-          this.code = DOMException[type];
-          this.message = message;
-        },
-        checkTokenAndGetIndex = function(classList, token) {
-          if (token === "") {
-            throw new DOMEx(
-              "SYNTAX_ERR", "An invalid or illegal string was specified"
-            );
-          }
-          if (/\s/.test(token)) {
-            throw new DOMEx(
-              "INVALID_CHARACTER_ERR", "String contains an invalid character"
-            );
-          }
-          return arrIndexOf.call(classList, token);
-        },
-        ClassList = function(elem) {
-          var
-            trimmedClasses = strTrim.call(elem.getAttribute("class") || ""),
-            classes = trimmedClasses ? trimmedClasses.split(/\s+/) : [],
-            i = 0,
-            len = classes.length;
-          for (; i < len; i++) {
-            this.push(classes[i]);
-          }
-          this._updateClassName = function() {
-            elem.setAttribute("class", this.toString());
-          };
-        },
-        classListProto = ClassList[protoProp] = [],
-        classListGetter = function() {
-          return new ClassList(this);
-        };
-      // Most DOMException implementations don't allow calling DOMException's toString()
-      // on non-DOMExceptions. Error's toString() is sufficient here.
-      DOMEx[protoProp] = Error[protoProp];
-      classListProto.item = function(i) {
-        return this[i] || null;
-      };
-      classListProto.contains = function(token) {
-        token += "";
-        return checkTokenAndGetIndex(this, token) !== -1;
-      };
-      classListProto.add = function() {
-        var
-          tokens = arguments,
-          i = 0,
-          l = tokens.length,
-          token, updated = false;
-        do {
-          token = tokens[i] + "";
-          if (checkTokenAndGetIndex(this, token) === -1) {
-            this.push(token);
-            updated = true;
-          }
-        }
-        while (++i < l);
-
-        if (updated) {
-          this._updateClassName();
-        }
-      };
-      classListProto.remove = function() {
-        var
-          tokens = arguments,
-          i = 0,
-          l = tokens.length,
-          token, updated = false,
-          index;
-        do {
-          token = tokens[i] + "";
-          index = checkTokenAndGetIndex(this, token);
-          while (index !== -1) {
-            this.splice(index, 1);
-            updated = true;
-            index = checkTokenAndGetIndex(this, token);
-          }
-        }
-        while (++i < l);
-
-        if (updated) {
-          this._updateClassName();
-        }
-      };
-      classListProto.toggle = function(token, force) {
-        token += "";
-
-        var
-          result = this.contains(token),
-          method = result ?
-          force !== true && "remove" :
-          force !== false && "add";
-
-        if (method) {
-          this[method](token);
-        }
-
-        if (force === true || force === false) {
-          return force;
-        } else {
-          return !result;
-        }
-      };
-      classListProto.toString = function() {
-        return this.join(" ");
-      };
-
-      if (objCtr.defineProperty) {
-        var classListPropDesc = {
-          get: classListGetter,
-          enumerable: true,
-          configurable: true
-        };
-        try {
-          objCtr.defineProperty(elemCtrProto, classListProp, classListPropDesc);
-        } catch (ex) { // IE 8 doesn't support enumerable:true
-          if (ex.number === -0x7FF5EC54) {
-            classListPropDesc.enumerable = false;
-            objCtr.defineProperty(elemCtrProto, classListProp, classListPropDesc);
-          }
-        }
-      } else if (objCtr[protoProp].__defineGetter__) {
-        elemCtrProto.__defineGetter__(classListProp, classListGetter);
-      }
-
-    }(self));
-
-  } else if ("DOMTokenList" in window) {
-    // There is full or partial native classList support, so just check if we need
-    // to normalize the add/remove and toggle APIs.
-    // DOMTokenList is expected to exist (removes conflicts with multiple polyfills present on site)
-
-    (function() {
-      "use strict";
-
-      var testElement = document.createElement("_");
-
-      testElement.classList.add("c1", "c2");
-
-      // Polyfill for IE 10/11 and Firefox <26, where classList.add and
-      // classList.remove exist but support only one argument at a time.
-      if (!testElement.classList.contains("c2")) {
-        var createMethod = function(method) {
-          var original = DOMTokenList.prototype[method];
-
-          DOMTokenList.prototype[method] = function(token) {
-            var i, len = arguments.length;
-
-            for (i = 0; i < len; i++) {
-              token = arguments[i];
-              original.call(this, token);
-            }
-          };
-        };
-        createMethod('add');
-        createMethod('remove');
-      }
-
-      testElement.classList.toggle("c3", false);
-
-      // Polyfill for IE 10 and Firefox <24, where classList.toggle does not
-      // support the second argument.
-      if (testElement.classList.contains("c3")) {
-        var _toggle = DOMTokenList.prototype.toggle;
-
-        DOMTokenList.prototype.toggle = function(token, force) {
-          if (1 in arguments && !this.contains(token) === !force) {
-            return force;
-          } else {
-            return _toggle.call(this, token);
-          }
-        };
-
-      }
-
-      testElement = null;
-    }());
-
-  }
-
-}
-;/**
- * @license wysihtml5x v0.5.0-beta4
- * https://github.com/Edicy/wysihtml5
+/**
+ * @license wysihtml v0.5.0-beta8
+ * https://github.com/Voog/wysihtml
  *
  * Author: Christopher Blum (https://github.com/tiff)
  * Secondary author of extended features: Oliver Pulges (https://github.com/pulges)
@@ -387,7 +10,7 @@ if ("document" in self) {
  *
  */
 var wysihtml5 = {
-  version: "0.5.0-beta4",
+  version: "0.5.0-beta8",
 
   // namespaces
   commands:   {},
@@ -413,6 +36,333 @@ var wysihtml5 = {
   TAB_KEY:        9,
   DELETE_KEY:     46
 };
+;wysihtml5.polyfills = function(win, doc) {
+
+  // TODO: in future try to replace most inline compability checks with polyfills for code readability 
+
+  // IE8 SUPPORT BLOCK
+  // You can compile without all this if IE8 is not needed
+
+  // String trim for ie8
+  if (!String.prototype.trim) {
+    (function() {
+      // Make sure we trim BOM and NBSP
+      var rtrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g;
+      String.prototype.trim = function() {
+        return this.replace(rtrim, '');
+      };
+    })();
+  }
+
+  // addEventListener, removeEventListener
+  (function() {
+    var s_add = 'addEventListener',
+        s_rem = 'removeEventListener';
+    if( doc[s_add] ) return;
+    win.Element.prototype[ s_add ] = win[ s_add ] = doc[ s_add ] = function( on, fn, self ) {
+      return (self = this).attachEvent( 'on' + on, function(e){
+        var e = e || win.event;
+        e.target = e.target || e.srcElement;
+        e.preventDefault  = e.preventDefault  || function(){e.returnValue = false};
+        e.stopPropagation = e.stopPropagation || function(){e.cancelBubble = true};
+        e.which = e.button ? ( e.button === 2 ? 3 : e.button === 4 ? 2 : e.button ) : e.keyCode;
+        fn.call(self, e);
+      });
+    };
+    win.Element.prototype[ s_rem ] = win[ s_rem ] = doc[ s_rem ] = function( on, fn ) {
+      return this.detachEvent( 'on' + on, fn );
+    };
+  })();
+
+  // element.textContent polyfill.
+  if (Object.defineProperty && Object.getOwnPropertyDescriptor && Object.getOwnPropertyDescriptor(win.Element.prototype, "textContent") && !Object.getOwnPropertyDescriptor(win.Element.prototype, "textContent").get) {
+  	(function() {
+  		var innerText = Object.getOwnPropertyDescriptor(win.Element.prototype, "innerText");
+  		Object.defineProperty(win.Element.prototype, "textContent",
+  			{
+  				get: function() {
+  					return innerText.get.call(this);
+  				},
+  				set: function(s) {
+  					return innerText.set.call(this, s);
+  				}
+  			}
+  		);
+  	})();
+  }
+
+  // isArray polyfill for ie8
+  if(!Array.isArray) {
+    Array.isArray = function(arg) {
+      return Object.prototype.toString.call(arg) === '[object Array]';
+    };
+  }
+
+  // Array indexOf for ie8
+  if (!Array.prototype.indexOf) {
+    Array.prototype.indexOf = function(a,f) {
+      for(var c=this.length,r=-1,d=f>>>0; ~(c-d); r=this[--c]===a?c:r);
+      return r;
+    };
+  }
+
+  // Function.prototype.bind()
+  // TODO: clean the code from variable 'that' as it can be confusing
+  if (!Function.prototype.bind) {
+    Function.prototype.bind = function(oThis) {
+      if (typeof this !== 'function') {
+        // closest thing possible to the ECMAScript 5
+        // internal IsCallable function
+        throw new TypeError('Function.prototype.bind - what is trying to be bound is not callable');
+      }
+
+      var aArgs   = Array.prototype.slice.call(arguments, 1),
+          fToBind = this,
+          fNOP    = function() {},
+          fBound  = function() {
+            return fToBind.apply(this instanceof fNOP && oThis
+                   ? this
+                   : oThis,
+                   aArgs.concat(Array.prototype.slice.call(arguments)));
+          };
+
+      fNOP.prototype = this.prototype;
+      fBound.prototype = new fNOP();
+
+      return fBound;
+    };
+  }
+
+  // Element.matches Adds ie8 support and unifies nonstandard function names in other browsers
+  win.Element && function(ElementPrototype) {
+    ElementPrototype.matches = ElementPrototype.matches ||
+    ElementPrototype.matchesSelector ||
+    ElementPrototype.mozMatchesSelector ||
+    ElementPrototype.msMatchesSelector ||
+    ElementPrototype.oMatchesSelector ||
+    ElementPrototype.webkitMatchesSelector ||
+    function (selector) {
+      var node = this, nodes = (node.parentNode || node.document).querySelectorAll(selector), i = -1;
+      while (nodes[++i] && nodes[i] != node);
+      return !!nodes[i];
+    };
+  }(win.Element.prototype);
+
+  // Element.classList for ie8-9 (toggle all IE)
+  // source http://purl.eligrey.com/github/classList.js/blob/master/classList.js
+
+  if ("document" in win) {
+    // Full polyfill for browsers with no classList support
+    if (!("classList" in doc.createElement("_"))) {
+      (function(view) {
+        "use strict";
+        if (!('Element' in view)) return;
+
+        var
+          classListProp = "classList",
+          protoProp = "prototype",
+          elemCtrProto = view.Element[protoProp],
+          objCtr = Object,
+          strTrim = String[protoProp].trim || function() {
+            return this.replace(/^\s+|\s+$/g, "");
+          },
+          arrIndexOf = Array[protoProp].indexOf || function(item) {
+            var
+              i = 0,
+              len = this.length;
+            for (; i < len; i++) {
+              if (i in this && this[i] === item) {
+                return i;
+              }
+            }
+            return -1;
+          }, // Vendors: please allow content code to instantiate DOMExceptions
+          DOMEx = function(type, message) {
+            this.name = type;
+            this.code = DOMException[type];
+            this.message = message;
+          },
+          checkTokenAndGetIndex = function(classList, token) {
+            if (token === "") {
+              throw new DOMEx(
+                "SYNTAX_ERR", "An invalid or illegal string was specified"
+              );
+            }
+            if (/\s/.test(token)) {
+              throw new DOMEx(
+                "INVALID_CHARACTER_ERR", "String contains an invalid character"
+              );
+            }
+            return arrIndexOf.call(classList, token);
+          },
+          ClassList = function(elem) {
+            var
+              trimmedClasses = strTrim.call(elem.getAttribute("class") || ""),
+              classes = trimmedClasses ? trimmedClasses.split(/\s+/) : [],
+              i = 0,
+              len = classes.length;
+            for (; i < len; i++) {
+              this.push(classes[i]);
+            }
+            this._updateClassName = function() {
+              elem.setAttribute("class", this.toString());
+            };
+          },
+          classListProto = ClassList[protoProp] = [],
+          classListGetter = function() {
+            return new ClassList(this);
+          };
+        // Most DOMException implementations don't allow calling DOMException's toString()
+        // on non-DOMExceptions. Error's toString() is sufficient here.
+        DOMEx[protoProp] = Error[protoProp];
+        classListProto.item = function(i) {
+          return this[i] || null;
+        };
+        classListProto.contains = function(token) {
+          token += "";
+          return checkTokenAndGetIndex(this, token) !== -1;
+        };
+        classListProto.add = function() {
+          var
+            tokens = arguments,
+            i = 0,
+            l = tokens.length,
+            token, updated = false;
+          do {
+            token = tokens[i] + "";
+            if (checkTokenAndGetIndex(this, token) === -1) {
+              this.push(token);
+              updated = true;
+            }
+          }
+          while (++i < l);
+
+          if (updated) {
+            this._updateClassName();
+          }
+        };
+        classListProto.remove = function() {
+          var
+            tokens = arguments,
+            i = 0,
+            l = tokens.length,
+            token, updated = false,
+            index;
+          do {
+            token = tokens[i] + "";
+            index = checkTokenAndGetIndex(this, token);
+            while (index !== -1) {
+              this.splice(index, 1);
+              updated = true;
+              index = checkTokenAndGetIndex(this, token);
+            }
+          }
+          while (++i < l);
+
+          if (updated) {
+            this._updateClassName();
+          }
+        };
+        classListProto.toggle = function(token, force) {
+          token += "";
+
+          var
+            result = this.contains(token),
+            method = result ?
+            force !== true && "remove" :
+            force !== false && "add";
+
+          if (method) {
+            this[method](token);
+          }
+
+          if (force === true || force === false) {
+            return force;
+          } else {
+            return !result;
+          }
+        };
+        classListProto.toString = function() {
+          return this.join(" ");
+        };
+
+        if (objCtr.defineProperty) {
+          var classListPropDesc = {
+            get: classListGetter,
+            enumerable: true,
+            configurable: true
+          };
+          try {
+            objCtr.defineProperty(elemCtrProto, classListProp, classListPropDesc);
+          } catch (ex) { // IE 8 doesn't support enumerable:true
+            if (ex.number === -0x7FF5EC54) {
+              classListPropDesc.enumerable = false;
+              objCtr.defineProperty(elemCtrProto, classListProp, classListPropDesc);
+            }
+          }
+        } else if (objCtr[protoProp].__defineGetter__) {
+          elemCtrProto.__defineGetter__(classListProp, classListGetter);
+        }
+
+      }(win));
+
+    } else if ("DOMTokenList" in win) {
+      // There is full or partial native classList support, so just check if we need
+      // to normalize the add/remove and toggle APIs.
+      // DOMTokenList is expected to exist (removes conflicts with multiple polyfills present on site)
+
+      (function() {
+        "use strict";
+
+        var testElement = doc.createElement("_");
+
+        testElement.classList.add("c1", "c2");
+
+        // Polyfill for IE 10/11 and Firefox <26, where classList.add and
+        // classList.remove exist but support only one argument at a time.
+        if (!testElement.classList.contains("c2")) {
+          var createMethod = function(method) {
+            var original = win.DOMTokenList.prototype[method];
+
+            win.DOMTokenList.prototype[method] = function(token) {
+              var i, len = arguments.length;
+
+              for (i = 0; i < len; i++) {
+                token = arguments[i];
+                original.call(this, token);
+              }
+            };
+          };
+          createMethod('add');
+          createMethod('remove');
+        }
+
+        testElement.classList.toggle("c3", false);
+
+        // Polyfill for IE 10 and Firefox <24, where classList.toggle does not
+        // support the second argument.
+        if (testElement.classList.contains("c3")) {
+          var _toggle = win.DOMTokenList.prototype.toggle;
+
+          win.DOMTokenList.prototype.toggle = function(token, force) {
+            if (1 in arguments && !this.contains(token) === !force) {
+              return force;
+            } else {
+              return _toggle.call(this, token);
+            }
+          };
+
+        }
+
+        testElement = null;
+      }());
+
+    }
+
+  }
+};
+
+wysihtml5.polyfills(window, document);
 ;/**
  * Rangy, a cross-browser JavaScript range and selection library
  * https://github.com/timdown/rangy
@@ -4734,8 +4684,8 @@ wysihtml5.browser = (function() {
          // When inserting unordered or ordered lists in Firefox, Chrome or Safari, the current selection or line gets
          // converted into a list (<ul><li>...</li></ul>, <ol><li>...</li></ol>)
          // IE and Opera act a bit different here as they convert the entire content of the current block element into a list
-        "insertUnorderedList":  isIE(),
-        "insertOrderedList":    isIE()
+        "insertUnorderedList":  isIE(9, ">="),
+        "insertOrderedList":    isIE(9, ">=")
       };
 
       // Firefox throws errors for queryCommandSupported, so we have to build up our own object of supported commands
@@ -5131,9 +5081,17 @@ wysihtml5.browser = (function() {
      *    wysihtml5.lang.object({ foo: 1, bar: 1 }).merge({ bar: 2, baz: 3 }).get();
      *    // => { foo: 1, bar: 2, baz: 3 }
      */
-    merge: function(otherObj) {
+    merge: function(otherObj, deep) {
       for (var i in otherObj) {
-        obj[i] = otherObj[i];
+        if (deep && wysihtml5.lang.object(otherObj[i]).isPlainObject() && (typeof obj[i] === "undefined" || wysihtml5.lang.object(obj[i]).isPlainObject())) {
+          if (typeof obj[i] === "undefined") {
+            obj[i] = wysihtml5.lang.object(otherObj[i]).clone(true);
+          } else {
+            wysihtml5.lang.object(obj[i]).merge(wysihtml5.lang.object(otherObj[i]).clone(true));
+          }
+        } else {
+          obj[i] = wysihtml5.lang.object(otherObj[i]).isPlainObject() ? wysihtml5.lang.object(otherObj[i]).clone(true) : otherObj[i];
+        }
       }
       return this;
     },
@@ -5188,7 +5146,7 @@ wysihtml5.browser = (function() {
     },
 
     isPlainObject: function () {
-      return Object.prototype.toString.call(obj) === '[object Object]';
+      return obj && Object.prototype.toString.call(obj) === '[object Object]' && !(("Node" in window) ? obj instanceof Node : obj instanceof Element || obj instanceof Text);
     }
   };
 };
@@ -6742,15 +6700,13 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
   }
 
   function _checkAttribute(attributeName, attributeValue, methodName, nodeName) {
-    var method = attributeCheckMethods[methodName],
+    var method = wysihtml5.lang.object(methodName).isFunction() ? methodName : attributeCheckMethods[methodName],
         newAttributeValue;
 
     if (method) {
-      if (attributeValue || (attributeName === "alt" && nodeName == "IMG")) {
-        newAttributeValue = method(attributeValue);
-        if (typeof(newAttributeValue) === "string") {
-          return newAttributeValue;
-        }
+      newAttributeValue = method(attributeValue, nodeName);
+      if (typeof(newAttributeValue) === "string") {
+        return newAttributeValue;
       }
     }
 
@@ -6985,9 +6941,13 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
 
     alt: (function() {
       var REG_EXP = /[^ a-z0-9_\-]/gi;
-      return function(attributeValue) {
+      return function(attributeValue, nodeName) {
         if (!attributeValue) {
-          return "";
+          if (nodeName === "IMG") {
+            return "";
+          } else {
+            return null;
+          }
         }
         return attributeValue.replace(REG_EXP, "");
       };
@@ -7013,6 +6973,9 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
 
     any: (function() {
       return function(attributeValue) {
+        if (!attributeValue) {
+          return null;
+        }
         return attributeValue;
       };
     })()
@@ -7264,12 +7227,15 @@ wysihtml5.dom.replaceWithChildNodes = function(node) {
     var doc             = list.ownerDocument,
         fragment        = doc.createDocumentFragment(),
         previousSibling = wysihtml5.dom.domNode(list).prev({ignoreBlankTexts: true}),
+        nextSibling = wysihtml5.dom.domNode(list).next({ignoreBlankTexts: true}),
         firstChild,
         lastChild,
         isLastChild,
         shouldAppendLineBreak,
         paragraph,
-        listItem;
+        listItem,
+        lastListItem = list.lastElementChild || list.lastChild,
+        isLastItem;
 
     if (useLineBreaks) {
       // Insert line break if list is after a non-block element
@@ -7279,10 +7245,11 @@ wysihtml5.dom.replaceWithChildNodes = function(node) {
 
       while (listItem = (list.firstElementChild || list.firstChild)) {
         lastChild = listItem.lastChild;
+        isLastItem = listItem === lastListItem;
         while (firstChild = listItem.firstChild) {
           isLastChild           = firstChild === lastChild;
           // This needs to be done before appending it to the fragment, as it otherwise will lose style information
-          shouldAppendLineBreak = isLastChild && !_isBlockElement(firstChild) && !_isLineBreak(firstChild);
+          shouldAppendLineBreak = (!isLastItem || (nextSibling && !_isBlockElement(nextSibling))) && isLastChild && !_isBlockElement(firstChild) && !_isLineBreak(firstChild);
           fragment.appendChild(firstChild);
           if (shouldAppendLineBreak) {
             _appendLineBreak(fragment);
@@ -7370,6 +7337,9 @@ wysihtml5.dom.replaceWithChildNodes = function(node) {
     constructor: function(readyCallback, config) {
       this.callback = readyCallback || wysihtml5.EMPTY_FUNCTION;
       this.config   = wysihtml5.lang.object({}).merge(config).get();
+      if (!this.config.className) {
+        this.config.className = "wysihtml5-sandbox";
+      }
       this.editableArea   = this._createIframe();
     },
 
@@ -7424,7 +7394,7 @@ wysihtml5.dom.replaceWithChildNodes = function(node) {
     _createIframe: function() {
       var that   = this,
           iframe = doc.createElement("iframe");
-      iframe.className = "wysihtml5-sandbox";
+      iframe.className = this.config.className;
       wysihtml5.dom.setAttributes({
         "security":           "restricted",
         "allowtransparency":  "true",
@@ -7510,6 +7480,10 @@ wysihtml5.dom.replaceWithChildNodes = function(node) {
         this._unset(iframeDocument, "cookie", "", true);
       }
 
+      if (wysihtml5.polyfills) {
+        wysihtml5.polyfills(iframeWindow, iframeDocument);
+      }
+
       this.loaded = true;
 
       // Trigger the callback
@@ -7583,6 +7557,9 @@ wysihtml5.dom.replaceWithChildNodes = function(node) {
       constructor: function(readyCallback, config, contentEditable) {
         this.callback = readyCallback || wysihtml5.EMPTY_FUNCTION;
         this.config   = wysihtml5.lang.object({}).merge(config).get();
+        if (!this.config.className) {
+          this.config.className = "wysihtml5-sandbox";
+        }
         if (contentEditable) {
             this.element = this._bindElement(contentEditable);
         } else {
@@ -7593,7 +7570,7 @@ wysihtml5.dom.replaceWithChildNodes = function(node) {
       // creates a new contenteditable and initiates it
       _createElement: function() {
         var element = doc.createElement("div");
-        element.className = "wysihtml5-sandbox";
+        element.className = this.config.className;
         this._loadElement(element);
         return element;
       },
@@ -7672,8 +7649,8 @@ wysihtml5.dom.replaceWithChildNodes = function(node) {
  *    wysihtml.dom.simulatePlaceholder(this, composer, "Foobar");
  */
 (function(dom) {
-  dom.simulatePlaceholder = function(editor, view, placeholderText) {
-    var CLASS_NAME = "placeholder",
+  dom.simulatePlaceholder = function(editor, view, placeholderText, placeholderClassName) {
+    var CLASS_NAME = placeholderClassName || "wysihtml5-placeholder",
         unset = function() {
           var composerIsVisible   = view.element.offsetWidth > 0 && view.element.offsetHeight > 0;
           if (view.hasPlaceholderSet()) {
@@ -7692,7 +7669,7 @@ wysihtml5.dom.replaceWithChildNodes = function(node) {
           dom.removeClass(view.element, CLASS_NAME);
         },
         set = function() {
-          if (view.isEmpty()) {
+          if (view.isEmpty() && !view.placeholderSet) {
             view.placeholderSet = true;
             view.setValue(placeholderText);
             dom.addClass(view.element, CLASS_NAME);
@@ -9017,7 +8994,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
   }
 
   var handleMouseDown = function(event) {
-    var target = wysihtml5.dom.getParentElement(event.target, { query: "td, th" });
+    var target = wysihtml5.dom.getParentElement(event.target, { query: "td, th" }, false, editable);
     if (target) {
       handleSelectionMousedown(target);
     }
@@ -9027,7 +9004,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
     select.start = target;
     select.end = target;
     select.cells = [target];
-    select.table = dom.getParentElement(select.start, { query: "table" });
+    select.table = dom.getParentElement(select.start, { query: "table" }, false, editable);
 
     if (select.table) {
       removeCellSelections();
@@ -9058,11 +9035,11 @@ wysihtml5.quirks.ensureProperClearing = (function() {
 
   function handleMouseMove (event) {
     var curTable = null,
-      cell = dom.getParentElement(event.target, { query: "td, th" }),
+      cell = dom.getParentElement(event.target, { query: "td, th" }, false, editable),
       oldEnd;
 
     if (cell && select.table && select.start) {
-      curTable =  dom.getParentElement(cell, { query: "table" });
+      curTable =  dom.getParentElement(cell, { query: "table" }, false, editable);
       if (curTable && curTable === select.table) {
         removeCellSelections();
         oldEnd = select.end;
@@ -9090,7 +9067,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
 
   var sideClickHandler = function(event) {
     editable.ownerDocument.removeEventListener("click", sideClickHandler);
-    if (dom.getParentElement(event.target, { query: "table" }) != select.table) {
+    if (dom.getParentElement(event.target, { query: "table" }, false, editable) != select.table) {
       removeCellSelections();
       select.table = null;
       select.start = null;
@@ -9106,7 +9083,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
   function selectCells (start, end) {
     select.start = start;
     select.end = end;
-    select.table = dom.getParentElement(select.start, { query: "table" });
+    select.table = dom.getParentElement(select.start, { query: "table" }, false, editable);
     selectedCells = dom.table.getCellsBetween(select.start, select.end);
     addSelections(selectedCells);
     bindSideclick();
@@ -9350,6 +9327,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
             }
           };
 
+      caretPlaceholder.className = '_wysihtml5-temp-caret-fix';
       caretPlaceholder.style.position = 'absolute';
       caretPlaceholder.style.display = 'block';
       caretPlaceholder.style.minWidth = '1px';
@@ -9385,7 +9363,9 @@ wysihtml5.quirks.ensureProperClearing = (function() {
           fixWebkitSelection = function() {
             // Webkit fails to add selection if there are no textnodes in that region
             // (like an uneditable container at the end of content).
-            if (!sel) {
+            var parent = node.parentNode,
+                lastSibling = parent ? parent.childNodes[parent.childNodes.length - 1] : null;
+            if (!sel || (lastSibling === node && this.win.getComputedStyle(node).display === "block")) {
               if (notVisual) {
                 // If setAfter is used as internal between actions, self-removing caretPlaceholder has simpler implementation
                 // and remove itself in call stack end instead on user interaction 
@@ -9401,7 +9381,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
                 this.createTemporaryCaretSpaceAfter(node);
               }
             }
-          },
+          }.bind(this),
           sel;
 
       range.setStartAfter(node);
@@ -9686,45 +9666,69 @@ wysihtml5.quirks.ensureProperClearing = (function() {
         }
     },
 
-    caretIsBeforeUneditable: function() {
-      var selection = this.getSelection(),
-          node = selection.anchorNode,
-          offset = selection.anchorOffset,
-          childNodes = [],
-          range, contentNodes, lastNode;
+    // Returns object describing node/text before selection
+    // If includePrevLeaves is true returns  also previous last leaf child if selection is in the beginning of current node
+    getBeforeSelection: function(includePrevLeaves) {
+      var sel = this.getSelection(),
+          startNode = (sel.isBackwards()) ? sel.focusNode : sel.anchorNode,
+          startOffset = (sel.isBackwards()) ? sel.focusOffset : sel.anchorOffset,
+          rng = this.createRange(), endNode, inTmpCaret;
 
-      if (node) {
-        if (offset === 0) {
-          var prevNode = this.getPreviousNode(node, true),
-              prevLeaf = prevNode ? wysihtml5.dom.domNode(prevNode).lastLeafNode((this.unselectableClass) ? {leafClasses: [this.unselectableClass]} : false) : null;
-          if (prevLeaf) {
-            var uneditables = this.getOwnUneditables();
-            for (var i = 0, maxi = uneditables.length; i < maxi; i++) {
-              if (prevLeaf === uneditables[i]) {
-                return uneditables[i];
-              }
-            }
+      // Escape temproray helper nodes if selection in them
+      inTmpCaret = wysihtml5.dom.getParentElement(startNode, { query: '._wysihtml5-temp-caret-fix' }, 1);
+      if (inTmpCaret) {
+        startNode = inTmpCaret.parentNode;
+        startOffset = Array.prototype.indexOf.call(startNode.childNodes, inTmpCaret);
+      }
+
+      if (startNode) {
+        if (startOffset > 0) {
+          if (startNode.nodeType === 3) {
+            rng.setStart(startNode, 0);
+            rng.setEnd(startNode, startOffset);
+            return {
+              type: "text",
+              range: rng,
+              offset : startOffset,
+              node: startNode
+            };
+          } else {
+            rng.setStartBefore(startNode.childNodes[0]);
+            endNode = startNode.childNodes[startOffset - 1];
+            rng.setEndAfter(endNode);
+            return {
+              type: "element",
+              range: rng,
+              offset : startOffset,
+              node: endNode
+            };
           }
         } else {
-          range = selection.getRangeAt(0);
-          range.setStart(range.startContainer, range.startOffset - 1);
-          // TODO: make getting children on range a separate funtion
-          if (range) {
-            contentNodes = range.getNodes([1,3]);
-            for (var n = 0, max = contentNodes.length; n < max; n++) {
-              if (contentNodes[n].parentNode && contentNodes[n].parentNode === node) {
-                childNodes.push(contentNodes[n]);
-              }
+          rng.setStartAndEnd(startNode, 0);
+
+          if (includePrevLeaves) {
+            var prevNode = this.getPreviousNode(startNode, true),
+              prevLeaf = prevNode ? wysihtml5.dom.domNode(prevNode).lastLeafNode() : null;
+
+            if (prevLeaf) {
+              return {
+                type: "leafnode",
+                range: rng,
+                offset : startOffset,
+                node: prevLeaf
+              };
             }
           }
-          lastNode = childNodes.length > 0 ? childNodes[childNodes.length -1] : null;
-          if (lastNode && lastNode.nodeType === 1 && wysihtml5.dom.hasClass(lastNode, this.unselectableClass)) {
-            return lastNode;
-          }
 
+          return {
+            type: "none",
+            range: rng,
+            offset : startOffset,
+            node: startNode
+          };
         }
       }
-      return false;
+      return null;
     },
 
     // TODO: Figure out a method from following 2 that would work universally
@@ -9804,7 +9808,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
         }
         this.setSelection(newRange);
         for (var i = caretPlaceholder.length; i--;) {
-         caretPlaceholder[i].parentNode.removeChild(caretPlaceholder[i]);
+          caretPlaceholder[i].parentNode.removeChild(caretPlaceholder[i]);
         }
 
       } else {
@@ -11374,7 +11378,7 @@ wysihtml5.Commands = Base.extend(
   function cleanup(composer) {
     var container = composer.element,
         allElements = container.querySelectorAll(BLOCK_ELEMENTS),
-        uneditables = container.querySelectorAll(composer.config.uneditableContainerClassname),
+        uneditables = container.querySelectorAll(composer.config.classNames.uneditableContainer),
         elements = wysihtml5.lang.array(allElements).without(uneditables);
 
     for (var i = elements.length; i--;) {
@@ -11646,7 +11650,7 @@ wysihtml5.Commands = Base.extend(
         state = this.state(composer, command, options);
         if (state) {
           bookmark = rangy.saveSelection(composer.win);
-          for (var j in state) {
+          for (var j = 0, jmax = state.length; j < jmax; j++) {
             removeOptionsFromElement(state[j], options, composer);
           }
         }
@@ -11669,7 +11673,7 @@ wysihtml5.Commands = Base.extend(
             composer.selection.selectLine();
           }
         }
-      
+
         // And get all selection ranges of current composer and iterat
         ranges = composer.selection.getOwnRanges();
         for (var i = ranges.length; i--;) {
@@ -12132,7 +12136,7 @@ wysihtml5.Commands = Base.extend(
         };
 
     if (node) {
-      var parentLi = wysihtml5.dom.getParentElement(node, { query: "li" }),
+      var parentLi = wysihtml5.dom.getParentElement(node, { query: "li" }, false, composer.element),
           otherNodeName = (nodeName === "UL") ? "OL" : "UL";
 
       if (isNode(node, nodeName)) {
@@ -12169,8 +12173,9 @@ wysihtml5.Commands = Base.extend(
     // <ul><li>foo</li><li>bar</li></ul>
     // becomes:
     // foo<br>bar<br>
-    composer.selection.executeAndRestore(function() {
-      var otherLists = getListsInSelection(otherNodeName, composer);
+
+    composer.selection.executeAndRestoreRangy(function() {
+      otherLists = getListsInSelection(otherNodeName, composer);
       if (otherLists.length) {
         for (var l = otherLists.length; l--;) {
           wysihtml5.dom.renameElement(otherLists[l], nodeName.toLowerCase());
@@ -12192,7 +12197,7 @@ wysihtml5.Commands = Base.extend(
     // becomes:
     // <ul><li>foo</li><li>bar</li></ul>
     // Also rename other lists in selection
-    composer.selection.executeAndRestore(function() {
+    composer.selection.executeAndRestoreRangy(function() {
       var renameLists = [el].concat(getListsInSelection(otherNodeName, composer));
 
       // All selection inner lists get renamed too
@@ -12231,7 +12236,7 @@ wysihtml5.Commands = Base.extend(
 
       if (tempElement) {
         isEmpty = wysihtml5.lang.array(["", "<br>", wysihtml5.INVISIBLE_SPACE]).contains(tempElement.innerHTML);
-        list = wysihtml5.dom.convertToList(tempElement, nodeName.toLowerCase(), composer.parent.config.uneditableContainerClassname);
+        list = wysihtml5.dom.convertToList(tempElement, nodeName.toLowerCase(), composer.parent.config.classNames.uneditableContainer);
         if (isEmpty) {
           composer.selection.selectNode(list.querySelector("li"), true);
         }
@@ -12245,6 +12250,7 @@ wysihtml5.Commands = Base.extend(
           cmd           = (nodeName === "OL") ? "insertOrderedList" : "insertUnorderedList",
           selectedNode  = composer.selection.getSelectedNode(),
           list          = findListEl(selectedNode, nodeName, composer);
+
 
       if (!list.el) {
         if (composer.commands.support(cmd)) {
@@ -12460,7 +12466,7 @@ wysihtml5.Commands = Base.extend(
         for (row = 0; row < value.rows; row ++) {
           html += '<tr>';
           for (col = 0; col < value.cols; col ++) {
-            html += "<td>&nbsp;</td>";
+            html += "<td><br></td>";
           }
           html += '</tr>';
         }
@@ -13142,14 +13148,17 @@ wysihtml5.views.View = Base.extend(
 
     _initContentEditableArea: function() {
         var that = this;
-
         if (this.config.noTextarea) {
             this.sandbox = new dom.ContentEditableArea(function() {
                 that._create();
-            }, {}, this.editableArea);
+            }, {
+              className: this.config.classNames.sandbox
+            }, this.editableArea);
         } else {
             this.sandbox = new dom.ContentEditableArea(function() {
                 that._create();
+            }, {
+              className: this.config.classNames.sandbox
             });
             this.editableArea = this.sandbox.getContentEditable();
             dom.insert(this.editableArea).after(this.textarea.element);
@@ -13159,11 +13168,11 @@ wysihtml5.views.View = Base.extend(
 
     _initSandbox: function() {
       var that = this;
-
       this.sandbox = new dom.Sandbox(function() {
         that._create();
       }, {
-        stylesheets:  this.config.stylesheets
+        stylesheets:  this.config.stylesheets,
+        className: this.config.classNames.sandbox
       });
       this.editableArea  = this.sandbox.getIframe();
 
@@ -13197,7 +13206,7 @@ wysihtml5.views.View = Base.extend(
       }
 
       // Make sure our selection handler is ready
-      this.selection = new wysihtml5.Selection(this.parent, this.element, this.config.uneditableContainerClassname);
+      this.selection = new wysihtml5.Selection(this.parent, this.element, this.config.classNames.uneditableContainer);
 
       // Make sure commands dispatcher is ready
       this.commands  = new wysihtml5.Commands(this.parent);
@@ -13208,7 +13217,7 @@ wysihtml5.views.View = Base.extend(
           ]).from(this.textarea.element).to(this.element);
       }
 
-      dom.addClass(this.element, this.config.composerClassName);
+      dom.addClass(this.element, this.config.classNames.composer);
       //
       // Make the editor look like the original textarea, by syncing styles
       if (this.config.style && !this.config.contentEditableMode) {
@@ -13234,7 +13243,7 @@ wysihtml5.views.View = Base.extend(
         ? this.config.placeholder
         : ((this.config.noTextarea) ? this.editableArea.getAttribute("data-placeholder") : this.textarea.element.getAttribute("placeholder"));
       if (placeholderText) {
-        dom.simulatePlaceholder(this.parent, this, placeholderText);
+        dom.simulatePlaceholder(this.parent, this, placeholderText, this.config.classNames.placeholder);
       }
 
       // Make sure that the browser avoids using inline styles whenever possible
@@ -13286,7 +13295,7 @@ wysihtml5.views.View = Base.extend(
         this.parent.on("newword:composer", function() {
           if (dom.getTextContent(that.element).match(dom.autoLink.URL_REG_EXP)) {
             var nodeWithSelection = that.selection.getSelectedNode(),
-                uneditables = that.element.querySelectorAll("." + that.config.uneditableContainerClassname),
+                uneditables = that.element.querySelectorAll("." + that.config.classNames.uneditableContainer),
                 isInUneditable = false;
 
             for (var i = uneditables.length; i--;) {
@@ -13295,12 +13304,12 @@ wysihtml5.views.View = Base.extend(
               }
             }
 
-            if (!isInUneditable) dom.autoLink(nodeWithSelection, [that.config.uneditableContainerClassname]);
+            if (!isInUneditable) dom.autoLink(nodeWithSelection, [that.config.classNames.uneditableContainer]);
           }
         });
 
         dom.observe(this.element, "blur", function() {
-          dom.autoLink(that.element, [that.config.uneditableContainerClassname]);
+          dom.autoLink(that.element, [that.config.classNames.uneditableContainer]);
         });
       }
 
@@ -13716,59 +13725,98 @@ wysihtml5.views.View = Base.extend(
     }
   };
 
+  // Override for giving user ability to delete last line break in table cell
+  var fixLastBrDeletionInTable = function(composer, force) {
+    if (composer.selection.caretIsLastInSelection()) {
+      var sel = composer.selection.getSelection(),
+          aNode = sel.anchorNode;
+      if (aNode && aNode.nodeType === 1 && (wysihtml5.dom.getParentElement(aNode, {query: 'td, th'}, false, composer.element) || force)) {
+        var nextNode = aNode.childNodes[sel.anchorOffset];
+        if (nextNode && nextNode.nodeType === 1 & nextNode.nodeName === "BR") {
+          nextNode.parentNode.removeChild(nextNode);
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+
+  // If found an uneditable before caret then notify it before deletion
+  var handleUneditableDeletion = function(composer) {
+    var before = composer.selection.getBeforeSelection(true);
+    if (before && (before.type === "element" || before.type === "leafnode") && before.node.nodeType === 1 && before.node.classList.contains(composer.config.classNames.uneditableContainer)) {
+      if (fixLastBrDeletionInTable(composer, true)) {
+        return true;
+      }
+      try {
+        var ev = new CustomEvent("wysihtml5:uneditable:delete");
+        before.node.dispatchEvent(ev);
+      } catch (err) {}
+      before.node.parentNode.removeChild(before.node);
+      return true;
+    }
+    return false;
+  };
+
+  // Deletion with caret in the beginning of headings needs special attention
+  // Heading does not concate text to previous block node correctly (browsers do unexpected miracles here especially webkit)
+  var fixDeleteInTheBeginnigOfHeading = function(composer) {
+    var selection = composer.selection;
+
+    if (selection.caretIsFirstInSelection() &&
+        selection.getPreviousNode() &&
+        selection.getPreviousNode().nodeName &&
+        (/^H\d$/gi).test(selection.getPreviousNode().nodeName)
+    ) {
+      var prevNode = selection.getPreviousNode();
+      if ((/^\s*$/).test(prevNode.textContent || prevNode.innerText)) {
+        // If heading is empty remove the heading node
+        prevNode.parentNode.removeChild(prevNode);
+        return true;
+      } else {
+        if (prevNode.lastChild) {
+          var selNode = prevNode.lastChild,
+              curNode = wysihtml5.dom.getParentElement(selection.getSelectedNode(), { query: "h1, h2, h3, h4, h5, h6, p, pre, div, blockquote" }, false, composer.element);
+          if (prevNode) {
+            if (curNode) {
+              while (curNode.firstChild) {
+                prevNode.appendChild(curNode.firstChild);
+              }
+              selection.setAfter(selNode);
+              return true;
+            } else if (selection.getSelectedNode().nodeType === 3) {
+              prevNode.appendChild(selection.getSelectedNode());
+              selection.setAfter(selNode);
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
+  };
+
   var handleDeleteKeyPress = function(event, composer) {
     var selection = composer.selection,
         element = composer.element;
 
     if (selection.isCollapsed()) {
       if (selection.caretIsInTheBeginnig('li')) {
+        // delete in the beginnig of LI will outdent not delete
         event.preventDefault();
         composer.commands.exec('outdentList');
-      } else if (selection.caretIsInTheBeginnig()) {
-        event.preventDefault();
       } else {
-        if (selection.caretIsFirstInSelection() &&
-            selection.getPreviousNode() &&
-            selection.getPreviousNode().nodeName &&
-            (/^H\d$/gi).test(selection.getPreviousNode().nodeName)
-        ) {
-          var prevNode = selection.getPreviousNode();
-          if ((/^\s*$/).test(prevNode.textContent || prevNode.innerText)) {
-            // heading is empty
-            event.preventDefault();
-            prevNode.parentNode.removeChild(prevNode);
-          } else {
-            if (prevNode.lastChild) {
-              var selNode = prevNode.lastChild,
-                  curNode = wysihtml5.dom.getParentElement(selection.getSelectedNode(), { query: "h1, h2, h3, h4, h5, h6, p, pre, div, blockquote" }, false, composer.element);
-              if (prevNode) {
-                if (curNode) {
-                  event.preventDefault();
-                  while (curNode.firstChild) {
-                    prevNode.appendChild(curNode.firstChild);
-                  }
-                  selection.setAfter(selNode);
-                } else if (selection.getSelectedNode().nodeType === 3) {
-                  event.preventDefault();
-                  prevNode.appendChild(selection.getSelectedNode());
-                  selection.setAfter(selNode);
-                }
-              }
-            }
-          }
-        }
-
-        var beforeUneditable = selection.caretIsBeforeUneditable();
-        // Do a special delete if caret would delete uneditable
-        if (beforeUneditable) {
+        if (fixDeleteInTheBeginnigOfHeading(composer)) {
           event.preventDefault();
-          // If customevents present notify element of being deleted
-          // TODO: Investigate if browser support can be extended
-          try {
-            var ev = new CustomEvent("wysihtml5:uneditable:delete");
-            beforeUneditable.dispatchEvent(ev);
-          } catch (err) {}
-          beforeUneditable.parentNode.removeChild(beforeUneditable);
+          return;
+        }
+        if (fixLastBrDeletionInTable(composer)) {
+          event.preventDefault();
+          return;
+        }
+        if (handleUneditableDeletion(composer)) {
+          event.preventDefault();
+          return;
         }
       }
     } else {
@@ -13861,7 +13909,7 @@ wysihtml5.views.View = Base.extend(
       // Make sure that images are selected when clicking on them
       var target = event.target,
           allImages = this.element.querySelectorAll('img'),
-          notMyImages = this.element.querySelectorAll('.' + this.config.uneditableContainerClassname + ' img'),
+          notMyImages = this.element.querySelectorAll('.' + this.config.classNames.uneditableContainer + ' img'),
           myImages = wysihtml5.lang.array(allImages).without(notMyImages);
 
       if (target.nodeName === "IMG" && wysihtml5.lang.array(myImages).contains(target)) {
@@ -13891,10 +13939,10 @@ wysihtml5.views.View = Base.extend(
   };
 
   var handleClick = function(event) {
-    if (this.config.uneditableContainerClassname) {
+    if (this.config.classNames.uneditableContainer) {
       // If uneditables is configured, makes clicking on uneditable move caret after clicked element (so it can be deleted like text)
       // If uneditable needs text selection itself event.stopPropagation can be used to prevent this behaviour
-      var uneditable = wysihtml5.dom.getParentElement(event.target, { query: "." + this.config.uneditableContainerClassname }, false, this.element);
+      var uneditable = wysihtml5.dom.getParentElement(event.target, { query: "." + this.config.classNames.uneditableContainer }, false, this.element);
       if (uneditable) {
         this.selection.setAfter(uneditable);
       }
@@ -14036,12 +14084,6 @@ wysihtml5.views.View = Base.extend(
       this.parent.fire("unset_placeholder");
     }).bind(this), false);
 
-    // --------- IE 8+9 focus the editor when the iframe is clicked (without actually firing the 'focus' event on the <body>) ---------
-    if (!this.config.contentEditableMode && browser.hasIframeFocusIssue()) {
-      container.addEventListener("focus", handleIframeFocus.bind(this), false);
-      container.addEventListener("blur", handleIframeBlur.bind(this), false);
-    }
-
   };
 })(wysihtml5);
 ;/**
@@ -14140,6 +14182,61 @@ wysihtml5.views.View = Base.extend(
       this.editor.on("destroy:composer", stopInterval);
     }
   });
+})(wysihtml5);
+;(function(wysihtml5) {
+
+  wysihtml5.views.SourceView = Base.extend(
+    /** @scope wysihtml5.views.SourceView.prototype */ {
+
+    constructor: function(editor, composer) {
+      this.editor   = editor;
+      this.composer = composer;
+
+      this._observe();
+    },
+
+    switchToTextarea: function(shouldParseHtml) {
+      var composerStyles = this.composer.win.getComputedStyle(this.composer.element),
+          width = parseFloat(composerStyles.width),
+          height = Math.max(parseFloat(composerStyles.height), 100);
+
+      if (!this.textarea) {
+        this.textarea = this.composer.doc.createElement('textarea');
+        this.textarea.className = "wysihtml5-source-view";
+      }
+      this.textarea.style.width = width + 'px';
+      this.textarea.style.height = height + 'px';
+      this.textarea.value = this.editor.getValue(shouldParseHtml, true);
+      this.composer.element.parentNode.insertBefore(this.textarea, this.composer.element);
+      this.editor.currentView = "source";
+      this.composer.element.style.display = 'none';
+    },
+
+    switchToComposer: function(shouldParseHtml) {
+      var textareaValue = this.textarea.value;
+      if (textareaValue) {
+        this.composer.setValue(textareaValue, shouldParseHtml);
+      } else {
+        this.composer.clear();
+        this.editor.fire("set_placeholder");
+      }
+      this.textarea.parentNode.removeChild(this.textarea);
+      this.editor.currentView = this.composer;
+      this.composer.element.style.display = '';
+    },
+
+    _observe: function() {
+      this.editor.on("change_view", function(view) {
+        if (view === "composer") {
+          this.switchToComposer(true);
+        } else if (view === "textarea") {
+          this.switchToTextarea(true);
+        }
+      }.bind(this));
+    }
+
+  });
+
 })(wysihtml5);
 ;wysihtml5.views.Textarea = wysihtml5.views.View.extend(
   /** @scope wysihtml5.views.Textarea.prototype */ {
@@ -14269,10 +14366,6 @@ wysihtml5.views.View = Base.extend(
     pasteParserRulesets: null,
     // Parser method to use when the user inserts content
     parser:               wysihtml5.dom.parse,
-    // Class name which should be set on the contentEditable element in the created sandbox iframe, can be styled via the 'stylesheets' option
-    composerClassName:    "wysihtml5-editor",
-    // Class name to add to the body when the wysihtml5 editor is supported
-    bodyClassName:        "wysihtml5-supported",
     // By default wysihtml5 will insert a <br> for line breaks, set this to false to use <p>
     useLineBreaks:        true,
     // Array (or single string) of stylesheet urls to be loaded in the editor's iframe
@@ -14285,9 +14378,18 @@ wysihtml5.views.View = Base.extend(
     cleanUp:              true,
     // Whether to use div instead of secure iframe
     contentEditableMode: false,
-    // Classname of container that editor should not touch and pass through
-    // Pass false to disable
-    uneditableContainerClassname: "wysihtml5-uneditable-container",
+    classNames: {
+      // Class name which should be set on the contentEditable element in the created sandbox iframe, can be styled via the 'stylesheets' option
+      composer: "wysihtml5-editor",
+      // Class name to add to the body when the wysihtml5 editor is supported
+      body: "wysihtml5-supported",
+      // classname added to editable area element (iframe/div) on creation
+      sandbox: "wysihtml5-sandbox",
+      // class on editable area with placeholder
+      placeholder: "wysihtml5-placeholder",
+      // Classname of container that editor should not touch and pass through
+      uneditableContainer: "wysihtml5-uneditable-container"
+    },
     // Browsers that support copied source handling will get a marking of the origin of the copied source (for determinig code cleanup rules on paste)
     // Also copied source is based directly on selection - 
     // (very useful for webkit based browsers where copy will otherwise contain a lot of code and styles based on whatever and not actually in selection).
@@ -14301,6 +14403,11 @@ wysihtml5.views.View = Base.extend(
       this.editableElement  = typeof(editableElement) === "string" ? document.getElementById(editableElement) : editableElement;
       this.config           = wysihtml5.lang.object({}).merge(defaultConfig).merge(config).get();
       this._isCompatible    = wysihtml5.browser.supported();
+
+      // merge classNames
+      if (config && config.classNames) {
+        wysihtml5.lang.object(this.config.classNames).merge(config.classNames);
+      }
 
       if (this.editableElement.nodeName.toLowerCase() != "textarea") {
           this.config.contentEditableMode = true;
@@ -14319,7 +14426,7 @@ wysihtml5.views.View = Base.extend(
       }
 
       // Add class name to body, to indicate that the editor is supported
-      wysihtml5.dom.addClass(document.body, this.config.bodyClassName);
+      wysihtml5.dom.addClass(document.body, this.config.classNames.body);
 
       this.composer = new wysihtml5.views.Composer(this, this.editableElement, this.config);
       this.currentView = this.composer;
@@ -14333,7 +14440,9 @@ wysihtml5.views.View = Base.extend(
 
     handleBeforeLoad: function() {
         if (!this.config.noTextarea) {
-            this.synchronizer = new wysihtml5.views.Synchronizer(this, this.textarea, this.composer);
+          this.synchronizer = new wysihtml5.views.Synchronizer(this, this.textarea, this.composer);
+        } else {
+          this.sourceView = new wysihtml5.views.SourceView(this, this.composer);
         }
         if (this.config.toolbar) {
           this.toolbar = new wysihtml5.toolbar.Toolbar(this, this.config.toolbar, this.config.showToolbarAfterInit);
@@ -14403,7 +14512,7 @@ wysihtml5.views.View = Base.extend(
         "rules": this.config.parserRules,
         "cleanUp": this.config.cleanUp,
         "context": parseContext,
-        "uneditableClass": this.config.uneditableContainerClassname,
+        "uneditableClass": this.config.classNames.uneditableContainer,
         "clearInternals" : clearInternals
       });
       if (typeof(htmlOrElement) === "object") {
@@ -14449,7 +14558,7 @@ wysihtml5.views.View = Base.extend(
       var cleanHtml = wysihtml5.quirks.cleanPastedHTML(oldHtml, {
         "referenceNode": this.composer.element,
         "rules": this.config.pasteParserRulesets || [{"set": this.config.parserRules}],
-        "uneditableClass": this.config.uneditableContainerClassname
+        "uneditableClass": this.config.classNames.uneditableContainer
       });
       this.composer.selection.deleteContents();
       this.composer.selection.insertHTML(cleanHtml);

@@ -13,8 +13,8 @@
  *    wysihtml.dom.simulatePlaceholder(this, composer, "Foobar");
  */
 (function(dom) {
-  dom.simulatePlaceholder = function(editor, view, placeholderText) {
-    var CLASS_NAME = "placeholder",
+  dom.simulatePlaceholder = function(editor, view, placeholderText, placeholderClassName) {
+    var CLASS_NAME = placeholderClassName || "wysihtml5-placeholder",
         unset = function() {
           var composerIsVisible   = view.element.offsetWidth > 0 && view.element.offsetHeight > 0;
           if (view.hasPlaceholderSet()) {
@@ -33,7 +33,7 @@
           dom.removeClass(view.element, CLASS_NAME);
         },
         set = function() {
-          if (view.isEmpty()) {
+          if (view.isEmpty() && !view.placeholderSet) {
             view.placeholderSet = true;
             view.setValue(placeholderText);
             dom.addClass(view.element, CLASS_NAME);

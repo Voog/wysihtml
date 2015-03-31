@@ -1,3 +1,25 @@
+*wysihtml5x 0.5.0-beta8* (March 16, 2015)
+* Fixes table cell selector escaping editable context
+* Fixes some list toggling issues
+* Fixes object merge for ie8 and its usage on init
+
+*wysihtml5x 0.5.0-beta7* (March 6, 2015)
+* Makes maine element classnames including placeholder configurable and prefixed (NB! .placeholder class is now .wysihtml5-placeholder)
+* Changes API by grouping class names under classNames option
+* Functions passed to check_attribute methods have now second argument node name
+* Functions passed to check_attribute methods can now decide if empty argument value will delete the arrtibute or keep enpty value ("" vs null)
+* Fixes an incorrect array iteration that could cause errors if Array prototype is extended
+
+*wysihtml5x 0.5.0-beta6* (March 3, 2015)
+* Makes html editing view available for div (iframeless) mode
+* Parser rules check_attributes accepts now functions for more flexible custmizaton
+* Fixes last line break deletion in table cell
+* Created tables do not fill cells with non-breakable spaces anymore
+
+*wysihtml5x 0.5.0-beta5* (February 17, 2015)
+* Fixes IE and webkit erroneous handling
+* Corrects bower.json usage
+
 *wysihtml5x 0.5.0-beta4* (January 29, 2015)
 * Adds sub- and superscript commands
 * Fixes errors mainly with IE8 and 9

@@ -16,32 +16,41 @@ module("wysihtml5.dom.resolveList", {
 test("Basic tests (useLineBreaks = true)", function() {
   this.equal(
     this.resolveList("<ul><li>foo</li></ul>", true),
-    "foo<br>"
+    "foo",
+    "List with one li element resolved"
+  );
+
+  this.equal(
+    this.resolveList("<ul><li>foo</li></ul>Test", true),
+    "foo<br>Test",
+    "List with test after adds line break"
   );
   
   this.equal(
     this.resolveList("<ul><li>foo</li><li>bar</li></ul>", true),
-    "foo<br>bar<br>"
+    "foo<br>bar",
+    "List with two li elements resolved"
   );
   
   this.equal(
     this.resolveList("<ol><li>foo</li><li>bar</li></ol>", true),
-    "foo<br>bar<br>"
+    "foo<br>bar",
+    "Numbered list with two li elements resolved"
   );
   
   this.equal(
     this.resolveList("<ol><li></li><li>bar</li></ol>", true),
-    "bar<br>"
+    "bar"
   );
   
   this.equal(
     this.resolveList("<ol><li>foo<br></li><li>bar</li></ol>", true),
-    "foo<br>bar<br>"
+    "foo<br>bar"
   );
   
   this.equal(
     this.resolveList("<ul><li><h1>foo</h1></li><li><div>bar</div></li><li>baz</li></ul>", true),
-    "<h1>foo</h1><div>bar</div>baz<br>"
+    "<h1>foo</h1><div>bar</div>baz"
   );
 });
 

@@ -5,9 +5,17 @@ wysihtml5.lang.object = function(obj) {
      *    wysihtml5.lang.object({ foo: 1, bar: 1 }).merge({ bar: 2, baz: 3 }).get();
      *    // => { foo: 1, bar: 2, baz: 3 }
      */
-    merge: function(otherObj) {
+    merge: function(otherObj, deep) {
       for (var i in otherObj) {
-        obj[i] = otherObj[i];
+        if (deep && wysihtml5.lang.object(otherObj[i]).isPlainObject() && (typeof obj[i] === "undefined" || wysihtml5.lang.object(obj[i]).isPlainObject())) {
+          if (typeof obj[i] === "undefined") {
+            obj[i] = wysihtml5.lang.object(otherObj[i]).clone(true);
+          } else {
+            wysihtml5.lang.object(obj[i]).merge(wysihtml5.lang.object(otherObj[i]).clone(true));
+          }
+        } else {
+          obj[i] = wysihtml5.lang.object(otherObj[i]).isPlainObject() ? wysihtml5.lang.object(otherObj[i]).clone(true) : otherObj[i];
+        }
       }
       return this;
     },
@@ -62,7 +70,7 @@ wysihtml5.lang.object = function(obj) {
     },
 
     isPlainObject: function () {
-      return Object.prototype.toString.call(obj) === '[object Object]';
+      return obj && Object.prototype.toString.call(obj) === '[object Object]' && !(("Node" in window) ? obj instanceof Node : obj instanceof Element || obj instanceof Text);
     }
   };
 };

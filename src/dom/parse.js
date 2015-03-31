@@ -465,15 +465,13 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
   }
 
   function _checkAttribute(attributeName, attributeValue, methodName, nodeName) {
-    var method = attributeCheckMethods[methodName],
+    var method = wysihtml5.lang.object(methodName).isFunction() ? methodName : attributeCheckMethods[methodName],
         newAttributeValue;
 
     if (method) {
-      if (attributeValue || (attributeName === "alt" && nodeName == "IMG")) {
-        newAttributeValue = method(attributeValue);
-        if (typeof(newAttributeValue) === "string") {
-          return newAttributeValue;
-        }
+      newAttributeValue = method(attributeValue, nodeName);
+      if (typeof(newAttributeValue) === "string") {
+        return newAttributeValue;
       }
     }
 
@@ -708,9 +706,13 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
 
     alt: (function() {
       var REG_EXP = /[^ a-z0-9_\-]/gi;
-      return function(attributeValue) {
+      return function(attributeValue, nodeName) {
         if (!attributeValue) {
-          return "";
+          if (nodeName === "IMG") {
+            return "";
+          } else {
+            return null;
+          }
         }
         return attributeValue.replace(REG_EXP, "");
       };
@@ -736,6 +738,9 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
 
     any: (function() {
       return function(attributeValue) {
+        if (!attributeValue) {
+          return null;
+        }
         return attributeValue;
       };
     })()

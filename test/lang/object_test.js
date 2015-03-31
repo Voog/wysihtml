@@ -7,6 +7,62 @@ test("merge()", function() {
   deepEqual(obj, { foo: 1, bar: 2, baz: 3 });
 });
 
+test("deep merge()", function() {
+  var obj = {
+        foo: 1,
+        bar: 1,
+        o1: "test",
+        o2: {
+          a:1,
+          b:1
+        }
+      },
+      mergeObj = {
+        bar: 2,
+        baz: 3,
+        o1: {
+          a: 1,
+          b: 1
+        },
+        o2: {
+          a: 2,
+          b: undefined,
+          c: 3
+        }
+      },
+      expectedObj = {
+        foo: 1,
+        bar: 2,
+        baz: 3,
+        o1: {
+          a: 1,
+          b: 1
+        },
+        o2: {
+          a: 2,
+          b: undefined,
+          c: 3
+        }
+      },
+      returnValue = wysihtml5.lang.object(obj).merge(mergeObj, true).get();
+
+  equal(returnValue, obj, "Original object reference kept and returned");
+  deepEqual(mergeObj, {
+    bar: 2,
+    baz: 3,
+    o1: {
+      a: 1,
+      b: 1
+    },
+    o2: {
+      a: 2,
+      b: undefined,
+      c: 3
+    }
+  }, "Did not alter the merged object");
+  deepEqual(obj, expectedObj, "original object merged correctly");
+});
+
 test("clone()", function() {
   var obj = { foo: true },
       returnValue = wysihtml5.lang.object(obj).clone();

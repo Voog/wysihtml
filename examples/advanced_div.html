@@ -61,7 +61,7 @@
     border: 2px solid black;
   }
   
-  .wysihtml5-command-active {
+  .wysihtml5-command-active, .wysihtml5-action-active {
     font-weight: bold;
   }
   
@@ -117,7 +117,7 @@
     padding: 0 0.2em;
     margin: 1px 0;
   }
-  .toolbar a.wysihtml5-command-active {
+  .toolbar a.wysihtml5-command-active, .toolbar .wysihtml5-action-active {
     background: #222;
     color: white;
   }
@@ -256,7 +256,7 @@
       </div>
     
       <div class="block">
-        <a data-wysihtml5-action="showSource">HTML</a>
+        <a data-wysihtml5-action="change_view">HTML</a>
       </div>
     
       <div data-wysihtml5-dialog="createLink" style="display: none;">
@@ -374,7 +374,7 @@
         <a data-wysihtml5-command="redo">redo</a>
       </div>
       <div class="block">
-        <a data-wysihtml5-action="showSource">HTML</a>
+        <a data-wysihtml5-action="change_view">HTML</a>
       </div>
     
       <div class="block">

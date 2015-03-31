@@ -15,7 +15,7 @@
   function cleanup(composer) {
     var container = composer.element,
         allElements = container.querySelectorAll(BLOCK_ELEMENTS),
-        uneditables = container.querySelectorAll(composer.config.uneditableContainerClassname),
+        uneditables = container.querySelectorAll(composer.config.classNames.uneditableContainer),
         elements = wysihtml5.lang.array(allElements).without(uneditables);
 
     for (var i = elements.length; i--;) {
@@ -287,7 +287,7 @@
         state = this.state(composer, command, options);
         if (state) {
           bookmark = rangy.saveSelection(composer.win);
-          for (var j in state) {
+          for (var j = 0, jmax = state.length; j < jmax; j++) {
             removeOptionsFromElement(state[j], options, composer);
           }
         }
@@ -310,7 +310,7 @@
             composer.selection.selectLine();
           }
         }
-      
+
         // And get all selection ranges of current composer and iterat
         ranges = composer.selection.getOwnRanges();
         for (var i = ranges.length; i--;) {
