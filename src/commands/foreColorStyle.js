@@ -1,27 +1,21 @@
 /**
- * document.execCommand("foreColor") will create either inline styles (firefox, chrome) or use font tags
- * which we don't want
- * Instead we set a css class
+ * Sets text color by inline styles
  */
 (function(wysihtml5) {
-  var REG_EXP = /(\s|^)color\s*:\s*[^;\s]+;?/gi;
 
   wysihtml5.commands.foreColorStyle = {
     exec: function(composer, command, color) {
-      var colorVals  = wysihtml5.quirks.styleParser.parseColor((typeof(color) == "object") ? "color:" + color.color : "color:" + color, "color"),
+      var colorVals  = wysihtml5.quirks.styleParser.parseColor("color:" + (color.color || color), "color"),
           colString;
 
       if (colorVals) {
-        colString = "color: rgb(" + colorVals[0] + ',' + colorVals[1] + ',' + colorVals[2] + ');';
-        if (colorVals[3] !== 1) {
-          colString += "color: rgba(" + colorVals[0] + ',' + colorVals[1] + ',' + colorVals[2] + ',' + colorVals[3] + ');';
-        }
-        wysihtml5.commands.formatInline.execWithToggle(composer, command, "span", false, false, colString, REG_EXP);
+        colString = (colorVals[3] !== 1 ? "rgb(" : "rgba(") + colorVals.join(',') + ')';
+        wysihtml5.commands.formatInline.exec(composer, command, {styleProperty: 'color', styleValue: colString, toggle: true});
       }
     },
 
     state: function(composer, command) {
-      return wysihtml5.commands.formatInline.state(composer, command, "span", false, false, "color", REG_EXP);
+      return wysihtml5.commands.formatInline.state(composer, command, {styleProperty: 'color'});
     },
 
     stateValue: function(composer, command, props) {
