@@ -134,7 +134,7 @@
   function correctOptionsForSimilarityCheck (options) {
     return {
       nodeName: options.nodeName || null,
-      className: options.className || null,
+      className: (!options.classRegExp) ? options.className || null : null,
       classRegExp: options.classRegExp || null,
       styleProperty: options.styleProperty || null
     };
@@ -188,6 +188,11 @@
         } else {
           for (i = textNodes.length; i--;) {
             unformatTextNode(textNodes[i], composer, options);
+          }
+          if (!options.toggle) {
+            for (i = textNodes.length; i--;) {
+              formatTextNode(textNodes[i], options);
+            }
           }
           selectTextNodes(textNodes, composer);
         }
