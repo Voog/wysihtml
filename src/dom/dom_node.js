@@ -78,6 +78,50 @@
         return wysihtml5.dom.domNode(lastChild).lastLeafNode(options);
       },
 
+      // Splits element at childnode and extracts the childNode out of the element context
+      // Example:
+      //   var node = wysihtml5.dom.domNode(node).escapeParent(parentNode);
+      escapeParent: function(element) {
+        var parent, split2, nodeWrap,
+            curNode = node;
+        
+        // Stop if node is not a descendant of element
+        if (!wysihtml5.dom.contains(element, node)) {
+          throw new Error("Child is not a descendant of node.");
+        }
+
+        // Climb up the node tree untill node is reached
+        do {
+          // Get current parent of node
+          parent = curNode.parentNode;
+
+          // Move after nodes to new clone wrapper
+          split2 = parent.cloneNode(false);
+          while (parent.lastChild && parent.lastChild !== curNode) {
+            split2.insertBefore(parent.lastChild, split2.firstChild);
+          }
+
+          // Move node up a level. If parent is not yet the container to escape, clone the parent around node, so inner nodes are escaped out too
+          if (parent !== element) {
+            nodeWrap = parent.cloneNode(false);
+            nodeWrap.appendChild(curNode);
+            curNode = nodeWrap;
+          }
+          parent.parentNode.insertBefore(curNode, parent.nextSibling);
+
+          // Add after nodes
+          if (!(/^\s*$/).test(split2.innerHTML)) {
+            parent.parentNode.insertBefore(split2, curNode.nextSibling);
+          }
+
+          // If parent is empty then remove
+          if ((/^\s*$/).test(parent.innerHTML)) {
+            parent.parentNode.removeChild(parent);
+          }
+
+        } while (parent && parent !== element);
+      },
+
       /*
         Tests a node against properties, and returns true if matches.
         Tests on principle that all properties defined must have at least one match.

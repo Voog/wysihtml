@@ -77,6 +77,14 @@
     wrapNode.appendChild(textNode);
   }
 
+  function unformatTextNode(textNode, composer, options) {
+    var container = composer.element;
+        wrapNode = findSimilarTextNodeWrapper(textNode, options, container);
+    if (wrapNode) {
+      wysihtml5.dom.domNode(textNode).escapeParent(wrapNode);
+    }
+  }
+
   function formatTextRange(range, composer, options) {
     var wrapNode = getWrapNode(range.endContainer, options);
 
@@ -146,6 +154,15 @@
     }
   }
 
+  function selectTextNodes (textNodes, composer) {
+    var range = rangy.createRange(composer.doc),
+        lastText = textNodes[textNodes.length - 1];
+
+    range.setStart(textNodes[0], 0);
+    range.setEnd(lastText, lastText.length);
+    composer.selection.setSelection(range);
+  }
+
   wysihtml5.commands.formatInline = {
 
     // Basics:
@@ -153,11 +170,29 @@
     // In case a similar inline wrapper node is detected on one of textnodes, the wrapper node is changed (if fully contained) or split and changed (partially contained)
     //    In case of changing mode every textnode is addressed separatly
     exec: function(composer, command, options) {
+
       var textNodes = getSelectedTextNodes(composer.selection, true),
+          stateNodes = this.state(composer, command, options),
           nodeWrapper, i;
 
       // If properties is passed as a string, correct options with that nodeName
       options = (typeof options === "string") ? { nodeName: options.toUpperCase() } : options;
+
+      // Remove state if toggle set and state on and selection is collapsed
+
+      if (stateNodes) {
+        if (!textNodes.length) {
+          var txtnode = composer.doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
+          wysihtml5.dom.domNode(txtnode).escapeParent(stateNodes[0]);
+          composer.selection.selectNode(txtnode);
+        } else {
+          for (i = textNodes.length; i--;) {
+            unformatTextNode(textNodes[i], composer, options);
+          }
+          selectTextNodes(textNodes, composer);
+        }
+        return;
+      }
 
       // Handle collapsed selection caret and return
       if (!textNodes.length) {
@@ -165,7 +200,7 @@
         return;
       }
 
-      if (hasSimilarTextNodeWrapper(textNodes, options, composer.element)) {
+      /*if (hasSimilarTextNodeWrapper(textNodes, options, composer.element)) {
         // Change mode triggered
         // only similar wrappernodes are changed 
         for (i = textNodes.length; i--;) {
@@ -176,12 +211,13 @@
             formatTextNode(textNodes[i], options);
           }
         }
-      } else {
+      } else {*/
         // Apply mode
         for (i = textNodes.length; i--;) {
           formatTextNode(textNodes[i], options);
         }
-      }
+        selectTextNodes(textNodes, composer);
+      //}
 
     },
 

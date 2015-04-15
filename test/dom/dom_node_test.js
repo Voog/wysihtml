@@ -110,6 +110,30 @@ test(".lastLeafNode() test for leafClasses option", function () {
 });
 
 
+test(".escapeParent()", function() {
+  var bold = document.createElement('B'),
+      underline = document.createElement('U'),
+      italic = document.createElement('I'),
+      text1 = document.createTextNode('text1'),
+      text2 = document.createTextNode('text2'),
+      text3 = document.createTextNode('text3');
+
+  this.container.innerHTML = "";
+
+  italic.appendChild(text1);
+  italic.appendChild(text2);
+  italic.appendChild(text3);
+
+  underline.appendChild(italic);
+  bold.appendChild(underline);
+  this.container.appendChild(bold);
+
+  wysihtml5.dom.domNode(text2).escapeParent(bold);
+
+  equal(this.container.innerHTML, "<b><u><i>text1</i></u></b><u><i>text2</i></u><b><u><i>text3</i></u></b>", "Parent split and node with parents escaped correctly");
+
+});
+
 
 
 
