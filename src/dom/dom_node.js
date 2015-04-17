@@ -111,10 +111,7 @@
 
           // Add after nodes
           parent.parentNode.insertBefore(split2, curNode.nextSibling);
-
-          // If parent is empty then remove
-          parent.parentNode.removeChild(parent);
-
+          
         } while (parent && parent !== element);
       },
 
