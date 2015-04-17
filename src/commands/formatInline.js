@@ -92,18 +92,17 @@
     composer.selection.selectNode(wrapNode);
   }
 
-  function changeTextNodeWrapper(textNodes, nodeWrapper, options) {
-    console.log('change');
-  }
-
   // Fetch all textnodes in selection
   // Empty textnodes are ignored except the one containing text caret
   function getSelectedTextNodes(selection, splitBounds) {
-    var caretNode = selection.isCollapsed() && selection.getSelectedNode(),
-        textNodes = selection.getOwnNodes([3], function(node) {
-          // Exclude empty nodes except caret node
-          return (!wysihtml5.dom.domNode(node).is.emptyTextNode() || caretNode === node);
-        }, splitBounds);
+    var textNodes = [];
+
+    if (!selection.isCollapsed()) {
+      textNodes = selection.getOwnNodes([3], function(node) {
+        // Exclude empty nodes except caret node
+        return (!wysihtml5.dom.domNode(node).is.emptyTextNode());
+      }, splitBounds);
+    }
 
     return textNodes;
   }
@@ -117,9 +116,9 @@
     return false;
   }
 
-  function findSimilarTextNodeWrapper(textNode, options, container) {
+  function findSimilarTextNodeWrapper(textNode, options, container, exact) {
     var node = textNode,
-        similarOptions = correctOptionsForSimilarityCheck (options);
+        similarOptions = exact ? options : correctOptionsForSimilarityCheck(options);
 
     do {
       if (node.nodeType === 1 && isSimilarNode(node, similarOptions)) {
@@ -163,6 +162,100 @@
     composer.selection.setSelection(range);
   }
 
+  function getState(composer, options, exact) {
+    var searchNodes = getSelectedTextNodes(composer.selection),
+        nodes = [],
+        partial = false,
+        node, range;
+
+    // Handle collapsed selection caret
+    if (!searchNodes.length) {
+      range = composer.selection.getOwnRanges()[0];
+      if (range) {
+        searchNodes = [range.endContainer];
+      }
+    }
+
+    for (var i = 0, maxi = searchNodes.length; i < maxi; i++) {
+      node = findSimilarTextNodeWrapper(searchNodes[i], options, composer.element, exact);
+      if (node) {
+        nodes.push(node);
+      } else {
+        partial = true;
+      }
+    }
+    
+    return {
+      nodes: nodes,
+      partial: partial
+    };
+  }
+
+  // Returns if caret is inside a word in textnode (not on boundary)
+  // If selection anchornode is not text node, returns false
+  function caretIsInsideWord(selection) {
+    var anchor, offset, beforeChar, afterChar;
+    if (selection) {
+      anchor = selection.anchorNode;
+      offset = selection.anchorOffset;
+      if (anchor && anchor.nodeType === 3 && offset > 0 && offset < anchor.data.length) {
+        beforeChar = anchor.data[offset - 1];
+        afterChar = anchor.data[offset];
+        return (/\w/).test(beforeChar) && (/\w/).test(afterChar);
+      }
+    }
+    return false;
+  }
+
+  function selectTextNode(node, start, end) {
+    var doc = node.ownerDocument,
+        win = doc.defaultView || doc.parentWindow,
+        range = rangy.createRange(doc),
+        selection = rangy.getSelection(win);
+
+    range.setStartAndEnd(node, start, end);
+    selection.setSingleRange(range);
+  }
+
+  // Returns a range and textnode containing object from caret position covering a whole word
+  // wordOffsety describes the original position of caret in the new textNode 
+  // Caret has to be inside a textNode.
+  function getRangeForWord(selection) {
+    var anchor, offset, doc, range, offsetStart, offsetEnd, beforeChar, afterChar,
+        txtNodes = [];
+    if (selection) {
+      anchor = selection.anchorNode;
+      offset = offsetStart = offsetEnd = selection.anchorOffset;
+      doc = anchor.ownerDocument;
+      range = rangy.createRange(doc);
+
+      if (anchor && anchor.nodeType === 3) {
+
+        while (offsetStart > 0 && (/\w/).test(anchor.data[offsetStart - 1])) {
+          offsetStart--;
+        }
+
+        while (offsetEnd < anchor.data.length && (/\w/).test(anchor.data[offsetEnd])) {
+          offsetEnd++;
+        }
+
+        range.setStartAndEnd(anchor, offsetStart, offsetEnd);
+        range.splitBoundaries();
+        txtNodes = range.getNodes([3], function(node) {
+          return (!wysihtml5.dom.domNode(node).is.emptyTextNode());
+        });
+
+        return {
+          wordOffset: offset - offsetStart,
+          range: range,
+          textNode: txtNodes[0]
+        };
+
+      }
+    }
+    return false;
+  }
+
   wysihtml5.commands.formatInline = {
 
     // Basics:
@@ -171,84 +264,105 @@
     //    In case of changing mode every textnode is addressed separatly
     exec: function(composer, command, options) {
 
+      // Join adjactent textnodes first
+      composer.element.normalize();
+
       var textNodes = getSelectedTextNodes(composer.selection, true),
-          stateNodes = this.state(composer, command, options),
-          nodeWrapper, i;
+          state = getState(composer, options),
+          exactState = getState(composer, options, true),
+          selection = composer.selection.getSelection(),
+          nodeWrapper, i, wordObj;
 
       // If properties is passed as a string, correct options with that nodeName
       options = (typeof options === "string") ? { nodeName: options.toUpperCase() } : options;
 
-      // Remove state if toggle set and state on and selection is collapsed
-
-      if (stateNodes) {
+      // Remove state if state is on and selection is collapsed
+      if (state.nodes.length > 0) {
+        // Text allready has the format applied
         if (!textNodes.length) {
-          var txtnode = composer.doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
-          wysihtml5.dom.domNode(txtnode).escapeParent(stateNodes[0]);
-          composer.selection.selectNode(txtnode);
-        } else {
-          for (i = textNodes.length; i--;) {
-            unformatTextNode(textNodes[i], composer, options);
+          // Selection is caret
+
+          if (caretIsInsideWord(selection)) {
+
+            // Unformat whole word 
+            wordObj = getRangeForWord(selection);
+            textNode = wordObj.textNode;
+            unformatTextNode(wordObj.textNode, composer, options);
+            selectTextNode(wordObj.textNode, wordObj.wordOffset);
+          
+          } else {
+
+            // Toggle the format state
+            var txtnode = composer.doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
+            composer.selection.splitElementAtCaret(state.nodes[0], txtnode);
+            composer.selection.selectNode(txtnode);
+
           }
-          if (!options.toggle) {
+
+        } else {
+
+          if (!exactState.partial) {
+            
+            // If whole selection (all textnodes) are in the applied format
+            // remove the format from selection
+            for (i = textNodes.length; i--;) {
+              unformatTextNode(textNodes[i], composer, options);
+            }
+
+          } else {
+            
+            // Selection is partially in format
+            // Remove previous format and apply new 
+            for (i = textNodes.length; i--;) {
+              unformatTextNode(textNodes[i], composer, options);
+            }
             for (i = textNodes.length; i--;) {
               formatTextNode(textNodes[i], options);
             }
+            
           }
+
           selectTextNodes(textNodes, composer);
         }
+        composer.element.normalize();
         return;
       }
 
+      // Selection is not in the applied format
       // Handle collapsed selection caret and return
       if (!textNodes.length) {
-        formatTextRange(composer.selection.getOwnRanges()[0], composer, options);
+
+        if (caretIsInsideWord(selection)) {
+
+          wordObj = getRangeForWord(selection);
+          formatTextNode(wordObj.textNode, options);
+          selectTextNode(wordObj.textNode, wordObj.wordOffset);
+
+        } else {
+          formatTextRange(composer.selection.getOwnRanges()[0], composer, options);
+        }
+
+        composer.element.normalize();
+        
         return;
       }
 
-      /*if (hasSimilarTextNodeWrapper(textNodes, options, composer.element)) {
-        // Change mode triggered
-        // only similar wrappernodes are changed 
-        for (i = textNodes.length; i--;) {
-          nodeWrapper = findSimilarTextNodeWrapper(textNodes[i], options, composer.element);
-          if (nodeWrapper) {
-            changeTextNodeWrapper(textNodes[i], nodeWrapper, options);
-          } else {
-            formatTextNode(textNodes[i], options);
-          }
-        }
-      } else {*/
-        // Apply mode
-        for (i = textNodes.length; i--;) {
-          formatTextNode(textNodes[i], options);
-        }
-        selectTextNodes(textNodes, composer);
-      //}
+      // Handle textnodes in selection and apply format
+      for (i = textNodes.length; i--;) {
+        formatTextNode(textNodes[i], options);
+      }
+
+      selectTextNodes(textNodes, composer);
+
+      composer.element.normalize();
 
     },
 
     state: function(composer, command, options) {
-      var searchNodes = getSelectedTextNodes(composer.selection),
-          nodes = [],
-          node, range;
-
       // If properties is passed as a string, correct options with that nodeName
       options = (typeof options === "string") ? { nodeName: options.toUpperCase() } : options;
 
-
-      // Handle collapsed selection caret
-      if (!searchNodes.length) {
-        range = composer.selection.getOwnRanges()[0];
-        if (range) {
-          searchNodes = [range.endContainer];
-        }
-      }
-
-      for (var i = 0, maxi = searchNodes.length; i < maxi; i++) {
-        node = findSimilarTextNodeWrapper(searchNodes[i], options, composer.element);
-        if (node) {
-          nodes.push(node);
-        }
-      }
+      var nodes = getState(composer, options, true).nodes;
       
       return (nodes.length === 0) ? false : nodes;
     }

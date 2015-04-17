@@ -200,7 +200,7 @@
                   }
                 } else {
                   // style value as string
-                  if (properties.styleValue === node.style[prop].trim()) {
+                  if (properties.styleValue === node.style[prop].trim().replace(/, /g, ",")) {
                     hasOneStyle = true;
                     break;
                   }
