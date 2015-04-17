@@ -110,14 +110,10 @@
           parent.parentNode.insertBefore(curNode, parent.nextSibling);
 
           // Add after nodes
-          if (!(/^\s*$/).test(split2.innerHTML)) {
-            parent.parentNode.insertBefore(split2, curNode.nextSibling);
-          }
+          parent.parentNode.insertBefore(split2, curNode.nextSibling);
 
           // If parent is empty then remove
-          if ((/^\s*$/).test(parent.innerHTML)) {
-            parent.parentNode.removeChild(parent);
-          }
+          parent.parentNode.removeChild(parent);
 
         } while (parent && parent !== element);
       },
