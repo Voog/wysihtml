@@ -111,7 +111,7 @@
 
           // Add after nodes
           parent.parentNode.insertBefore(split2, curNode.nextSibling);
-          
+
         } while (parent && parent !== element);
       },
 

@@ -264,6 +264,9 @@
     //    In case of changing mode every textnode is addressed separatly
     exec: function(composer, command, options) {
 
+      // If properties is passed as a string, correct options with that nodeName
+      options = (typeof options === "string") ? { nodeName: options.toUpperCase() } : options;
+
       // Join adjactent textnodes first
       composer.element.normalize();
 
@@ -273,8 +276,7 @@
           selection = composer.selection.getSelection(),
           nodeWrapper, i, wordObj;
 
-      // If properties is passed as a string, correct options with that nodeName
-      options = (typeof options === "string") ? { nodeName: options.toUpperCase() } : options;
+      
 
       // Remove state if state is on and selection is collapsed
       if (state.nodes.length > 0) {
@@ -319,7 +321,7 @@
             for (i = textNodes.length; i--;) {
               formatTextNode(textNodes[i], options);
             }
-            
+
           }
 
           selectTextNodes(textNodes, composer);
