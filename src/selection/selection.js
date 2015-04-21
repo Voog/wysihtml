@@ -696,13 +696,22 @@
     splitElementAtCaret: function (element, insertNode) {
       var sel = this.getSelection(),
           range, contentAfterRangeStart,
-          firstChild, lastChild;
+          firstChild, lastChild, childNodes;
 
       if (sel.rangeCount > 0) {
         range = sel.getRangeAt(0).cloneRange(); // Create a copy of the selection range to work with
 
         range.setEndAfter(element); // Place the end of the range after the element
         contentAfterRangeStart = range.extractContents(); // Extract the contents of the element after the caret into a fragment
+
+        childNodes = contentAfterRangeStart.childNodes;
+
+        // Empty elements are cleaned up from extracted content
+        for (var i = childNodes.length; i --;) {
+          if (childNodes[i].nodeType === 1 &&  (/^\s*$/).test(childNodes[i].innerHTML)) {
+            contentAfterRangeStart.removeChild(childNodes[i]);
+          }
+        }
 
         element.parentNode.insertBefore(contentAfterRangeStart, element.nextSibling);
 

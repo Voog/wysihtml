@@ -109,8 +109,27 @@
           }
           parent.parentNode.insertBefore(curNode, parent.nextSibling);
 
-          // Add after nodes
-          parent.parentNode.insertBefore(split2, curNode.nextSibling);
+          // Add after nodes (unless empty)
+          if (split2.innerHTML !== '') {
+            // if contents are empty insert without wrap
+            if ((/^\s+$/).test(split2.innerHTML)) {
+              while (split2.lastChild) {
+                parent.parentNode.insertBefore(split2.lastChild, curNode.nextSibling);
+              }
+            } else {
+              parent.parentNode.insertBefore(split2, curNode.nextSibling);
+            }
+          }
+
+          // If the node left behind before the split (parent) is now empty then remove
+          if (parent.innerHTML === '') {
+            parent.parentNode.removeChild(parent);
+          } else if ((/^\s+$/).test(parent.innerHTML)) {
+            while (parent.firstChild) {
+              parent.parentNode.insertBefore(parent.firstChild, parent);
+            }
+            parent.parentNode.removeChild(parent);
+          }
 
         } while (parent && parent !== element);
       },

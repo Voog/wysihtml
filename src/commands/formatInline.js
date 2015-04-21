@@ -49,8 +49,9 @@
   }
 
   function unformatTextNode(textNode, composer, options) {
-    var container = composer.element;
+    var container = composer.element,
         wrapNode = findSimilarTextNodeWrapper(textNode, options, container);
+
     if (wrapNode) {
       wysihtml5.dom.domNode(textNode).escapeParent(wrapNode);
     }
@@ -245,7 +246,7 @@
           state = getState(composer, options),
           exactState = getState(composer, options, true),
           selection = composer.selection.getSelection(),
-          nodeWrapper, i, wordObj;
+          nodeWrapper, i, wordObj, textNode;
 
       
 

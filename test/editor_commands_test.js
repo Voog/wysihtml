@@ -37,7 +37,7 @@ if (wysihtml5.browser.supported()) {
   
 // bold, italic, underline
   asyncTest("Basic formating tests", function() {
-     expect(18);
+     expect(20  );
     var that = this,
         text = "once upon a time there was an unformated text.",
         parserRules = {
@@ -56,15 +56,20 @@ if (wysihtml5.browser.supported()) {
       // basic bold
       editor.setValue(text, true);
       editor.composer.selection.selectNode(editor.editableElement);
+      
       editor.composer.commands.exec('bold');
       equal(editableElement.innerHTML.toLowerCase(), "<b>" + text + "</b>", "Command bold sets text as bold correctly");
 
-      editor.composer.selection.getSelection().collapseToEnd();
-
-      ok(editor.composer.selection.getSelection().isCollapsed, "Text caret is collapsed");
+      editor.composer.commands.exec('bold');
+      equal(editableElement.innerHTML.toLowerCase(), text, "Command bold unset text from bold correctly");
 
       editor.composer.commands.exec('bold');
+      equal(editableElement.innerHTML.toLowerCase(), "<b>" + text + "</b>", "Command bold toggle works");
+
       editor.composer.selection.getSelection().collapseToEnd();
+      ok(editor.composer.selection.getSelection().isCollapsed, "Text caret is collapsed");
+      editor.composer.commands.exec('bold');
+
       editor.composer.commands.exec('insertHtml', 'test');
       ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
       equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<b>" + text + "</b>test", "With caret at last position bold is not removed but set to notbold at caret");
