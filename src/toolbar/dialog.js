@@ -190,7 +190,7 @@
       this.elementToChange = null;
       dom.removeClass(this.link, CLASS_NAME_OPENED);
       this.container.style.display = "none";
-      this.fire("hide");
+      this.fire("cancel");
     }
   });
 })(wysihtml5);
