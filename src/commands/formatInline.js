@@ -14,13 +14,6 @@
         "i": "em, i"
       };
 
-  function isVisibleTextNode(node) {
-    if (node.data && (/[^\s]/g).test(node.data)) {
-      return true;
-    }
-    return false;
-  }
-
   function getWrapNode(textNode, options) {
     var nodeName = options && options.nodeName || defaultTag,
         element = textNode.ownerDocument.createElement(nodeName);
@@ -83,15 +76,6 @@
     return textNodes;
   }
 
-  function hasSimilarTextNodeWrapper(textNodes, options, container) {
-    for (var i = textNodes.length; i--;) {
-      if (findSimilarTextNodeWrapper(textNodes[i], options, container)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   function findSimilarTextNodeWrapper(textNode, options, container, exact) {
     var node = textNode,
         similarOptions = exact ? options : correctOptionsForSimilarityCheck(options);
@@ -106,7 +90,7 @@
     return null;
   }
 
-  function correctOptionsForSimilarityCheck (options) {
+  function correctOptionsForSimilarityCheck(options) {
     return {
       nodeName: options.nodeName || null,
       className: (!options.classRegExp) ? options.className || null : null,
@@ -117,7 +101,7 @@
 
   // Finds inline node with similar nodeName/style/className
   // If nodeName is specified inline node with the same (or alias) nodeName is expected to prove similar
-  function isSimilarNode (node, options) {
+  function isSimilarNode(node, options) {
     var o;
     if (options.nodeName) {
       var query = queryAliasMap[options.nodeName.toLowerCase()] || options.nodeName.toLowerCase();
@@ -129,13 +113,23 @@
     }
   }
 
-  function selectTextNodes (textNodes, composer) {
+  function selectTextNodes(textNodes, composer) {
     var range = rangy.createRange(composer.doc),
         lastText = textNodes[textNodes.length - 1];
 
     range.setStart(textNodes[0], 0);
     range.setEnd(lastText, lastText.length);
     composer.selection.setSelection(range);
+  }
+
+  function selectTextNode(node, start, end) {
+    var doc = node.ownerDocument,
+        win = doc.defaultView || doc.parentWindow,
+        range = rangy.createRange(doc),
+        selection = rangy.getSelection(win);
+
+    range.setStartAndEnd(node, start, end);
+    selection.setSingleRange(range);
   }
 
   function getState(composer, options, exact) {
@@ -181,16 +175,6 @@
       }
     }
     return false;
-  }
-
-  function selectTextNode(node, start, end) {
-    var doc = node.ownerDocument,
-        win = doc.defaultView || doc.parentWindow,
-        range = rangy.createRange(doc),
-        selection = rangy.getSelection(win);
-
-    range.setStartAndEnd(node, start, end);
-    selection.setSingleRange(range);
   }
 
   // Returns a range and textnode containing object from caret position covering a whole word
@@ -348,8 +332,7 @@
   function applyFormat(composer, textNodes, options) {
     var wordObj, i,
         selection = composer.selection.getSelection();
-
-    
+ 
     if (!textNodes.length) {
       // Handle collapsed selection caret and return
 
