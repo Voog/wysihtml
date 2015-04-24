@@ -12,11 +12,11 @@ if (wysihtml5.browser.supported()) {
       
     },
 
-    setCaretInsideNode: function(editor, el) {
-        var r1 = editor.composer.selection.createRange(),
-            e1 = el.childNodes[0];
-        r1.setEnd(e1, 1);
-        r1.setStart(e1, 1);
+    setCaretTo: function(editor, el, offset) {
+        var r1 = editor.composer.selection.createRange();
+
+        r1.setEnd(el, offset);
+        r1.setStart(el, offset);
         editor.composer.selection.setSelection(r1);
     },
 
@@ -37,7 +37,7 @@ if (wysihtml5.browser.supported()) {
   
 // bold, italic, underline
   asyncTest("Basic formating tests", function() {
-     expect(20  );
+     expect(12);
     var that = this,
         text = "once upon a time there was an unformated text.",
         parserRules = {
@@ -52,10 +52,13 @@ if (wysihtml5.browser.supported()) {
         });
         
     editor.on("load", function() {
-      var editableElement   = that.editableArea1;
+      var editableElement   = that.editableArea1,
+          sel;
+      
       // basic bold
+      
       editor.setValue(text, true);
-      editor.composer.selection.selectNode(editor.editableElement);
+      editor.composer.selection.selectNode(editableElement);
       
       editor.composer.commands.exec('bold');
       equal(editableElement.innerHTML.toLowerCase(), "<b>" + text + "</b>", "Command bold sets text as bold correctly");
@@ -64,66 +67,198 @@ if (wysihtml5.browser.supported()) {
       equal(editableElement.innerHTML.toLowerCase(), text, "Command bold unset text from bold correctly");
 
       editor.composer.commands.exec('bold');
-      equal(editableElement.innerHTML.toLowerCase(), "<b>" + text + "</b>", "Command bold toggle works");
-
-      editor.composer.selection.getSelection().collapseToEnd();
-      ok(editor.composer.selection.getSelection().isCollapsed, "Text caret is collapsed");
+      equal(editableElement.innerHTML.toLowerCase(), "<b>" + text + "</b>", "Command bold toggle works 1");
       editor.composer.commands.exec('bold');
+      equal(editableElement.innerHTML.toLowerCase(), text, "Command bold toggle works 2");
 
-      editor.composer.commands.exec('insertHtml', 'test');
-      ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
-      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<b>" + text + "</b>test", "With caret at last position bold is not removed but set to notbold at caret");
-      
-
-      that.setCaretInsideNode(editor, editableElement.querySelector('b'));
-      editor.composer.commands.exec('bold');
-
-      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), text + "test", "Bold is correctly removed when text caret is inside bold");
-      ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
+      equal(editableElement.childNodes.length, 1, "No empty textnodes left behind");
+      equal(editableElement.firstChild.nodeType, 3, "Only node is textnode");
+      sel = editor.composer.selection.getSelection();
+      equal(sel.anchorNode, editableElement.firstChild, "Selction anchor node correct");
+      equal(sel.anchorOffset, 0, "Selction anchor offset correct");
+      equal(sel.focusNode, editableElement.firstChild, "Selction afocus node correct");
+      equal(sel.focusOffset,editableElement.firstChild.data.length, "Selction focus offset correct");
 
       // basic italic
       editor.setValue(text, true);
-      editor.composer.selection.selectNode(editor.editableElement);
+      editor.composer.selection.selectNode(editableElement);
       editor.composer.commands.exec('italic');
       equal(editableElement.innerHTML.toLowerCase(), "<i>" + text + "</i>", "Command italic sets text as italic correctly");
-      
-      editor.composer.selection.getSelection().collapseToEnd();
-      ok(editor.composer.selection.getSelection().isCollapsed, "Text caret is collapsed");
-
-      editor.composer.commands.exec('italic');
-      editor.composer.selection.getSelection().collapseToEnd();
-      editor.composer.commands.exec('insertHtml', 'test');
-
-      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<i>" + text + "</i>test", "With caret at last position italic is not removed but set to notitalic at caret");
-      ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
-
-      that.setCaretInsideNode(editor, editableElement.querySelector('i'));
-      editor.composer.commands.exec('italic');
-
-      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), text + "test", "Italic is correctly removed when text caret is inside italic");
-      ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
 
       // basic underline
       editor.setValue(text, true);
-      editor.composer.selection.selectNode(editor.editableElement);
+      editor.composer.selection.selectNode(editableElement);
       editor.composer.commands.exec('underline');
       equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<u>" + text + "</u>", "Command underline sets text as underline correctly");
 
+      start();
+    });
+  });
+
+  asyncTest("Format inline", function() {
+    expect(19);
+    var that = this,
+        parserRules = {
+          "classes": "any",
+          tags: {
+            span: {
+              "check_attributes": {
+                "style": "any"
+              }
+            },
+            button: {
+              "check_attributes": {
+                "style": "any"
+              }
+            },
+            strong: 1
+          }
+        },
+        editor = new wysihtml5.Editor(this.editableArea1, {
+          parserRules: parserRules
+        });
+
+    var blankCaretStart = function(editor) {
+      editor.setValue("", true);
+      editor.composer.selection.selectNode(editor.composer.element);
+      editor.composer.selection.getSelection().collapseToStart();
+    }
+
+    var blankSelectionStart = function(editor) {
+      editor.setValue("test this text", true);
+      editor.composer.selection.selectNode(editor.composer.element);
+    }
+        
+    editor.on("load", function() {
+      var editableElement  = that.editableArea1;
+     
+      blankCaretStart(editor);
+      editor.composer.commands.exec("formatInline", "strong");
+      ok((/^<strong><\/strong>(<\/?br>)?$/).test(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, '')), "FormatInline given string as parameter creates empty node with that tagName");
+      editor.composer.commands.exec("formatInline", "strong");
+      equal(!!editableElement.querySelector('strong'), false, "Previous Insert is toggleable");
+
+      blankCaretStart(editor);
+      editor.composer.commands.exec("formatInline", {className : "test-class"});
+      ok((/^<span class="test-class"><\/span>(<\/?br>)?$/).test(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, '')), "FormatInline given only className maks span with that name");
+      editor.composer.commands.exec("formatInline", {className : "test-class"});
+      equal(!!editableElement.querySelector('span.test-class'), false, "Previous Insert is toggleable");
+      
+      blankCaretStart(editor);
+      editor.composer.commands.exec("formatInline", {nodeName: "button", className : "test-class"});
+      ok((/^<button class="test-class"><\/button>(<\/?br>)?$/).test(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, '')), "FormatInline given classname and nodeName works correctly");
+      editor.composer.commands.exec("formatInline", {className : "test-class"});
+      ok((/^<button><\/button>(<\/?br>)?$/).test(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, '')), "If no nodename given and node is not span, classname is removed but tag remains");
+
+      blankSelectionStart(editor);
+      editor.composer.commands.exec("formatInline", "strong");
+      equal(editableElement.innerHTML.toLowerCase(), "<strong>test this text</strong>", "FormatInline wrapping selection correctly");
+      editor.composer.commands.exec("formatInline", "strong");
+      equal(editableElement.innerHTML, "test this text", "Previous Insert is toggleable");
+
+      blankSelectionStart(editor);
+      editor.composer.commands.exec("formatInline", "strong");
+      equal(editableElement.innerHTML.toLowerCase(), "<strong>test this text</strong>", "FormatInline wrapping selection correctly");
+      editor.composer.commands.exec("formatInline", "strong");
+      equal(editableElement.innerHTML, "test this text", "Previous Insert is toggleable");
+
+      blankSelectionStart(editor);
+      editor.composer.commands.exec("formatInline", {nodeName: "button", className : "test-class"});
+      equal(editableElement.innerHTML.toLowerCase(), '<button class="test-class">test this text</button>', "FormatInline wrapping selection with tag and class correctly");
+      editor.composer.commands.exec("formatInline", {className : "test-class"});
+      equal(editableElement.innerHTML.toLowerCase(), '<button>test this text</button>', "FormatInline removing class but keeping tag if tag not configured in options");
+
+      blankSelectionStart(editor);
+      editor.composer.commands.exec("formatInline", {nodeName: "button", styleProperty: "color", styleValue: "red" });
+      equal(editableElement.innerHTML.toLowerCase(), '<button style="color: red;">test this text</button>', "FormatInline wrapping selection with tag and style correctly");
+      editor.composer.commands.exec("formatInline", {nodeName: "button", styleProperty: "color", styleValue: "red" });
+      equal(editableElement.innerHTML, "test this text", "Previous Insert is toggleable");
+
+      blankSelectionStart(editor);
+      editor.composer.commands.exec("formatInline", {nodeName: "button", styleProperty: "color", styleValue: "red" });
+      equal(editableElement.innerHTML.toLowerCase(), '<button style="color: red;">test this text</button>', "FormatInline wrapping selection with tag and style correctly");
+      editor.composer.commands.exec("formatInline", {nodeName: "button", styleProperty: "color", styleValue: "blue" });
+      equal(editableElement.innerHTML.toLowerCase(), '<button style="color: blue;">test this text</button>', "FormatInline changing selection style correctly");
+      editor.composer.commands.exec("formatInline", {styleProperty: "color", styleValue: "blue"});
+      equal(editableElement.innerHTML.toLowerCase(), '<button>test this text</button>', "FormatInline removing style but keeping tag if tag not configured in options");
+      editor.composer.commands.exec("formatInline", {nodeName: "button", styleProperty: "color", styleValue: "blue" });
+      equal(editableElement.innerHTML.toLowerCase(), '<button style="color: blue;">test this text</button>', "Style is added to tag if not present and node not removed even if defined");
+
+      editor.composer.commands.exec("formatInline", {nodeName: "button", styleProperty: "color", styleValue: "blue" });
+      equal(editableElement.innerHTML.toLowerCase(), 'test this text', "Exact state toggles");
+     
+      start();
+    });
+  });
+
+  asyncTest("Format inline caret/word-mode handling", function() {
+     expect(15);
+    var that = this,
+        text = "once upon a time there was an unformated text.",
+        parserRules = {
+          tags: {
+            b: true
+          }
+        },
+        editor = new wysihtml5.Editor(this.editableArea1, {
+          parserRules: parserRules
+        });
+
+    var initString = function(editor, command, tag, txt, offset) {
+      var editable = that.editableArea1,
+          el;
+      editor.setValue(txt, true);
+      editor.composer.selection.selectNode(editable);
+      if (command) {
+        editor.composer.commands.exec(command);
+      }
+      el = (tag) ? editable.querySelector(tag).firstChild : editable.firstChild;
+      that.setCaretTo(editor, el, offset);
+    }
+        
+    editor.on("load", function() {
+      var editableElement   = that.editableArea1;
+      
+      editor.setValue(text, true);
+      editor.composer.selection.selectNode(editableElement);
+      editor.composer.commands.exec('bold');
       editor.composer.selection.getSelection().collapseToEnd();
       ok(editor.composer.selection.getSelection().isCollapsed, "Text caret is collapsed");
-
-      editor.composer.commands.exec('underline');
-      editor.composer.selection.getSelection().collapseToEnd();
+      editor.composer.commands.exec('bold');
       editor.composer.commands.exec('insertHtml', 'test');
+      ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<b>" + text + "</b>test", "With caret at last position bold is not removed but set to notbold at caret");
 
-      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<u>" + text + "</u>test", "With caret at last position underline is not removed but set to notunderline at caret");
+      initString(editor, 'bold', 'b', text, 7);
+      editor.composer.commands.exec('bold');
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<b>once </b>upon<b> a time there was an unformated text.</b>" , "Bold is correctly removed from word that caret was in");
       ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
 
-      that.setCaretInsideNode(editor, editableElement.querySelector('u'));
-      editor.composer.commands.exec('underline');
-
-      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), text + "test", "Underline is correctly removed when text caret is inside underline");
+      initString(editor, 'bold', 'b', text, 5);
+      editor.composer.commands.exec('bold');
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<b>once </b><b>upon a time there was an unformated text.</b>" , "Bold is correctly removed from caret but not word when caret first in word");
       ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
+
+      initString(editor, 'bold', 'b', text, 9);
+      editor.composer.commands.exec('bold');
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<b>once upon</b><b> a time there was an unformated text.</b>" , "Bold is correctly removed from caret but not word when caret last in word");
+      ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
+
+      initString(editor, false, false, text, 7);
+      editor.composer.commands.exec('bold');
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "once <b>upon</b> a time there was an unformated text." , "Bold is correctly added to word that caret was in");
+      ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
+
+      initString(editor, false, false, text, 5);
+      editor.composer.commands.exec('bold');
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "once <b></b>upon a time there was an unformated text." , "Bold is correctly added to caret but not to word when caret first in word");
+      ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
+
+      initString(editor, false, false, text, 9);
+      editor.composer.commands.exec('bold');
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "once upon<b></b> a time there was an unformated text." , "Bold is correctly added to caret but not to word when caret last in wor");
+      ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
+
 
       start();
     });
@@ -261,7 +396,7 @@ if (wysihtml5.browser.supported()) {
     });
     
 // createLink/removeLink
-        asyncTest("Create/remove link", function() {
+     /*   asyncTest("Create/remove link", function() {
            expect(4);
            
           var that = this,
@@ -301,7 +436,7 @@ if (wysihtml5.browser.supported()) {
             
             start();
           });
-        });
+        });*/
 
   // create table
     asyncTest("Create table", function() {

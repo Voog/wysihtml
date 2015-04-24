@@ -715,17 +715,32 @@
 
         element.parentNode.insertBefore(contentAfterRangeStart, element.nextSibling);
 
-        firstChild = insertNode.firstChild;
-        lastChild = insertNode.lastChild;
+        if (insertNode) {
+          firstChild = insertNode.firstChild || insertNode;
+          lastChild = insertNode.lastChild || insertNode;
 
-        element.parentNode.insertBefore(insertNode, element.nextSibling);
+          element.parentNode.insertBefore(insertNode, element.nextSibling);
 
-        // Select inserted node contents
-        if (firstChild && lastChild) {
-           range.setStartBefore(firstChild);
-           range.setEndAfter(lastChild);
-           this.setSelection(range);
+          // Select inserted node contents
+          if (firstChild && lastChild) {
+             range.setStartBefore(firstChild);
+             range.setEndAfter(lastChild);
+             this.setSelection(range);
+          }
+        } else {
+          range.setStartAfter(element);
+          range.setEndAfter(element);
         }
+
+        if ((/^\s*$/).test(element.innerHTML)) {
+          if (element.innerHTML === '') {
+            element.parentNode.removeChild(element);
+          } else {
+            wysihtml5.dom.unwrap(element);
+          }
+        }
+
+
       }
     },
 

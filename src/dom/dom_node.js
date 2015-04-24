@@ -81,7 +81,7 @@
       // Splits element at childnode and extracts the childNode out of the element context
       // Example:
       //   var node = wysihtml5.dom.domNode(node).escapeParent(parentNode);
-      escapeParent: function(element) {
+      escapeParent: function(element, newWrapper) {
         var parent, split2, nodeWrap,
             curNode = node;
         
@@ -132,6 +132,11 @@
           }
 
         } while (parent && parent !== element);
+
+        if (newWrapper && curNode) {
+          curNode.parentNode.insertBefore(newWrapper, curNode);
+          newWrapper.appendChild(curNode);
+        }
       },
 
       /*

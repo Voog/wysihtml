@@ -50,10 +50,14 @@
 
   function unformatTextNode(textNode, composer, options) {
     var container = composer.element,
-        wrapNode = findSimilarTextNodeWrapper(textNode, options, container);
+        wrapNode = findSimilarTextNodeWrapper(textNode, options, container),
+        newWrapNode;
 
     if (wrapNode) {
-      wysihtml5.dom.domNode(textNode).escapeParent(wrapNode);
+      newWrapNode = wrapNode.cloneNode(false);
+
+      wysihtml5.dom.domNode(textNode).escapeParent(wrapNode, newWrapNode);
+      removeFormatFromElement(newWrapNode, options);
     }
   }
 
@@ -228,6 +232,147 @@
     return false;
   }
 
+  function hasNoClass(element) {
+    return (/^\s*$/).test(element.className);
+  }
+
+  function hasNoStyle(element) {
+    return !element.getAttribute('style') || (/^\s*$/).test(element.getAttribute('style'));
+  }
+
+  function removeFormatFromElement(element, options) {
+    var attr, newNode, a;
+
+    if (options.className) {
+      element.classList.remove(options.className);
+      if (hasNoClass(element)) {
+        element.removeAttribute('class');
+      }
+    }
+
+    // change/remove style
+    if (options.styleProperty) {
+      if (element.style[wysihtml5.browser.fixStyleKey(options.styleProperty)].trim().replace(/, /g, ",") === options.styleValue) {
+        element.style[wysihtml5.browser.fixStyleKey(options.styleProperty)] = '';
+      } else {
+        element.style[wysihtml5.browser.fixStyleKey(options.styleProperty)] = options.styleValue;
+      }
+    }
+
+    if ((options.nodeName && element.nodeName === options.nodeName) || (!options.nodeName && element.nodeName === defaultTag)) {
+
+
+      attr = wysihtml5.dom.getAttributes(element);
+      if (hasNoClass(element) && hasNoStyle(element) && attr.length === 0) {
+        wysihtml5.dom.unwrap(element);
+      } else if (!options.nodeName) {
+        newNode = element.ownerDocument.createElement(defaultTag);
+
+        // pass present attributes
+        for (a in attr) {
+          if (attr.hasOwnProperty(a)) {
+            newNode.setAttribute(a, attr[a]);
+          }
+        }
+
+        while (element.firstChild) {
+          newNode.appendChild(element.firstChild);
+        }
+        element.parentNode.insertBefore(newNode, element);
+        element.parentNode.removeChild(element);
+      }
+
+    }
+  }
+
+  function removeFormat(composer, textNodes, state, options) {
+    var exactState = getState(composer, options, true),
+        selection = composer.selection.getSelection(),
+        wordObj, textNode, newNode, i;
+
+    if (!textNodes.length) {
+      // Selection is caret
+
+      if (caretIsInsideWord(selection)) {
+
+        // Unformat whole word 
+        wordObj = getRangeForWord(selection);
+        textNode = wordObj.textNode;
+        unformatTextNode(wordObj.textNode, composer, options);
+        selectTextNode(wordObj.textNode, wordObj.wordOffset);
+      
+      } else {
+
+        // Escape caret out of format
+        textNode = composer.doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
+        newNode = state.nodes[0].cloneNode(false);
+        newNode.appendChild(textNode);
+        composer.selection.splitElementAtCaret(state.nodes[0], newNode);
+        removeFormatFromElement(newNode, options);
+        composer.selection.selectNode(textNode);
+      }
+
+    } else {
+
+      if (!exactState.partial) {
+
+        // If whole selection (all textnodes) are in the applied format
+        // remove the format from selection
+        for (i = textNodes.length; i--;) {
+          unformatTextNode(textNodes[i], composer, options);
+        }
+
+      } else {
+        
+        // Selection is partially in format
+        // change it to new if format if textnode allreafy in similar state
+        // else just apply
+        
+        for (i = textNodes.length; i--;) {
+          
+          if (findSimilarTextNodeWrapper(textNodes[i], options, composer.element)) {
+            unformatTextNode(textNodes[i], composer, options);
+          } else {
+            formatTextNode(textNodes[i], options);
+          }
+        }
+
+      }
+
+      selectTextNodes(textNodes, composer);
+    }
+    composer.element.normalize();
+  }
+
+  function applyFormat(composer, textNodes, options) {
+    var wordObj, i,
+        selection = composer.selection.getSelection();
+
+    
+    if (!textNodes.length) {
+      // Handle collapsed selection caret and return
+
+      if (caretIsInsideWord(selection)) {
+        wordObj = getRangeForWord(selection);
+        formatTextNode(wordObj.textNode, options);
+        selectTextNode(wordObj.textNode, wordObj.wordOffset);
+      } else {
+        formatTextRange(composer.selection.getOwnRanges()[0], composer, options);
+      }
+      
+    } else {
+      // Handle textnodes in selection and apply format
+
+      for (i = textNodes.length; i--;) {
+        formatTextNode(textNodes[i], options);
+      }
+      selectTextNodes(textNodes, composer);
+
+    }
+
+    composer.element.normalize();
+  }
+
   wysihtml5.commands.formatInline = {
 
     // Basics:
@@ -237,104 +382,28 @@
     exec: function(composer, command, options) {
 
       // If properties is passed as a string, correct options with that nodeName
-      options = (typeof options === "string") ? { nodeName: options.toUpperCase() } : options;
+      options = (typeof options === "string") ? { nodeName: options } : options;
+      if (options.nodeName) { options.nodeName = options.nodeName.toUpperCase(); }
 
       // Join adjactent textnodes first
       composer.element.normalize();
 
       var textNodes = getSelectedTextNodes(composer.selection, true),
-          state = getState(composer, options),
-          exactState = getState(composer, options, true),
-          selection = composer.selection.getSelection(),
-          nodeWrapper, i, wordObj, textNode;
-
-      
-
-      // Remove state if state is on and selection is collapsed
+          state = getState(composer, options);
       if (state.nodes.length > 0) {
         // Text allready has the format applied
-        if (!textNodes.length) {
-          // Selection is caret
-
-          if (caretIsInsideWord(selection)) {
-
-            // Unformat whole word 
-            wordObj = getRangeForWord(selection);
-            textNode = wordObj.textNode;
-            unformatTextNode(wordObj.textNode, composer, options);
-            selectTextNode(wordObj.textNode, wordObj.wordOffset);
-          
-          } else {
-
-            // Toggle the format state
-            var txtnode = composer.doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
-            composer.selection.splitElementAtCaret(state.nodes[0], txtnode);
-            composer.selection.selectNode(txtnode);
-
-          }
-
-        } else {
-
-          if (!exactState.partial) {
-            
-            // If whole selection (all textnodes) are in the applied format
-            // remove the format from selection
-            for (i = textNodes.length; i--;) {
-              unformatTextNode(textNodes[i], composer, options);
-            }
-
-          } else {
-            
-            // Selection is partially in format
-            // Remove previous format and apply new 
-            for (i = textNodes.length; i--;) {
-              unformatTextNode(textNodes[i], composer, options);
-            }
-            for (i = textNodes.length; i--;) {
-              formatTextNode(textNodes[i], options);
-            }
-
-          }
-
-          selectTextNodes(textNodes, composer);
-        }
-        composer.element.normalize();
-        return;
+        removeFormat(composer, textNodes, state, options);
+      } else {
+        // Selection is not in the applied format
+        applyFormat(composer, textNodes, options);
       }
-
-      // Selection is not in the applied format
-      // Handle collapsed selection caret and return
-      if (!textNodes.length) {
-
-        if (caretIsInsideWord(selection)) {
-
-          wordObj = getRangeForWord(selection);
-          formatTextNode(wordObj.textNode, options);
-          selectTextNode(wordObj.textNode, wordObj.wordOffset);
-
-        } else {
-          formatTextRange(composer.selection.getOwnRanges()[0], composer, options);
-        }
-
-        composer.element.normalize();
-        
-        return;
-      }
-
-      // Handle textnodes in selection and apply format
-      for (i = textNodes.length; i--;) {
-        formatTextNode(textNodes[i], options);
-      }
-
-      selectTextNodes(textNodes, composer);
-
-      composer.element.normalize();
 
     },
 
     state: function(composer, command, options) {
       // If properties is passed as a string, correct options with that nodeName
-      options = (typeof options === "string") ? { nodeName: options.toUpperCase() } : options;
+      options = (typeof options === "string") ? { nodeName: options } : options;
+      if (options.nodeName) { options.nodeName = options.nodeName.toUpperCase(); }
 
       var nodes = getState(composer, options, true).nodes;
       
