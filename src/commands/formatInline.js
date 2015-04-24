@@ -315,7 +315,6 @@
     } else {
 
       if (!exactState.partial) {
-
         // If whole selection (all textnodes) are in the applied format
         // remove the format from selection
         for (i = textNodes.length; i--;) {
@@ -332,7 +331,9 @@
           
           if (findSimilarTextNodeWrapper(textNodes[i], options, composer.element)) {
             unformatTextNode(textNodes[i], composer, options);
-          } else {
+          }
+
+          if (!findSimilarTextNodeWrapper(textNodes[i], options, composer.element)) {
             formatTextNode(textNodes[i], options);
           }
         }
