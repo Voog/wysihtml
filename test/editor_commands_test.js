@@ -183,7 +183,6 @@ if (wysihtml5.browser.supported()) {
       equal(editableElement.innerHTML.toLowerCase(), '<button>test this text</button>', "FormatInline removing style but keeping tag if tag not configured in options");
       editor.composer.commands.exec("formatInline", {nodeName: "button", styleProperty: "color", styleValue: "blue" });
       equal(editableElement.innerHTML.toLowerCase(), '<button style="color: blue;">test this text</button>', "Style is added to tag if not present and node not removed even if defined");
-
       editor.composer.commands.exec("formatInline", {nodeName: "button", styleProperty: "color", styleValue: "blue" });
       equal(editableElement.innerHTML.toLowerCase(), 'test this text', "Exact state toggles");
      
@@ -191,7 +190,7 @@ if (wysihtml5.browser.supported()) {
     });
   });
 
-  asyncTest("Format inline caret/word-mode handling", function() {
+  asyncTest("Format inline - caret/word-mode handling", function() {
      expect(15);
     var that = this,
         text = "once upon a time there was an unformated text.",
@@ -258,6 +257,48 @@ if (wysihtml5.browser.supported()) {
       editor.composer.commands.exec('bold');
       equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "once upon<b></b> a time there was an unformated text." , "Bold is correctly added to caret but not to word when caret last in wor");
       ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
+
+
+      start();
+    });
+  });
+
+  asyncTest("Format inline - similar cosequent tags merge", function() {
+    expect(2);
+    var that = this,
+        text = "once upon a time there was an unformated text.",
+        parserRules = {
+          tags: {
+            b: true
+          }
+        },
+        editor = new wysihtml5.Editor(this.editableArea1, {
+          parserRules: parserRules
+        });
+
+    var initString = function(editor, command, tag, txt, offset) {
+      var editable = that.editableArea1,
+          el;
+      editor.setValue(txt, true);
+      editor.composer.selection.selectNode(editable);
+      if (command) {
+        editor.composer.commands.exec(command);
+      }
+      el = (tag) ? editable.querySelector(tag).firstChild : editable.firstChild;
+      that.setCaretTo(editor, el, offset);
+    }
+        
+    editor.on("load", function() {
+      var editableElement   = that.editableArea1;
+
+      initString(editor, 'bold', 'b', text, 7);
+      editor.composer.commands.exec('bold');
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<b>once </b>upon<b> a time there was an unformated text.</b>" , "Tag of nodeName is correctly removed from word that caret was in");
+      editor.composer.selection.selectNode(editor.composer.element);
+      editor.composer.commands.exec('bold');
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<b>once upon a time there was an unformated text.</b>" , "Tag of nodeName is reapplied and similar consequent tags merged");
+      editor.composer.selection.selectNode(editor.composer.element);
+
 
 
       start();

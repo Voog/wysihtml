@@ -324,9 +324,7 @@
 
       }
 
-      selectTextNodes(textNodes, composer);
     }
-    composer.element.normalize();
   }
 
   function applyFormat(composer, textNodes, options) {
@@ -350,11 +348,69 @@
       for (i = textNodes.length; i--;) {
         formatTextNode(textNodes[i], options);
       }
-      selectTextNodes(textNodes, composer);
 
     }
+  }
 
-    composer.element.normalize();
+  // Contents of 2 elements are merged to fitst element. second element is removed as consequence
+  function mergeContents(element1, element2) {
+    while (element2.firstChild) {
+      element1.appendChild(element2.firstChild);
+    }
+    element2.parentNode.removeChild(element2);
+  }
+
+  //
+  function isSameNode(element1, element2) {
+    var classes1, classes2,
+        attr1, attr2;
+
+    if (element1.nodeType !== 1 || element2.nodeType !== 1) {
+      return false;
+    }
+
+    if (element1.nodeName !== element2.nodeName) {
+      return false;
+    }
+
+
+    classes1 = element1.className.trim().replace(/\s+/g, ' ').split(' ');
+    classes2 = element2.className.trim().replace(/\s+/g, ' ').split(' ');
+    if (wysihtml5.lang.array(classes1).without(classes2).length > 0) {
+      return false;
+    }
+
+    attr1 = wysihtml5.dom.getAttributes(element1);
+    attr2 = wysihtml5.dom.getAttributes(element2);
+    if (attr1.length > attr2.length) {
+      return false;
+    }
+    for (var a in attr1) {
+      if (attr1.hasOwnProperty(a)) {
+        if (typeof attr2[a] === undefined || attr2[a] !== attr1[a]) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  function mergeConsequentSimilarElements(elements) {
+    for (var i = elements.length; i--;) {
+      
+      if (elements[i] && elements[i].parentNode) { // Test if node is not allready removed in cleanup
+
+        if (elements[i].nextSibling && isSameNode(elements[i], elements[i].nextSibling)) {
+          mergeContents(elements[i], elements[i].nextSibling);
+        }
+
+        if (elements[i].previousSibling && isSameNode(elements[i]  , elements[i].previousSibling)) {
+          mergeContents(elements[i].previousSibling, elements[i]);
+        }
+
+      }
+    }
   }
 
   wysihtml5.commands.formatInline = {
@@ -381,6 +437,13 @@
         // Selection is not in the applied format
         applyFormat(composer, textNodes, options);
       }
+
+      mergeConsequentSimilarElements(getState(composer, options).nodes);
+
+      if (textNodes.length > 0) {
+        selectTextNodes(textNodes, composer);
+      }
+      composer.element.normalize();
 
     },
 
