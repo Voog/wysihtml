@@ -233,6 +233,17 @@
           }
         }
 
+        if (properties.attribute) {
+          var attr = wysihtml5.dom.getAttributes(node),
+              hasAttribute = false;
+          if (typeof attr[properties.attribute] === undefined) {
+            return false;
+          }
+          if (properties.attributeValue && properties.attributeValue !== attr[properties.attribute]) {
+            return false;
+          }
+        }
+
         return true;
       }
 

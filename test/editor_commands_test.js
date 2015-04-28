@@ -103,7 +103,7 @@ if (wysihtml5.browser.supported()) {
   });
 
   asyncTest("Format inline", function() {
-    expect(19);
+    expect(23);
     var that = this,
         parserRules = {
           "classes": "any",
@@ -192,13 +192,25 @@ if (wysihtml5.browser.supported()) {
       equal(editableElement.innerHTML.toLowerCase(), '<button style="color: blue;">test this text</button>', "Style is added to tag if not present and node not removed even if defined");
       editor.composer.commands.exec("formatInline", {nodeName: "button", styleProperty: "color", styleValue: "blue" });
       equal(editableElement.innerHTML.toLowerCase(), 'test this text', "Exact state toggles");
+
+      blankCaretStart(editor);
+      editor.composer.commands.exec("formatInline", {nodeName: "a", attribute : "href", attributeValue: "http://www.google.com"});
+      ok((/^<a href="http:\/\/www.google.com"><\/a>(<\/?br>)?$/).test(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, '')), "FormatInline given tag and attribute makes node with that name and attribute at caret");
+      editor.composer.commands.exec("formatInline", {nodeName: "a", attribute : "href", attributeValue: "http://www.google.com"});
+      equal(!!editableElement.querySelector('a'), false, "Previous Insert is toggleable");
+
+      blankSelectionStart(editor);
+      editor.composer.commands.exec("formatInline", {nodeName: "a", attribute : "href", attributeValue: "http://www.google.com"});
+      equal(editableElement.innerHTML.toLowerCase(), '<a href="http://www.google.com">test this text</a>', "FormatInline wrapping selection with tag and attribute");
+      editor.composer.commands.exec("formatInline", {nodeName: "a", attribute : "href", attributeValue: "http://www.google.com"});
+      equal(editableElement.innerHTML, "test this text", "Previous Insert is toggleable");
      
       start();
     });
   });
 
   asyncTest("Format inline - caret/word-mode handling", function() {
-     expect(15);
+     expect(17);
     var that = this,
         text = "once upon a time there was an unformated text.",
         parserRules = {
@@ -210,13 +222,13 @@ if (wysihtml5.browser.supported()) {
           parserRules: parserRules
         });
 
-    var initString = function(editor, command, tag, txt, offset) {
+    var initString = function(editor, command, val, tag, txt, offset) {
       var editable = that.editableArea1,
           el;
       editor.setValue(txt, true);
       editor.composer.selection.selectNode(editable);
       if (command) {
-        editor.composer.commands.exec(command);
+        editor.composer.commands.exec(command, val);
       }
       el = (tag) ? editable.querySelector(tag).firstChild : editable.firstChild;
       that.setCaretTo(editor, el, offset);
@@ -235,45 +247,51 @@ if (wysihtml5.browser.supported()) {
       ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
       equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<b>" + text + "</b>test", "With caret at last position bold is not removed but set to notbold at caret");
 
-      initString(editor, 'bold', 'b', text, 7);
+      initString(editor, 'bold', null, 'b', text, 7);
       editor.composer.commands.exec('bold');
       equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<b>once </b>upon<b> a time there was an unformated text.</b>" , "Bold is correctly removed from word that caret was in");
       ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
 
-      initString(editor, 'bold', 'b', text, 5);
+      initString(editor, 'bold', null, 'b', text, 5);
       editor.composer.commands.exec('bold');
       editor.composer.commands.exec('insertHtml','x');
       equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<b>once </b>x<b>upon a time there was an unformated text.</b>" , "Bold is correctly removed from caret but not word when caret first in word");
       ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
 
-      initString(editor, 'bold', 'b', text, 9);
+      initString(editor, 'bold', null, 'b', text, 9);
       editor.composer.commands.exec('bold');
       editor.composer.commands.exec('insertHtml','x');
       equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<b>once upon</b>x<b> a time there was an unformated text.</b>" , "Bold is correctly removed from caret but not word when caret last in word");
       ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
 
-      initString(editor, false, false, text, 7);
+      initString(editor, false, null, false, text, 7);
       editor.composer.commands.exec('bold');
       equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "once <b>upon</b> a time there was an unformated text." , "Bold is correctly added to word that caret was in");
       ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
 
-      initString(editor, false, false, text, 5);
+      initString(editor, false, null, false, text, 5);
       editor.composer.commands.exec('bold');
       equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "once <b></b>upon a time there was an unformated text." , "Bold is correctly added to caret but not to word when caret first in word");
       ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
 
-      initString(editor, false, false, text, 9);
+      initString(editor, false, null, false, text, 9);
       editor.composer.commands.exec('bold');
       equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "once upon<b></b> a time there was an unformated text." , "Bold is correctly added to caret but not to word when caret last in wor");
       ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
 
+      initString(editor, 'formatInline', {nodeName: "a", attribute : "href", attributeValue: "http://www.google.com"}, 'a', text, 7);
+      editor.composer.commands.exec("formatInline", {nodeName: "a", attribute : "href", attributeValue: "http://www.google.com"});
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), '<a href="http://www.google.com">once </a>upon<a href="http://www.google.com"> a time there was an unformated text.</a>' , "Link tag and href attribute is correctly removed from word that caret was in");
+      ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
+        
+        
 
       start();
     });
   });
 
   asyncTest("Format inline - similar cosequent tags merge", function() {
-    expect(20);
+    expect(22);
     var that = this,
         text = "once upon a time there was an unformated text.",
         parserRules = {
@@ -369,6 +387,14 @@ if (wysihtml5.browser.supported()) {
       that.setSelection(editor, editor.composer.element.childNodes[0].firstChild, 2, editor.composer.element.childNodes[2].firstChild, 2);
       editor.composer.commands.exec('formatInline', {styleProperty: "color", styleValue:"rgb(0, 0, 255)"});
       equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), '<span style="color: rgb(255, 0, 0);">on</span><span style="color: rgb(0, 0, 255);">ce upon a</span><span style="color: rgb(255, 0, 0);"> time there was an unformated text.</span>' , "Color property with different value split changed and merged correctly");
+
+      initString(editor, false, null, false, text, 7);
+      editor.composer.commands.exec("formatInline", {nodeName: "a", attribute : "href", attributeValue: "http://www.google.com"});
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), 'once <a href="http://www.google.com">upon</a> a time there was an unformated text.' , "Tag and attribute added to word");
+      editor.composer.selection.selectNode(editor.composer.element);
+      editor.composer.commands.exec("formatInline", {nodeName: "a", attribute : "href", attributeValue: "http://www.google.com"});
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), '<a href="http://www.google.com">once upon a time there was an unformated text.</a>' , "Tags extended on both ends and merged");
+
 
       start();
     });

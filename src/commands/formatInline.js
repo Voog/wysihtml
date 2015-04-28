@@ -14,7 +14,52 @@
         "i": "em, i"
       };
 
-  function getWrapNode(textNode, options) {
+  function hasNoClass(element) {
+    return (/^\s*$/).test(element.className);
+  }
+
+  function hasNoStyle(element) {
+    return !element.getAttribute('style') || (/^\s*$/).test(element.getAttribute('style'));
+  }
+
+  // compares two nodes if they are semantically the same
+  // Used in cleanup to find consequent semantically similar elements for merge
+  function isSameNode(element1, element2) {
+    var classes1, classes2,
+        attr1, attr2;
+
+    if (element1.nodeType !== 1 || element2.nodeType !== 1) {
+      return false;
+    }
+
+    if (element1.nodeName !== element2.nodeName) {
+      return false;
+    }
+
+
+    classes1 = element1.className.trim().replace(/\s+/g, ' ').split(' ');
+    classes2 = element2.className.trim().replace(/\s+/g, ' ').split(' ');
+    if (wysihtml5.lang.array(classes1).without(classes2).length > 0) {
+      return false;
+    }
+
+    attr1 = wysihtml5.dom.getAttributes(element1);
+    attr2 = wysihtml5.dom.getAttributes(element2);
+    if (attr1.length > attr2.length) {
+      return false;
+    }
+    for (var a in attr1) {
+      if (attr1.hasOwnProperty(a)) {
+        if (typeof attr2[a] === undefined || attr2[a] !== attr1[a]) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  function createWrapNode(textNode, options) {
     var nodeName = options && options.nodeName || defaultTag,
         element = textNode.ownerDocument.createElement(nodeName);
 
@@ -31,34 +76,66 @@
       element.style[wysihtml5.browser.fixStyleKey(options.styleProperty)] = options.styleValue;
     }
 
+    if (options.attribute && typeof options.attributeValue !== "undefined") {
+      element.setAttribute(options.attribute, options.attributeValue);
+    }
+
     return element;
   }
 
-  function formatTextNode(textNode, options) {
-    var wrapNode = getWrapNode(textNode, options);
+  function removeFormatFromElement(element, options) {
+    var attr, newNode, a;
 
-    textNode.parentNode.insertBefore(wrapNode, textNode);
-    wrapNode.appendChild(textNode);
-  }
-
-  function unformatTextNode(textNode, composer, options) {
-    var container = composer.element,
-        wrapNode = findSimilarTextNodeWrapper(textNode, options, container),
-        newWrapNode;
-
-    if (wrapNode) {
-      newWrapNode = wrapNode.cloneNode(false);
-
-      wysihtml5.dom.domNode(textNode).escapeParent(wrapNode, newWrapNode);
-      removeFormatFromElement(newWrapNode, options);
+    if (options.className) {
+      element.classList.remove(options.className);
+      if (hasNoClass(element)) {
+        element.removeAttribute('class');
+      }
     }
-  }
 
-  function formatTextRange(range, composer, options) {
-    var wrapNode = getWrapNode(range.endContainer, options);
+    // change/remove style
+    if (options.styleProperty) {
+      if (element.style[wysihtml5.browser.fixStyleKey(options.styleProperty)].trim().replace(/, /g, ",") === options.styleValue) {
+        element.style[wysihtml5.browser.fixStyleKey(options.styleProperty)] = '';
+      } else {
+        element.style[wysihtml5.browser.fixStyleKey(options.styleProperty)] = options.styleValue;
+      }
+    }
+    if (hasNoStyle(element)) {
+      element.removeAttribute('style');
+    }
 
-    range.surroundContents(wrapNode);
-    composer.selection.selectNode(wrapNode);
+    if (options.attribute) {
+      attr = wysihtml5.dom.getAttributes(element);
+      if (options.attributeValue && attr[options.attribute] && attr[options.attribute] === options.attributeValue) {
+        element.removeAttribute(options.attribute);
+      } else {
+        element.setAttribute(options.attribute, options.attributeValue);
+      }
+    }
+
+    if ((options.nodeName && element.nodeName === options.nodeName) || (!options.nodeName && element.nodeName === defaultTag)) {
+      attr = wysihtml5.dom.getAttributes(element);
+      if (hasNoClass(element) && hasNoStyle(element) && attr.length === 0) {
+        wysihtml5.dom.unwrap(element);
+      } else if (!options.nodeName) {
+        newNode = element.ownerDocument.createElement(defaultTag);
+        
+        // pass present attributes
+        for (a in attr) {
+          if (attr.hasOwnProperty(a)) {
+            newNode.setAttribute(a, attr[a]);
+          }
+        }
+
+        while (element.firstChild) {
+          newNode.appendChild(element.firstChild);
+        }
+        element.parentNode.insertBefore(newNode, element);
+        element.parentNode.removeChild(element);
+      }
+
+    }
   }
 
   // Fetch all textnodes in selection
@@ -100,7 +177,7 @@
   }
 
   // Finds inline node with similar nodeName/style/className
-  // If nodeName is specified inline node with the same (or alias) nodeName is expected to prove similar
+  // If nodeName is specified inline node with the same (or alias) nodeName is expected to prove similar regardless of attributes
   function isSimilarNode(node, options) {
     var o;
     if (options.nodeName) {
@@ -223,59 +300,28 @@
     return false;
   }
 
-  function hasNoClass(element) {
-    return (/^\s*$/).test(element.className);
+  // Contents of 2 elements are merged to fitst element. second element is removed as consequence
+  function mergeContents(element1, element2) {
+    while (element2.firstChild) {
+      element1.appendChild(element2.firstChild);
+    }
+    element2.parentNode.removeChild(element2);
   }
 
-  function hasNoStyle(element) {
-    return !element.getAttribute('style') || (/^\s*$/).test(element.getAttribute('style'));
-  }
+  function mergeConsequentSimilarElements(elements) {
+    for (var i = elements.length; i--;) {
+      
+      if (elements[i] && elements[i].parentNode) { // Test if node is not allready removed in cleanup
 
-  function removeFormatFromElement(element, options) {
-    var attr, newNode, a;
-
-    if (options.className) {
-      element.classList.remove(options.className);
-      if (hasNoClass(element)) {
-        element.removeAttribute('class');
-      }
-    }
-
-    // change/remove style
-    if (options.styleProperty) {
-      if (element.style[wysihtml5.browser.fixStyleKey(options.styleProperty)].trim().replace(/, /g, ",") === options.styleValue) {
-        element.style[wysihtml5.browser.fixStyleKey(options.styleProperty)] = '';
-      } else {
-        element.style[wysihtml5.browser.fixStyleKey(options.styleProperty)] = options.styleValue;
-      }
-    }
-    if (hasNoStyle(element)) {
-      element.removeAttribute('style');
-    }
-
-    if ((options.nodeName && element.nodeName === options.nodeName) || (!options.nodeName && element.nodeName === defaultTag)) {
-
-
-      attr = wysihtml5.dom.getAttributes(element);
-      if (hasNoClass(element) && hasNoStyle(element) && attr.length === 0) {
-        wysihtml5.dom.unwrap(element);
-      } else if (!options.nodeName) {
-        newNode = element.ownerDocument.createElement(defaultTag);
-
-        // pass present attributes
-        for (a in attr) {
-          if (attr.hasOwnProperty(a)) {
-            newNode.setAttribute(a, attr[a]);
-          }
+        if (elements[i].nextSibling && isSameNode(elements[i], elements[i].nextSibling)) {
+          mergeContents(elements[i], elements[i].nextSibling);
         }
 
-        while (element.firstChild) {
-          newNode.appendChild(element.firstChild);
+        if (elements[i].previousSibling && isSameNode(elements[i]  , elements[i].previousSibling)) {
+          mergeContents(elements[i].previousSibling, elements[i]);
         }
-        element.parentNode.insertBefore(newNode, element);
-        element.parentNode.removeChild(element);
-      }
 
+      }
     }
   }
 
@@ -295,6 +341,33 @@
     selectTextNode(textNode, offset);
     mergeConsequentSimilarElements(getState(composer, options).nodes);
     selectTextNode(textNode, offset);
+  }
+
+  function formatTextNode(textNode, options) {
+    var wrapNode = createWrapNode(textNode, options);
+
+    textNode.parentNode.insertBefore(wrapNode, textNode);
+    wrapNode.appendChild(textNode);
+  }
+
+  function unformatTextNode(textNode, composer, options) {
+    var container = composer.element,
+        wrapNode = findSimilarTextNodeWrapper(textNode, options, container),
+        newWrapNode;
+
+    if (wrapNode) {
+      newWrapNode = wrapNode.cloneNode(false);
+
+      wysihtml5.dom.domNode(textNode).escapeParent(wrapNode, newWrapNode);
+      removeFormatFromElement(newWrapNode, options);
+    }
+  }
+
+  function formatTextRange(range, composer, options) {
+    var wrapNode = createWrapNode(range.endContainer, options);
+
+    range.surroundContents(wrapNode);
+    composer.selection.selectNode(wrapNode);
   }
 
   function removeFormat(composer, textNodes, state, options) {
@@ -381,67 +454,6 @@
       }
 
       cleanupAndSetSelection(composer, textNodes, options);
-    }
-  }
-
-  // Contents of 2 elements are merged to fitst element. second element is removed as consequence
-  function mergeContents(element1, element2) {
-    while (element2.firstChild) {
-      element1.appendChild(element2.firstChild);
-    }
-    element2.parentNode.removeChild(element2);
-  }
-
-  //
-  function isSameNode(element1, element2) {
-    var classes1, classes2,
-        attr1, attr2;
-
-    if (element1.nodeType !== 1 || element2.nodeType !== 1) {
-      return false;
-    }
-
-    if (element1.nodeName !== element2.nodeName) {
-      return false;
-    }
-
-
-    classes1 = element1.className.trim().replace(/\s+/g, ' ').split(' ');
-    classes2 = element2.className.trim().replace(/\s+/g, ' ').split(' ');
-    if (wysihtml5.lang.array(classes1).without(classes2).length > 0) {
-      return false;
-    }
-
-    attr1 = wysihtml5.dom.getAttributes(element1);
-    attr2 = wysihtml5.dom.getAttributes(element2);
-    if (attr1.length > attr2.length) {
-      return false;
-    }
-    for (var a in attr1) {
-      if (attr1.hasOwnProperty(a)) {
-        if (typeof attr2[a] === undefined || attr2[a] !== attr1[a]) {
-          return false;
-        }
-      }
-    }
-
-    return true;
-  }
-
-  function mergeConsequentSimilarElements(elements) {
-    for (var i = elements.length; i--;) {
-      
-      if (elements[i] && elements[i].parentNode) { // Test if node is not allready removed in cleanup
-
-        if (elements[i].nextSibling && isSameNode(elements[i], elements[i].nextSibling)) {
-          mergeContents(elements[i], elements[i].nextSibling);
-        }
-
-        if (elements[i].previousSibling && isSameNode(elements[i]  , elements[i].previousSibling)) {
-          mergeContents(elements[i].previousSibling, elements[i]);
-        }
-
-      }
     }
   }
 
