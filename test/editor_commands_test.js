@@ -271,7 +271,7 @@ if (wysihtml5.browser.supported()) {
   });
 
   asyncTest("Format inline - similar cosequent tags merge", function() {
-    expect(14);
+    expect(20);
     var that = this,
         text = "once upon a time there was an unformated text.",
         parserRules = {
@@ -292,8 +292,12 @@ if (wysihtml5.browser.supported()) {
         editor.composer.commands.exec(command, val);
       }
       el = (tag) ? editable.querySelector(tag).firstChild : editable.firstChild;
-      that.setCaretTo(editor, el, offset);
-    }
+      if (offset === false) {
+        editor.composer.selection.selectNode(el);
+      } else {
+        that.setCaretTo(editor, el, offset);
+      }
+    };
         
     editor.on("load", function() {
       var editableElement   = that.editableArea1;
@@ -346,13 +350,24 @@ if (wysihtml5.browser.supported()) {
       initString(editor, false, null, false, text, 7);
       editor.composer.commands.exec('formatInline', {styleProperty: "color", styleValue:"rgb(255, 0, 0)"});
       equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), 'once <span style="color: rgb(255, 0, 0);">upon</span> a time there was an unformated text.' , "Color added to word");
-      
       that.setSelection(editor, editor.composer.element.childNodes[1].firstChild, 2, editor.composer.element.childNodes[2], 2);
-      
       editor.composer.commands.exec('formatInline', {styleProperty: "color", styleValue:"rgb(0, 255, 0)"});
-
       equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), 'once <span style="color: rgb(255, 0, 0);">up</span><span style="color: rgb(0, 255, 0);">on a</span> time there was an unformated text.' , "Different color partly changed and merged");
       
+      initString(editor, false, null, false, text, 7);
+      editor.composer.commands.exec('formatInline', {styleProperty: "color", styleValue:"rgb(255, 0, 0)"});
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), 'once <span style="color: rgb(255, 0, 0);">upon</span> a time there was an unformated text.' , "Color added to word");
+      that.setSelection(editor, editor.composer.element.childNodes[1].firstChild, 2, editor.composer.element.childNodes[2], 2);
+      editor.composer.commands.exec('formatInline', {styleProperty: "color", styleValue:"rgb(0, 255, 0)"});
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), 'once <span style="color: rgb(255, 0, 0);">up</span><span style="color: rgb(0, 255, 0);">on a</span> time there was an unformated text.' , "Different color partly changed and merged");
+      
+      initString(editor, 'formatInline', {styleProperty: "color", styleValue:"rgb(255, 0, 0)"}, 'span', text, 7);
+      editor.composer.commands.exec('formatInline', {styleProperty: "color", styleValue:"rgb(0, 255, 0)"});
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), '<span style="color: rgb(255, 0, 0);">once </span><span style="color: rgb(0, 255, 0);">upon</span><span style="color: rgb(255, 0, 0);"> a time there was an unformated text.</span>' , "Color property with different value split correctly");
+      that.setSelection(editor, editor.composer.element.childNodes[0].firstChild, 2, editor.composer.element.childNodes[2].firstChild, 2);
+      editor.composer.commands.exec('formatInline', {styleProperty: "color", styleValue:"rgb(0, 0, 255)"});
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), '<span style="color: rgb(255, 0, 0);">on</span><span style="color: rgb(0, 0, 255);">ce upon a</span><span style="color: rgb(255, 0, 0);"> time there was an unformated text.</span>' , "Color property with different value split changed and merged correctly");
+
       start();
     });
   });

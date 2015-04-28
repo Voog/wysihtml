@@ -276,6 +276,24 @@
     }
   }
 
+  function cleanupAndSetSelection(composer, textNodes, options) {
+    if (textNodes.length > 0) {
+      selectTextNodes(textNodes, composer);
+    }
+
+    mergeConsequentSimilarElements(getState(composer, options).nodes);
+
+    if (textNodes.length > 0) {
+      selectTextNodes(textNodes, composer);
+    }
+  }
+
+  function cleanupAndSetCaret(composer, textNode, offset, options) {
+    selectTextNode(textNode, offset);
+    mergeConsequentSimilarElements(getState(composer, options).nodes);
+    selectTextNode(textNode, offset);
+  }
+
   function removeFormat(composer, textNodes, state, options) {
     var exactState = getState(composer, options, true),
         selection = composer.selection.getSelection(),
@@ -283,17 +301,13 @@
 
     if (!textNodes.length) {
       // Selection is caret
-
       if (caretIsInsideWord(selection)) {
 
         // Unformat whole word 
         wordObj = getRangeForWord(selection);
         textNode = wordObj.textNode;
         unformatTextNode(wordObj.textNode, composer, options);
-        
-        selectTextNode(wordObj.textNode, wordObj.wordOffset);
-        mergeConsequentSimilarElements(getState(composer, options).nodes);
-        selectTextNode(wordObj.textNode, wordObj.wordOffset);
+        cleanupAndSetCaret(composer, wordObj.textNode, wordObj.wordOffset, options);
 
       } else {
 
@@ -303,8 +317,7 @@
         newNode.appendChild(textNode);
         composer.selection.splitElementAtCaret(state.nodes[0], newNode);
         removeFormatFromElement(newNode, options);
-        mergeConsequentSimilarElements(getState(composer, options).nodes);
-        composer.selection.selectNode(textNode);
+        cleanupAndSetSelection(composer, [textNode], options);
       }
 
     } else {
@@ -335,11 +348,7 @@
 
       }
 
-      mergeConsequentSimilarElements(getState(composer, options).nodes);
-      if (textNodes.length > 0) {
-        selectTextNodes(textNodes, composer);
-      }
-
+      cleanupAndSetSelection(composer, textNodes, options);
     }
   }
 
@@ -350,14 +359,15 @@
     if (!textNodes.length) {
       // Handle collapsed selection caret and return
       if (caretIsInsideWord(selection)) {
+
         wordObj = getRangeForWord(selection);
         formatTextNode(wordObj.textNode, options);
-        selectTextNode(wordObj.textNode, wordObj.wordOffset);
-        mergeConsequentSimilarElements(getState(composer, options).nodes);
-        selectTextNode(wordObj.textNode, wordObj.wordOffset);
+        cleanupAndSetCaret(composer, wordObj.textNode, wordObj.wordOffset, options);
+
       } else {
+
         formatTextRange(composer.selection.getOwnRanges()[0], composer, options);
-        mergeConsequentSimilarElements(getState(composer, options).nodes);
+
       }
       
     } else {
@@ -367,12 +377,7 @@
         formatTextNode(textNodes[i], options);
       }
 
-      mergeConsequentSimilarElements(getState(composer, options).nodes);
-      
-      if (textNodes.length > 0) {
-        selectTextNodes(textNodes, composer);
-      }
-
+      cleanupAndSetSelection(composer, textNodes, options);
     }
   }
 
@@ -461,10 +466,8 @@
         // Selection is not in the applied format
         applyFormat(composer, textNodes, options);
       }
-
       
       composer.element.normalize();
-
     },
 
     state: function(composer, command, options) {
