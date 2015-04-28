@@ -242,12 +242,14 @@ if (wysihtml5.browser.supported()) {
 
       initString(editor, 'bold', 'b', text, 5);
       editor.composer.commands.exec('bold');
-      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<b>once </b><b>upon a time there was an unformated text.</b>" , "Bold is correctly removed from caret but not word when caret first in word");
+      editor.composer.commands.exec('insertHtml','x');
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<b>once </b>x<b>upon a time there was an unformated text.</b>" , "Bold is correctly removed from caret but not word when caret first in word");
       ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
 
       initString(editor, 'bold', 'b', text, 9);
       editor.composer.commands.exec('bold');
-      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<b>once upon</b><b> a time there was an unformated text.</b>" , "Bold is correctly removed from caret but not word when caret last in word");
+      editor.composer.commands.exec('insertHtml','x');
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<b>once upon</b>x<b> a time there was an unformated text.</b>" , "Bold is correctly removed from caret but not word when caret last in word");
       ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
 
       initString(editor, false, false, text, 7);

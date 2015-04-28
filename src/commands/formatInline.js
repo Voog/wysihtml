@@ -249,6 +249,9 @@
         element.style[wysihtml5.browser.fixStyleKey(options.styleProperty)] = options.styleValue;
       }
     }
+    if (hasNoStyle(element)) {
+      element.removeAttribute('style');
+    }
 
     if ((options.nodeName && element.nodeName === options.nodeName) || (!options.nodeName && element.nodeName === defaultTag)) {
 
