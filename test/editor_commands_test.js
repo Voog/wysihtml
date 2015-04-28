@@ -20,6 +20,13 @@ if (wysihtml5.browser.supported()) {
         editor.composer.selection.setSelection(r1);
     },
 
+    setSelection: function(editor, el, offset, el2, offset2) {
+      var r1 = editor.composer.selection.createRange();
+      r1.setEnd(el2, offset2);
+      r1.setStart(el, offset);
+      editor.composer.selection.setSelection(r1);
+    },
+
     teardown: function() {
       var leftover;
       this.editableArea1.parentNode.removeChild(this.editableArea1);
@@ -264,7 +271,7 @@ if (wysihtml5.browser.supported()) {
   });
 
   asyncTest("Format inline - similar cosequent tags merge", function() {
-    expect(2);
+    expect(14);
     var that = this,
         text = "once upon a time there was an unformated text.",
         parserRules = {
@@ -276,13 +283,13 @@ if (wysihtml5.browser.supported()) {
           parserRules: parserRules
         });
 
-    var initString = function(editor, command, tag, txt, offset) {
+    var initString = function(editor, command, val, tag, txt, offset) {
       var editable = that.editableArea1,
           el;
       editor.setValue(txt, true);
       editor.composer.selection.selectNode(editable);
       if (command) {
-        editor.composer.commands.exec(command);
+        editor.composer.commands.exec(command, val);
       }
       el = (tag) ? editable.querySelector(tag).firstChild : editable.firstChild;
       that.setCaretTo(editor, el, offset);
@@ -291,16 +298,61 @@ if (wysihtml5.browser.supported()) {
     editor.on("load", function() {
       var editableElement   = that.editableArea1;
 
-      initString(editor, 'bold', 'b', text, 7);
+      initString(editor, 'bold', null, 'b', text, 7);
       editor.composer.commands.exec('bold');
       equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<b>once </b>upon<b> a time there was an unformated text.</b>" , "Tag of nodeName is correctly removed from word that caret was in");
       editor.composer.selection.selectNode(editor.composer.element);
       editor.composer.commands.exec('bold');
-      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<b>once upon a time there was an unformated text.</b>" , "Tag of nodeName is reapplied and similar consequent tags merged");
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<b>once upon a time there was an unformated text.</b>" , "Tag of nodeName is reapplied and similar consequent tags merged on expanding selection");
+      editor.composer.commands.exec('bold');
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "once upon a time there was an unformated text." , "Selection preserved and toggleable");
+
+      initString(editor, 'bold', null, 'b', text, 7);
+      editor.composer.commands.exec('bold');
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<b>once </b>upon<b> a time there was an unformated text.</b>" , "Tag of nodeName is correctly removed from word that caret was in");
+      editor.composer.commands.exec('bold');
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<b>once upon a time there was an unformated text.</b>" , "Tag of nodeName is reapplied and similar consequent tags merged on toggle");
+      editor.composer.commands.exec('bold');
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<b>once </b>upon<b> a time there was an unformated text.</b>" , "Caret preserved and toggleable");
+
+      initString(editor, false, null, false, text, 7);
+      editor.composer.commands.exec('bold');
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "once <b>upon</b> a time there was an unformated text." , "Bold added to word");
       editor.composer.selection.selectNode(editor.composer.element);
+      editor.composer.commands.exec('bold');
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<b>once upon a time there was an unformated text.</b>" , "Tags extended on both ends and merged");
 
+      initString(editor, false, null, false, text, 7);
+      editor.composer.commands.exec('formatInline', {className: "test"});
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), 'once <span class="test">upon</span> a time there was an unformated text.' , "Class added to word");
+      editor.composer.selection.selectNode(editor.composer.element);
+      editor.composer.commands.exec('formatInline', {className: "test"});
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), '<span class="test">once upon a time there was an unformated text.</span>' , "Tag extended on both ends and merged");
 
+      initString(editor, false, null, false, text, 7);
+      editor.composer.commands.exec('formatInline', {styleProperty: "color", styleValue:"rgb(255, 0, 0)"});
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), 'once <span style="color: rgb(255, 0, 0);">upon</span> a time there was an unformated text.' , "Style added to word");
+      editor.composer.selection.selectNode(editor.composer.element);
+      editor.composer.commands.exec('formatInline', {styleProperty: "color", styleValue:"rgb(255, 0, 0)"});
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), '<span style="color: rgb(255, 0, 0);">once upon a time there was an unformated text.</span>' , "Tag extended on both ends and merged");
 
+      initString(editor, 'formatInline', {className: "test"}, 'span', text, 7);
+      editor.composer.commands.exec('formatInline', {styleProperty: "color", styleValue:"red"});
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), '<span class="test">once <span style="color: red;">upon</span> a time there was an unformated text.</span>' , "Style added to word");
+      editor.composer.selection.selectNode(editor.composer.element);
+      editor.composer.commands.exec('formatInline', {styleProperty: "color", styleValue:"red"});
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), '<span class="test"><span style="color: red;">once upon a time there was an unformated text.</span></span>' , "Tag extended on both ends and merged");
+
+      initString(editor, false, null, false, text, 7);
+      editor.composer.commands.exec('formatInline', {styleProperty: "color", styleValue:"rgb(255, 0, 0)"});
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), 'once <span style="color: rgb(255, 0, 0);">upon</span> a time there was an unformated text.' , "Color added to word");
+      
+      that.setSelection(editor, editor.composer.element.childNodes[1].firstChild, 2, editor.composer.element.childNodes[2], 2);
+      
+      editor.composer.commands.exec('formatInline', {styleProperty: "color", styleValue:"rgb(0, 255, 0)"});
+
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), 'once <span style="color: rgb(255, 0, 0);">up</span><span style="color: rgb(0, 255, 0);">on a</span> time there was an unformated text.' , "Different color partly changed and merged");
+      
       start();
     });
   });

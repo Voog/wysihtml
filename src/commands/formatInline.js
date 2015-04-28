@@ -136,7 +136,14 @@
     var searchNodes = getSelectedTextNodes(composer.selection),
         nodes = [],
         partial = false,
-        node, range;
+        node, range, caretNode;
+
+    if (searchNodes.length === 0 && composer.selection.isCollapsed()) {
+      caretNode = composer.selection.getSelection().anchorNode;
+      if (caretNode.nodeType === 3) {
+        searchNodes = [caretNode];
+      }
+    }
 
     // Handle collapsed selection caret
     if (!searchNodes.length) {
@@ -283,8 +290,11 @@
         wordObj = getRangeForWord(selection);
         textNode = wordObj.textNode;
         unformatTextNode(wordObj.textNode, composer, options);
+        
         selectTextNode(wordObj.textNode, wordObj.wordOffset);
-      
+        mergeConsequentSimilarElements(getState(composer, options).nodes);
+        selectTextNode(wordObj.textNode, wordObj.wordOffset);
+
       } else {
 
         // Escape caret out of format
@@ -293,6 +303,7 @@
         newNode.appendChild(textNode);
         composer.selection.splitElementAtCaret(state.nodes[0], newNode);
         removeFormatFromElement(newNode, options);
+        mergeConsequentSimilarElements(getState(composer, options).nodes);
         composer.selection.selectNode(textNode);
       }
 
@@ -324,6 +335,11 @@
 
       }
 
+      mergeConsequentSimilarElements(getState(composer, options).nodes);
+      if (textNodes.length > 0) {
+        selectTextNodes(textNodes, composer);
+      }
+
     }
   }
 
@@ -333,13 +349,15 @@
  
     if (!textNodes.length) {
       // Handle collapsed selection caret and return
-
       if (caretIsInsideWord(selection)) {
         wordObj = getRangeForWord(selection);
         formatTextNode(wordObj.textNode, options);
         selectTextNode(wordObj.textNode, wordObj.wordOffset);
+        mergeConsequentSimilarElements(getState(composer, options).nodes);
+        selectTextNode(wordObj.textNode, wordObj.wordOffset);
       } else {
         formatTextRange(composer.selection.getOwnRanges()[0], composer, options);
+        mergeConsequentSimilarElements(getState(composer, options).nodes);
       }
       
     } else {
@@ -347,6 +365,12 @@
 
       for (i = textNodes.length; i--;) {
         formatTextNode(textNodes[i], options);
+      }
+
+      mergeConsequentSimilarElements(getState(composer, options).nodes);
+      
+      if (textNodes.length > 0) {
+        selectTextNodes(textNodes, composer);
       }
 
     }
@@ -438,11 +462,7 @@
         applyFormat(composer, textNodes, options);
       }
 
-      mergeConsequentSimilarElements(getState(composer, options).nodes);
-
-      if (textNodes.length > 0) {
-        selectTextNodes(textNodes, composer);
-      }
+      
       composer.element.normalize();
 
     },
