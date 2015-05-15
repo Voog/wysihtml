@@ -103,7 +103,7 @@ if (wysihtml5.browser.supported()) {
   });
 
   asyncTest("Format inline", function() {
-    expect(23);
+    expect(26);
     var that = this,
         parserRules = {
           "classes": "any",
@@ -204,6 +204,14 @@ if (wysihtml5.browser.supported()) {
       equal(editableElement.innerHTML.toLowerCase(), '<a href="http://www.google.com">test this text</a>', "FormatInline wrapping selection with tag and attribute");
       editor.composer.commands.exec("formatInline", {nodeName: "a", attribute : "href", attributeValue: "http://www.google.com"});
       equal(editableElement.innerHTML, "test this text", "Previous Insert is toggleable");
+
+      blankCaretStart(editor);
+      editor.composer.commands.exec("formatInline", {nodeName: "a", attribute : {"href": "http://www.google.com", "target": "_blank"}});
+      ok((/^<a href="http:\/\/www.google.com" target="_blank"><\/a>(<\/?br>)?$/).test(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, '')), "FormatInline given tag and attribute makes node with that name and attribute at caret");
+      editor.composer.commands.exec("formatInline", {nodeName: "a", attribute : {"href": "http://www.google.com", "target": "_self"}});
+      ok((/^<a href="http:\/\/www.google.com" target="_self"><\/a>(<\/?br>)?$/).test(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, '')), "FormatInline given different attribute at first changes to new attribute");
+      editor.composer.commands.exec("formatInline", {nodeName: "a", attribute : {"href": "http://www.google.com", "target": "_self"}});
+      equal(!!editableElement.querySelector('a'), false, "Previous Insert is toggleable");
      
       start();
     });
@@ -531,48 +539,48 @@ if (wysihtml5.browser.supported()) {
       });
     });
     
-// createLink/removeLink
-     /*   asyncTest("Create/remove link", function() {
-           expect(4);
-           
-          var that = this,
-              editor = new wysihtml5.Editor(this.editableArea1),
-              text = "text";
-        
-          editor.on("load", function() {
-            var editableElement   = that.editableArea1;
-            editor.setValue(text, true);
-            editor.composer.selection.selectNode(editor.editableElement);
-            
-            // Create
-            editor.composer.commands.exec('createLink', {
-              "href": "http://test.com", "title": "test"
-            });
-            that.equal(editableElement.innerHTML.toLowerCase(), '<a href="http://test.com" title="test">' + text + '</a>', "Link added correctly");
-            
-            // Change
-            editor.composer.selection.selectNode(editor.editableElement);
-            editor.composer.commands.exec('createLink', {
-              "href": "http://changed.com"
-            });
-            that.equal(editableElement.innerHTML.toLowerCase(), '<a href="http://changed.com">' + text + '</a>', "Link attributes changed correctly when createLink is executed on existing link");
-            
-            //Remove
-            editor.composer.selection.selectNode(editor.editableElement);
-            editor.composer.commands.exec('removeLink');
-            that.equal(editableElement.innerHTML, text, "Link remove correctly");
-            
-            // Create with caret
-            editor.composer.selection.selectNode(editor.editableElement);
-            editor.composer.selection.getSelection().collapseToStart();
-            editor.composer.commands.exec('createLink', {
-              "href": "http://test.com", "title": "test"
-            });
-            that.equal(editableElement.innerHTML.toLowerCase(), '<a href="http://test.com" title="test">http://test.com/</a> ' + text + '', "Link with caret added correctly");
-            
-            start();
-          });
-        });*/
+ //createLink/removeLink
+  asyncTest("Create/remove link", function() {
+     expect(4);
+     
+    var that = this,
+        editor = new wysihtml5.Editor(this.editableArea1),
+        text = "text";
+  
+    editor.on("load", function() {
+      var editableElement   = that.editableArea1;
+      editor.setValue(text, true);
+      editor.composer.selection.selectNode(editor.editableElement);
+      
+      // Create
+      editor.composer.commands.exec('createLink', {
+        "href": "http://test.com", "title": "test"
+      });
+      that.equal(editableElement.innerHTML.toLowerCase(), '<a href="http://test.com" title="test">' + text + '</a>', "Link added correctly");
+      
+      // Change
+      editor.composer.selection.selectNode(editor.editableElement);
+      editor.composer.commands.exec('createLink', {
+        "href": "http://changed.com"
+      });
+      that.equal(editableElement.innerHTML.toLowerCase(), '<a href="http://changed.com">' + text + '</a>', "Link attributes changed correctly when createLink is executed on existing link");
+      
+      //Remove
+      editor.composer.selection.selectNode(editor.editableElement);
+      editor.composer.commands.exec('removeLink');
+      that.equal(editableElement.innerHTML, text, "Link remove correctly");
+      
+      // Create with caret
+      editor.composer.selection.selectNode(editor.editableElement);
+      editor.composer.selection.getSelection().collapseToStart();
+      editor.composer.commands.exec('createLink', {
+        "href": "http://test.com", "title": "test"
+      });
+      that.equal(editableElement.innerHTML.toLowerCase(), '<a href="http://test.com" title="test">http://test.com</a>' + text + '', "Link with caret added correctly");
+                                                   
+      start();
+    });
+  });
 
   // create table
     asyncTest("Create table", function() {

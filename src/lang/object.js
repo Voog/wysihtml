@@ -20,6 +20,29 @@ wysihtml5.lang.object = function(obj) {
       return this;
     },
 
+    difference: function (otherObj) {
+      var diffObj = {};
+
+      // Get old values not in comparing object
+      for (var i in obj) {
+        if (obj.hasOwnProperty(i)) {
+          if (!otherObj.hasOwnProperty(i)) {
+            diffObj[i] = obj[i];
+          }
+        }
+      }
+
+      // Get new and different values in comparing object
+      for (var o in otherObj) {
+        if (otherObj.hasOwnProperty(o)) {
+          if (!obj.hasOwnProperty(o) || obj[o] !== otherObj[o]) {
+            diffObj[0] = obj[0];
+          }
+        }
+      }
+      return diffObj;
+    },
+
     get: function() {
       return obj;
     },
@@ -71,6 +94,20 @@ wysihtml5.lang.object = function(obj) {
 
     isPlainObject: function () {
       return obj && Object.prototype.toString.call(obj) === '[object Object]' && !(("Node" in window) ? obj instanceof Node : obj instanceof Element || obj instanceof Text);
+    },
+
+    /**
+     * @example
+     *    wysihtml5.lang.object({}).isEmpty();
+     *    // => true
+     */
+    isEmpty: function() {
+      for (var i in obj) {
+        if (obj.hasOwnProperty(i)) {
+          return false;
+        }
+      }
+      return true;
     }
   };
 };

@@ -22,6 +22,26 @@
     return !element.getAttribute('style') || (/^\s*$/).test(element.getAttribute('style'));
   }
 
+  // Associative arrays in javascript are really objects and do not have length defined
+  // Thus have to check emptyness in a different way
+  function hasNoAttributes(element) {
+    var attr = wysihtml5.dom.getAttributes(element);
+    return wysihtml5.lang.object(attr).isEmpty();
+  }
+
+  // Tests if attr2 list contains all attributes present in attr1
+  // Note: attr 1 can have more attributes than attr2
+  function containsSameAttributes(attr1, attr2) {
+    for (var a in attr1) {
+      if (attr1.hasOwnProperty(a)) {
+        if (typeof attr2[a] === undefined || attr2[a] !== attr1[a]) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
   // compares two nodes if they are semantically the same
   // Used in cleanup to find consequent semantically similar elements for merge
   function isSameNode(element1, element2) {
@@ -45,15 +65,9 @@
 
     attr1 = wysihtml5.dom.getAttributes(element1);
     attr2 = wysihtml5.dom.getAttributes(element2);
-    if (attr1.length > attr2.length) {
+
+    if (attr1.length !== attr2.length || !containsSameAttributes(attr1, attr2)) {
       return false;
-    }
-    for (var a in attr1) {
-      if (attr1.hasOwnProperty(a)) {
-        if (typeof attr2[a] === undefined || attr2[a] !== attr1[a]) {
-          return false;
-        }
-      }
     }
 
     return true;
@@ -76,16 +90,54 @@
       element.style[wysihtml5.browser.fixStyleKey(options.styleProperty)] = options.styleValue;
     }
 
-    if (options.attribute && typeof options.attributeValue !== "undefined") {
-      element.setAttribute(options.attribute, options.attributeValue);
+    if (options.attribute) {
+      if (typeof options.attribute === "object") {
+        for (var a in options.attribute) {
+          if (options.attribute.hasOwnProperty(a)) {
+            element.setAttribute(a, options.attribute[a]);
+          }
+        }
+      } else if (typeof options.attributeValue !== "undefined") {
+        element.setAttribute(options.attribute, options.attributeValue);
+      }
     }
 
     return element;
   }
 
-  function removeFormatFromElement(element, options) {
-    var attr, newNode, a;
 
+  // If attrbutes and values are the same > remove
+  // if attributes or values 
+  function updateElementAttributes(element, newAttributes, toggle) {
+    var attr = wysihtml5.dom.getAttributes(element),
+        attrDifference = wysihtml5.lang.object(attr).difference(newAttributes),
+        a, b;
+
+    if (wysihtml5.lang.object(attrDifference).isEmpty() && toggle !== false) {
+      for (a in newAttributes) {
+        if (newAttributes.hasOwnProperty(a)) {
+          element.removeAttribute(a);
+        }
+      }
+    } else {
+      if (!wysihtml5.lang.object(attrDifference).isEmpty()) {
+        for (b in attrDifference) {
+          if (attrDifference.hasOwnProperty(b)) {
+            element.removeAttribute(b);
+          }
+        }
+      }
+      for (a in newAttributes) {
+        if (newAttributes.hasOwnProperty(a)) {
+          element.setAttribute(a, newAttributes[a]);
+        }
+      }
+    }
+
+  }
+
+  function updateFormatOfElement(element, options) {
+    var attr, newNode, a, newAttributes;
     if (options.className) {
       element.classList.remove(options.className);
       if (hasNoClass(element)) {
@@ -106,22 +158,24 @@
     }
 
     if (options.attribute) {
-      attr = wysihtml5.dom.getAttributes(element);
-      if (options.attributeValue && attr[options.attribute] && attr[options.attribute] === options.attributeValue) {
-        element.removeAttribute(options.attribute);
+      if (typeof options.attribute === "object") {
+        newAttributes =  options.attribute;
       } else {
-        element.setAttribute(options.attribute, options.attributeValue);
+        newAttributes = {};
+        newAttributes[options.attribute] = options.attributeValue || '';
       }
+      updateElementAttributes(element, newAttributes, options.toggle);
     }
 
     if ((options.nodeName && element.nodeName === options.nodeName) || (!options.nodeName && element.nodeName === defaultTag)) {
-      attr = wysihtml5.dom.getAttributes(element);
-      if (hasNoClass(element) && hasNoStyle(element) && attr.length === 0) {
+      
+      if (hasNoClass(element) && hasNoStyle(element) && hasNoAttributes(element)) {
         wysihtml5.dom.unwrap(element);
       } else if (!options.nodeName) {
         newNode = element.ownerDocument.createElement(defaultTag);
         
         // pass present attributes
+        attr = wysihtml5.dom.getAttributes(element);
         for (a in attr) {
           if (attr.hasOwnProperty(a)) {
             newNode.setAttribute(a, attr[a]);
@@ -359,7 +413,7 @@
       newWrapNode = wrapNode.cloneNode(false);
 
       wysihtml5.dom.domNode(textNode).escapeParent(wrapNode, newWrapNode);
-      removeFormatFromElement(newWrapNode, options);
+      updateFormatOfElement(newWrapNode, options);
     }
   }
 
@@ -370,37 +424,48 @@
     composer.selection.selectNode(wrapNode);
   }
 
-  function removeFormat(composer, textNodes, state, options) {
+  function updateFormat(composer, textNodes, state, options) {
     var exactState = getState(composer, options, true),
         selection = composer.selection.getSelection(),
         wordObj, textNode, newNode, i;
 
     if (!textNodes.length) {
       // Selection is caret
-      if (caretIsInsideWord(selection)) {
 
-        // Unformat whole word 
-        wordObj = getRangeForWord(selection);
-        textNode = wordObj.textNode;
-        unformatTextNode(wordObj.textNode, composer, options);
-        cleanupAndSetCaret(composer, wordObj.textNode, wordObj.wordOffset, options);
+      if (options.toggle !== false) {
+        if (caretIsInsideWord(selection)) {
 
+          // Unformat whole word 
+          wordObj = getRangeForWord(selection);
+          textNode = wordObj.textNode;
+          unformatTextNode(wordObj.textNode, composer, options);
+          cleanupAndSetCaret(composer, wordObj.textNode, wordObj.wordOffset, options);
+
+        } else {
+
+          // Escape caret out of format
+          textNode = composer.doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
+          newNode = state.nodes[0].cloneNode(false);
+          newNode.appendChild(textNode);
+          composer.selection.splitElementAtCaret(state.nodes[0], newNode);
+          updateFormatOfElement(newNode, options);
+          cleanupAndSetSelection(composer, [textNode], options);
+        }
       } else {
+        // In non-toggle mode the closest state element has to be found and the state updated if different
+        for (i = state.nodes.length; i--;) {
 
-        // Escape caret out of format
-        textNode = composer.doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
-        newNode = state.nodes[0].cloneNode(false);
-        newNode.appendChild(textNode);
-        composer.selection.splitElementAtCaret(state.nodes[0], newNode);
-        removeFormatFromElement(newNode, options);
-        cleanupAndSetSelection(composer, [textNode], options);
+          updateFormatOfElement(state.nodes[i], options);
+
+        }
       }
 
     } else {
 
-      if (!exactState.partial) {
+      if (!exactState.partial && options.toggle !== false) {
         // If whole selection (all textnodes) are in the applied format
         // remove the format from selection
+        // Non-toggle mode never removes. Remove has to be called explicitly
         for (i = textNodes.length; i--;) {
           unformatTextNode(textNodes[i], composer, options);
         }
@@ -476,7 +541,7 @@
           state = getState(composer, options);
       if (state.nodes.length > 0) {
         // Text allready has the format applied
-        removeFormat(composer, textNodes, state, options);
+        updateFormat(composer, textNodes, state, options);
       } else {
         // Selection is not in the applied format
         applyFormat(composer, textNodes, options);
