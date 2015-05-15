@@ -29,19 +29,6 @@
     return wysihtml5.lang.object(attr).isEmpty();
   }
 
-  // Tests if attr2 list contains all attributes present in attr1
-  // Note: attr 1 can have more attributes than attr2
-  function containsSameAttributes(attr1, attr2) {
-    for (var a in attr1) {
-      if (attr1.hasOwnProperty(a)) {
-        if (typeof attr2[a] === undefined || attr2[a] !== attr1[a]) {
-          return false;
-        }
-      }
-    }
-    return true;
-  }
-
   // compares two nodes if they are semantically the same
   // Used in cleanup to find consequent semantically similar elements for merge
   function isSameNode(element1, element2) {
@@ -66,7 +53,7 @@
     attr1 = wysihtml5.dom.getAttributes(element1);
     attr2 = wysihtml5.dom.getAttributes(element2);
 
-    if (attr1.length !== attr2.length || !containsSameAttributes(attr1, attr2)) {
+    if (attr1.length !== attr2.length || !wysihtml5.lang.object(wysihtml5.lang.object(attr1).difference(attr2)).isEmpty()) {
       return false;
     }
 
@@ -105,7 +92,6 @@
     return element;
   }
 
-
   // If attrbutes and values are the same > remove
   // if attributes or values 
   function updateElementAttributes(element, newAttributes, toggle) {
@@ -133,13 +119,16 @@
         }
       }
     }
-
   }
 
   function updateFormatOfElement(element, options) {
     var attr, newNode, a, newAttributes;
     if (options.className) {
-      element.classList.remove(options.className);
+      if (options.toggle !== false && element.classList.contains(options.className)) {
+        element.classList.remove(options.className);
+      } else {
+        element.classList.add(options.className);
+      }
       if (hasNoClass(element)) {
         element.removeAttribute('class');
       }
@@ -147,7 +136,7 @@
 
     // change/remove style
     if (options.styleProperty) {
-      if (element.style[wysihtml5.browser.fixStyleKey(options.styleProperty)].trim().replace(/, /g, ",") === options.styleValue) {
+      if (options.toggle !== false && element.style[wysihtml5.browser.fixStyleKey(options.styleProperty)].trim().replace(/, /g, ",") === options.styleValue) {
         element.style[wysihtml5.browser.fixStyleKey(options.styleProperty)] = '';
       } else {
         element.style[wysihtml5.browser.fixStyleKey(options.styleProperty)] = options.styleValue;
@@ -452,11 +441,9 @@
           cleanupAndSetSelection(composer, [textNode], options);
         }
       } else {
-        // In non-toggle mode the closest state element has to be found and the state updated if different
+        // In non-toggle mode the closest state element has to be found and the state updated differently
         for (i = state.nodes.length; i--;) {
-
           updateFormatOfElement(state.nodes[i], options);
-
         }
       }
 
