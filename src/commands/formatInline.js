@@ -43,7 +43,6 @@
       return false;
     }
 
-
     classes1 = element1.className.trim().replace(/\s+/g, ' ').split(' ');
     classes2 = element2.className.trim().replace(/\s+/g, ' ').split(' ');
     if (wysihtml5.lang.array(classes1).without(classes2).length > 0) {
@@ -458,6 +457,7 @@
           composer.selection.splitElementAtCaret(state.nodes[0], newNode);
           updateFormatOfElement(newNode, options);
           cleanupAndSetSelection(composer, [textNode], options);
+          composer.selection.getSelection().collapseToEnd();
         }
       } else {
         // In non-toggle mode the closest state element has to be found and the state updated differently
