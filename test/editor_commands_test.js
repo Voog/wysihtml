@@ -103,7 +103,7 @@ if (wysihtml5.browser.supported()) {
   });
 
   asyncTest("Format inline", function() {
-    expect(26);
+    expect(27);
     var that = this,
         parserRules = {
           "classes": "any",
@@ -213,6 +213,13 @@ if (wysihtml5.browser.supported()) {
       editor.composer.commands.exec("formatInline", {nodeName: "a", attribute : {"href": "http://www.google.com", "target": "_self"}});
       equal(!!editableElement.querySelector('a'), false, "Previous Insert is toggleable");
      
+      blankSelectionStart(editor);
+      editor.composer.commands.exec("formatInline", "strong");
+      console.log('--');
+      editor.composer.commands.exec("formatInline", "b");
+      equal(editableElement.innerHTML, "test this text", "Bold and strong are analogs");
+
+
       start();
     });
   });

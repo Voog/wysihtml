@@ -122,7 +122,8 @@
   }
 
   function updateFormatOfElement(element, options) {
-    var attr, newNode, a, newAttributes;
+    var attr, newNode, a, newAttributes, nodeNameQuery;
+
     if (options.className) {
       if (options.toggle !== false && element.classList.contains(options.className)) {
         element.classList.remove(options.className);
@@ -156,7 +157,11 @@
       updateElementAttributes(element, newAttributes, options.toggle);
     }
 
-    if ((options.nodeName && element.nodeName === options.nodeName) || (!options.nodeName && element.nodeName === defaultTag)) {
+    // Handle similar semanticallys ame elements (queryAliasMap)
+    nodeNameQuery = options.nodeName ? queryAliasMap[options.nodeName.toLowerCase()] || options.nodeName.toLowerCase() : null;
+    
+    if ((options.nodeName && wysihtml5.dom.domNode(element).test({ query: nodeNameQuery })) || (!options.nodeName && element.nodeName === defaultTag)) {
+
       
       if (hasNoClass(element) && hasNoStyle(element) && hasNoAttributes(element)) {
         wysihtml5.dom.unwrap(element);
