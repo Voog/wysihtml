@@ -207,15 +207,14 @@ if (wysihtml5.browser.supported()) {
 
       blankCaretStart(editor);
       editor.composer.commands.exec("formatInline", {nodeName: "a", attribute : {"href": "http://www.google.com", "target": "_blank"}});
-      ok((/^<a href="http:\/\/www.google.com" target="_blank"><\/a>(<\/?br>)?$/).test(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, '')), "FormatInline given tag and attribute makes node with that name and attribute at caret");
+      that.equal(('<a href="http://www.google.com" target="_blank"></a><br>'), editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "FormatInline given tag and attribute makes node with that name and attribute at caret");
       editor.composer.commands.exec("formatInline", {nodeName: "a", attribute : {"href": "http://www.google.com", "target": "_self"}});
-      ok((/^<a href="http:\/\/www.google.com" target="_self"><\/a>(<\/?br>)?$/).test(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, '')), "FormatInline given different attribute at first changes to new attribute");
+      that.equal(('<a href="http://www.google.com" target="_self"></a><br>'), editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "FormatInline given different attribute at first changes to new attribute");
       editor.composer.commands.exec("formatInline", {nodeName: "a", attribute : {"href": "http://www.google.com", "target": "_self"}});
       equal(!!editableElement.querySelector('a'), false, "Previous Insert is toggleable");
      
       blankSelectionStart(editor);
       editor.composer.commands.exec("formatInline", "strong");
-      console.log('--');
       editor.composer.commands.exec("formatInline", "b");
       equal(editableElement.innerHTML, "test this text", "Bold and strong are analogs");
 
