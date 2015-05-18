@@ -386,6 +386,7 @@
     selectTextNode(textNode, offset);
   }
 
+  // Formats a textnode with given options
   function formatTextNode(textNode, options) {
     var wrapNode = createWrapNode(textNode, options);
 
@@ -393,6 +394,7 @@
     wrapNode.appendChild(textNode);
   }
 
+  // Changes/toggles format of a textnode
   function unformatTextNode(textNode, composer, options) {
     var container = composer.element,
         wrapNode = findSimilarTextNodeWrapper(textNode, options, container),
@@ -406,6 +408,17 @@
     }
   }
 
+  // Removes the format around textnode
+  function removeFormatFromTextNode(textNode, composer, options) {
+    var container = composer.element,
+        wrapNode = findSimilarTextNodeWrapper(textNode, options, container);
+
+    if (wrapNode) {
+      wysihtml5.dom.domNode(textNode).escapeParent(wrapNode);
+    }
+  }
+
+  // Creates node around caret formated with options
   function formatTextRange(range, composer, options) {
     var wrapNode = createWrapNode(range.endContainer, options);
 
@@ -413,6 +426,7 @@
     composer.selection.selectNode(wrapNode);
   }
 
+  // Changes/toggles format of whole selection
   function updateFormat(composer, textNodes, state, options) {
     var exactState = getState(composer, options, true),
         selection = composer.selection.getSelection(),
@@ -480,6 +494,20 @@
     }
   }
 
+  // Removes format from selection
+  function removeFormat(composer, textNodes, state, options) {
+    if (!textNodes.length) {
+      for (var i = state.nodes.length; i--;) {
+        wysihtml5.dom.unwrap(state.nodes[i]);
+      }
+    } else {
+      for (i = textNodes.length; i--;) {
+        removeFormatFromTextNode(textNodes[i], composer, options);
+      }
+    }
+  }
+
+  // Adds format to selection
   function applyFormat(composer, textNodes, options) {
     var wordObj, i,
         selection = composer.selection.getSelection();
@@ -508,6 +536,13 @@
       cleanupAndSetSelection(composer, textNodes, options);
     }
   }
+  
+  // If properties is passed as a string, correct options with that nodeName
+  function fixOptions(options) {
+    options = (typeof options === "string") ? { nodeName: options } : options;
+    if (options.nodeName) { options.nodeName = options.nodeName.toUpperCase(); }
+    return options;
+  }
 
   wysihtml5.commands.formatInline = {
 
@@ -516,10 +551,7 @@
     // In case a similar inline wrapper node is detected on one of textnodes, the wrapper node is changed (if fully contained) or split and changed (partially contained)
     //    In case of changing mode every textnode is addressed separatly
     exec: function(composer, command, options) {
-
-      // If properties is passed as a string, correct options with that nodeName
-      options = (typeof options === "string") ? { nodeName: options } : options;
-      if (options.nodeName) { options.nodeName = options.nodeName.toUpperCase(); }
+      options = fixOptions(options);
 
       // Join adjactent textnodes first
       composer.element.normalize();
@@ -537,10 +569,23 @@
       composer.element.normalize();
     },
 
+    remove: function(composer, command, options) {
+      options = fixOptions(options);
+      composer.element.normalize();
+
+      var textNodes = getSelectedTextNodes(composer.selection, true),
+          state = getState(composer, options);
+
+      if (state.nodes.length > 0) {
+        // Text allready has the format applied
+        removeFormat(composer, textNodes, state, options);
+      }
+      
+      composer.element.normalize();
+    },
+
     state: function(composer, command, options) {
-      // If properties is passed as a string, correct options with that nodeName
-      options = (typeof options === "string") ? { nodeName: options } : options;
-      if (options.nodeName) { options.nodeName = options.nodeName.toUpperCase(); }
+      options = fixOptions(options);
 
       var nodes = getState(composer, options, true).nodes;
       
