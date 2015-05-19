@@ -91,27 +91,43 @@
     return element;
   }
 
+  // Tests if attr2 list contains all attributes present in attr1
+  // Note: attr 1 can have more attributes than attr2
+  function containsSameAttributes(attr1, attr2) {
+    for (var a in attr1) {
+      if (attr1.hasOwnProperty(a)) {
+        if (typeof attr2[a] === undefined || attr2[a] !== attr1[a]) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
   // If attrbutes and values are the same > remove
   // if attributes or values 
   function updateElementAttributes(element, newAttributes, toggle) {
     var attr = wysihtml5.dom.getAttributes(element),
+        fullContain = containsSameAttributes(newAttributes, attr),
         attrDifference = wysihtml5.lang.object(attr).difference(newAttributes),
         a, b;
 
-    if (wysihtml5.lang.object(attrDifference).isEmpty() && toggle !== false) {
+    if (fullContain && toggle !== false) {
       for (a in newAttributes) {
         if (newAttributes.hasOwnProperty(a)) {
           element.removeAttribute(a);
         }
       }
     } else {
-      if (!wysihtml5.lang.object(attrDifference).isEmpty()) {
+
+      /*if (!wysihtml5.lang.object(attrDifference).isEmpty()) {
         for (b in attrDifference) {
           if (attrDifference.hasOwnProperty(b)) {
             element.removeAttribute(b);
           }
         }
-      }
+      }*/
+
       for (a in newAttributes) {
         if (newAttributes.hasOwnProperty(a)) {
           element.setAttribute(a, newAttributes[a]);
@@ -122,6 +138,8 @@
 
   function updateFormatOfElement(element, options) {
     var attr, newNode, a, newAttributes, nodeNameQuery;
+
+    
 
     if (options.className) {
       if (options.toggle !== false && element.classList.contains(options.className)) {
@@ -264,6 +282,13 @@
 
     if (searchNodes.length === 0 && composer.selection.isCollapsed()) {
       caretNode = composer.selection.getSelection().anchorNode;
+      if (!caretNode) {
+        // selection not in editor
+        return {
+            nodes: [],
+            partial: false
+        };
+      }
       if (caretNode.nodeType === 3) {
         searchNodes = [caretNode];
       }
@@ -439,6 +464,7 @@
     if (!textNodes.length) {
       // Selection is caret
 
+
       if (options.toggle !== false) {
         if (caretIsInsideWord(selection)) {
 
@@ -469,6 +495,7 @@
     } else {
 
       if (!exactState.partial && options.toggle !== false) {
+
         // If whole selection (all textnodes) are in the applied format
         // remove the format from selection
         // Non-toggle mode never removes. Remove has to be called explicitly

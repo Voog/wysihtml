@@ -569,7 +569,7 @@ if (wysihtml5.browser.supported()) {
       editor.composer.commands.exec('createLink', {
         "href": "http://changed.com"
       });
-      that.equal(editableElement.innerHTML.toLowerCase(), '<a href="http://changed.com">' + text + '</a>', "Link attributes changed correctly when createLink is executed on existing link");
+      that.equal(editableElement.innerHTML.toLowerCase(), '<a href="http://changed.com" title="test">' + text + '</a>', "Link attributes changed correctly when createLink is executed on existing link");
       
       //Remove
       editor.composer.selection.selectNode(editor.editableElement);
