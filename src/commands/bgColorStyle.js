@@ -15,7 +15,7 @@
     },
 
     state: function(composer, command, color) {
-      var colorVals  = wysihtml5.quirks.styleParser.parseColor("background-color:" + (color.color || color), "background-color"),
+      var colorVals  = color ? wysihtml5.quirks.styleParser.parseColor("background-color:" + (color.color || color), "background-color") : null,
           colString;
 
 
@@ -23,7 +23,7 @@
         colString = (colorVals[3] === 1 ? "rgb(" + [colorVals[0], colorVals[1], colorVals[2]].join(',') : "rgba(" + colorVals.join(',')) + ')';
       }
 
-      return colString ? wysihtml5.commands.formatInline.state(composer, command, {styleProperty: 'backgroundColor', styleValue: colString}) : false;
+      return wysihtml5.commands.formatInline.state(composer, command, {styleProperty: 'backgroundColor', styleValue: colString});
     },
 
     stateValue: function(composer, command, props) {
