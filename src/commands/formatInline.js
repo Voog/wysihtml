@@ -270,7 +270,7 @@
         range = rangy.createRange(doc),
         selection = rangy.getSelection(win);
 
-    range.setStartAndEnd(node, start, end);
+    range.setStartAndEnd(node, start, typeof end !== 'undefined' ? end : start);
     selection.setSingleRange(range);
   }
 
