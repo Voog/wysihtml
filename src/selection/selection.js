@@ -73,7 +73,6 @@
      */
     getBookmark: function() {
       var range = this.getRange();
-      if (range) expandRangeToSurround(range);
       return range && range.cloneRange();
     },
 

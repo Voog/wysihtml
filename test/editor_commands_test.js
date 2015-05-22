@@ -103,7 +103,7 @@ if (wysihtml5.browser.supported()) {
   });
 
   asyncTest("Format inline", function() {
-    expect(27);
+    expect(28);
     var that = this,
         parserRules = {
           "classes": "any",
@@ -218,6 +218,12 @@ if (wysihtml5.browser.supported()) {
       editor.composer.commands.exec("formatInline", "b");
       equal(editableElement.innerHTML, "test this text", "Bold and strong are analogs");
 
+      editor.setValue("this is a short text", true);
+      that.setSelection(editor, editableElement.firstChild, 2 , editableElement.firstChild, 7);
+      editor.composer.commands.exec("formatInline", {nodeName: "a", attribute : {"href": "http://www.google.com", "target": "_blank"}});
+      that.setSelection(editor, editableElement.querySelector('a').firstChild, 2 , editableElement.childNodes[2], 5);
+      editor.composer.commands.exec("formatInline", {nodeName: "a", attribute : {"href": "http://www.google.com", "target": "_blank"}});
+      equal(editableElement.innerHTML.toLowerCase(), 'th<a href="http://www.google.com" target="_blank">is is a sh</a>ort text', 'extending link selection correctly');
 
       start();
     });
@@ -297,8 +303,6 @@ if (wysihtml5.browser.supported()) {
       editor.composer.commands.exec("formatInline", {nodeName: "a", attribute : "href", attributeValue: "http://www.google.com"});
       equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), '<a href="http://www.google.com">once </a>upon<a href="http://www.google.com"> a time there was an unformated text.</a>' , "Link tag and href attribute is correctly removed from word that caret was in");
       ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
-        
-        
 
       start();
     });
@@ -547,7 +551,7 @@ if (wysihtml5.browser.supported()) {
     
  //createLink/removeLink
   asyncTest("Create/remove link", function() {
-     expect(4);
+     expect(5);
      
     var that = this,
         editor = new wysihtml5.Editor(this.editableArea1),
@@ -583,6 +587,19 @@ if (wysihtml5.browser.supported()) {
         "href": "http://test.com", "title": "test"
       });
       that.equal(editableElement.innerHTML.toLowerCase(), '<a href="http://test.com" title="test">http://test.com</a>' + text + '', "Link with caret added correctly");
+
+
+      editor.setValue("this is a short text", true);
+      that.setSelection(editor, editableElement.firstChild, 2 , editableElement.firstChild, 7);
+      editor.composer.commands.exec('createLink', {
+        "href": "http://test.com", "title": "test"
+      });
+      that.setSelection(editor, editableElement.querySelector('a').firstChild, 2 , editableElement.childNodes[2], 5);
+      editor.composer.commands.exec('createLink', {
+        "href": "http://test.com", "title": "test"
+      });
+      equal(editableElement.innerHTML.toLowerCase(), 'th<a href="http://test.com" title="test">is is a sh</a>ort text', 'extending link selection correctly');
+
                                                    
       start();
     });
