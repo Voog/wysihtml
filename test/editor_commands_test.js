@@ -223,7 +223,7 @@ if (wysihtml5.browser.supported()) {
       editor.composer.commands.exec("formatInline", {nodeName: "a", attribute : {"href": "http://www.google.com", "target": "_blank"}});
       that.setSelection(editor, editableElement.querySelector('a').firstChild, 2 , editableElement.childNodes[2], 5);
       editor.composer.commands.exec("formatInline", {nodeName: "a", attribute : {"href": "http://www.google.com", "target": "_blank"}});
-      equal(editableElement.innerHTML.toLowerCase(), 'th<a href="http://www.google.com" target="_blank">is is a sh</a>ort text', 'extending link selection correctly');
+      that.equal(editableElement.innerHTML.toLowerCase(), 'th<a href="http://www.google.com" target="_blank">is is a sh</a>ort text', 'extending link selection correctly');
 
       start();
     });
@@ -598,7 +598,7 @@ if (wysihtml5.browser.supported()) {
       editor.composer.commands.exec('createLink', {
         "href": "http://test.com", "title": "test"
       });
-      equal(editableElement.innerHTML.toLowerCase(), 'th<a href="http://test.com" title="test">is is a sh</a>ort text', 'extending link selection correctly');
+      that.equal(editableElement.innerHTML.toLowerCase(), 'th<a href="http://test.com" title="test">is is a sh</a>ort text', 'extending link selection correctly');
 
                                                    
       start();
