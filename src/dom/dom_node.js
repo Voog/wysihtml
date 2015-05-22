@@ -7,7 +7,7 @@
 
       is: {
         emptyTextNode: function() {
-          return node.nodeType === wysihtml5.TEXT_NODE && (/^\s*$/g).test(node.data);
+          return node.nodeType === wysihtml5.TEXT_NODE && (/^[\r\n]*$/g).test(node.data);
         }
       },
 

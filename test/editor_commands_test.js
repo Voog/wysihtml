@@ -309,12 +309,17 @@ if (wysihtml5.browser.supported()) {
   });
 
   asyncTest("Format inline - similar cosequent tags merge", function() {
-    expect(22);
+    expect(23);
     var that = this,
         text = "once upon a time there was an unformated text.",
         parserRules = {
           tags: {
-            b: true
+            b: true,
+            span: {
+              "check_attributes": {
+                "style": "any"
+              }
+            }
           }
         },
         editor = new wysihtml5.Editor(this.editableArea1, {
@@ -412,6 +417,11 @@ if (wysihtml5.browser.supported()) {
       editor.composer.selection.selectNode(editor.composer.element);
       editor.composer.commands.exec("formatInline", {nodeName: "a", attribute : "href", attributeValue: "http://www.google.com"});
       equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), '<a href="http://www.google.com">once upon a time there was an unformated text.</a>' , "Tags extended on both ends and merged");
+
+      editor.setValue('<span style="color: rgb(1,2,3);">test1</span> <span style="color: rgb(4,5,6);">test2</span>', true);
+      editor.composer.selection.selectNode(editableElement);
+      editor.composer.commands.exec('formatInline', {styleProperty: "color", styleValue:"rgb(255, 0, 0)"});
+      that.equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), '<span style="color: rgb(255, 0, 0);">test1 test2</span>' , "Empty spaces handles correctly on merge");
 
 
       start();
@@ -599,7 +609,6 @@ if (wysihtml5.browser.supported()) {
         "href": "http://test.com", "title": "test"
       });
       that.equal(editableElement.innerHTML.toLowerCase(), 'th<a href="http://test.com" title="test">is is a sh</a>ort text', 'extending link selection correctly');
-
                                                    
       start();
     });
