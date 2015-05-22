@@ -251,7 +251,7 @@
     } else {
       o = wysihtml5.lang.object(options).clone();
       o.query = INLINE_ELEMENTS; // make sure only inline elements with styles and classes are counted
-      return wysihtml5.dom.domNode(node).test(options);
+      return wysihtml5.dom.domNode(node).test(o);
     }
   }
 
