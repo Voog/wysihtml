@@ -322,6 +322,75 @@ wysihtml5.polyfills = function(win, doc) {
     }
 
   }
+
+  // Safary has a bug of not restoring selection after node.normalize correctly.
+  // Detects the misbegaviour and patches it
+  var normalizeHasCaretError = function() {
+    if ("createRange" in document && "getSelection" in window) {
+      var e = document.createElement('div'),
+          t1 = document.createTextNode('a'),
+          t2 = document.createTextNode('a'),
+          t3 = document.createTextNode('a'),
+          r = document.createRange(),
+          s, ret;
+
+      e.setAttribute('contenteditable', 'true');
+      e.appendChild(t1);
+      e.appendChild(t2);
+      e.appendChild(t3);
+      document.body.appendChild(e);
+      r.setStart(t2, 1);
+      r.setEnd(t2, 1);
+
+      s = window.getSelection();
+      s.removeAllRanges();
+      s.addRange(r);
+      e.normalize();
+      s = window.getSelection();
+
+      ret = (e.childNodes.length !== 1 || s.anchorNode !== e.firstChild || s.anchorOffset !== 2);
+      e.parentNode.removeChild(e);
+      return ret;
+    }
+  };
+
+  if ("Node" in window && "normalize" in Node.prototype && normalizeHasCaretError()) {
+    var f = Node.prototype.normalize;
+    var nf = function() {
+      var s = window.getSelection(),
+          anode = s.anchorNode,
+          aoffset = s.anchorOffset,
+          fnode = s.focusNode,
+          foffset = s.focusOffset,
+          r = this.ownerDocument.createRange();
+
+      if ((anode === fnode && foffset < aoffset) || (anode !== fnode && (anode.compareDocumentPosition(fnode) & Node.DOCUMENT_POSITION_PRECEDING))) { 
+        fnode = [anode, anode = fnode][0];
+        foffset = [aoffset, aoffset = foffset][0];
+      }
+
+      if (anode && anode.nodeType === 3) {
+        while (anode.previousSibling && anode.previousSibling.nodeType === 3) {
+          aoffset = anode.previousSibling.nodeValue.length + aoffset;
+          anode = anode.previousSibling;
+        }
+      }
+
+      if (fnode && fnode.nodeType === 3) {
+        while (fnode.previousSibling && fnode.previousSibling.nodeType === 3) {
+          foffset = fnode.previousSibling.nodeValue.length + foffset;
+          fnode = fnode.previousSibling;
+        }
+      }
+
+      f.call(this);
+      r.setStart(anode, aoffset);
+      r.setEnd(fnode, foffset);
+      s.removeAllRanges();
+      s.addRange(r);
+    };
+    Node.prototype.normalize = nf;
+  }
 };
 
 wysihtml5.polyfills(window, document);
