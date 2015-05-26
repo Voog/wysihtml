@@ -207,9 +207,9 @@ if (wysihtml5.browser.supported()) {
 
       blankCaretStart(editor);
       editor.composer.commands.exec("formatInline", {nodeName: "a", attribute : {"href": "http://www.google.com", "target": "_blank"}});
-      that.equal(('<a href="http://www.google.com" target="_blank"></a><br>'), editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "FormatInline given tag and attribute makes node with that name and attribute at caret");
+      that.equal(('<a href="http://www.google.com" target="_blank"></a>'), editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, '').replace(/<br\/?>/gi, ''), "FormatInline given tag and attribute makes node with that name and attribute at caret");
       editor.composer.commands.exec("formatInline", {nodeName: "a", attribute : {"href": "http://www.google.com", "target": "_self"}});
-      that.equal(('<a href="http://www.google.com" target="_self"></a><br>'), editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "FormatInline given different attribute at first changes to new attribute");
+      that.equal(('<a href="http://www.google.com" target="_self"></a>'), editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, '').replace(/<br\/?>/gi, ''), "FormatInline given different attribute at first changes to new attribute");
       editor.composer.commands.exec("formatInline", {nodeName: "a", attribute : {"href": "http://www.google.com", "target": "_self"}});
       equal(!!editableElement.querySelector('a'), false, "Previous Insert is toggleable");
      
@@ -263,7 +263,7 @@ if (wysihtml5.browser.supported()) {
       editor.composer.selection.getSelection().collapseToEnd();
       ok(editor.composer.selection.getSelection().isCollapsed, "Text caret is collapsed");
       editor.composer.commands.exec('bold');
-      editor.composer.commands.exec('insertHtml', 'test');
+      editor.composer.commands.exec('insertHTML', 'test');
       ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
       equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<b>" + text + "</b>test", "With caret at last position bold is not removed but set to notbold at caret");
 
@@ -274,13 +274,13 @@ if (wysihtml5.browser.supported()) {
 
       initString(editor, 'bold', null, 'b', text, 5);
       editor.composer.commands.exec('bold');
-      editor.composer.commands.exec('insertHtml','x');
+      editor.composer.commands.exec('insertHTML','x');
       equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<b>once </b>x<b>upon a time there was an unformated text.</b>" , "Bold is correctly removed from caret but not word when caret first in word");
       ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
 
       initString(editor, 'bold', null, 'b', text, 9);
       editor.composer.commands.exec('bold');
-      editor.composer.commands.exec('insertHtml','x');
+      editor.composer.commands.exec('insertHTML','x');
       equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<b>once upon</b>x<b> a time there was an unformated text.</b>" , "Bold is correctly removed from caret but not word when caret last in word");
       ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
 

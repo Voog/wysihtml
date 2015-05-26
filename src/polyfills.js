@@ -354,42 +354,68 @@ wysihtml5.polyfills = function(win, doc) {
     }
   };
 
-  if ("Node" in window && "normalize" in Node.prototype && normalizeHasCaretError()) {
+  var getTextNodes = function(node){
+    var all = [];
+    for (node=node.firstChild;node;node=node.nextSibling){
+      if (node.nodeType == 3) {
+          all.push(node);
+      } else {
+        all = all.concat(getTextNodes(node));
+      }
+    }
+    return all;
+  };
+
+  var normalizeFix = function() {
     var f = Node.prototype.normalize;
     var nf = function() {
-      var s = window.getSelection(),
+      var texts = getTextNodes(this),
+          s = this.ownerDocument.defaultView.getSelection(),
           anode = s.anchorNode,
           aoffset = s.anchorOffset,
           fnode = s.focusNode,
           foffset = s.focusOffset,
-          r = this.ownerDocument.createRange();
+          r = this.ownerDocument.createRange(),
+          prevTxt = texts.shift(),
+          curText = prevTxt ? texts.shift() : null;
 
-      if ((anode === fnode && foffset < aoffset) || (anode !== fnode && (anode.compareDocumentPosition(fnode) & Node.DOCUMENT_POSITION_PRECEDING))) { 
+      if ((anode === fnode && foffset < aoffset) || (anode !== fnode && (anode.compareDocumentPosition(fnode) & Node.DOCUMENT_POSITION_PRECEDING))) {
         fnode = [anode, anode = fnode][0];
         foffset = [aoffset, aoffset = foffset][0];
       }
 
-      if (anode && anode.nodeType === 3) {
-        while (anode.previousSibling && anode.previousSibling.nodeType === 3) {
-          aoffset = anode.previousSibling.nodeValue.length + aoffset;
-          anode = anode.previousSibling;
+      while(prevTxt && curText) {
+        if (curText.previousSibling && curText.previousSibling === prevTxt) {
+          if (anode === curText) {
+            anode = prevTxt;
+            aoffset = prevTxt.nodeValue.length +  aoffset;
+          }
+          if (fnode === curText) {
+            fnode = prevTxt;
+            foffset = prevTxt.nodeValue.length +  foffset;
+          }
+          prevTxt.nodeValue = prevTxt.nodeValue + curText.nodeValue;
+          curText.parentNode.removeChild(curText);
+          curText = texts.shift();
+        } else {
+          prevTxt = curText;
+          curText = texts.shift();
         }
       }
 
-      if (fnode && fnode.nodeType === 3) {
-        while (fnode.previousSibling && fnode.previousSibling.nodeType === 3) {
-          foffset = fnode.previousSibling.nodeValue.length + foffset;
-          fnode = fnode.previousSibling;
-        }
+      if (anode && anode.parentNode && fnode && fnode.parentNode) {
+        r.setStart(anode, aoffset);
+        r.setEnd(fnode, foffset);
+        s.removeAllRanges();
+        s.addRange(r);
       }
 
-      f.call(this);
-      r.setStart(anode, aoffset);
-      r.setEnd(fnode, foffset);
-      s.removeAllRanges();
-      s.addRange(r);
     };
     Node.prototype.normalize = nf;
+  };
+
+  if ("Node" in window && "normalize" in Node.prototype && normalizeHasCaretError()) {
+    normalizeFix();
   }
 };
 

@@ -178,13 +178,15 @@
      * callback is an optional parameter accepting a function to execute when selection ahs been set
      */
     setAfter: function(node, notVisual, callback) {
-      var range = rangy.createRange(this.doc),
+      var win = this.win,
+          range = rangy.createRange(this.doc),
           fixWebkitSelection = function() {
             // Webkit fails to add selection if there are no textnodes in that region
             // (like an uneditable container at the end of content).
             var parent = node.parentNode,
                 lastSibling = parent ? parent.childNodes[parent.childNodes.length - 1] : null;
-            if (!sel || (lastSibling === node && this.win.getComputedStyle(node).display === "block")) {
+
+            if (!sel || (lastSibling === node && node.nodeType === 1 && win.getComputedStyle(node).display === "block")) {
               if (notVisual) {
                 // If setAfter is used as internal between actions, self-removing caretPlaceholder has simpler implementation
                 // and remove itself in call stack end instead on user interaction 

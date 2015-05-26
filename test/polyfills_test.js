@@ -31,5 +31,5 @@ test("Check element.normalize is preserving caret position", function() {
 
   ok(this.editable.childNodes.length === 1, "Normalize merged nodes");
   ok(s.anchorNode === this.editable.firstChild, "Anchor element is correct after normalize");
-  ok(s.anchorOffset === 7 , "Anchor offset is correct after normalize")
+  ok(s.anchorOffset === 7 , "Anchor offset is correct after normalize");
 });
