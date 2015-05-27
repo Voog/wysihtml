@@ -129,12 +129,12 @@ if (wysihtml5.browser.supported()) {
       editor.setValue("", true);
       editor.composer.selection.selectNode(editor.composer.element);
       editor.composer.selection.getSelection().collapseToStart();
-    }
+    };
 
     var blankSelectionStart = function(editor) {
       editor.setValue("test this text", true);
       editor.composer.selection.selectNode(editor.composer.element);
-    }
+    };
         
     editor.on("load", function() {
       var editableElement  = that.editableArea1;

@@ -259,19 +259,29 @@
     var range = rangy.createRange(composer.doc),
         lastText = textNodes[textNodes.length - 1];
 
-    range.setStart(textNodes[0], 0);
-    range.setEnd(lastText, lastText.length);
-    composer.selection.setSelection(range);
+    if (textNodes[0] && lastText) {
+      range.setStart(textNodes[0], 0);
+      range.setEnd(lastText, lastText.length);
+      rangy.getSelection(composer.win).removeAllRanges();
+      composer.element.focus();
+      rangy.getSelection(composer.win).addRange(range);
+    }
+    
   }
 
-  function selectTextNode(node, start, end) {
+  function selectTextNode(composer, node, start, end) {
     var doc = node.ownerDocument,
         win = doc.defaultView || doc.parentWindow,
         range = rangy.createRange(doc),
         selection = rangy.getSelection(win);
 
-    range.setStartAndEnd(node, start, typeof end !== 'undefined' ? end : start);
-    selection.setSingleRange(range);
+    if (node) {
+      range.setStart(node, start);
+      range.setEnd(node, typeof end !== 'undefined' ? end : start);
+      rangy.getSelection(composer.win).removeAllRanges();
+      composer.element.focus();
+      rangy.getSelection(composer.win).addRange(range);
+    }
   }
 
   function getState(composer, options, exact) {
@@ -399,20 +409,19 @@
 
   function cleanupAndSetSelection(composer, textNodes, options) {
     if (textNodes.length > 0) {
+
       selectTextNodes(textNodes, composer);
     }
-
     mergeConsequentSimilarElements(getState(composer, options).nodes);
-
     if (textNodes.length > 0) {
       selectTextNodes(textNodes, composer);
     }
   }
 
   function cleanupAndSetCaret(composer, textNode, offset, options) {
-    selectTextNode(textNode, offset);
+    selectTextNode(composer, textNode, offset);
     mergeConsequentSimilarElements(getState(composer, options).nodes);
-    selectTextNode(textNode, offset);
+    selectTextNode(composer, textNode, offset);
   }
 
   // Formats a textnode with given options
@@ -483,7 +492,10 @@
           composer.selection.splitElementAtCaret(state.nodes[0], newNode);
           updateFormatOfElement(newNode, options);
           cleanupAndSetSelection(composer, [textNode], options);
-          composer.selection.getSelection().collapseToEnd();
+          var s = composer.selection.getSelection();
+          if (s.anchorNode && s.focusNode) {
+            s.collapseToEnd();
+          }
         }
       } else {
         // In non-toggle mode the closest state element has to be found and the state updated differently
@@ -553,18 +565,17 @@
         cleanupAndSetCaret(composer, wordObj.textNode, wordObj.wordOffset, options);
 
       } else {
-
-        formatTextRange(composer.selection.getOwnRanges()[0], composer, options);
-
+        var r = composer.selection.getOwnRanges()[0];
+        if (r) {
+          formatTextRange(r, composer, options);
+        }
       }
       
     } else {
       // Handle textnodes in selection and apply format
-
       for (i = textNodes.length; i--;) {
         formatTextNode(textNodes[i], options);
       }
-
       cleanupAndSetSelection(composer, textNodes, options);
     }
   }
@@ -597,7 +608,6 @@
         // Selection is not in the applied format
         applyFormat(composer, textNodes, options);
       }
-      
       composer.element.normalize();
     },
 

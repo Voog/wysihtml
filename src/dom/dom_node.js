@@ -6,8 +6,9 @@
     return {
 
       is: {
-        emptyTextNode: function() {
-          return node.nodeType === wysihtml5.TEXT_NODE && (/^[\r\n]*$/g).test(node.data);
+        emptyTextNode: function(ignoreWhitespace) {
+          var regx = ignoreWhitespace ? (/^\s*$/g) : (/^[\r\n]*$/g);
+          return node.nodeType === wysihtml5.TEXT_NODE && (regx).test(node.data);
         }
       },
 
@@ -22,7 +23,7 @@
 
         if (
           (!wysihtml5.lang.array(types).contains(prevNode.nodeType)) || // nodeTypes check.
-          (options && options.ignoreBlankTexts && wysihtml5.dom.domNode(prevNode).is.emptyTextNode()) // Blank text nodes bypassed if set
+          (options && options.ignoreBlankTexts && wysihtml5.dom.domNode(prevNode).is.emptyTextNode(true)) // Blank text nodes bypassed if set
         ) {
           return wysihtml5.dom.domNode(prevNode).prev(options);
         }
@@ -41,7 +42,7 @@
 
         if (
           (!wysihtml5.lang.array(types).contains(nextNode.nodeType)) || // nodeTypes check.
-          (options && options.ignoreBlankTexts && wysihtml5.dom.domNode(nextNode).is.emptyTextNode()) // blank text nodes bypassed if set
+          (options && options.ignoreBlankTexts && wysihtml5.dom.domNode(nextNode).is.emptyTextNode(true)) // blank text nodes bypassed if set
         ) {
           return wysihtml5.dom.domNode(nextNode).next(options);
         }
