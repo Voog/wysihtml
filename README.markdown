@@ -7,10 +7,10 @@ This project is supported by [Voog](http://voog.com).
 
 ## Demos
 * Project page with simple demo: http://wysihtml.com
-* Minimal demo: http://voog.github.com/wysihtml/examples/simple.html
-* Advanced demo: http://voog.github.com/wysihtml/examples/advanced.html
-* Editable GitHub page: http://voog.github.com/wysihtml
-* Or try it on a working app: http://voog.com
+* Minimal demo: https://voog.github.com/wysihtml/examples/simple.html
+* Advanced demo: https://voog.github.com/wysihtml/examples/advanced.html
+* Editable GitHub page: https://voog.github.com/wysihtml
+* Or try it on a working app: https://www.voog.com
 
 
 ## Features
