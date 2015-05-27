@@ -26,6 +26,10 @@
       return wysihtml5.commands.formatInline.state(composer, command, {styleProperty: 'color', styleValue: colString});
     },
 
+    remove: function(composer, command) {
+      return wysihtml5.commands.formatInline.remove(composer, command, {styleProperty: 'color'});
+    },
+
     stateValue: function(composer, command, props) {
       var st = this.state(composer, command),
           colorStr,

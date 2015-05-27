@@ -15,6 +15,10 @@
       return wysihtml5.commands.formatInline.state(composer, command, {styleProperty: "fontSize", styleValue: size});
     },
 
+    remove: function(composer, command) {
+      return wysihtml5.commands.formatInline.remove(composer, command, {styleProperty: "fontSize"});
+    },
+
     stateValue: function(composer, command) {
       var st = this.state(composer, command),
           styleStr, fontsizeMatches,
