@@ -209,10 +209,10 @@
     var textNodes = [];
 
     if (!selection.isCollapsed()) {
-      textNodes = selection.getOwnNodes([3], function(node) {
+      textNodes = textNodes.concat(selection.getOwnNodes([3], function(node) {
         // Exclude empty nodes except caret node
         return (!wysihtml5.dom.domNode(node).is.emptyTextNode());
-      }, splitBounds);
+      }, splitBounds));
     }
 
     return textNodes;
@@ -255,6 +255,26 @@
     }
   }
 
+  function selectRange(composer, range) {
+    var d = document.documentElement || document.body,
+        oldScrollTop  = d.scrollTop,
+        oldScrollLeft = d.scrollLeft,
+        selection = rangy.getSelection(composer.win);
+
+    rangy.getSelection(composer.win).removeAllRanges();
+    
+    // IE looses focus of contenteditable on removeallranges and can not set new selection unless contenteditable is focused again
+    try {
+      rangy.getSelection(composer.win).addRange(range);
+    } catch (e) {}
+    if (!composer.doc.activeElement || !wysihtml5.dom.contains(composer.element, composer.doc.activeElement)) {
+      composer.element.focus();
+      d.scrollTop  = oldScrollTop;
+      d.scrollLeft = oldScrollLeft;
+      rangy.getSelection(composer.win).addRange(range);
+    }
+  }
+
   function selectTextNodes(textNodes, composer) {
     var range = rangy.createRange(composer.doc),
         lastText = textNodes[textNodes.length - 1];
@@ -262,25 +282,17 @@
     if (textNodes[0] && lastText) {
       range.setStart(textNodes[0], 0);
       range.setEnd(lastText, lastText.length);
-      rangy.getSelection(composer.win).removeAllRanges();
-      composer.element.focus();
-      rangy.getSelection(composer.win).addRange(range);
+      selectRange(composer, range);
     }
     
   }
 
   function selectTextNode(composer, node, start, end) {
-    var doc = node.ownerDocument,
-        win = doc.defaultView || doc.parentWindow,
-        range = rangy.createRange(doc),
-        selection = rangy.getSelection(win);
-
+    var range = rangy.createRange(composer.doc);
     if (node) {
       range.setStart(node, start);
       range.setEnd(node, typeof end !== 'undefined' ? end : start);
-      rangy.getSelection(composer.win).removeAllRanges();
-      composer.element.focus();
-      rangy.getSelection(composer.win).addRange(range);
+      selectRange(composer, range);
     }
   }
 
@@ -409,7 +421,6 @@
 
   function cleanupAndSetSelection(composer, textNodes, options) {
     if (textNodes.length > 0) {
-
       selectTextNodes(textNodes, composer);
     }
     mergeConsequentSimilarElements(getState(composer, options).nodes);
@@ -494,7 +505,10 @@
           cleanupAndSetSelection(composer, [textNode], options);
           var s = composer.selection.getSelection();
           if (s.anchorNode && s.focusNode) {
-            s.collapseToEnd();
+            // Has an error in IE when collapsing selection. probably from rangy
+            try {
+              s.collapseToEnd();
+            } catch (e) {}
           }
         }
       } else {

@@ -9,8 +9,8 @@
           colString;
 
       if (colorVals) {
-        colString = (colorVals[3] === 1 ? "rgb(" + [colorVals[0], colorVals[1], colorVals[2]].join(',') : "rgba(" + colorVals.join(',')) + ')';
-        wysihtml5.commands.formatInline.exec(composer, command, {styleProperty: 'color', styleValue: colString, toggle: true});
+        colString = (colorVals[3] === 1 ? "rgb(" + [colorVals[0], colorVals[1], colorVals[2]].join(', ') : "rgba(" + colorVals.join(', ')) + ')';
+        wysihtml5.commands.formatInline.exec(composer, command, {styleProperty: 'color', styleValue: colString});
       }
     },
 
@@ -20,7 +20,7 @@
 
 
       if (colorVals) {
-        colString = (colorVals[3] === 1 ? "rgb(" + [colorVals[0], colorVals[1], colorVals[2]].join(',') : "rgba(" + colorVals.join(',')) + ')';
+        colString = (colorVals[3] === 1 ? "rgb(" + [colorVals[0], colorVals[1], colorVals[2]].join(', ') : "rgba(" + colorVals.join(', ')) + ')';
       }
 
       return wysihtml5.commands.formatInline.state(composer, command, {styleProperty: 'color', styleValue: colString});
