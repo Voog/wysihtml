@@ -1,3 +1,6 @@
+*wysihtml5x 0.5.0-beta9* (June 2, 2015)
+* New formatInline logic (and syntax). Fixes most current inline formating issues (bold/italic/colors/etc.)
+
 *wysihtml5x 0.5.0-beta8* (March 16, 2015)
 * Fixes table cell selector escaping editable context
 * Fixes some list toggling issues
