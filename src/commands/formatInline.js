@@ -554,14 +554,23 @@
 
   // Removes format from selection
   function removeFormat(composer, textNodes, state, options) {
-    if (!textNodes.length) {
-      for (var i = state.nodes.length; i--;) {
+    var textNode, textOffset, newNode, i,
+        selection = composer.selection.getSelection();
+
+    if (!textNodes.length) {    
+      textNode = selection.anchorNode;
+      textOffset = selection.anchorOffset;
+
+      for (i = state.nodes.length; i--;) {
         wysihtml5.dom.unwrap(state.nodes[i]);
       }
+
+      cleanupAndSetCaret(composer, textNode, textOffset, options);
     } else {
       for (i = textNodes.length; i--;) {
         removeFormatFromTextNode(textNodes[i], composer, options);
       }
+      cleanupAndSetSelection(composer, textNodes, options);
     }
   }
 
