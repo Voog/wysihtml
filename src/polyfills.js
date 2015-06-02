@@ -322,6 +322,101 @@ wysihtml5.polyfills = function(win, doc) {
     }
 
   }
+
+  // Safary has a bug of not restoring selection after node.normalize correctly.
+  // Detects the misbegaviour and patches it
+  var normalizeHasCaretError = function() {
+    if ("createRange" in document && "getSelection" in window) {
+      var e = document.createElement('div'),
+          t1 = document.createTextNode('a'),
+          t2 = document.createTextNode('a'),
+          t3 = document.createTextNode('a'),
+          r = document.createRange(),
+          s, ret;
+
+      e.setAttribute('contenteditable', 'true');
+      e.appendChild(t1);
+      e.appendChild(t2);
+      e.appendChild(t3);
+      document.body.appendChild(e);
+      r.setStart(t2, 1);
+      r.setEnd(t2, 1);
+
+      s = window.getSelection();
+      s.removeAllRanges();
+      s.addRange(r);
+      e.normalize();
+      s = window.getSelection();
+
+      ret = (e.childNodes.length !== 1 || s.anchorNode !== e.firstChild || s.anchorOffset !== 2);
+      e.parentNode.removeChild(e);
+      return ret;
+    }
+  };
+
+  var getTextNodes = function(node){
+    var all = [];
+    for (node=node.firstChild;node;node=node.nextSibling){
+      if (node.nodeType == 3) {
+          all.push(node);
+      } else {
+        all = all.concat(getTextNodes(node));
+      }
+    }
+    return all;
+  };
+
+  var normalizeFix = function() {
+    var f = Node.prototype.normalize;
+    var nf = function() {
+      var texts = getTextNodes(this),
+          s = this.ownerDocument.defaultView.getSelection(),
+          anode = s.anchorNode,
+          aoffset = s.anchorOffset,
+          fnode = s.focusNode,
+          foffset = s.focusOffset,
+          r = this.ownerDocument.createRange(),
+          prevTxt = texts.shift(),
+          curText = prevTxt ? texts.shift() : null;
+
+      if ((anode === fnode && foffset < aoffset) || (anode !== fnode && (anode.compareDocumentPosition(fnode) & Node.DOCUMENT_POSITION_PRECEDING))) {
+        fnode = [anode, anode = fnode][0];
+        foffset = [aoffset, aoffset = foffset][0];
+      }
+
+      while(prevTxt && curText) {
+        if (curText.previousSibling && curText.previousSibling === prevTxt) {
+          if (anode === curText) {
+            anode = prevTxt;
+            aoffset = prevTxt.nodeValue.length +  aoffset;
+          }
+          if (fnode === curText) {
+            fnode = prevTxt;
+            foffset = prevTxt.nodeValue.length +  foffset;
+          }
+          prevTxt.nodeValue = prevTxt.nodeValue + curText.nodeValue;
+          curText.parentNode.removeChild(curText);
+          curText = texts.shift();
+        } else {
+          prevTxt = curText;
+          curText = texts.shift();
+        }
+      }
+
+      if (anode && anode.parentNode && fnode && fnode.parentNode) {
+        r.setStart(anode, aoffset);
+        r.setEnd(fnode, foffset);
+        s.removeAllRanges();
+        s.addRange(r);
+      }
+
+    };
+    Node.prototype.normalize = nf;
+  };
+
+  if ("Node" in window && "normalize" in Node.prototype && normalizeHasCaretError()) {
+    normalizeFix();
+  }
 };
 
 wysihtml5.polyfills(window, document);

@@ -3,6 +3,9 @@ wysihtml5.dom.contains = (function() {
   if (documentElement.contains) {
     return function(container, element) {
       if (element.nodeType !== wysihtml5.ELEMENT_NODE) {
+        if (element.parentNode === container) {
+          return true;
+        }
         element = element.parentNode;
       }
       return container !== element && container.contains(element);

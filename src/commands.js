@@ -60,6 +60,16 @@ wysihtml5.Commands = Base.extend(
     return result;
   },
 
+  remove: function(command, commandValue) {
+    var obj     = wysihtml5.commands[command],
+        args    = wysihtml5.lang.array(arguments).get(),
+        method  = obj && obj.remove;
+    if (method) {
+      args.unshift(this.composer);
+      return method.apply(obj, args);
+    }
+  },
+
   /**
    * Check whether the current command is active
    * If the caret is within a bold text, then calling this with command "bold" should return true

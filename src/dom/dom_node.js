@@ -3,11 +3,14 @@
   wysihtml5.dom.domNode = function(node) {
     var defaultNodeTypes = [wysihtml5.ELEMENT_NODE, wysihtml5.TEXT_NODE];
 
-    var _isBlankText = function(node) {
-      return node.nodeType === wysihtml5.TEXT_NODE && (/^\s*$/g).test(node.data);
-    };
-
     return {
+
+      is: {
+        emptyTextNode: function(ignoreWhitespace) {
+          var regx = ignoreWhitespace ? (/^\s*$/g) : (/^[\r\n]*$/g);
+          return node.nodeType === wysihtml5.TEXT_NODE && (regx).test(node.data);
+        }
+      },
 
       // var node = wysihtml5.dom.domNode(element).prev({nodeTypes: [1,3], ignoreBlankTexts: true});
       prev: function(options) {
@@ -20,7 +23,7 @@
 
         if (
           (!wysihtml5.lang.array(types).contains(prevNode.nodeType)) || // nodeTypes check.
-          (options && options.ignoreBlankTexts && _isBlankText(prevNode)) // Blank text nodes bypassed if set
+          (options && options.ignoreBlankTexts && wysihtml5.dom.domNode(prevNode).is.emptyTextNode(true)) // Blank text nodes bypassed if set
         ) {
           return wysihtml5.dom.domNode(prevNode).prev(options);
         }
@@ -39,7 +42,7 @@
 
         if (
           (!wysihtml5.lang.array(types).contains(nextNode.nodeType)) || // nodeTypes check.
-          (options && options.ignoreBlankTexts && _isBlankText(nextNode)) // blank text nodes bypassed if set
+          (options && options.ignoreBlankTexts && wysihtml5.dom.domNode(nextNode).is.emptyTextNode(true)) // blank text nodes bypassed if set
         ) {
           return wysihtml5.dom.domNode(nextNode).next(options);
         }
@@ -74,6 +77,67 @@
         }
 
         return wysihtml5.dom.domNode(lastChild).lastLeafNode(options);
+      },
+
+      // Splits element at childnode and extracts the childNode out of the element context
+      // Example:
+      //   var node = wysihtml5.dom.domNode(node).escapeParent(parentNode);
+      escapeParent: function(element, newWrapper) {
+        var parent, split2, nodeWrap,
+            curNode = node;
+        
+        // Stop if node is not a descendant of element
+        if (!wysihtml5.dom.contains(element, node)) {
+          throw new Error("Child is not a descendant of node.");
+        }
+
+        // Climb up the node tree untill node is reached
+        do {
+          // Get current parent of node
+          parent = curNode.parentNode;
+
+          // Move after nodes to new clone wrapper
+          split2 = parent.cloneNode(false);
+          while (parent.lastChild && parent.lastChild !== curNode) {
+            split2.insertBefore(parent.lastChild, split2.firstChild);
+          }
+
+          // Move node up a level. If parent is not yet the container to escape, clone the parent around node, so inner nodes are escaped out too
+          if (parent !== element) {
+            nodeWrap = parent.cloneNode(false);
+            nodeWrap.appendChild(curNode);
+            curNode = nodeWrap;
+          }
+          parent.parentNode.insertBefore(curNode, parent.nextSibling);
+
+          // Add after nodes (unless empty)
+          if (split2.innerHTML !== '') {
+            // if contents are empty insert without wrap
+            if ((/^\s+$/).test(split2.innerHTML)) {
+              while (split2.lastChild) {
+                parent.parentNode.insertBefore(split2.lastChild, curNode.nextSibling);
+              }
+            } else {
+              parent.parentNode.insertBefore(split2, curNode.nextSibling);
+            }
+          }
+
+          // If the node left behind before the split (parent) is now empty then remove
+          if (parent.innerHTML === '') {
+            parent.parentNode.removeChild(parent);
+          } else if ((/^\s+$/).test(parent.innerHTML)) {
+            while (parent.firstChild) {
+              parent.parentNode.insertBefore(parent.firstChild, parent);
+            }
+            parent.parentNode.removeChild(parent);
+          }
+
+        } while (parent && parent !== element);
+
+        if (newWrapper && curNode) {
+          curNode.parentNode.insertBefore(newWrapper, curNode);
+          newWrapper.appendChild(curNode);
+        }
       },
 
       /*
@@ -154,7 +218,7 @@
                   }
                 } else {
                   // style value as string
-                  if (properties.styleValue === node.style[prop].trim()) {
+                  if (properties.styleValue === node.style[prop].trim().replace(/, /g, ",")) {
                     hasOneStyle = true;
                     break;
                   }
@@ -168,6 +232,37 @@
               return false;
             }
           }
+        }
+
+        if (properties.attribute) {
+          var attr = wysihtml5.dom.getAttributes(node),
+              attrList = [],
+              hasOneAttribute = false;
+
+          if (Array.isArray(properties.attribute)) {
+            attrList = properties.attribute;
+          } else {
+            attrList[properties.attribute] = properties.attributeValue;
+          }
+
+          for (var a in attrList) {
+            if (attrList.hasOwnProperty(a)) {
+              if (typeof attrList[a] === "undefined") {
+                if (typeof attr[a] !== "undefined") {
+                  hasOneAttribute = true;
+                  break;
+                }
+              } else if (attr[a] === attrList[a]) {
+                hasOneAttribute = true;
+                break;
+              }
+            }
+          }
+
+          if (!hasOneAttribute) {
+            return false;
+          }
+
         }
 
         return true;

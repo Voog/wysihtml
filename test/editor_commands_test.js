@@ -12,12 +12,19 @@ if (wysihtml5.browser.supported()) {
       
     },
 
-    setCaretInsideNode: function(editor, el) {
-        var r1 = editor.composer.selection.createRange(),
-            e1 = el.childNodes[0];
-        r1.setEnd(e1, 1);
-        r1.setStart(e1, 1);
+    setCaretTo: function(editor, el, offset) {
+        var r1 = editor.composer.selection.createRange();
+
+        r1.setEnd(el, offset);
+        r1.setStart(el, offset);
         editor.composer.selection.setSelection(r1);
+    },
+
+    setSelection: function(editor, el, offset, el2, offset2) {
+      var r1 = editor.composer.selection.createRange();
+      r1.setEnd(el2, offset2);
+      r1.setStart(el, offset);
+      editor.composer.selection.setSelection(r1);
     },
 
     teardown: function() {
@@ -37,7 +44,7 @@ if (wysihtml5.browser.supported()) {
   
 // bold, italic, underline
   asyncTest("Basic formating tests", function() {
-     expect(18);
+     expect(12);
     var that = this,
         text = "once upon a time there was an unformated text.",
         parserRules = {
@@ -52,73 +59,44 @@ if (wysihtml5.browser.supported()) {
         });
         
     editor.on("load", function() {
-      var editableElement   = that.editableArea1;
+      var editableElement   = that.editableArea1,
+          sel;
+      
       // basic bold
+      
       editor.setValue(text, true);
-      editor.composer.selection.selectNode(editor.editableElement);
+      editor.composer.selection.selectNode(editableElement);
+      
       editor.composer.commands.exec('bold');
       equal(editableElement.innerHTML.toLowerCase(), "<b>" + text + "</b>", "Command bold sets text as bold correctly");
 
-      editor.composer.selection.getSelection().collapseToEnd();
-
-      ok(editor.composer.selection.getSelection().isCollapsed, "Text caret is collapsed");
+      editor.composer.commands.exec('bold');
+      equal(editableElement.innerHTML.toLowerCase(), text, "Command bold unset text from bold correctly");
 
       editor.composer.commands.exec('bold');
-      editor.composer.selection.getSelection().collapseToEnd();
-      editor.composer.commands.exec('insertHtml', 'test');
-      ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
-      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<b>" + text + "</b>test", "With caret at last position bold is not removed but set to notbold at caret");
-      
-
-      that.setCaretInsideNode(editor, editableElement.querySelector('b'));
+      equal(editableElement.innerHTML.toLowerCase(), "<b>" + text + "</b>", "Command bold toggle works 1");
       editor.composer.commands.exec('bold');
+      equal(editableElement.innerHTML.toLowerCase(), text, "Command bold toggle works 2");
 
-      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), text + "test", "Bold is correctly removed when text caret is inside bold");
-      ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
+      equal(editableElement.childNodes.length, 1, "No empty textnodes left behind");
+      equal(editableElement.firstChild.nodeType, 3, "Only node is textnode");
+      sel = editor.composer.selection.getSelection();
+      equal(sel.anchorNode, editableElement.firstChild, "Selction anchor node correct");
+      equal(sel.anchorOffset, 0, "Selction anchor offset correct");
+      equal(sel.focusNode, editableElement.firstChild, "Selction afocus node correct");
+      equal(sel.focusOffset,editableElement.firstChild.data.length, "Selction focus offset correct");
 
       // basic italic
       editor.setValue(text, true);
-      editor.composer.selection.selectNode(editor.editableElement);
+      editor.composer.selection.selectNode(editableElement);
       editor.composer.commands.exec('italic');
       equal(editableElement.innerHTML.toLowerCase(), "<i>" + text + "</i>", "Command italic sets text as italic correctly");
-      
-      editor.composer.selection.getSelection().collapseToEnd();
-      ok(editor.composer.selection.getSelection().isCollapsed, "Text caret is collapsed");
-
-      editor.composer.commands.exec('italic');
-      editor.composer.selection.getSelection().collapseToEnd();
-      editor.composer.commands.exec('insertHtml', 'test');
-
-      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<i>" + text + "</i>test", "With caret at last position italic is not removed but set to notitalic at caret");
-      ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
-
-      that.setCaretInsideNode(editor, editableElement.querySelector('i'));
-      editor.composer.commands.exec('italic');
-
-      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), text + "test", "Italic is correctly removed when text caret is inside italic");
-      ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
 
       // basic underline
       editor.setValue(text, true);
-      editor.composer.selection.selectNode(editor.editableElement);
+      editor.composer.selection.selectNode(editableElement);
       editor.composer.commands.exec('underline');
       equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<u>" + text + "</u>", "Command underline sets text as underline correctly");
-
-      editor.composer.selection.getSelection().collapseToEnd();
-      ok(editor.composer.selection.getSelection().isCollapsed, "Text caret is collapsed");
-
-      editor.composer.commands.exec('underline');
-      editor.composer.selection.getSelection().collapseToEnd();
-      editor.composer.commands.exec('insertHtml', 'test');
-
-      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), "<u>" + text + "</u>test", "With caret at last position underline is not removed but set to notunderline at caret");
-      ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
-
-      that.setCaretInsideNode(editor, editableElement.querySelector('u'));
-      editor.composer.commands.exec('underline');
-
-      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, ''), text + "test", "Underline is correctly removed when text caret is inside underline");
-      ok(editor.composer.selection.getSelection().isCollapsed, "Text caret did remain collapsed");
 
       start();
     });
@@ -255,48 +233,60 @@ if (wysihtml5.browser.supported()) {
       });
     });
     
-// createLink/removeLink
-        asyncTest("Create/remove link", function() {
-           expect(4);
-           
-          var that = this,
-              editor = new wysihtml5.Editor(this.editableArea1),
-              text = "text";
-        
-          editor.on("load", function() {
-            var editableElement   = that.editableArea1;
-            editor.setValue(text, true);
-            editor.composer.selection.selectNode(editor.editableElement);
-            
-            // Create
-            editor.composer.commands.exec('createLink', {
-              "href": "http://test.com", "title": "test"
-            });
-            that.equal(editableElement.innerHTML.toLowerCase(), '<a href="http://test.com" title="test">' + text + '</a>', "Link added correctly");
-            
-            // Change
-            editor.composer.selection.selectNode(editor.editableElement);
-            editor.composer.commands.exec('createLink', {
-              "href": "http://changed.com"
-            });
-            that.equal(editableElement.innerHTML.toLowerCase(), '<a href="http://changed.com">' + text + '</a>', "Link attributes changed correctly when createLink is executed on existing link");
-            
-            //Remove
-            editor.composer.selection.selectNode(editor.editableElement);
-            editor.composer.commands.exec('removeLink');
-            that.equal(editableElement.innerHTML, text, "Link remove correctly");
-            
-            // Create with caret
-            editor.composer.selection.selectNode(editor.editableElement);
-            editor.composer.selection.getSelection().collapseToStart();
-            editor.composer.commands.exec('createLink', {
-              "href": "http://test.com", "title": "test"
-            });
-            that.equal(editableElement.innerHTML.toLowerCase(), '<a href="http://test.com" title="test">http://test.com/</a> ' + text + '', "Link with caret added correctly");
-            
-            start();
-          });
-        });
+ //createLink/removeLink
+  asyncTest("Create/remove link", function() {
+     expect(5);
+     
+    var that = this,
+        editor = new wysihtml5.Editor(this.editableArea1),
+        text = "text";
+  
+    editor.on("load", function() {
+      var editableElement   = that.editableArea1;
+      editor.setValue(text, true);
+      editor.composer.selection.selectNode(editor.editableElement);
+      
+      // Create
+      editor.composer.commands.exec('createLink', {
+        "href": "http://test.com", "title": "test"
+      });
+      that.equal(editableElement.innerHTML.toLowerCase(), '<a href="http://test.com" title="test">' + text + '</a>', "Link added correctly");
+      
+      // Change
+      editor.composer.selection.selectNode(editor.editableElement);
+      editor.composer.commands.exec('createLink', {
+        "href": "http://changed.com"
+      });
+      that.equal(editableElement.innerHTML.toLowerCase(), '<a href="http://changed.com" title="test">' + text + '</a>', "Link attributes changed correctly when createLink is executed on existing link");
+      
+      //Remove
+      editor.composer.selection.selectNode(editor.editableElement);
+      editor.composer.commands.exec('removeLink');
+      that.equal(editableElement.innerHTML, text, "Link remove correctly");
+      
+      // Create with caret
+      editor.composer.selection.selectNode(editor.editableElement);
+      editor.composer.selection.getSelection().collapseToStart();
+      editor.composer.commands.exec('createLink', {
+        "href": "http://test.com", "title": "test"
+      });
+      that.equal(editableElement.innerHTML.toLowerCase(), '<a href="http://test.com" title="test">http://test.com</a>' + text + '', "Link with caret added correctly");
+
+
+      editor.setValue("this is a short text", true);
+      that.setSelection(editor, editableElement.firstChild, 2 , editableElement.firstChild, 7);
+      editor.composer.commands.exec('createLink', {
+        "href": "http://test.com", "title": "test"
+      });
+      that.setSelection(editor, editableElement.querySelector('a').firstChild, 2 , editableElement.childNodes[2], 5);
+      editor.composer.commands.exec('createLink', {
+        "href": "http://test.com", "title": "test"
+      });
+      that.equal(editableElement.innerHTML.toLowerCase(), 'th<a href="http://test.com" title="test">is is a sh</a>ort text', 'extending link selection correctly');
+                                                   
+      start();
+    });
+  });
 
   // create table
     asyncTest("Create table", function() {

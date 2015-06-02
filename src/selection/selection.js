@@ -73,7 +73,6 @@
      */
     getBookmark: function() {
       var range = this.getRange();
-      if (range) expandRangeToSurround(range);
       return range && range.cloneRange();
     },
 
@@ -179,13 +178,15 @@
      * callback is an optional parameter accepting a function to execute when selection ahs been set
      */
     setAfter: function(node, notVisual, callback) {
-      var range = rangy.createRange(this.doc),
+      var win = this.win,
+          range = rangy.createRange(this.doc),
           fixWebkitSelection = function() {
             // Webkit fails to add selection if there are no textnodes in that region
             // (like an uneditable container at the end of content).
             var parent = node.parentNode,
                 lastSibling = parent ? parent.childNodes[parent.childNodes.length - 1] : null;
-            if (!sel || (lastSibling === node && this.win.getComputedStyle(node).display === "block")) {
+
+            if (!sel || (lastSibling === node && node.nodeType === 1 && win.getComputedStyle(node).display === "block")) {
               if (notVisual) {
                 // If setAfter is used as internal between actions, self-removing caretPlaceholder has simpler implementation
                 // and remove itself in call stack end instead on user interaction 
@@ -696,7 +697,7 @@
     splitElementAtCaret: function (element, insertNode) {
       var sel = this.getSelection(),
           range, contentAfterRangeStart,
-          firstChild, lastChild;
+          firstChild, lastChild, childNodes;
 
       if (sel.rangeCount > 0) {
         range = sel.getRangeAt(0).cloneRange(); // Create a copy of the selection range to work with
@@ -704,19 +705,43 @@
         range.setEndAfter(element); // Place the end of the range after the element
         contentAfterRangeStart = range.extractContents(); // Extract the contents of the element after the caret into a fragment
 
+        childNodes = contentAfterRangeStart.childNodes;
+
+        // Empty elements are cleaned up from extracted content
+        for (var i = childNodes.length; i --;) {
+          if (childNodes[i].nodeType === 1 &&  (/^\s*$/).test(childNodes[i].innerHTML)) {
+            contentAfterRangeStart.removeChild(childNodes[i]);
+          }
+        }
+
         element.parentNode.insertBefore(contentAfterRangeStart, element.nextSibling);
 
-        firstChild = insertNode.firstChild;
-        lastChild = insertNode.lastChild;
+        if (insertNode) {
+          firstChild = insertNode.firstChild || insertNode;
+          lastChild = insertNode.lastChild || insertNode;
 
-        element.parentNode.insertBefore(insertNode, element.nextSibling);
+          element.parentNode.insertBefore(insertNode, element.nextSibling);
 
-        // Select inserted node contents
-        if (firstChild && lastChild) {
-           range.setStartBefore(firstChild);
-           range.setEndAfter(lastChild);
-           this.setSelection(range);
+          // Select inserted node contents
+          if (firstChild && lastChild) {
+             range.setStartBefore(firstChild);
+             range.setEndAfter(lastChild);
+             this.setSelection(range);
+          }
+        } else {
+          range.setStartAfter(element);
+          range.setEndAfter(element);
         }
+
+        if ((/^\s*$/).test(element.innerHTML)) {
+          if (element.innerHTML === '') {
+            element.parentNode.removeChild(element);
+          } else {
+            wysihtml5.dom.unwrap(element);
+          }
+        }
+
+
       }
     },
 
@@ -916,6 +941,24 @@
       } else {
         return [];
       }
+    },
+
+    // Gets all the elements in selection with nodeType
+    // Ignores the elements not belonging to current editable area
+    // If filter is defined nodes must pass the filter function with true to be included in list
+    getOwnNodes: function(nodeType, filter, splitBounds) {
+      var ranges = this.getOwnRanges(),
+          nodes = [];
+      for (var r = 0, rmax = ranges.length; r < rmax; r++) {
+        if (ranges[r]) {
+          if (splitBounds) {
+            ranges[r].splitBoundaries();
+          }
+          nodes = nodes.concat(ranges[r].getNodes(Array.isArray(nodeType) ? nodeType : [nodeType], filter));
+        }
+      }
+
+      return nodes;
     },
 
     fixRangeOverflow: function(range) {

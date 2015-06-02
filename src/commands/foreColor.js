@@ -1,18 +1,16 @@
 /**
- * document.execCommand("foreColor") will create either inline styles (firefox, chrome) or use font tags
- * which we don't want
- * Instead we set a css class
+ * Set color css class
  */
 (function(wysihtml5) {
   var REG_EXP = /wysiwyg-color-[0-9a-z]+/g;
 
   wysihtml5.commands.foreColor = {
     exec: function(composer, command, color) {
-      wysihtml5.commands.formatInline.execWithToggle(composer, command, "span", "wysiwyg-color-" + color, REG_EXP);
+      wysihtml5.commands.formatInline.exec(composer, command, {className: "wysiwyg-color-" + color, classRegExp: REG_EXP, toggle: true});
     },
 
     state: function(composer, command, color) {
-      return wysihtml5.commands.formatInline.state(composer, command, "span", "wysiwyg-color-" + color, REG_EXP);
+      return wysihtml5.commands.formatInline.state(composer, command, {className: "wysiwyg-color-" + color});
     }
   };
 })(wysihtml5);
