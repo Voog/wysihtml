@@ -1,5 +1,5 @@
 /**
- * @license wysihtml v0.5.0-beta9
+ * @license wysihtml v0.5.0-beta10
  * https://github.com/Voog/wysihtml
  *
  * Author: Christopher Blum (https://github.com/tiff)
@@ -10,7 +10,7 @@
  *
  */
 var wysihtml5 = {
-  version: "0.5.0-beta9",
+  version: "0.5.0-beta10",
 
   // namespaces
   commands:   {},
@@ -5898,6 +5898,17 @@ wysihtml5.dom.copyAttributes = function(attributesToCopy) {
         emptyTextNode: function(ignoreWhitespace) {
           var regx = ignoreWhitespace ? (/^\s*$/g) : (/^[\r\n]*$/g);
           return node.nodeType === wysihtml5.TEXT_NODE && (regx).test(node.data);
+        },
+
+        visible: function() {
+          var isVisible = !(/^\s*$/g).test(wysihtml5.dom.getTextContent(node));
+
+          if (!isVisible) {
+            if (node.nodeType === 1 && node.querySelector('img, br, hr, object, embed, canvas, input, textarea')) {
+              isVisible = true;
+            }
+          }
+          return isVisible;
         }
       },
 
@@ -10213,7 +10224,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
 
         // Empty elements are cleaned up from extracted content
         for (var i = childNodes.length; i --;) {
-          if (childNodes[i].nodeType === 1 &&  (/^\s*$/).test(childNodes[i].innerHTML)) {
+          if (!wysihtml5.dom.domNode(childNodes[i]).is.visible()) {
             contentAfterRangeStart.removeChild(childNodes[i]);
           }
         }
@@ -10237,11 +10248,11 @@ wysihtml5.quirks.ensureProperClearing = (function() {
           range.setEndAfter(element);
         }
 
-        if ((/^\s*$/).test(element.innerHTML)) {
-          if (element.innerHTML === '') {
+        if (!wysihtml5.dom.domNode(element).is.visible()) {
+          if (wysihtml5.dom.getTextContent(element) === '') {
             element.parentNode.removeChild(element);
           } else {
-            wysihtml5.dom.unwrap(element);
+            element.parentNode.replaceChild(this.doc.createTextNode(" "), element);
           }
         }
 
@@ -11651,8 +11662,10 @@ wysihtml5.Commands = Base.extend(
   var dom = wysihtml5.dom,
       // When the caret is within a H1 and the H4 is invoked, the H1 should turn into H4
       // instead of creating a H4 within a H1 which would result in semantically invalid html
-      UNNESTABLE_BLOCK_ELEMENTS = "h1, h2, h3, h4, h5, h6, p, pre";
-      BLOCK_ELEMENTS = "h1, h2, h3, h4, h5, h6, p, pre, div, blockquote";
+      UNNESTABLE_BLOCK_ELEMENTS = "h1, h2, h3, h4, h5, h6, p, pre",
+      BLOCK_ELEMENTS = "h1, h2, h3, h4, h5, h6, p, pre, div, blockquote",
+      INLINE_ELEMENTS = "b, big, i, small, tt, abbr, acronym, cite, code, dfn, em, kbd, strong, samp, var, a, bdo, br, q, span, sub, sup, button, label, textarea, input, select, u";
+
 
   // Removes empty block level elements
   function cleanup(composer) {
@@ -11685,6 +11698,35 @@ wysihtml5.Commands = Base.extend(
     }
 
     return block;
+  }
+
+  function cloneOuterInlines(node, container) {
+    var n = node,
+        innerNode,
+        parentNode,
+        el = null,
+        el2;
+        
+    while (n && container && n !== container) {
+      if (n.nodeType === 1 && n.matches(INLINE_ELEMENTS)) {
+        parentNode = n;
+        if (el === null) {
+          el = n.cloneNode(false);
+          innerNode = el;
+        } else {
+          el2 = n.cloneNode(false);
+          el2.appendChild(el);
+          el = el2;
+        }
+      }
+      n = n.parentNode;
+    }
+
+    return {
+      parent: parentNode,
+      outerNode: el,
+      innerNode: innerNode
+    };
   }
 
   // Formats an element according to options nodeName, className, styleProperty, styleValue
@@ -11892,13 +11934,24 @@ wysihtml5.Commands = Base.extend(
 
       blocks = wysihtml5.lang.array(fragment.childNodes).get();
     }
-
     if (firstOuterBlock) {
       // If selection starts inside un-nestable block, split-escape the unnestable point and insert node between
       composer.selection.splitElementAtCaret(firstOuterBlock, fragment);
     } else {
-      // Otherwise just insert
-      r.insertNode(fragment);
+      // Ensure node does not get inserted into an inline where it is not allowed
+      var outerInlines = cloneOuterInlines(rangeStartContainer, composer.element);
+      if (outerInlines.outerNode && outerInlines.innerNode && outerInlines.parent) {
+        if (fragment.childNodes.length === 1) {
+          while(fragment.firstChild.firstChild) {
+            outerInlines.innerNode.appendChild(fragment.firstChild.firstChild);
+          }
+          fragment.firstChild.appendChild(outerInlines.outerNode);
+        }
+        composer.selection.splitElementAtCaret(outerInlines.parent, fragment);
+      } else {
+        // Otherwise just insert
+        r.insertNode(fragment);
+      }
     }
 
     return blocks;
@@ -12067,7 +12120,7 @@ wysihtml5.Commands = Base.extend(
 (function(wysihtml5) {
 
   var defaultTag = "SPAN",
-      INLINE_ELEMENTS = "b, big, i, small, tt, abbr, acronym, cite, code, dfn, em, kbd, strong, samp, var, a, bdo, br, q, span, sub, sup, button, label, textarea, input, select",
+      INLINE_ELEMENTS = "b, big, i, small, tt, abbr, acronym, cite, code, dfn, em, kbd, strong, samp, var, a, bdo, br, q, span, sub, sup, button, label, textarea, input, select, u",
       queryAliasMap = {
         "b": "b, strong",
         "strong": "b, strong",
@@ -15569,7 +15622,7 @@ wysihtml5.views.View = Base.extend(
       this.elementToChange = null;
       dom.removeClass(this.link, CLASS_NAME_OPENED);
       this.container.style.display = "none";
-      this.fire("hide");
+      this.fire("cancel");
     }
   });
 })(wysihtml5);
