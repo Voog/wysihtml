@@ -6,7 +6,7 @@
 (function(wysihtml5) {
 
   var defaultTag = "SPAN",
-      INLINE_ELEMENTS = "b, big, i, small, tt, abbr, acronym, cite, code, dfn, em, kbd, strong, samp, var, a, bdo, br, q, span, sub, sup, button, label, textarea, input, select",
+      INLINE_ELEMENTS = "b, big, i, small, tt, abbr, acronym, cite, code, dfn, em, kbd, strong, samp, var, a, bdo, br, q, span, sub, sup, button, label, textarea, input, select, u",
       queryAliasMap = {
         "b": "b, strong",
         "strong": "b, strong",

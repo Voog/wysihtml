@@ -94,8 +94,10 @@ if (wysihtml5.browser.supported()) {
       blankCaretStart(editor);
       editor.composer.commands.exec("formatInline", {nodeName: "button", className : "test-class"});
       ok((/^<button class="test-class"><\/button>(<\/?br>)?$/).test(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, '')), "FormatInline given classname and nodeName works correctly");
+      editableElement.firstChild.innerHTML = "test"; // empty nodes will be removed thus add some text for testing
+      editor.composer.selection.selectNode(editableElement.firstChild);
       editor.composer.commands.exec("formatInline", {className : "test-class"});
-      ok((/^<button><\/button>(<\/?br>)?$/).test(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, '')), "If no nodename given and node is not span, classname is removed but tag remains");
+      ok((/^<button>test<\/button>(<\/?br>)?$/).test(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, '')), "If no nodename given and node is not span, classname is removed but tag remains");
 
       blankSelectionStart(editor);
       editor.composer.commands.exec("formatInline", "strong");

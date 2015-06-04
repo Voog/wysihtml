@@ -9,7 +9,9 @@
       // When the caret is within a H1 and the H4 is invoked, the H1 should turn into H4
       // instead of creating a H4 within a H1 which would result in semantically invalid html
       UNNESTABLE_BLOCK_ELEMENTS = "h1, h2, h3, h4, h5, h6, p, pre",
-      BLOCK_ELEMENTS = "h1, h2, h3, h4, h5, h6, p, pre, div, blockquote";
+      BLOCK_ELEMENTS = "h1, h2, h3, h4, h5, h6, p, pre, div, blockquote",
+      INLINE_ELEMENTS = "b, big, i, small, tt, abbr, acronym, cite, code, dfn, em, kbd, strong, samp, var, a, bdo, br, q, span, sub, sup, button, label, textarea, input, select, u";
+
 
   // Removes empty block level elements
   function cleanup(composer) {
@@ -42,6 +44,35 @@
     }
 
     return block;
+  }
+
+  function cloneOuterInlines(node, container) {
+    var n = node,
+        innerNode,
+        parentNode,
+        el = null,
+        el2;
+        
+    while (n && container && n !== container) {
+      if (n.nodeType === 1 && n.matches(INLINE_ELEMENTS)) {
+        parentNode = n;
+        if (el === null) {
+          el = n.cloneNode(false);
+          innerNode = el;
+        } else {
+          el2 = n.cloneNode(false);
+          el2.appendChild(el);
+          el = el2;
+        }
+      }
+      n = n.parentNode;
+    }
+
+    return {
+      parent: parentNode,
+      outerNode: el,
+      innerNode: innerNode
+    };
   }
 
   // Formats an element according to options nodeName, className, styleProperty, styleValue
@@ -249,13 +280,24 @@
 
       blocks = wysihtml5.lang.array(fragment.childNodes).get();
     }
-
     if (firstOuterBlock) {
       // If selection starts inside un-nestable block, split-escape the unnestable point and insert node between
       composer.selection.splitElementAtCaret(firstOuterBlock, fragment);
     } else {
-      // Otherwise just insert
-      r.insertNode(fragment);
+      // Ensure node does not get inserted into an inline where it is not allowed
+      var outerInlines = cloneOuterInlines(rangeStartContainer, composer.element);
+      if (outerInlines.outerNode && outerInlines.innerNode && outerInlines.parent) {
+        if (fragment.childNodes.length === 1) {
+          while(fragment.firstChild.firstChild) {
+            outerInlines.innerNode.appendChild(fragment.firstChild.firstChild);
+          }
+          fragment.firstChild.appendChild(outerInlines.outerNode);
+        }
+        composer.selection.splitElementAtCaret(outerInlines.parent, fragment);
+      } else {
+        // Otherwise just insert
+        r.insertNode(fragment);
+      }
     }
 
     return blocks;

@@ -709,7 +709,7 @@
 
         // Empty elements are cleaned up from extracted content
         for (var i = childNodes.length; i --;) {
-          if (childNodes[i].nodeType === 1 &&  (/^\s*$/).test(childNodes[i].innerHTML)) {
+          if (!wysihtml5.dom.domNode(childNodes[i]).is.visible()) {
             contentAfterRangeStart.removeChild(childNodes[i]);
           }
         }
@@ -733,11 +733,11 @@
           range.setEndAfter(element);
         }
 
-        if ((/^\s*$/).test(element.innerHTML)) {
-          if (element.innerHTML === '') {
+        if (!wysihtml5.dom.domNode(element).is.visible()) {
+          if (wysihtml5.dom.getTextContent(element) === '') {
             element.parentNode.removeChild(element);
           } else {
-            wysihtml5.dom.unwrap(element);
+            element.parentNode.replaceChild(this.doc.createTextNode(" "), element);
           }
         }
 

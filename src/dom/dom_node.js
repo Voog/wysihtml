@@ -9,6 +9,17 @@
         emptyTextNode: function(ignoreWhitespace) {
           var regx = ignoreWhitespace ? (/^\s*$/g) : (/^[\r\n]*$/g);
           return node.nodeType === wysihtml5.TEXT_NODE && (regx).test(node.data);
+        },
+
+        visible: function() {
+          var isVisible = !(/^\s*$/g).test(wysihtml5.dom.getTextContent(node));
+
+          if (!isVisible) {
+            if (node.nodeType === 1 && node.querySelector('img, br, hr, object, embed, canvas, input, textarea')) {
+              isVisible = true;
+            }
+          }
+          return isVisible;
         }
       },
 
