@@ -48,9 +48,7 @@
         return;
       }
 
-      var formElements, i, length,
-          that = this,
-          _clearInterval = function() { clearInterval(that.interval); },
+      var that = this,
           callbackWrapper = function(event) {
             var attributes = that._serialize();
             that.fire("save", attributes);
@@ -58,9 +56,6 @@
             event.preventDefault();
             event.stopPropagation();
           };
-
-      _clearInterval();
-      this.interval = setInterval(function() { that._interpolate(true); }, 500);
 
       dom.observe(that.link, "click", function() {
         if (dom.hasClass(that.link, CLASS_NAME_OPENED)) {
@@ -87,13 +82,6 @@
         event.preventDefault();
         event.stopPropagation();
       });
-
-      formElements  = this.container.querySelectorAll(SELECTOR_FORM_ELEMENTS);
-      length        = formElements.length;
-
-      for (i = 0; i < length; i++) {
-        dom.observe(formElements[i], "change", _clearInterval);
-      }
 
       this._observed = true;
     },
@@ -184,7 +172,6 @@
      * Hide the dialog element
      */
     hide: function() {
-      clearInterval(this.interval);
       this.elementToChange = null;
       dom.removeClass(this.link, CLASS_NAME_OPENED);
       this.container.style.display = "none";
