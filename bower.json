@@ -1,6 +1,5 @@
 {
   "name": "wysihtml",
-  "version": "0.5.0-beta10",
   "main": "dist/wysihtml-toolbar.js",
   "dependencies": {
   },
