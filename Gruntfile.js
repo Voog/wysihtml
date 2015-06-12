@@ -73,6 +73,7 @@ module.exports = function(grunt) {
     "src/commands/formatCode.js",
     "src/commands/formatInline.js",
     "src/commands/insertBlockQuote.js",
+    "src/commands/exitBlockQuote.js",
     "src/commands/insertHTML.js",
     "src/commands/insertImage.js",
     "src/commands/insertLineBreak.js",
