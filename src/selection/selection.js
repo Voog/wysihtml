@@ -699,7 +699,7 @@
           voidElements = ["area", "base", "br", "col", "command", "embed", "hr", "img", "input", "keygen", "link", "meta", "param", "source", "track", "wbr"],
           range = this.getRange();
 
-      anchorNode = node || range.anchorNode;
+      anchorNode = node || range.startContainer;
       anchorNodeTagNameLower = anchorNode.tagName.toLowerCase();
 
       return voidElements.indexOf(anchorNodeTagNameLower) === -1;
