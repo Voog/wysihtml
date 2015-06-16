@@ -464,8 +464,8 @@ wysihtml5.polyfills(window, document);
  *
  * Copyright 2015, Tim Down
  * Licensed under the MIT license.
- * Version: 1.3.1-dev
- * Build date: 20 May 2015
+ * Version: 1.3.0
+ * Build date: 10 May 2015
  */
 
 (function(factory, root) {
@@ -569,7 +569,7 @@ wysihtml5.polyfills(window, document);
     };
 
     var api = {
-        version: "1.3.1-dev",
+        version: "1.3.0",
         initialized: false,
         isBrowser: isBrowser,
         supported: true,
@@ -4313,8 +4313,8 @@ wysihtml5.polyfills(window, document);
  *
  * Copyright 2015, Tim Down
  * Licensed under the MIT license.
- * Version: 1.3.1-dev
- * Build date: 20 May 2015
+ * Version: 1.3.0
+ * Build date: 10 May 2015
  */
 (function(factory, root) {
     if (typeof define == "function" && define.amd) {
@@ -10207,6 +10207,17 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       if (range) {
         range.insertNode(node);
       }
+    },
+
+    canAppendChild: function (node) {
+      var anchorNode, anchorNodeTagNameLower,
+          voidElements = ["area", "base", "br", "col", "command", "embed", "hr", "img", "input", "keygen", "link", "meta", "param", "source", "track", "wbr"],
+          range = this.getRange();
+
+      anchorNode = node || range.anchorNode;
+      anchorNodeTagNameLower = anchorNode.tagName.toLowerCase();
+
+      return voidElements.indexOf(anchorNodeTagNameLower) === -1;
     },
 
     splitElementAtCaret: function (element, insertNode) {

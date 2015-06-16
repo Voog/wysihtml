@@ -694,6 +694,17 @@
       }
     },
 
+    canAppendChild: function (node) {
+      var anchorNode, anchorNodeTagNameLower,
+          voidElements = ["area", "base", "br", "col", "command", "embed", "hr", "img", "input", "keygen", "link", "meta", "param", "source", "track", "wbr"],
+          range = this.getRange();
+
+      anchorNode = node || range.anchorNode;
+      anchorNodeTagNameLower = anchorNode.tagName.toLowerCase();
+
+      return voidElements.indexOf(anchorNodeTagNameLower) === -1;
+    },
+
     splitElementAtCaret: function (element, insertNode) {
       var sel = this.getSelection(),
           range, contentAfterRangeStart,
