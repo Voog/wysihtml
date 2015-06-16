@@ -10215,7 +10215,10 @@ wysihtml5.quirks.ensureProperClearing = (function() {
           range = this.getRange();
 
       anchorNode = node || range.startContainer;
-      anchorNodeTagNameLower = anchorNode.tagName.toLowerCase();
+
+      if (anchorNode) {
+        anchorNodeTagNameLower = (anchorNode.tagName || anchorNode.nodeName).toLowerCase();
+      }
 
       return voidElements.indexOf(anchorNodeTagNameLower) === -1;
     },
