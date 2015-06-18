@@ -40,10 +40,10 @@
         }
         if (field.getAttribute(ATTRIBUTE_FIELDS) === "color") {
           colourMode = (field.dataset.colormode || "rgb").toLowerCase();
+          colourMode = colourMode === 'hex' ? 'hash' : colourMode;
 
           if (colour) {
             field.value = styleParser.unparseColor(colour, colourMode);
-            field.value = colourMode === "hex" ? "#" + field.value : field.value;
           } else {
             field.value = styleParser.unparseColor([0, 0, 0], colourMode);
           }
