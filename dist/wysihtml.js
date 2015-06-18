@@ -9516,12 +9516,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
     },
 
     unparseColor: function(val, colourName) {
-      var colourType,
-          hexRadix = 16;
-
-      if (!(colourType = getColourType(val))) { return false; }
-
-      colourName = colourType.name;
+      var hexRadix = 16;
 
       if (colourName === "hex") {
         return (val[0].toString(hexRadix).toUpperCase()) + (val[1].toString(hexRadix).toUpperCase()) + (val[2].toString(hexRadix).toUpperCase());

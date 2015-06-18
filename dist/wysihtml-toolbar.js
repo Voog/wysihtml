@@ -9516,12 +9516,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
     },
 
     unparseColor: function(val, colourName) {
-      var colourType,
-          hexRadix = 16;
-
-      if (!(colourType = getColourType(val))) { return false; }
-
-      colourName = colourType.name;
+      var hexRadix = 16;
 
       if (colourName === "hex") {
         return (val[0].toString(hexRadix).toUpperCase()) + (val[1].toString(hexRadix).toUpperCase()) + (val[2].toString(hexRadix).toUpperCase());
@@ -16116,14 +16111,14 @@ wysihtml5.views.View = Base.extend(
     },
 
     _interpolate: function(avoidHiddenFields) {
-      var field, colourName,
+      var field, colourName, colourMode,
           focusedElement = document.querySelector(":focus"),
           fields         = this.container.querySelectorAll(SELECTOR_FIELDS),
           length         = fields.length,
           i              = 0,
           firstElement   = (this.elementToChange) ? ((wysihtml5.lang.object(this.elementToChange).isArray()) ? this.elementToChange[0] : this.elementToChange) : null,
-          colorStr       = (firstElement) ? firstElement.getAttribute("style") : null,
-          color          = (colorStr) ? wysihtml5.quirks.styleParser.parseColor(colorStr, "color") : null;
+          colourStr       = (firstElement) ? firstElement.getAttribute("style") : null,
+          colour          = (colourStr) ? wysihtml5.quirks.styleParser.parseColor(colourStr, "color") : null;
 
       for (; i<length; i++) {
         field = fields[i];
@@ -16136,9 +16131,10 @@ wysihtml5.views.View = Base.extend(
           continue;
         }
         if (field.getAttribute(ATTRIBUTE_FIELDS) === "color") {
-          if (color) {
-            colourName = wysihtml5.quirks.styleParser.getColorName(color);
-            field.value = wysihtml5.quirks.styleParser.unparseColor(colourName);
+          colourMode = (field.dataset.colormode || "").toLowerCase();
+
+          if (colour) {
+            field.value = wysihtml5.quirks.styleParser.unparseColor(colour, colourMode);
           } else {
             field.value = "rgb(0,0,0)";
           }
