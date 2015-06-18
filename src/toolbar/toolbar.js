@@ -193,7 +193,7 @@
         if (!commandObj.dialog) {
           that.execCommand(command, commandValue);
         } else {
-          state = getCommandState(that.composer, command);
+          state = getCommandState(that.composer, commandObj);
           commandObj.dialog.show(state);
         }
 
@@ -277,15 +277,7 @@
             }
             if (command.dialog) {
               if (typeof(state) === "object" || wysihtml5.lang.object(state).isArray()) {
-
-                if (!command.dialog.multiselect && wysihtml5.lang.object(state).isArray()) {
-                  // Grab first and only object/element in state array, otherwise convert state into boolean
-                  // to avoid showing a dialog for multiple selected elements which may have different attributes
-                  // eg. when two links with different href are selected, the state will be an array consisting of both link elements
-                  // but the dialog interface can only update one
-                  state = state.length === 1 ? state[0] : true;
-                  command.state = state;
-                }
+                command.state = getCommandState(composer, command);
 
                 displayDialogAttributeValue = command.dialog.container.dataset.showdialogbydefault || false;
 
@@ -338,6 +330,10 @@
   function getCommandState (composer, command) {
     var state = composer.commands.state(command.name, command.value);
 
+    // Grab first and only object/element in state array, otherwise convert state into boolean
+    // to avoid showing a dialog for multiple selected elements which may have different attributes
+    // eg. when two links with different href are selected, the state will be an array consisting of both link elements
+    // but the dialog interface can only update one
     if (!command.dialog.multiselect && wysihtml5.lang.object(state).isArray()) {
       state = state.length === 1 ? state[0] : true;
     }
