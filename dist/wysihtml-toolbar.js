@@ -15647,6 +15647,8 @@ wysihtml5.views.View = Base.extend(
           firstField.focus();
         } catch(e) {}
       }
+
+      this.opened = true;
     },
 
     /**
@@ -15657,9 +15659,10 @@ wysihtml5.views.View = Base.extend(
       dom.removeClass(this.link, CLASS_NAME_OPENED);
       this.container.style.display = "none";
       this.fire("cancel");
+      this.opened = false;
     }
   });
-})(wysihtml5);
+})(wysihtml5); //jshint ignore:line
 ;/**
  * Converts speech-to-text and inserts this into the editor
  * As of now (2011/03/25) this only is supported in Chrome >= 11
@@ -15889,7 +15892,7 @@ wysihtml5.views.View = Base.extend(
       var commandObj = this.commandMapping[command + ":" + commandValue];
 
       // Show dialog when available
-      if (commandObj && commandObj.dialog && !commandObj.state) {
+      if (commandObj && commandObj.dialog && (!commandObj.state || !commandObj.dialog.opened)) {
         commandObj.dialog.show();
       } else {
         this._execCommand(command, commandValue);

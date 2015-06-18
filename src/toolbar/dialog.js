@@ -166,6 +166,8 @@
           firstField.focus();
         } catch(e) {}
       }
+
+      this.opened = true;
     },
 
     /**
@@ -176,6 +178,7 @@
       dom.removeClass(this.link, CLASS_NAME_OPENED);
       this.container.style.display = "none";
       this.fire("cancel");
+      this.opened = false;
     }
   });
-})(wysihtml5);
+})(wysihtml5); //jshint ignore:line
