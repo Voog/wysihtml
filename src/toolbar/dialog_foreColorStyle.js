@@ -43,12 +43,12 @@
         if (field.getAttribute(ATTRIBUTE_FIELDS) === "color") {
           if (color) {
             if (color[3] && color[3] != 1) {
-              field.value = "rgba(" + color[0] + "," + color[1] + "," + color[2] + "," + color[3] + ");";
+              field.value = "rgba(" + color[0] + "," + color[1] + "," + color[2] + "," + color[3] + ")";
             } else {
-              field.value = "rgb(" + color[0] + "," + color[1] + "," + color[2] + ");";
+              field.value = "rgb(" + color[0] + "," + color[1] + "," + color[2] + ")";
             }
           } else {
-            field.value = "rgb(0,0,0);";
+            field.value = "rgb(0,0,0)";
           }
         }
       }
