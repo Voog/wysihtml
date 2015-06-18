@@ -15541,13 +15541,8 @@ wysihtml5.views.View = Base.extend(
           };
 
       dom.observe(that.link, "click", function() {
-        var state;
-
         if (dom.hasClass(that.link, CLASS_NAME_OPENED)) {
           setTimeout(function() { that.hide(); }, 0);
-        } else {
-          state = that.command.state();
-          that.show(state);
         }
       });
 
