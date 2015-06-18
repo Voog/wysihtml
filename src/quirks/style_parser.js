@@ -89,9 +89,9 @@
       var hexRadix = 16;
 
       if (colourName === "hex") {
-        return (val[0].toString(hexRadix).toUpperCase()) + (val[1].toString(hexRadix).toUpperCase()) + (val[2].toString(hexRadix).toUpperCase());
+        return (val[0].toString(hexRadix) + val[1].toString(hexRadix) + val[2].toString(hexRadix)).toUpperCase();
       } else if (colourName === "hash") {
-        return "#" + (val[0].toString(16).toUpperCase()) + (val[1].toString(16).toUpperCase()) + (val[2].toString(16).toUpperCase());
+        return "#" + (val[0].toString(hexRadix) + val[1].toString(hexRadix) + val[2].toString(hexRadix)).toUpperCase();
       } else if (colourName === "rgb") {
         return "rgb(" + val[0] + "," + val[1] + "," + val[2] + ")";
       } else if (colourName === "rgba") {

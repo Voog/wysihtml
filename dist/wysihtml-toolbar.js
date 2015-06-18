@@ -9519,9 +9519,9 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       var hexRadix = 16;
 
       if (colourName === "hex") {
-        return (val[0].toString(hexRadix).toUpperCase()) + (val[1].toString(hexRadix).toUpperCase()) + (val[2].toString(hexRadix).toUpperCase());
+        return (val[0].toString(hexRadix) + val[1].toString(hexRadix) + val[2].toString(hexRadix)).toUpperCase();
       } else if (colourName === "hash") {
-        return "#" + (val[0].toString(16).toUpperCase()) + (val[1].toString(16).toUpperCase()) + (val[2].toString(16).toUpperCase());
+        return "#" + (val[0].toString(hexRadix) + val[1].toString(hexRadix) + val[2].toString(hexRadix)).toUpperCase();
       } else if (colourName === "rgb") {
         return "rgb(" + val[0] + "," + val[1] + "," + val[2] + ")";
       } else if (colourName === "rgba") {
@@ -16111,14 +16111,15 @@ wysihtml5.views.View = Base.extend(
     },
 
     _interpolate: function(avoidHiddenFields) {
-      var field, colourName, colourMode,
+      var field, colourMode,
+          styleParser = wysihtml5.quirks.styleParser,
           focusedElement = document.querySelector(":focus"),
           fields         = this.container.querySelectorAll(SELECTOR_FIELDS),
           length         = fields.length,
           i              = 0,
           firstElement   = (this.elementToChange) ? ((wysihtml5.lang.object(this.elementToChange).isArray()) ? this.elementToChange[0] : this.elementToChange) : null,
           colourStr       = (firstElement) ? firstElement.getAttribute("style") : null,
-          colour          = (colourStr) ? wysihtml5.quirks.styleParser.parseColor(colourStr, "color") : null;
+          colour          = (colourStr) ? styleParser.parseColor(colourStr, "color") : null;
 
       for (; i<length; i++) {
         field = fields[i];
@@ -16131,12 +16132,13 @@ wysihtml5.views.View = Base.extend(
           continue;
         }
         if (field.getAttribute(ATTRIBUTE_FIELDS) === "color") {
-          colourMode = (field.dataset.colormode || "").toLowerCase();
+          colourMode = (field.dataset.colormode || "rgb").toLowerCase();
 
           if (colour) {
-            field.value = wysihtml5.quirks.styleParser.unparseColor(colour, colourMode);
+            field.value = styleParser.unparseColor(colour, colourMode);
+            field.value = colourMode === "hex" ? "#" + field.value : field.value;
           } else {
-            field.value = "rgb(0,0,0)";
+            field.value = styleParser.unparseColor([0, 0, 0], "rgb");
           }
         }
       }
