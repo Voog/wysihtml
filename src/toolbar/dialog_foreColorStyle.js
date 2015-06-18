@@ -1,6 +1,5 @@
 (function(wysihtml5) {
-  var dom                     = wysihtml5.dom,
-      SELECTOR_FIELDS         = "[data-wysihtml5-dialog-field]",
+  var SELECTOR_FIELDS         = "[data-wysihtml5-dialog-field]",
       ATTRIBUTE_FIELDS        = "data-wysihtml5-dialog-field";
 
   wysihtml5.toolbar.Dialog_foreColorStyle = wysihtml5.toolbar.Dialog.extend({
@@ -46,7 +45,7 @@
             field.value = styleParser.unparseColor(colour, colourMode);
             field.value = colourMode === "hex" ? "#" + field.value : field.value;
           } else {
-            field.value = styleParser.unparseColor([0, 0, 0], "rgb");
+            field.value = styleParser.unparseColor([0, 0, 0], colourMode);
           }
         }
       }
