@@ -15545,7 +15545,7 @@ wysihtml5.views.View = Base.extend(
         if (dom.hasClass(that.link, CLASS_NAME_OPENED)) {
           setTimeout(function() { that.hide(); }, 0);
         } else {
-          setTimeout(function() { that.show(); }, 0);
+          that.show();
         }
       });
 
