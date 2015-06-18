@@ -134,17 +134,7 @@
         return;
       }
 
-      var commandObj = this.commandMapping[command + ":" + commandValue];
-
-      // Show dialog when available
-      /*if (commandObj && commandObj.dialog && !commandObj.state) {
-        commandObj.dialog.show();
-      } else {
-        this._execCommand(command, commandValue);
-      }*/
-      if (!commandObj || !commandObj.dialog) {
-        this._execCommand(command, commandValue);
-      }
+      this._execCommand(command, commandValue);
     },
 
     _execCommand: function(command, commandValue) {
@@ -194,10 +184,19 @@
       dom.delegate(container, "[data-wysihtml5-command], [data-wysihtml5-action]", "mousedown", function(event) { event.preventDefault(); });
 
       dom.delegate(container, "[data-wysihtml5-command]", "click", function(event) {
-        var link          = this,
+        var state,
+            link          = this,
             command       = link.getAttribute("data-wysihtml5-command"),
-            commandValue  = link.getAttribute("data-wysihtml5-command-value");
-        that.execCommand(command, commandValue);
+            commandValue  = link.getAttribute("data-wysihtml5-command-value"),
+            commandObj = this.commandMapping[command + ":" + commandValue];
+
+        if (!commandObj.dialog) {
+          that.execCommand(command, commandValue);
+        } else {
+          state = getCommandState(command);
+          commandObj.dialog.show(state);
+        }
+
         event.preventDefault();
       });
 
@@ -335,5 +334,15 @@
       this.container.style.display = "none";
     }
   });
+
+  function getCommandState (command) {
+    var state = this.composer.commands.state(command.name, command.value);
+
+    if (!command.dialog.multiselect && wysihtml5.lang.object(state).isArray()) {
+      state = state.length === 1 ? state[0] : true;
+    }
+
+    return state;
+  }
 
 })(wysihtml5);
