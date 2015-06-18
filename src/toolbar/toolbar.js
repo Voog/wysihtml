@@ -188,7 +188,7 @@
             link          = this,
             command       = link.getAttribute("data-wysihtml5-command"),
             commandValue  = link.getAttribute("data-wysihtml5-command-value"),
-            commandObj = this.commandMapping[command + ":" + commandValue];
+            commandObj = that.commandMapping[command + ":" + commandValue];
 
         if (!commandObj.dialog) {
           that.execCommand(command, commandValue);
