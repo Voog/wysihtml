@@ -9475,10 +9475,10 @@ wysihtml5.quirks.ensureProperClearing = (function() {
 
   wysihtml5.quirks.styleParser = {
 
-    getColourName : getColourName,
-    getColourType : getColourType,
+    getColorName : getColourName,
+    getColorType : getColourType,
 
-    parseColour : function (stylesStr, paramName) {
+    parseColor : function (stylesStr, paramName) {
       var paramsRegex, params, colourType, colourMatch, radix,
           colourStr = stylesStr;
 

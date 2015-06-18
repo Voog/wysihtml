@@ -9475,10 +9475,10 @@ wysihtml5.quirks.ensureProperClearing = (function() {
 
   wysihtml5.quirks.styleParser = {
 
-    getColourName : getColourName,
-    getColourType : getColourType,
+    getColorName : getColourName,
+    getColorType : getColourType,
 
-    parseColour : function (stylesStr, paramName) {
+    parseColor : function (stylesStr, paramName) {
       var paramsRegex, params, colourType, colourMatch, radix,
           colourStr = stylesStr;
 
@@ -16116,15 +16116,13 @@ wysihtml5.views.View = Base.extend(
     },
 
     _interpolate: function(avoidHiddenFields) {
-      var field,
-          fieldName,
-          newValue,
+      var field, colourName,
           focusedElement = document.querySelector(":focus"),
           fields         = this.container.querySelectorAll(SELECTOR_FIELDS),
           length         = fields.length,
           i              = 0,
           firstElement   = (this.elementToChange) ? ((wysihtml5.lang.object(this.elementToChange).isArray()) ? this.elementToChange[0] : this.elementToChange) : null,
-          colorStr       = (firstElement) ? firstElement.getAttribute('style') : null,
+          colorStr       = (firstElement) ? firstElement.getAttribute("style") : null,
           color          = (colorStr) ? wysihtml5.quirks.styleParser.parseColor(colorStr, "color") : null;
 
       for (; i<length; i++) {
@@ -16139,11 +16137,8 @@ wysihtml5.views.View = Base.extend(
         }
         if (field.getAttribute(ATTRIBUTE_FIELDS) === "color") {
           if (color) {
-            if (color[3] && color[3] != 1) {
-              field.value = "rgba(" + color[0] + "," + color[1] + "," + color[2] + "," + color[3] + ")";
-            } else {
-              field.value = "rgb(" + color[0] + "," + color[1] + "," + color[2] + ")";
-            }
+            colourName = wysihtml5.quirks.styleParser.getColorName(color);
+            field.value = wysihtml5.quirks.styleParser.unparseColor(colourName);
           } else {
             field.value = "rgb(0,0,0)";
           }
