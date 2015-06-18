@@ -11601,12 +11601,15 @@ wysihtml5.Commands = Base.extend(
 
   wysihtml5.commands.foreColorStyle = {
     exec: function(composer, command, color) {
-      var colorVals  = wysihtml5.quirks.styleParser.parseColor("color:" + (color.color || color), "color"),
-          colString;
+      var colorVals, colString;
+
+      if (!color) { return; }
+
+      colorVals = wysihtml5.quirks.styleParser.parseColor("color:" + (color.color || color), "color");
 
       if (colorVals) {
-        colString = (colorVals[3] === 1 ? "rgb(" + [colorVals[0], colorVals[1], colorVals[2]].join(', ') : "rgba(" + colorVals.join(', ')) + ')';
-        wysihtml5.commands.formatInline.exec(composer, command, {styleProperty: 'color', styleValue: colString});
+        colString = (colorVals[3] === 1 ? "rgb(" + [colorVals[0], colorVals[1], colorVals[2]].join(", ") : "rgba(" + colorVals.join(', ')) + ')';
+        wysihtml5.commands.formatInline.exec(composer, command, {styleProperty: "color", styleValue: colString});
       }
     },
 
@@ -11616,14 +11619,14 @@ wysihtml5.Commands = Base.extend(
 
 
       if (colorVals) {
-        colString = (colorVals[3] === 1 ? "rgb(" + [colorVals[0], colorVals[1], colorVals[2]].join(', ') : "rgba(" + colorVals.join(', ')) + ')';
+        colString = (colorVals[3] === 1 ? "rgb(" + [colorVals[0], colorVals[1], colorVals[2]].join(", ") : "rgba(" + colorVals.join(', ')) + ')';
       }
 
-      return wysihtml5.commands.formatInline.state(composer, command, {styleProperty: 'color', styleValue: colString});
+      return wysihtml5.commands.formatInline.state(composer, command, {styleProperty: "color", styleValue: colString});
     },
 
     remove: function(composer, command) {
-      return wysihtml5.commands.formatInline.remove(composer, command, {styleProperty: 'color'});
+      return wysihtml5.commands.formatInline.remove(composer, command, {styleProperty: "color"});
     },
 
     stateValue: function(composer, command, props) {
@@ -11636,7 +11639,7 @@ wysihtml5.Commands = Base.extend(
       }
 
       if (st) {
-        colorStr = st.getAttribute('style');
+        colorStr = st.getAttribute("style");
         if (colorStr) {
           val = wysihtml5.quirks.styleParser.parseColor(colorStr, "color");
           return wysihtml5.quirks.styleParser.unparseColor(val, props);
@@ -15541,6 +15544,8 @@ wysihtml5.views.View = Base.extend(
       dom.observe(that.link, "click", function() {
         if (dom.hasClass(that.link, CLASS_NAME_OPENED)) {
           setTimeout(function() { that.hide(); }, 0);
+        } else {
+          setTimeout(function() { that.show(); }, 0);
         }
       });
 
@@ -15892,7 +15897,7 @@ wysihtml5.views.View = Base.extend(
       var commandObj = this.commandMapping[command + ":" + commandValue];
 
       // Show dialog when available
-      if (commandObj && commandObj.dialog && (!commandObj.state || !commandObj.dialog.opened)) {
+      if (commandObj && commandObj.dialog && !commandObj.state) {
         commandObj.dialog.show();
       } else {
         this._execCommand(command, commandValue);

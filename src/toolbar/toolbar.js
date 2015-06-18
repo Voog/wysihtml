@@ -137,7 +137,7 @@
       var commandObj = this.commandMapping[command + ":" + commandValue];
 
       // Show dialog when available
-      if (commandObj && commandObj.dialog && (!commandObj.state || !commandObj.dialog.opened)) {
+      if (commandObj && commandObj.dialog && !commandObj.state) {
         commandObj.dialog.show();
       } else {
         this._execCommand(command, commandValue);
