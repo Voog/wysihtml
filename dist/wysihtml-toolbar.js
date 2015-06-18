@@ -15307,7 +15307,8 @@ wysihtml5.views.View = Base.extend(
     // Also copied source is based directly on selection - 
     // (very useful for webkit based browsers where copy will otherwise contain a lot of code and styles based on whatever and not actually in selection).
     // If falsy value is passed source override is also disabled
-    copyedFromMarking: '<meta name="copied-from" content="wysihtml5">'
+    copyedFromMarking: '<meta name="copied-from" content="wysihtml5">',
+    showDialogsByDefault: true
   };
 
   wysihtml5.Editor = wysihtml5.lang.Dispatcher.extend(
@@ -15988,13 +15989,10 @@ wysihtml5.views.View = Base.extend(
 
     _updateLinkStates: function() {
 
-      var commandMapping      = this.commandMapping,
-          commandblankMapping = this.commandblankMapping,
-          actionMapping       = this.actionMapping,
-          i,
-          state,
-          action,
-          command;
+      var i, state, action, command, displayDialogAttributeValue,
+          commandMapping      = this.commandMapping,
+          composer            = this.composer,
+          actionMapping       = this.actionMapping;
       // every millisecond counts... this is executed quite often
       for (i in commandMapping) {
         command = commandMapping[i];
@@ -16038,7 +16036,12 @@ wysihtml5.views.View = Base.extend(
                   state = state.length === 1 ? state[0] : true;
                   command.state = state;
                 }
-                command.dialog.show(state);
+
+                displayDialogAttributeValue = command.dialog.container.dataset.showdialogbydefault || false;
+
+                if (composer.config.showDialogsByDefault || displayDialogAttributeValue) {
+                  command.dialog.show(state);
+                }
               } else {
                 command.dialog.hide();
               }
@@ -16132,7 +16135,7 @@ wysihtml5.views.View = Base.extend(
         }
         if (field.getAttribute(ATTRIBUTE_FIELDS) === "color") {
           colourMode = (field.dataset.colormode || "rgb").toLowerCase();
-          colourMode = colourMode === 'hex' ? 'hash' : colourMode;
+          colourMode = colourMode === "hex" ? "hash" : colourMode;
 
           if (colour) {
             field.value = styleParser.unparseColor(colour, colourMode);

@@ -83,7 +83,8 @@
     // Also copied source is based directly on selection - 
     // (very useful for webkit based browsers where copy will otherwise contain a lot of code and styles based on whatever and not actually in selection).
     // If falsy value is passed source override is also disabled
-    copyedFromMarking: '<meta name="copied-from" content="wysihtml5">'
+    copyedFromMarking: '<meta name="copied-from" content="wysihtml5">',
+    showDialogsByDefault: true
   };
 
   wysihtml5.Editor = wysihtml5.lang.Dispatcher.extend(

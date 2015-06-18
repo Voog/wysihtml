@@ -237,13 +237,10 @@
 
     _updateLinkStates: function() {
 
-      var commandMapping      = this.commandMapping,
-          commandblankMapping = this.commandblankMapping,
-          actionMapping       = this.actionMapping,
-          i,
-          state,
-          action,
-          command;
+      var i, state, action, command, displayDialogAttributeValue,
+          commandMapping      = this.commandMapping,
+          composer            = this.composer,
+          actionMapping       = this.actionMapping;
       // every millisecond counts... this is executed quite often
       for (i in commandMapping) {
         command = commandMapping[i];
@@ -287,7 +284,12 @@
                   state = state.length === 1 ? state[0] : true;
                   command.state = state;
                 }
-                command.dialog.show(state);
+
+                displayDialogAttributeValue = command.dialog.container.dataset.showdialogbydefault || false;
+
+                if (composer.config.showDialogsByDefault || displayDialogAttributeValue) {
+                  command.dialog.show(state);
+                }
               } else {
                 command.dialog.hide();
               }
