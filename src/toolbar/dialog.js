@@ -38,9 +38,10 @@
 
   wysihtml5.toolbar.Dialog = wysihtml5.lang.Dispatcher.extend(
     /** @scope wysihtml5.toolbar.Dialog.prototype */ {
-    constructor: function(link, container) {
+    constructor: function(link, container, command) {
       this.link       = link;
       this.container  = container;
+      this.command = command;
     },
 
     _observe: function() {
@@ -58,10 +59,13 @@
           };
 
       dom.observe(that.link, "click", function() {
+        var state;
+
         if (dom.hasClass(that.link, CLASS_NAME_OPENED)) {
           setTimeout(function() { that.hide(); }, 0);
         } else {
-          that.show();
+          state = that.command.state();
+          that.show(state);
         }
       });
 

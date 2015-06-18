@@ -15443,8 +15443,7 @@ wysihtml5.views.View = Base.extend(
      *  - Observes for paste and drop
      */
     _initParser: function() {
-      var oldHtml,
-          cleanHtml;
+      var oldHtml;
 
       if (wysihtml5.browser.supportsModenPaste()) {
         this.on("paste:composer", function(event) {
@@ -15522,9 +15521,10 @@ wysihtml5.views.View = Base.extend(
 
   wysihtml5.toolbar.Dialog = wysihtml5.lang.Dispatcher.extend(
     /** @scope wysihtml5.toolbar.Dialog.prototype */ {
-    constructor: function(link, container) {
+    constructor: function(link, container, command) {
       this.link       = link;
       this.container  = container;
+      this.command = command;
     },
 
     _observe: function() {
@@ -15542,10 +15542,13 @@ wysihtml5.views.View = Base.extend(
           };
 
       dom.observe(that.link, "click", function() {
+        var state;
+
         if (dom.hasClass(that.link, CLASS_NAME_OPENED)) {
           setTimeout(function() { that.hide(); }, 0);
         } else {
-          that.show();
+          state = that.command.state();
+          that.show(state);
         }
       });
 
@@ -15855,9 +15858,9 @@ wysihtml5.views.View = Base.extend(
 
       if (dialogElement) {
         if (wysihtml5.toolbar["Dialog_" + command]) {
-            dialog = new wysihtml5.toolbar["Dialog_" + command](link, dialogElement);
+            dialog = new wysihtml5.toolbar["Dialog_" + command](link, dialogElement, command);
         } else {
-            dialog = new wysihtml5.toolbar.Dialog(link, dialogElement);
+            dialog = new wysihtml5.toolbar.Dialog(link, dialogElement, command);
         }
 
         dialog.on("show", function() {
@@ -15897,9 +15900,12 @@ wysihtml5.views.View = Base.extend(
       var commandObj = this.commandMapping[command + ":" + commandValue];
 
       // Show dialog when available
-      if (commandObj && commandObj.dialog && !commandObj.state) {
+      /*if (commandObj && commandObj.dialog && !commandObj.state) {
         commandObj.dialog.show();
       } else {
+        this._execCommand(command, commandValue);
+      }*/
+      if (!commandObj || !commandObj.dialog) {
         this._execCommand(command, commandValue);
       }
     },

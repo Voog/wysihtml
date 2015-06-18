@@ -216,8 +216,7 @@
      *  - Observes for paste and drop
      */
     _initParser: function() {
-      var oldHtml,
-          cleanHtml;
+      var oldHtml;
 
       if (wysihtml5.browser.supportsModenPaste()) {
         this.on("paste:composer", function(event) {

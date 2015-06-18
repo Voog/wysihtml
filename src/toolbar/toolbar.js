@@ -95,9 +95,9 @@
 
       if (dialogElement) {
         if (wysihtml5.toolbar["Dialog_" + command]) {
-            dialog = new wysihtml5.toolbar["Dialog_" + command](link, dialogElement);
+            dialog = new wysihtml5.toolbar["Dialog_" + command](link, dialogElement, command);
         } else {
-            dialog = new wysihtml5.toolbar.Dialog(link, dialogElement);
+            dialog = new wysihtml5.toolbar.Dialog(link, dialogElement, command);
         }
 
         dialog.on("show", function() {
@@ -137,9 +137,12 @@
       var commandObj = this.commandMapping[command + ":" + commandValue];
 
       // Show dialog when available
-      if (commandObj && commandObj.dialog && !commandObj.state) {
+      /*if (commandObj && commandObj.dialog && !commandObj.state) {
         commandObj.dialog.show();
       } else {
+        this._execCommand(command, commandValue);
+      }*/
+      if (!commandObj || !commandObj.dialog) {
         this._execCommand(command, commandValue);
       }
     },
