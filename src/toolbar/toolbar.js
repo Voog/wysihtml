@@ -193,7 +193,7 @@
         if (!commandObj.dialog) {
           that.execCommand(command, commandValue);
         } else {
-          state = getCommandState(command);
+          state = getCommandState(that.composer, command);
           commandObj.dialog.show(state);
         }
 
@@ -335,8 +335,8 @@
     }
   });
 
-  function getCommandState (command) {
-    var state = this.composer.commands.state(command.name, command.value);
+  function getCommandState (composer, command) {
+    var state = composer.commands.state(command.name, command.value);
 
     if (!command.dialog.multiselect && wysihtml5.lang.object(state).isArray()) {
       state = state.length === 1 ? state[0] : true;
