@@ -95,9 +95,9 @@
 
       if (dialogElement) {
         if (wysihtml5.toolbar["Dialog_" + command]) {
-            dialog = new wysihtml5.toolbar["Dialog_" + command](link, dialogElement, command);
+            dialog = new wysihtml5.toolbar["Dialog_" + command](link, dialogElement);
         } else {
-            dialog = new wysihtml5.toolbar.Dialog(link, dialogElement, command);
+            dialog = new wysihtml5.toolbar.Dialog(link, dialogElement);
         }
 
         dialog.on("show", function() {
