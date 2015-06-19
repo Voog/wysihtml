@@ -15631,7 +15631,8 @@ wysihtml5.views.View = Base.extend(
       }
     },
 
-    update: function () {
+    update: function (elementToChange) {
+      this.elementToChange = elementToChange ? elementToChange : this.elementToChange;
       this._interpolate();
     },
 
@@ -15641,20 +15642,19 @@ wysihtml5.views.View = Base.extend(
     show: function(elementToChange) {
       var firstField  = this.container.querySelector(SELECTOR_FORM_ELEMENTS);
 
-      this.elementToChange = elementToChange;
       this._observe();
-      this._interpolate();
+      this.update(elementToChange);
 
       dom.addClass(this.link, CLASS_NAME_OPENED);
       this.container.style.display = "";
+      this.isOpen = true;
       this.fire("show");
+      
       if (firstField && !elementToChange) {
         try {
           firstField.focus();
         } catch(e) {}
       }
-
-      this.opened = true;
     },
 
     /**
@@ -15664,8 +15664,8 @@ wysihtml5.views.View = Base.extend(
       this.elementToChange = null;
       dom.removeClass(this.link, CLASS_NAME_OPENED);
       this.container.style.display = "none";
+      this.isOpen = false;
       this.fire("cancel");
-      this.opened = false;
     }
   });
 })(wysihtml5); //jshint ignore:line
@@ -16045,7 +16045,7 @@ wysihtml5.views.View = Base.extend(
                 if (composer.config.showDialogsByDefault || displayDialogAttributeValue) {
                   command.dialog.show(state);
                 } else {
-                  command.dialog.update();
+                  command.dialog.update(state);
                 }
               } else {
                 command.dialog.hide();
