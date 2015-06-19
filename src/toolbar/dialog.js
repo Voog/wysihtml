@@ -166,7 +166,7 @@
       this.container.style.display = "";
       this.isOpen = true;
       this.fire("show");
-      
+
       if (firstField && !elementToChange) {
         try {
           firstField.focus();

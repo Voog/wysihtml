@@ -276,8 +276,9 @@
               dom.addClass(command.group, CLASS_NAME_COMMAND_ACTIVE);
             }
             if (command.dialog) {
-              if (typeof(state) === "object" || wysihtml5.lang.object(state).isArray()) {
-                command.state = getCommandState(composer, command);
+              if (state && typeof state === "object") {
+                state = getCommandState(composer, command)
+                command.state = state;
 
                 displayDialogAttributeValue = command.dialog.container.dataset.showdialogbydefault || false;
 
