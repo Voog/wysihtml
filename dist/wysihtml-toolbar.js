@@ -15631,6 +15631,10 @@ wysihtml5.views.View = Base.extend(
       }
     },
 
+    update: function () {
+      this._interpolate();
+    },
+
     /**
      * Show the dialog element
      */
@@ -16040,6 +16044,8 @@ wysihtml5.views.View = Base.extend(
 
                 if (composer.config.showDialogsByDefault || displayDialogAttributeValue) {
                   command.dialog.show(state);
+                } else {
+                  command.dialog.update();
                 }
               } else {
                 command.dialog.hide();

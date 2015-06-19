@@ -148,6 +148,10 @@
       }
     },
 
+    update: function () {
+      this._interpolate();
+    },
+
     /**
      * Show the dialog element
      */

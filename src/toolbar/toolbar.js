@@ -283,6 +283,8 @@
 
                 if (composer.config.showDialogsByDefault || displayDialogAttributeValue) {
                   command.dialog.show(state);
+                } else {
+                  command.dialog.update();
                 }
               } else {
                 command.dialog.hide();
