@@ -139,8 +139,6 @@
   function updateFormatOfElement(element, options) {
     var attr, newNode, a, newAttributes, nodeNameQuery;
 
-    
-
     if (options.className) {
       if (options.toggle !== false && element.classList.contains(options.className)) {
         element.classList.remove(options.className);
@@ -649,10 +647,11 @@
       composer.element.normalize();
     },
 
-    state: function(composer, command, options) {
+    state: function(composer, command, options, exact) {
       options = fixOptions(options);
+      exact = typeof exact === "boolean" ? exact : true;
 
-      var nodes = getState(composer, options, true).nodes;
+      var nodes = getState(composer, options, exact).nodes;
       
       return (nodes.length === 0) ? false : nodes;
     }

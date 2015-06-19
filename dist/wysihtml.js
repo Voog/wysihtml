@@ -11553,7 +11553,7 @@ wysihtml5.Commands = Base.extend(
     },
 
     state: function(composer, command, size) {
-      return wysihtml5.commands.formatInline.state(composer, command, {styleProperty: "fontSize", styleValue: size});
+      return wysihtml5.commands.formatInline.state(composer, command, {styleProperty: "fontSize", styleValue: size}, false);
     },
 
     remove: function(composer, command) {
@@ -11561,15 +11561,14 @@ wysihtml5.Commands = Base.extend(
     },
 
     stateValue: function(composer, command) {
-      var st = this.state(composer, command),
-          styleStr, fontsizeMatches,
-          val = false;
+      var styleStr,
+          st = this.state(composer, command);
 
       if (st && wysihtml5.lang.object(st).isArray()) {
           st = st[0];
       }
       if (st) {
-        styleStr = st.getAttribute('style');
+        styleStr = st.getAttribute("style");
         if (styleStr) {
           return wysihtml5.quirks.styleParser.parseFontSize(styleStr);
         }
@@ -12304,8 +12303,6 @@ wysihtml5.Commands = Base.extend(
   function updateFormatOfElement(element, options) {
     var attr, newNode, a, newAttributes, nodeNameQuery;
 
-    
-
     if (options.className) {
       if (options.toggle !== false && element.classList.contains(options.className)) {
         element.classList.remove(options.className);
@@ -12814,10 +12811,11 @@ wysihtml5.Commands = Base.extend(
       composer.element.normalize();
     },
 
-    state: function(composer, command, options) {
+    state: function(composer, command, options, exact) {
       options = fixOptions(options);
+      exact = typeof exact === "boolean" ? exact : true;
 
-      var nodes = getState(composer, options, true).nodes;
+      var nodes = getState(composer, options, exact).nodes;
       
       return (nodes.length === 0) ? false : nodes;
     }

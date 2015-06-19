@@ -21,6 +21,5 @@
         field.value = size;
       }
     }
-
   });
 })(wysihtml5);
