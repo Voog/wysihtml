@@ -218,7 +218,7 @@
       var oldHtml,
           cleanHtml;
 
-      if (wysihtml5.browser.supportsModenPaste()) {
+      if (wysihtml5.browser.supportsModernPaste()) {
         this.on("paste:composer", function(event) {
           event.preventDefault();
           oldHtml = wysihtml5.dom.getPastedHtml(event);
