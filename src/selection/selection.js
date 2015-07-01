@@ -529,7 +529,15 @@
 
           if (includePrevLeaves) {
             var prevNode = this.getPreviousNode(startNode, true),
-              prevLeaf = prevNode ? wysihtml5.dom.domNode(prevNode).lastLeafNode() : null;
+                prevLeaf = null;
+
+            if(prevNode) {
+              if (prevNode.nodeType === 1 && wysihtml5.dom.hasClass(prevNode, this.unselectableClass)) {
+                prevLeaf = prevNode;
+              } else {
+                prevLeaf = wysihtml5.dom.domNode(prevNode).lastLeafNode();
+              }
+            }
 
             if (prevLeaf) {
               return {
