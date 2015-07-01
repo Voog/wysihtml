@@ -380,7 +380,7 @@ wysihtml5.browser = (function() {
       It is on window but cannot return text/html
       Should actually check for clipboardData on paste event, but cannot in firefox
     */
-    supportsModenPaste: function () {
+    supportsModernPaste: function () {
       return !("clipboardData" in window);
     },
 
