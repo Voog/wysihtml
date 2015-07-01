@@ -350,6 +350,7 @@ wysihtml5.polyfills = function(win, doc) {
 
       ret = (e.childNodes.length !== 1 || s.anchorNode !== e.firstChild || s.anchorOffset !== 2);
       e.parentNode.removeChild(e);
+      s.removeAllRanges();
       return ret;
     }
   };
