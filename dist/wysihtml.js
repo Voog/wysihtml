@@ -1,5 +1,5 @@
 /**
- * @license wysihtml v0.5.0-beta10
+ * @license wysihtml v0.5.0-beta11
  * https://github.com/Voog/wysihtml
  *
  * Author: Christopher Blum (https://github.com/tiff)
@@ -10,7 +10,7 @@
  *
  */
 var wysihtml5 = {
-  version: "0.5.0-beta10",
+  version: "0.5.0-beta11",
 
   // namespaces
   commands:   {},
@@ -388,6 +388,7 @@ var wysihtml5 = {
 
       ret = (e.childNodes.length !== 1 || s.anchorNode !== e.firstChild || s.anchorOffset !== 2);
       e.parentNode.removeChild(e);
+      s.removeAllRanges();
       return ret;
     }
   };
@@ -5073,7 +5074,7 @@ wysihtml5.browser = (function() {
       It is on window but cannot return text/html
       Should actually check for clipboardData on paste event, but cannot in firefox
     */
-    supportsModenPaste: function () {
+    supportsModernPaste: function () {
       return !("clipboardData" in window);
     },
 
@@ -10044,7 +10045,15 @@ wysihtml5.quirks.ensureProperClearing = (function() {
 
           if (includePrevLeaves) {
             var prevNode = this.getPreviousNode(startNode, true),
-              prevLeaf = prevNode ? wysihtml5.dom.domNode(prevNode).lastLeafNode() : null;
+                prevLeaf = null;
+
+            if(prevNode) {
+              if (prevNode.nodeType === 1 && wysihtml5.dom.hasClass(prevNode, this.unselectableClass)) {
+                prevLeaf = prevNode;
+              } else {
+                prevLeaf = wysihtml5.dom.domNode(prevNode).lastLeafNode();
+              }
+            }
 
             if (prevLeaf) {
               return {
@@ -15394,7 +15403,7 @@ wysihtml5.views.View = Base.extend(
       var oldHtml,
           cleanHtml;
 
-      if (wysihtml5.browser.supportsModenPaste()) {
+      if (wysihtml5.browser.supportsModernPaste()) {
         this.on("paste:composer", function(event) {
           event.preventDefault();
           oldHtml = wysihtml5.dom.getPastedHtml(event);

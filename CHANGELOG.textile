@@ -1,3 +1,6 @@
+*wysihtml5x 0.5.0-beta11* (July 1, 2015)
+* Minor release that fixes some misbehaviours in Safari
+
 *wysihtml5x 0.5.0-beta10* (June 4, 2015)
 * Fixes issue where block level elements can be inserted into inline elements on some cases
 
