@@ -305,6 +305,13 @@
       event.preventDefault();
       handleTabKeyDown(this, this.element);
     }
+    if (keyCode === wysihtml5.ENTER_KEY) {
+      var selection = this.selection;
+      if (selection.caretIsInTheBeginnig('blockquote')) {
+        event.preventDefault();
+        this.commands.exec('exitBlockQuote');
+      }
+    }
 
   };
 

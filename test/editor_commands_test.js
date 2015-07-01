@@ -413,6 +413,35 @@ if (wysihtml5.browser.supported()) {
       });
     });
 
+  // exit blockQuote
+    asyncTest("Exit a blockquote element", function() {
+      expect(1);
+      var that = this,
+        editor = new wysihtml5.Editor(this.editableArea1, {
+          parserRules: {
+            tags: {
+              h1: true,
+              p: true,
+              blockquote: true
+            }
+          }
+        }),
+        text = "test<blockquote><p>Filled Blockquote</p><p></p></blockquote>test";
+
+      editor.on("load", function() {
+        var editableElement   = that.editableArea1;
+        var result = "test<blockquote><p>filled blockquote</p></blockquote><p>﻿</p>test";
+
+        editor.setValue(text, true);
+
+        editor.composer.selection.selectNode(editor.editableElement.querySelector('blockquote').lastChild);
+        editor.composer.commands.exec('exitBlockQuote');
+        equal(editableElement.innerHTML.toLowerCase(), result , "Blockquote exited.");
+        start();
+      });
+    });
+
+
   // sub/super script
     asyncTest("Create subscript / superscript", function() {
       expect(2);
