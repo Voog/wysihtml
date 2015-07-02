@@ -1,6 +1,5 @@
 (function(wysihtml5) {
-  var dom                     = wysihtml5.dom,
-      SELECTOR_FIELDS         = "[data-wysihtml5-dialog-field]",
+  var SELECTOR_FIELDS         = "[data-wysihtml5-dialog-field]",
       ATTRIBUTE_FIELDS        = "data-wysihtml5-dialog-field";
 
   wysihtml5.toolbar.Dialog_foreColorStyle = wysihtml5.toolbar.Dialog.extend({
@@ -19,16 +18,15 @@
     },
 
     _interpolate: function(avoidHiddenFields) {
-      var field,
-          fieldName,
-          newValue,
+      var field, colourMode,
+          styleParser = wysihtml5.quirks.styleParser,
           focusedElement = document.querySelector(":focus"),
           fields         = this.container.querySelectorAll(SELECTOR_FIELDS),
           length         = fields.length,
           i              = 0,
           firstElement   = (this.elementToChange) ? ((wysihtml5.lang.object(this.elementToChange).isArray()) ? this.elementToChange[0] : this.elementToChange) : null,
-          colorStr       = (firstElement) ? firstElement.getAttribute('style') : null,
-          color          = (colorStr) ? wysihtml5.quirks.styleParser.parseColor(colorStr, "color") : null;
+          colourStr       = (firstElement) ? firstElement.getAttribute("style") : null,
+          colour          = (colourStr) ? styleParser.parseColor(colourStr, "color") : null;
 
       for (; i<length; i++) {
         field = fields[i];
@@ -41,14 +39,13 @@
           continue;
         }
         if (field.getAttribute(ATTRIBUTE_FIELDS) === "color") {
-          if (color) {
-            if (color[3] && color[3] != 1) {
-              field.value = "rgba(" + color[0] + "," + color[1] + "," + color[2] + "," + color[3] + ");";
-            } else {
-              field.value = "rgb(" + color[0] + "," + color[1] + "," + color[2] + ");";
-            }
+          colourMode = (field.dataset.colormode || "rgb").toLowerCase();
+          colourMode = colourMode === "hex" ? "hash" : colourMode;
+
+          if (colour) {
+            field.value = styleParser.unparseColor(colour, colourMode);
           } else {
-            field.value = "rgb(0,0,0);";
+            field.value = styleParser.unparseColor([0, 0, 0], colourMode);
           }
         }
       }

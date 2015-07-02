@@ -12,7 +12,7 @@
     },
 
     state: function(composer, command, size) {
-      return wysihtml5.commands.formatInline.state(composer, command, {styleProperty: "fontSize", styleValue: size});
+      return wysihtml5.commands.formatInline.state(composer, command, {styleProperty: "fontSize", styleValue: size}, false);
     },
 
     remove: function(composer, command) {
@@ -20,15 +20,14 @@
     },
 
     stateValue: function(composer, command) {
-      var st = this.state(composer, command),
-          styleStr, fontsizeMatches,
-          val = false;
+      var styleStr,
+          st = this.state(composer, command);
 
       if (st && wysihtml5.lang.object(st).isArray()) {
           st = st[0];
       }
       if (st) {
-        styleStr = st.getAttribute('style');
+        styleStr = st.getAttribute("style");
         if (styleStr) {
           return wysihtml5.quirks.styleParser.parseFontSize(styleStr);
         }

@@ -134,14 +134,7 @@
         return;
       }
 
-      var commandObj = this.commandMapping[command + ":" + commandValue];
-
-      // Show dialog when available
-      if (commandObj && commandObj.dialog && !commandObj.state) {
-        commandObj.dialog.show();
-      } else {
-        this._execCommand(command, commandValue);
-      }
+      this._execCommand(command, commandValue);
     },
 
     _execCommand: function(command, commandValue) {
@@ -191,10 +184,19 @@
       dom.delegate(container, "[data-wysihtml5-command], [data-wysihtml5-action]", "mousedown", function(event) { event.preventDefault(); });
 
       dom.delegate(container, "[data-wysihtml5-command]", "click", function(event) {
-        var link          = this,
+        var state,
+            link          = this,
             command       = link.getAttribute("data-wysihtml5-command"),
-            commandValue  = link.getAttribute("data-wysihtml5-command-value");
-        that.execCommand(command, commandValue);
+            commandValue  = link.getAttribute("data-wysihtml5-command-value"),
+            commandObj = that.commandMapping[command + ":" + commandValue];
+
+        if (!commandObj.dialog) {
+          that.execCommand(command, commandValue);
+        } else {
+          state = getCommandState(that.composer, commandObj);
+          commandObj.dialog.show(state);
+        }
+
         event.preventDefault();
       });
 
@@ -237,13 +239,10 @@
 
     _updateLinkStates: function() {
 
-      var commandMapping      = this.commandMapping,
-          commandblankMapping = this.commandblankMapping,
-          actionMapping       = this.actionMapping,
-          i,
-          state,
-          action,
-          command;
+      var i, state, action, command, displayDialogAttributeValue,
+          commandMapping      = this.commandMapping,
+          composer            = this.composer,
+          actionMapping       = this.actionMapping;
       // every millisecond counts... this is executed quite often
       for (i in commandMapping) {
         command = commandMapping[i];
@@ -277,17 +276,17 @@
               dom.addClass(command.group, CLASS_NAME_COMMAND_ACTIVE);
             }
             if (command.dialog) {
-              if (typeof(state) === "object" || wysihtml5.lang.object(state).isArray()) {
+              if (state && typeof state === "object") {
+                state = getCommandState(composer, command)
+                command.state = state;
 
-                if (!command.dialog.multiselect && wysihtml5.lang.object(state).isArray()) {
-                  // Grab first and only object/element in state array, otherwise convert state into boolean
-                  // to avoid showing a dialog for multiple selected elements which may have different attributes
-                  // eg. when two links with different href are selected, the state will be an array consisting of both link elements
-                  // but the dialog interface can only update one
-                  state = state.length === 1 ? state[0] : true;
-                  command.state = state;
+                displayDialogAttributeValue = command.dialog.container.dataset.showdialogbydefault || false;
+
+                if (composer.config.showDialogsByDefault || displayDialogAttributeValue) {
+                  command.dialog.show(state);
+                } else {
+                  command.dialog.update(state);
                 }
-                command.dialog.show(state);
               } else {
                 command.dialog.hide();
               }
@@ -330,5 +329,19 @@
       this.container.style.display = "none";
     }
   });
+
+  function getCommandState (composer, command) {
+    var state = composer.commands.state(command.name, command.value);
+
+    // Grab first and only object/element in state array, otherwise convert state into boolean
+    // to avoid showing a dialog for multiple selected elements which may have different attributes
+    // eg. when two links with different href are selected, the state will be an array consisting of both link elements
+    // but the dialog interface can only update one
+    if (!command.dialog.multiselect && wysihtml5.lang.object(state).isArray()) {
+      state = state.length === 1 ? state[0] : true;
+    }
+
+    return state;
+  }
 
 })(wysihtml5);

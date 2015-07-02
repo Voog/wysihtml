@@ -9430,71 +9430,105 @@ wysihtml5.quirks.ensureProperClearing = (function() {
 
 };
 ;(function(wysihtml5) {
-  var RGBA_REGEX     = /^rgba\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*([\d\.]+)\s*\)/i,
-      RGB_REGEX      = /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)/i,
-      HEX6_REGEX     = /^#([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])/i,
-      HEX3_REGEX     = /^#([0-9a-f])([0-9a-f])([0-9a-f])/i;
+  var supportedColourTypes = {
+      rgba : {
+        regex: /^rgba\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*([\d\.]+)\s*\)/i,
+        name: "rgba"
+      },
+      rgb : {
+        regex: /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)/i,
+        name: "rgb"
+      },
+      hex6 : {
+        regex: /^#([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])/i,
+        name: "hex",
+        radix: 16
+      },
+      hex3 : {
+        regex: /^#([0-9a-f])([0-9a-f])([0-9a-f])/i,
+        name: "hex",
+        radix: 16
+      }
+    },
+    makeParamRegExp = function (p) {
+      return new RegExp("(^|\\s|;)" + p + "\\s*:\\s*[^;$]+", "gi");
+    };
 
-  var param_REGX = function (p) {
-    return new RegExp("(^|\\s|;)" + p + "\\s*:\\s*[^;$]+" , "gi");
-  };
+  function getColourType (colourStr) {
+    var prop, colourTypeConf;
+
+    for (prop in supportedColourTypes) {
+      if (!supportedColourTypes.hasOwnProperty(prop)) { continue; }
+
+      colourTypeConf = supportedColourTypes[prop];
+
+      if (colourTypeConf.regex.test(colourStr)) {
+        return colourTypeConf;
+      }
+    }
+  }
+
+  function getColourName (colourStr) {
+    var type = getColourType(colourStr);
+
+    return type ? type.name : void 0;
+  }
 
   wysihtml5.quirks.styleParser = {
 
-    parseColor: function(stylesStr, paramName) {
-      var paramRegex = param_REGX(paramName),
-          params = stylesStr.match(paramRegex),
-          radix = 10,
-          str, colorMatch;
+    getColorName : getColourName,
+    getColorType : getColourType,
 
-      if (params) {
-        for (var i = params.length; i--;) {
-          params[i] = wysihtml5.lang.string(params[i].split(':')[1]).trim();
-        }
-        str = params[params.length-1];
+    parseColor : function (stylesStr, paramName) {
+      var paramsRegex, params, colourType, colourMatch, radix,
+          colourStr = stylesStr;
 
-        if (RGBA_REGEX.test(str)) {
-          colorMatch = str.match(RGBA_REGEX);
-        } else if (RGB_REGEX.test(str)) {
-          colorMatch = str.match(RGB_REGEX);
-        } else if (HEX6_REGEX.test(str)) {
-          colorMatch = str.match(HEX6_REGEX);
-          radix = 16;
-        } else if (HEX3_REGEX.test(str)) {
-          colorMatch = str.match(HEX3_REGEX);
-          colorMatch.shift();
-          colorMatch.push(1);
-          return wysihtml5.lang.array(colorMatch).map(function(d, idx) {
-            return (idx < 3) ? (parseInt(d, 16) * 16) + parseInt(d, 16): parseFloat(d);
-          });
-        }
+      if (paramName) {
+        paramsRegex = makeParamRegExp(paramName);
 
-        if (colorMatch) {
-          colorMatch.shift();
-          if (!colorMatch[3]) {
-            colorMatch.push(1);
-          }
-          return wysihtml5.lang.array(colorMatch).map(function(d, idx) {
-            return (idx < 3) ? parseInt(d, radix): parseFloat(d);
-          });
-        }
+        if (!(params = stylesStr.match(paramsRegex))) { return false; }
+
+        params = params.pop().split(":")[1];
+        colourStr = wysihtml5.lang.string(params).trim();
       }
-      return false;
+
+      if (!(colourType = getColourType(colourStr))) { return false; }
+      if (!(colourMatch = colourStr.match(colourType.regex))) { return false; }
+
+      radix = colourType.radix || 10;
+
+      if (colourType === supportedColourTypes.hex3) {
+        colourMatch.shift();
+        colourMatch.push(1);
+        return wysihtml5.lang.array(colourMatch).map(function(d, idx) {
+          return (idx < 3) ? (parseInt(d, radix) * radix) + parseInt(d, radix): parseFloat(d);
+        });
+      }
+
+      colourMatch.shift();
+
+      if (!colourMatch[3]) {
+        colourMatch.push(1);
+      }
+
+      return wysihtml5.lang.array(colourMatch).map(function(d, idx) {
+        return (idx < 3) ? parseInt(d, radix): parseFloat(d);
+      });
     },
 
-    unparseColor: function(val, props) {
-      if (props) {
-        if (props == "hex") {
-          return (val[0].toString(16).toUpperCase()) + (val[1].toString(16).toUpperCase()) + (val[2].toString(16).toUpperCase());
-        } else if (props == "hash") {
-          return "#" + (val[0].toString(16).toUpperCase()) + (val[1].toString(16).toUpperCase()) + (val[2].toString(16).toUpperCase());
-        } else if (props == "rgb") {
-          return "rgb(" + val[0] + "," + val[1] + "," + val[2] + ")";
-        } else if (props == "rgba") {
-          return "rgba(" + val[0] + "," + val[1] + "," + val[2] + "," + val[3] + ")";
-        } else if (props == "csv") {
-          return  val[0] + "," + val[1] + "," + val[2] + "," + val[3];
-        }
+    unparseColor: function(val, colourName) {
+      var hexRadix = 16;
+
+      if (colourName === "hex") {
+        return (val[0].toString(hexRadix) + val[1].toString(hexRadix) + val[2].toString(hexRadix)).toUpperCase();
+      } else if (colourName === "hash") {
+        return "#" + (val[0].toString(hexRadix) + val[1].toString(hexRadix) + val[2].toString(hexRadix)).toUpperCase();
+      } else if (colourName === "rgb") {
+        return "rgb(" + val[0] + "," + val[1] + "," + val[2] + ")";
+      } else if (colourName === "rgba") {
+        return "rgba(" + val[0] + "," + val[1] + "," + val[2] + "," + val[3] + ")";
+      } else if (colourName === "csv") {
+        return  val[0] + "," + val[1] + "," + val[2] + "," + val[3];
       }
 
       if (val[3] && val[3] !== 1) {
@@ -9505,9 +9539,9 @@ wysihtml5.quirks.ensureProperClearing = (function() {
     },
 
     parseFontSize: function(stylesStr) {
-      var params = stylesStr.match(param_REGX('font-size'));
+      var params = stylesStr.match(makeParamRegExp("font-size"));
       if (params) {
-        return wysihtml5.lang.string(params[params.length - 1].split(':')[1]).trim();
+        return wysihtml5.lang.string(params[params.length - 1].split(":")[1]).trim();
       }
       return false;
     }
@@ -10216,6 +10250,20 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       if (range) {
         range.insertNode(node);
       }
+    },
+
+    canAppendChild: function (node) {
+      var anchorNode, anchorNodeTagNameLower,
+          voidElements = ["area", "base", "br", "col", "command", "embed", "hr", "img", "input", "keygen", "link", "meta", "param", "source", "track", "wbr"],
+          range = this.getRange();
+
+      anchorNode = node || range.startContainer;
+
+      if (anchorNode) {
+        anchorNodeTagNameLower = (anchorNode.tagName || anchorNode.nodeName).toLowerCase();
+      }
+
+      return voidElements.indexOf(anchorNodeTagNameLower) === -1;
     },
 
     splitElementAtCaret: function (element, insertNode) {
@@ -11514,7 +11562,7 @@ wysihtml5.Commands = Base.extend(
     },
 
     state: function(composer, command, size) {
-      return wysihtml5.commands.formatInline.state(composer, command, {styleProperty: "fontSize", styleValue: size});
+      return wysihtml5.commands.formatInline.state(composer, command, {styleProperty: "fontSize", styleValue: size}, false);
     },
 
     remove: function(composer, command) {
@@ -11522,15 +11570,14 @@ wysihtml5.Commands = Base.extend(
     },
 
     stateValue: function(composer, command) {
-      var st = this.state(composer, command),
-          styleStr, fontsizeMatches,
-          val = false;
+      var styleStr,
+          st = this.state(composer, command);
 
       if (st && wysihtml5.lang.object(st).isArray()) {
           st = st[0];
       }
       if (st) {
-        styleStr = st.getAttribute('style');
+        styleStr = st.getAttribute("style");
         if (styleStr) {
           return wysihtml5.quirks.styleParser.parseFontSize(styleStr);
         }
@@ -11562,12 +11609,15 @@ wysihtml5.Commands = Base.extend(
 
   wysihtml5.commands.foreColorStyle = {
     exec: function(composer, command, color) {
-      var colorVals  = wysihtml5.quirks.styleParser.parseColor("color:" + (color.color || color), "color"),
-          colString;
+      var colorVals, colString;
+
+      if (!color) { return; }
+
+      colorVals = wysihtml5.quirks.styleParser.parseColor("color:" + (color.color || color), "color");
 
       if (colorVals) {
-        colString = (colorVals[3] === 1 ? "rgb(" + [colorVals[0], colorVals[1], colorVals[2]].join(', ') : "rgba(" + colorVals.join(', ')) + ')';
-        wysihtml5.commands.formatInline.exec(composer, command, {styleProperty: 'color', styleValue: colString});
+        colString = (colorVals[3] === 1 ? "rgb(" + [colorVals[0], colorVals[1], colorVals[2]].join(", ") : "rgba(" + colorVals.join(', ')) + ')';
+        wysihtml5.commands.formatInline.exec(composer, command, {styleProperty: "color", styleValue: colString});
       }
     },
 
@@ -11577,14 +11627,14 @@ wysihtml5.Commands = Base.extend(
 
 
       if (colorVals) {
-        colString = (colorVals[3] === 1 ? "rgb(" + [colorVals[0], colorVals[1], colorVals[2]].join(', ') : "rgba(" + colorVals.join(', ')) + ')';
+        colString = (colorVals[3] === 1 ? "rgb(" + [colorVals[0], colorVals[1], colorVals[2]].join(", ") : "rgba(" + colorVals.join(', ')) + ')';
       }
 
-      return wysihtml5.commands.formatInline.state(composer, command, {styleProperty: 'color', styleValue: colString});
+      return wysihtml5.commands.formatInline.state(composer, command, {styleProperty: "color", styleValue: colString});
     },
 
     remove: function(composer, command) {
-      return wysihtml5.commands.formatInline.remove(composer, command, {styleProperty: 'color'});
+      return wysihtml5.commands.formatInline.remove(composer, command, {styleProperty: "color"});
     },
 
     stateValue: function(composer, command, props) {
@@ -11597,7 +11647,7 @@ wysihtml5.Commands = Base.extend(
       }
 
       if (st) {
-        colorStr = st.getAttribute('style');
+        colorStr = st.getAttribute("style");
         if (colorStr) {
           val = wysihtml5.quirks.styleParser.parseColor(colorStr, "color");
           return wysihtml5.quirks.styleParser.unparseColor(val, props);
@@ -12262,8 +12312,6 @@ wysihtml5.Commands = Base.extend(
   function updateFormatOfElement(element, options) {
     var attr, newNode, a, newAttributes, nodeNameQuery;
 
-    
-
     if (options.className) {
       if (options.toggle !== false && element.classList.contains(options.className)) {
         element.classList.remove(options.className);
@@ -12772,10 +12820,11 @@ wysihtml5.Commands = Base.extend(
       composer.element.normalize();
     },
 
-    state: function(composer, command, options) {
+    state: function(composer, command, options, exact) {
       options = fixOptions(options);
+      exact = typeof exact === "boolean" ? exact : true;
 
-      var nodes = getState(composer, options, true).nodes;
+      var nodes = getState(composer, options, exact).nodes;
       
       return (nodes.length === 0) ? false : nodes;
     }
@@ -15268,7 +15317,8 @@ wysihtml5.views.View = Base.extend(
     // Also copied source is based directly on selection - 
     // (very useful for webkit based browsers where copy will otherwise contain a lot of code and styles based on whatever and not actually in selection).
     // If falsy value is passed source override is also disabled
-    copyedFromMarking: '<meta name="copied-from" content="wysihtml5">'
+    copyedFromMarking: '<meta name="copied-from" content="wysihtml5">',
+    showDialogsByDefault: true
   };
 
   wysihtml5.Editor = wysihtml5.lang.Dispatcher.extend(
@@ -15400,8 +15450,7 @@ wysihtml5.views.View = Base.extend(
      *  - Observes for paste and drop
      */
     _initParser: function() {
-      var oldHtml,
-          cleanHtml;
+      var oldHtml;
 
       if (wysihtml5.browser.supportsModernPaste()) {
         this.on("paste:composer", function(event) {
@@ -15524,14 +15573,6 @@ wysihtml5.views.View = Base.extend(
         event.stopPropagation();
       });
 
-      var formElements  = this.container.querySelectorAll(SELECTOR_FORM_ELEMENTS),
-          i             = 0,
-          length        = formElements.length,
-          _clearInterval = function() { clearInterval(that.interval); };
-      for (; i<length; i++) {
-        dom.observe(formElements[i], "change", _clearInterval);
-      }
-
       this._observed = true;
     },
 
@@ -15597,25 +15638,25 @@ wysihtml5.views.View = Base.extend(
       }
     },
 
+    update: function (elementToChange) {
+      this.elementToChange = elementToChange ? elementToChange : this.elementToChange;
+      this._interpolate();
+    },
+
     /**
      * Show the dialog element
      */
     show: function(elementToChange) {
-      if (dom.hasClass(this.link, CLASS_NAME_OPENED)) {
-        return;
-      }
+      var firstField  = this.container.querySelector(SELECTOR_FORM_ELEMENTS);
 
-      var that        = this,
-          firstField  = this.container.querySelector(SELECTOR_FORM_ELEMENTS);
-      this.elementToChange = elementToChange;
       this._observe();
-      this._interpolate();
-      if (elementToChange) {
-        this.interval = setInterval(function() { that._interpolate(true); }, 500);
-      }
+      this.update(elementToChange);
+
       dom.addClass(this.link, CLASS_NAME_OPENED);
       this.container.style.display = "";
+      this.isOpen = true;
       this.fire("show");
+
       if (firstField && !elementToChange) {
         try {
           firstField.focus();
@@ -15627,14 +15668,14 @@ wysihtml5.views.View = Base.extend(
      * Hide the dialog element
      */
     hide: function() {
-      clearInterval(this.interval);
       this.elementToChange = null;
       dom.removeClass(this.link, CLASS_NAME_OPENED);
       this.container.style.display = "none";
+      this.isOpen = false;
       this.fire("cancel");
     }
   });
-})(wysihtml5);
+})(wysihtml5); //jshint ignore:line
 ;/**
  * Converts speech-to-text and inserts this into the editor
  * As of now (2011/03/25) this only is supported in Chrome >= 11
@@ -15861,14 +15902,7 @@ wysihtml5.views.View = Base.extend(
         return;
       }
 
-      var commandObj = this.commandMapping[command + ":" + commandValue];
-
-      // Show dialog when available
-      if (commandObj && commandObj.dialog && !commandObj.state) {
-        commandObj.dialog.show();
-      } else {
-        this._execCommand(command, commandValue);
-      }
+      this._execCommand(command, commandValue);
     },
 
     _execCommand: function(command, commandValue) {
@@ -15918,10 +15952,19 @@ wysihtml5.views.View = Base.extend(
       dom.delegate(container, "[data-wysihtml5-command], [data-wysihtml5-action]", "mousedown", function(event) { event.preventDefault(); });
 
       dom.delegate(container, "[data-wysihtml5-command]", "click", function(event) {
-        var link          = this,
+        var state,
+            link          = this,
             command       = link.getAttribute("data-wysihtml5-command"),
-            commandValue  = link.getAttribute("data-wysihtml5-command-value");
-        that.execCommand(command, commandValue);
+            commandValue  = link.getAttribute("data-wysihtml5-command-value"),
+            commandObj = that.commandMapping[command + ":" + commandValue];
+
+        if (!commandObj.dialog) {
+          that.execCommand(command, commandValue);
+        } else {
+          state = getCommandState(that.composer, commandObj);
+          commandObj.dialog.show(state);
+        }
+
         event.preventDefault();
       });
 
@@ -15964,13 +16007,10 @@ wysihtml5.views.View = Base.extend(
 
     _updateLinkStates: function() {
 
-      var commandMapping      = this.commandMapping,
-          commandblankMapping = this.commandblankMapping,
-          actionMapping       = this.actionMapping,
-          i,
-          state,
-          action,
-          command;
+      var i, state, action, command, displayDialogAttributeValue,
+          commandMapping      = this.commandMapping,
+          composer            = this.composer,
+          actionMapping       = this.actionMapping;
       // every millisecond counts... this is executed quite often
       for (i in commandMapping) {
         command = commandMapping[i];
@@ -16004,17 +16044,17 @@ wysihtml5.views.View = Base.extend(
               dom.addClass(command.group, CLASS_NAME_COMMAND_ACTIVE);
             }
             if (command.dialog) {
-              if (typeof(state) === "object" || wysihtml5.lang.object(state).isArray()) {
+              if (state && typeof state === "object") {
+                state = getCommandState(composer, command)
+                command.state = state;
 
-                if (!command.dialog.multiselect && wysihtml5.lang.object(state).isArray()) {
-                  // Grab first and only object/element in state array, otherwise convert state into boolean
-                  // to avoid showing a dialog for multiple selected elements which may have different attributes
-                  // eg. when two links with different href are selected, the state will be an array consisting of both link elements
-                  // but the dialog interface can only update one
-                  state = state.length === 1 ? state[0] : true;
-                  command.state = state;
+                displayDialogAttributeValue = command.dialog.container.dataset.showdialogbydefault || false;
+
+                if (composer.config.showDialogsByDefault || displayDialogAttributeValue) {
+                  command.dialog.show(state);
+                } else {
+                  command.dialog.update(state);
                 }
-                command.dialog.show(state);
               } else {
                 command.dialog.hide();
               }
@@ -16058,6 +16098,20 @@ wysihtml5.views.View = Base.extend(
     }
   });
 
+  function getCommandState (composer, command) {
+    var state = composer.commands.state(command.name, command.value);
+
+    // Grab first and only object/element in state array, otherwise convert state into boolean
+    // to avoid showing a dialog for multiple selected elements which may have different attributes
+    // eg. when two links with different href are selected, the state will be an array consisting of both link elements
+    // but the dialog interface can only update one
+    if (!command.dialog.multiselect && wysihtml5.lang.object(state).isArray()) {
+      state = state.length === 1 ? state[0] : true;
+    }
+
+    return state;
+  }
+
 })(wysihtml5);
 ;(function(wysihtml5) {
   wysihtml5.toolbar.Dialog_createTable = wysihtml5.toolbar.Dialog.extend({
@@ -16067,8 +16121,7 @@ wysihtml5.views.View = Base.extend(
   });
 })(wysihtml5);
 ;(function(wysihtml5) {
-  var dom                     = wysihtml5.dom,
-      SELECTOR_FIELDS         = "[data-wysihtml5-dialog-field]",
+  var SELECTOR_FIELDS         = "[data-wysihtml5-dialog-field]",
       ATTRIBUTE_FIELDS        = "data-wysihtml5-dialog-field";
 
   wysihtml5.toolbar.Dialog_foreColorStyle = wysihtml5.toolbar.Dialog.extend({
@@ -16087,16 +16140,15 @@ wysihtml5.views.View = Base.extend(
     },
 
     _interpolate: function(avoidHiddenFields) {
-      var field,
-          fieldName,
-          newValue,
+      var field, colourMode,
+          styleParser = wysihtml5.quirks.styleParser,
           focusedElement = document.querySelector(":focus"),
           fields         = this.container.querySelectorAll(SELECTOR_FIELDS),
           length         = fields.length,
           i              = 0,
           firstElement   = (this.elementToChange) ? ((wysihtml5.lang.object(this.elementToChange).isArray()) ? this.elementToChange[0] : this.elementToChange) : null,
-          colorStr       = (firstElement) ? firstElement.getAttribute('style') : null,
-          color          = (colorStr) ? wysihtml5.quirks.styleParser.parseColor(colorStr, "color") : null;
+          colourStr       = (firstElement) ? firstElement.getAttribute("style") : null,
+          colour          = (colourStr) ? styleParser.parseColor(colourStr, "color") : null;
 
       for (; i<length; i++) {
         field = fields[i];
@@ -16109,14 +16161,13 @@ wysihtml5.views.View = Base.extend(
           continue;
         }
         if (field.getAttribute(ATTRIBUTE_FIELDS) === "color") {
-          if (color) {
-            if (color[3] && color[3] != 1) {
-              field.value = "rgba(" + color[0] + "," + color[1] + "," + color[2] + "," + color[3] + ");";
-            } else {
-              field.value = "rgb(" + color[0] + "," + color[1] + "," + color[2] + ");";
-            }
+          colourMode = (field.dataset.colormode || "rgb").toLowerCase();
+          colourMode = colourMode === "hex" ? "hash" : colourMode;
+
+          if (colour) {
+            field.value = styleParser.unparseColor(colour, colourMode);
           } else {
-            field.value = "rgb(0,0,0);";
+            field.value = styleParser.unparseColor([0, 0, 0], colourMode);
           }
         }
       }
@@ -16147,6 +16198,5 @@ wysihtml5.views.View = Base.extend(
         field.value = size;
       }
     }
-
   });
 })(wysihtml5);
