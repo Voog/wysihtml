@@ -42,6 +42,8 @@
     // Whether toolbar is displayed after init by script automatically.
     // Can be set to false if toolobar is set to display only on editable area focus
     showToolbarAfterInit: true,
+    // With default toolbar it shows dialogs in toolbar when their related text format state becomes active (click on link in text opens link dialogue)
+    showToolbarDialogsOnSelection: true,
     // Whether urls, entered by the user should automatically become clickable-links
     autoLink:             true,
     // Includes table editing events and cell selection tracking
@@ -83,8 +85,7 @@
     // Also copied source is based directly on selection - 
     // (very useful for webkit based browsers where copy will otherwise contain a lot of code and styles based on whatever and not actually in selection).
     // If falsy value is passed source override is also disabled
-    copyedFromMarking: '<meta name="copied-from" content="wysihtml5">',
-    showDialogsByDefault: true
+    copyedFromMarking: '<meta name="copied-from" content="wysihtml5">'
   };
 
   wysihtml5.Editor = wysihtml5.lang.Dispatcher.extend(

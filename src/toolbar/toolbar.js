@@ -309,12 +309,12 @@
             }
             if (command.dialog) {
               if (state && typeof state === "object") {
-                state = getCommandState(composer, command)
+                state = getCommandState(composer, command);
                 command.state = state;
 
                 displayDialogAttributeValue = command.dialog.container.dataset.showdialogbydefault || false;
 
-                if (composer.config.showDialogsByDefault || displayDialogAttributeValue) {
+                if (composer.config.showToolbarDialogsOnSelection || displayDialogAttributeValue) {
                   command.dialog.show(state);
                 } else {
                   command.dialog.update(state);
