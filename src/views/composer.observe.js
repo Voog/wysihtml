@@ -156,9 +156,9 @@
 
   // Listens to "drop", "paste", "mouseup", "focus", "keyup" events and fires
   var handleUserInteraction = function (event) {
-    this.parent.fire("beforeinteraction").fire("beforeinteraction:composer");
+    this.parent.fire("beforeinteraction", event).fire("beforeinteraction:composer", event);
     setTimeout((function() {
-      this.parent.fire("interaction").fire("interaction:composer");
+      this.parent.fire("interaction", event).fire("interaction:composer", event);
     }).bind(this), 0);
   };
 

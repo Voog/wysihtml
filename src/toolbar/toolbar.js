@@ -90,8 +90,7 @@
     _getDialog: function(link, command) {
       var that          = this,
           dialogElement = this.container.querySelector("[data-wysihtml5-dialog='" + command + "']"),
-          dialog,
-          caretBookmark;
+          dialog, caretBookmark;
 
       if (dialogElement) {
         if (wysihtml5.toolbar["Dialog_" + command]) {
@@ -102,7 +101,6 @@
 
         dialog.on("show", function() {
           caretBookmark = that.composer.selection.getBookmark();
-
           that.editor.fire("show:dialog", { command: command, dialogContainer: dialogElement, commandLink: link });
         });
 
@@ -111,14 +109,27 @@
             that.composer.selection.setBookmark(caretBookmark);
           }
           that._execCommand(command, attributes);
-
           that.editor.fire("save:dialog", { command: command, dialogContainer: dialogElement, commandLink: link });
+          that._hideAllDialogs();
+          that._preventInstantFocus();
+          caretBookmark = undefined;
+
         });
 
         dialog.on("cancel", function() {
-          that.editor.focus(false);
+          if (caretBookmark) {
+            that.composer.selection.setBookmark(caretBookmark);
+          }
           that.editor.fire("cancel:dialog", { command: command, dialogContainer: dialogElement, commandLink: link });
+          caretBookmark = undefined;
+          that._preventInstantFocus();
         });
+
+        dialog.on("hide", function() {
+          that.editor.fire("hide:dialog", { command: command, dialogContainer: dialogElement, commandLink: link });
+          caretBookmark = undefined;
+        });
+
       }
       return dialog;
     },
@@ -206,21 +217,26 @@
         event.preventDefault();
       });
 
-      editor.on("interaction:composer", function() {
+      editor.on("interaction:composer", function(event) {
+        if (!that.preventFocus) {
           that._updateLinkStates();
+        }
       });
 
-      editor.on("focus:composer", function() {
-        that.bookmark = null;
-      });
+      this.container.ownerDocument.addEventListener("click", function(event) {
+        if (!wysihtml5.dom.contains(that.container, event.target) && !wysihtml5.dom.contains(that.composer.element, event.target)) {
+          that._updateLinkStates();
+          that._preventInstantFocus();
+        }
+      }, false);
 
       if (this.editor.config.handleTables) {
-          editor.on("tableselect:composer", function() {
-              that.container.querySelectorAll('[data-wysihtml5-hiddentools="table"]')[0].style.display = "";
-          });
-          editor.on("tableunselect:composer", function() {
-              that.container.querySelectorAll('[data-wysihtml5-hiddentools="table"]')[0].style.display = "none";
-          });
+        editor.on("tableselect:composer", function() {
+            that.container.querySelectorAll('[data-wysihtml5-hiddentools="table"]')[0].style.display = "";
+        });
+        editor.on("tableunselect:composer", function() {
+            that.container.querySelectorAll('[data-wysihtml5-hiddentools="table"]')[0].style.display = "none";
+        });
       }
 
       editor.on("change_view", function(currentView) {
@@ -235,6 +251,22 @@
             }
           }, 0);
       });
+    },
+
+    _hideAllDialogs: function() {
+      var commandMapping      = this.commandMapping;
+      for (var i in commandMapping) {
+        if (commandMapping[i].dialog) {
+          commandMapping[i].dialog.hide();
+        }
+      }
+    },
+
+    _preventInstantFocus: function() {
+      this.preventFocus = true;
+      setTimeout(function() {
+        this.preventFocus = false;
+      }.bind(this),0);
     },
 
     _updateLinkStates: function() {

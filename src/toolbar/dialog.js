@@ -69,16 +69,14 @@
           callbackWrapper(event);
         }
         if (keyCode === wysihtml5.ESCAPE_KEY) {
-          that.fire("cancel");
-          that.hide();
+          that.cancel();
         }
       });
 
       dom.delegate(this.container, "[data-wysihtml5-dialog-action=save]", "click", callbackWrapper);
 
       dom.delegate(this.container, "[data-wysihtml5-dialog-action=cancel]", "click", function(event) {
-        that.fire("cancel");
-        that.hide();
+        that.cancel();
         event.preventDefault();
         event.stopPropagation();
       });
@@ -177,11 +175,20 @@
     /**
      * Hide the dialog element
      */
-    hide: function() {
+    _hide: function(focus) {
       this.elementToChange = null;
       dom.removeClass(this.link, CLASS_NAME_OPENED);
       this.container.style.display = "none";
       this.isOpen = false;
+    },
+
+    hide: function() {
+      this._hide();
+      this.fire("hide");
+    },
+
+    cancel: function() {
+      this._hide();
       this.fire("cancel");
     }
   });
