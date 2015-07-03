@@ -190,7 +190,7 @@
             commandValue  = link.getAttribute("data-wysihtml5-command-value"),
             commandObj = that.commandMapping[command + ":" + commandValue];
 
-        if (!commandObj.dialog) {
+        if (commandValue || !commandObj.dialog) {
           that.execCommand(command, commandValue);
         } else {
           state = getCommandState(that.composer, commandObj);
