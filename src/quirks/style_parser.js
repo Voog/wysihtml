@@ -107,18 +107,31 @@
       });
     },
 
-    unparseColor: function(val, colorName) {
+    /* Takes rgba color array [r,g,b,a] as a value and formats it to color string with given format type
+     * If no format is given, rgba/rgb is returned based on alpha value
+     *
+     * Example:
+     *    var colorStr = wysihtml5.quirks.styleParser.unparseColor([170, 187, 204, 1], "hash");  // "#AABBCC"
+     *    var colorStr = wysihtml5.quirks.styleParser.unparseColor([170, 187, 204, 1], "hex");  // "AABBCC"
+     *    var colorStr = wysihtml5.quirks.styleParser.unparseColor([170, 187, 204, 1], "csv");  // "170, 187, 204, 1"
+     *    var colorStr = wysihtml5.quirks.styleParser.unparseColor([170, 187, 204, 1], "rgba");  // "rgba(170,187,204,1)"
+     *    var colorStr = wysihtml5.quirks.styleParser.unparseColor([170, 187, 204, 1], "rgb");  // "rgb(170,187,204)"
+     *
+     *    var colorStr = wysihtml5.quirks.styleParser.unparseColor([170, 187, 204, 0.5]);  // "rgba(170,187,204,0.5)"
+     *    var colorStr = wysihtml5.quirks.styleParser.unparseColor([170, 187, 204, 1]);  // "rgb(170,187,204)"
+     */
+    unparseColor: function(val, colorFormat) {
       var hexRadix = 16;
 
-      if (colorName === "hex") {
+      if (colorFormat === "hex") {
         return (val[0].toString(hexRadix) + val[1].toString(hexRadix) + val[2].toString(hexRadix)).toUpperCase();
-      } else if (colorName === "hash") {
+      } else if (colorFormat === "hash") {
         return "#" + (val[0].toString(hexRadix) + val[1].toString(hexRadix) + val[2].toString(hexRadix)).toUpperCase();
-      } else if (colorName === "rgb") {
+      } else if (colorFormat === "rgb") {
         return "rgb(" + val[0] + "," + val[1] + "," + val[2] + ")";
-      } else if (colorName === "rgba") {
+      } else if (colorFormat === "rgba") {
         return "rgba(" + val[0] + "," + val[1] + "," + val[2] + "," + val[3] + ")";
-      } else if (colorName === "csv") {
+      } else if (colorFormat === "csv") {
         return  val[0] + "," + val[1] + "," + val[2] + "," + val[3];
       }
 
@@ -129,6 +142,7 @@
       }
     },
 
+    // Parses font size value from style string
     parseFontSize: function(stylesStr) {
       var params = stylesStr.match(makeParamRegExp("font-size"));
       if (params) {
