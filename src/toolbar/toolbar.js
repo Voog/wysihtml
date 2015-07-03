@@ -307,12 +307,15 @@
             if (command.group) {
               dom.addClass(command.group, CLASS_NAME_COMMAND_ACTIVE);
             }
-            if (command.dialog) {
+            // commands with fixed value can not have a dialog.
+            if (command.dialog && (typeof command.value === "undefined" || command.value === null)) {
               if (state && typeof state === "object") {
                 state = getCommandState(composer, command);
                 command.state = state;
 
-                displayDialogAttributeValue = command.dialog.container.dataset.showdialogbydefault || false;
+                // If dialog has dataset.showdialogonselection set as true,
+                // Dialog displays on text state becoming active regardless of clobal showToolbarDialogsOnSelection options value
+                displayDialogAttributeValue = command.dialog.container.dataset ? command.dialog.container.dataset.showdialogonselection : false;
 
                 if (composer.config.showToolbarDialogsOnSelection || displayDialogAttributeValue) {
                   command.dialog.show(state);
@@ -332,7 +335,8 @@
             if (command.group) {
               dom.removeClass(command.group, CLASS_NAME_COMMAND_ACTIVE);
             }
-            if (command.dialog) {
+            // commands with fixed value can not have a dialog.
+            if (command.dialog && !command.value) {
               command.dialog.hide();
             }
           }

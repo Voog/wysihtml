@@ -647,12 +647,9 @@
       composer.element.normalize();
     },
 
-    state: function(composer, command, options, exact) {
+    state: function(composer, command, options) {
       options = fixOptions(options);
-      exact = typeof exact === "boolean" ? exact : true;
-
-      var nodes = getState(composer, options, exact).nodes;
-      
+      var nodes = getState(composer, options, true).nodes;
       return (nodes.length === 0) ? false : nodes;
     }
   };

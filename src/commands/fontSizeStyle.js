@@ -7,12 +7,12 @@
     exec: function(composer, command, size) {
       size = size.size || size;
       if (!(/^\s*$/).test(size)) {
-        wysihtml5.commands.formatInline.exec(composer, command, {styleProperty: "fontSize", styleValue: size, toggle: true});
+        wysihtml5.commands.formatInline.exec(composer, command, {styleProperty: "fontSize", styleValue: size});
       }
     },
 
     state: function(composer, command, size) {
-      return wysihtml5.commands.formatInline.state(composer, command, {styleProperty: "fontSize", styleValue: size}, false);
+      return wysihtml5.commands.formatInline.state(composer, command, {styleProperty: "fontSize", styleValue: size || undefined});
     },
 
     remove: function(composer, command) {
