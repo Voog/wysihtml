@@ -1168,7 +1168,8 @@
         anode = anode.parentNode;
       }
 
-      return wysihtml5.dom.contains(this.composer.element, fnode) && wysihtml5.dom.contains(this.composer.element, anode);
+      return (wysihtml5.dom.contains(this.composer.element, fnode) || this.composer.element === fnode) &&
+             (wysihtml5.dom.contains(this.composer.element, anode) || this.composer.element === anode);
     },
 
     deselect: function() {

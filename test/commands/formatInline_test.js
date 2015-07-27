@@ -43,7 +43,7 @@ if (wysihtml5.browser.supported()) {
   });
 
   asyncTest("Format inline", function() {
-    expect(28);
+    expect(30);
     var that = this,
         parserRules = {
           "classes": "any",
@@ -166,6 +166,12 @@ if (wysihtml5.browser.supported()) {
       that.setSelection(editor, editableElement.querySelector('a').firstChild, 2 , editableElement.childNodes[2], 5);
       editor.composer.commands.exec("formatInline", {nodeName: "a", attribute : {"href": "http://www.google.com", "target": "_blank"}});
       that.equal(editableElement.innerHTML.toLowerCase(), 'th<a href="http://www.google.com" target="_blank">is is a sh</a>ort text', 'extending link selection correctly');
+
+      blankCaretStart(editor);
+      editor.composer.commands.exec("formatInline", {nodeName: "button", styleProperty: "color", styleValue: "red", toggle: false});
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, '').replace(/<br\/?>/gi, ''), '<button style="color: red;"></button>', "Adds custom button to curet");
+      editor.composer.commands.exec("formatInline", {nodeName: "button", styleProperty: "color", styleValue: "red", toggle: false});
+      equal(editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, '').replace(/<br\/?>/gi, ''), '<button style="color: red;"></button>', "Will not toggle if set to false");
 
       start();
     });

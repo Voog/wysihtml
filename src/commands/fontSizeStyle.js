@@ -7,7 +7,7 @@
     exec: function(composer, command, size) {
       size = size.size || size;
       if (!(/^\s*$/).test(size)) {
-        wysihtml5.commands.formatInline.exec(composer, command, {styleProperty: "fontSize", styleValue: size});
+        wysihtml5.commands.formatInline.exec(composer, command, {styleProperty: "fontSize", styleValue: size, toggle: false});
       }
     },
 

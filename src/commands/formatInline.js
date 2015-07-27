@@ -137,7 +137,7 @@
   }
 
   function updateFormatOfElement(element, options) {
-    var attr, newNode, a, newAttributes, nodeNameQuery;
+    var attr, newNode, a, newAttributes, nodeNameQuery, nodeQueryMatch;
 
     if (options.className) {
       if (options.toggle !== false && element.classList.contains(options.className)) {
@@ -172,30 +172,19 @@
       updateElementAttributes(element, newAttributes, options.toggle);
     }
 
-    // Handle similar semanticallys ame elements (queryAliasMap)
+
+    // Handle similar semantically same elements (queryAliasMap)
     nodeNameQuery = options.nodeName ? queryAliasMap[options.nodeName.toLowerCase()] || options.nodeName.toLowerCase() : null;
+    nodeQueryMatch = nodeNameQuery ? wysihtml5.dom.domNode(element).test({ query: nodeNameQuery }) : false;
     
-    if ((options.nodeName && wysihtml5.dom.domNode(element).test({ query: nodeNameQuery })) || (!options.nodeName && element.nodeName === defaultTag)) {
-
-      
-      if (hasNoClass(element) && hasNoStyle(element) && hasNoAttributes(element)) {
+    // Unwrap element if no attributes present and node name given
+    // or no attributes and if no nodename set but node is the default
+    if (!options.nodeName || options.nodeName === defaultTag || nodeQueryMatch) {
+      if (
+        ((options.toggle !== false && nodeQueryMatch) || (!options.nodeName && element.nodeName === defaultTag)) &&
+        hasNoClass(element) && hasNoStyle(element) && hasNoAttributes(element)
+      ) {
         wysihtml5.dom.unwrap(element);
-      } else if (!options.nodeName) {
-        newNode = element.ownerDocument.createElement(defaultTag);
-        
-        // pass present attributes
-        attr = wysihtml5.dom.getAttributes(element);
-        for (a in attr) {
-          if (attr.hasOwnProperty(a)) {
-            newNode.setAttribute(a, attr[a]);
-          }
-        }
-
-        while (element.firstChild) {
-          newNode.appendChild(element.firstChild);
-        }
-        element.parentNode.insertBefore(newNode, element);
-        element.parentNode.removeChild(element);
       }
 
     }
