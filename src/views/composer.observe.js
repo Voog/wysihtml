@@ -294,9 +294,9 @@
         if (parent.nodeName === "A" && !parent.firstChild) {
           parent.parentNode.removeChild(parent);
         }
-        setTimeout(function() {
+        setTimeout((function() {
           wysihtml5.quirks.redraw(this.element);
-        }, 0);
+        }).bind(this), 0);
       }
     }
 
