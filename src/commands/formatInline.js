@@ -300,35 +300,39 @@
         partial = false,
         node, range, caretNode;
 
-    if (searchNodes.length === 0 && composer.selection.isCollapsed()) {
-      caretNode = composer.selection.getSelection().anchorNode;
-      if (!caretNode) {
-        // selection not in editor
-        return {
-            nodes: [],
-            partial: false
-        };
-      }
-      if (caretNode.nodeType === 3) {
-        searchNodes = [caretNode];
-      }
-    }
+    if (composer.selection.isInThisEditable()) {
 
-    // Handle collapsed selection caret
-    if (!searchNodes.length) {
-      range = composer.selection.getOwnRanges()[0];
-      if (range) {
-        searchNodes = [range.endContainer];
+      if (searchNodes.length === 0 && composer.selection.isCollapsed()) {
+        caretNode = composer.selection.getSelection().anchorNode;
+        if (!caretNode) {
+          // selection not in editor
+          return {
+              nodes: [],
+              partial: false
+          };
+        }
+        if (caretNode.nodeType === 3) {
+          searchNodes = [caretNode];
+        }
       }
-    }
 
-    for (var i = 0, maxi = searchNodes.length; i < maxi; i++) {
-      node = findSimilarTextNodeWrapper(searchNodes[i], options, composer.element, exact);
-      if (node) {
-        nodes.push(node);
-      } else {
-        partial = true;
+      // Handle collapsed selection caret
+      if (!searchNodes.length) {
+        range = composer.selection.getOwnRanges()[0];
+        if (range) {
+          searchNodes = [range.endContainer];
+        }
       }
+
+      for (var i = 0, maxi = searchNodes.length; i < maxi; i++) {
+        node = findSimilarTextNodeWrapper(searchNodes[i], options, composer.element, exact);
+        if (node) {
+          nodes.push(node);
+        } else {
+          partial = true;
+        }
+      }
+
     }
     
     return {

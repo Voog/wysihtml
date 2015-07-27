@@ -1154,6 +1154,23 @@
         return (wysihtml5.lang.array(nodeNames).contains(parentElement.nodeName)) ? parentElement : false;
     },
 
+    isInThisEditable: function() {
+      var sel = this.getSelection(),
+          fnode = sel.focusNode,
+          anode = sel.anchorNode;
+
+      // In IE node contains will not work for textnodes, thus taking parentNode
+      if (fnode && fnode.nodeType !== 1) {
+        fnode = fnode.parentNode;
+      }
+
+      if (anode && anode.nodeType !== 1) {
+        anode = anode.parentNode;
+      }
+
+      return wysihtml5.dom.contains(this.composer.element, fnode) && wysihtml5.dom.contains(this.composer.element, anode);
+    },
+
     deselect: function() {
       var sel = this.getSelection();
       sel && sel.removeAllRanges();
