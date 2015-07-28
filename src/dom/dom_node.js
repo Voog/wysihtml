@@ -1,5 +1,19 @@
 // TODO: Refactor dom tree traversing here
 (function(wysihtml5) {
+
+  // Finds parents of a node, returning the outermost node first in Array
+  // if contain node is given parents search is stopped at the container
+  function parents(node, container) {
+    var nodes = [node], n = node;
+
+    // iterate parents while parent exists and it is not container element
+    while((container && n && n !== container) || (!container && n)) {
+      nodes.unshift(n);
+      n = n.parentNode;
+    }
+    return nodes;
+  }
+
   wysihtml5.dom.domNode = function(node) {
     var defaultNodeTypes = [wysihtml5.ELEMENT_NODE, wysihtml5.TEXT_NODE];
 
@@ -59,6 +73,30 @@
         }
         
         return nextNode;
+      },
+
+      // Finds the common acnestor container of two nodes
+      // If container given stops search at the container
+      // If no common ancestor found returns null
+      // var node = wysihtml5.dom.domNode(element).commonAncestor(node2, container);
+      commonAncestor: function(node2, container) {
+        var parents1 = parents(node, container),
+            parents2 = parents(node2, container);
+
+        // Ensure we have found a common ancestor, which will be the first one if anything
+        if (parents1[0] != parents2[0]) {
+          return null;
+        }
+
+        // Traverse up the hierarchy of parents until we reach where they're no longer
+        // the same. Then return previous which was the common ancestor.
+        for (var i = 0; i < parents1.length; i++) {
+          if (parents1[i] != parents2[i]) {
+            return parents1[i - 1];
+          }
+        }
+
+        return null;
       },
 
       // Traverses a node for last children and their chidren (including itself), and finds the last node that has no children.

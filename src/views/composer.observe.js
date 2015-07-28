@@ -70,14 +70,14 @@
   // Deletion with caret in the beginning of headings needs special attention
   // Heading does not concate text to previous block node correctly (browsers do unexpected miracles here especially webkit)
   var fixDeleteInTheBeginnigOfHeading = function(composer) {
-    var selection = composer.selection;
+    var selection = composer.selection,
+        prevNode = selection.getPreviousNode();
 
     if (selection.caretIsFirstInSelection() &&
-        selection.getPreviousNode() &&
-        selection.getPreviousNode().nodeName &&
-        (/^H\d$/gi).test(selection.getPreviousNode().nodeName)
+        prevNode &&
+        prevNode.nodeType === 1 &&
+        (/block/).test(composer.win.getComputedStyle(prevNode).display)
     ) {
-      var prevNode = selection.getPreviousNode();
       if ((/^\s*$/).test(prevNode.textContent || prevNode.innerText)) {
         // If heading is empty remove the heading node
         prevNode.parentNode.removeChild(prevNode);
@@ -85,20 +85,23 @@
       } else {
         if (prevNode.lastChild) {
           var selNode = prevNode.lastChild,
-              curNode = wysihtml5.dom.getParentElement(selection.getSelectedNode(), { query: "h1, h2, h3, h4, h5, h6, p, pre, div, blockquote" }, false, composer.element);
-          if (prevNode) {
+              selectedNode = selection.getSelectedNode(),
+              commonAncestorNode = wysihtml5.dom.domNode(prevNode).commonAncestor(selectedNode, composer.element);
+              curNode = commonAncestorNode ? wysihtml5.dom.getParentElement(selectedNode, {
+                query: "h1, h2, h3, h4, h5, h6, p, pre, div, blockquote"
+              }, false, commonAncestorNode) : null;
+          
             if (curNode) {
               while (curNode.firstChild) {
                 prevNode.appendChild(curNode.firstChild);
               }
               selection.setAfter(selNode);
               return true;
-            } else if (selection.getSelectedNode().nodeType === 3) {
-              prevNode.appendChild(selection.getSelectedNode());
+            } else if (selectedNode.nodeType === 3) {
+              prevNode.appendChild(selectedNode);
               selection.setAfter(selNode);
               return true;
             }
-          }
         }
       }
     }
