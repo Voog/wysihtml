@@ -340,7 +340,7 @@
 
         if (composer.selection.isCollapsed()) {
           parent = wysihtml5.dom.getParentElement(composer.selection.getOwnRanges()[0].startContainer, {
-            query: BLOCK_ELEMENTS
+            query: UNNESTABLE_BLOCK_ELEMENTS + ', ' + (options && options.nodeName ? options.nodeName.toLowerCase() : 'div'),
           }, null, composer.element);
           if (parent) {
             bookmark = rangy.saveSelection(composer.win);
@@ -353,7 +353,7 @@
           }
         }
 
-        // And get all selection ranges of current composer and iterat
+        // And get all selection ranges of current composer and iterate
         ranges = composer.selection.getOwnRanges();
         for (var i = ranges.length; i--;) {
           newBlockElements = newBlockElements.concat(wrapRangeWithElement(ranges[i], options, getParentBlockNodeName(ranges[i].startContainer, composer), composer));

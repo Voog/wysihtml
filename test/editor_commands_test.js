@@ -165,6 +165,9 @@ if (wysihtml5.browser.supported()) {
         editor.composer.commands.exec('justifyLeft');
         equal(editableElement.innerHTML.toLowerCase(), '<div class="wysiwyg-text-align-left">once upon a time</div><br>there was an unformated text<br>spanning many lines.', "First line wrapper class changed correctly");
         
+        editableElement.innerHTML = '<p class="wysiwyg-text-align-left">once upon a time</p><br>there was an unformated text<br>spanning many lines.';
+        node = editor.editableElement.querySelector('p').firstChild;
+        editor.composer.selection.selectNode(node);
         editor.composer.commands.exec('formatBlock', "h1");
         equal(editableElement.innerHTML.toLowerCase(), '<h1 class="wysiwyg-text-align-left">once upon a time</h1><br>there was an unformated text<br>spanning many lines.', "Alignment div changed to heading ok");
         
@@ -172,16 +175,13 @@ if (wysihtml5.browser.supported()) {
         editor.composer.commands.exec('formatBlock', "h1");
         editor.composer.commands.exec('justifyRight');
         equal(editableElement.innerHTML.toLowerCase(), '<h1>once upon a time</h1><br>there was an unformated text<br>spanning many lines.', "heading alignment removed sucessfully");
-     
-        
+
         editor.composer.commands.exec('alignRightStyle');
         editor.composer.commands.exec('alignRightStyle');
-        equal(editableElement.innerHTML.toLowerCase(), '<h1>once upon a time</h1><br>there was an unformated text<br>spanning many lines.', "heading alignment with style removed sucessfully");
-        
+        equal(editableElement.innerHTML.toLowerCase(), '<h1>once upon a time</h1><br>there was an unformated text<br>spanning many lines.', "heading alignment with style removed sucessfully");        
         editor.composer.commands.exec('formatBlock', "p");
         equal(editableElement.innerHTML.toLowerCase(), '<p>once upon a time</p><br>there was an unformated text<br>spanning many lines.', "heading changed to paragraph");
 
-        
         // Tests covering multiple block elements
 
         prepareMutipleBlocks();
@@ -200,12 +200,10 @@ if (wysihtml5.browser.supported()) {
         editor.composer.commands.exec('formatBlock');
         equal(editableElement.innerHTML.toLowerCase(), '<h1>once </h1>upon a time<br>there<br><p> was a formated text</p>spanning many lines.', "Format removed from Selection covering 2 blocks");
 
-
         prepareMutipleBlocks(true);
         editor.composer.commands.exec('formatBlock', "h1");
         editor.composer.commands.exec('formatBlock', "h2");
         equal(editableElement.innerHTML.toLowerCase(), '<h1>once </h1><h2>upon a time</h2><h2>there</h2><p> was a formated text</p>spanning many lines.', "Selection covering multiple blocks preserved fot subsequent modifications");
-
 
         start();
       });
