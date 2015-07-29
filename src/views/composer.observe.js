@@ -113,23 +113,17 @@
         element = composer.element;
 
     if (selection.isCollapsed()) {
-      if (selection.caretIsInTheBeginnig('li')) {
-        // delete in the beginnig of LI will outdent not delete
+      if (fixDeleteInTheBeginnigOfHeading(composer)) {
         event.preventDefault();
-        composer.commands.exec('outdentList');
-      } else {
-        if (fixDeleteInTheBeginnigOfHeading(composer)) {
-          event.preventDefault();
-          return;
-        }
-        if (fixLastBrDeletionInTable(composer)) {
-          event.preventDefault();
-          return;
-        }
-        if (handleUneditableDeletion(composer)) {
-          event.preventDefault();
-          return;
-        }
+        return;
+      }
+      if (fixLastBrDeletionInTable(composer)) {
+        event.preventDefault();
+        return;
+      }
+      if (handleUneditableDeletion(composer)) {
+        event.preventDefault();
+        return;
       }
     } else {
       if (selection.containsUneditable()) {
@@ -139,11 +133,15 @@
     }
   };
 
-  var handleTabKeyDown = function(composer, element) {
+  var handleTabKeyDown = function(composer, element, shiftKey) {
     if (!composer.selection.isCollapsed()) {
       composer.selection.deleteContents();
     } else if (composer.selection.caretIsInTheBeginnig('li')) {
-      if (composer.commands.exec('indentList')) return;
+      if (shiftKey) {
+        if (composer.commands.exec('outdentList')) return;
+      } else {
+        if (composer.commands.exec('indentList')) return;
+      }
     }
 
     // Is &emsp; close enough to tab. Could not find enough counter arguments for now.
@@ -306,7 +304,7 @@
     if (this.config.handleTabKey && keyCode === wysihtml5.TAB_KEY) {
       // TAB key handling
       event.preventDefault();
-      handleTabKeyDown(this, this.element);
+      handleTabKeyDown(this, this.element, event.shiftKey);
     }
 
   };
