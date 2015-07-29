@@ -163,7 +163,7 @@ if (wysihtml5.browser.supported()) {
         var node = editor.editableElement.querySelector('.wysiwyg-text-align-right').firstChild;
         editor.composer.selection.selectNode(node);
         editor.composer.commands.exec('justifyLeft');
-        equal(editableElement.innerHTML.toLowerCase(), '<div class="wysiwyg-text-align-left">once upon a time</div><br>there was an unformated text<br>spanning many lines.', "First line wrapper class changed correctly");
+        equal(editableElement.innerHTML.toLowerCase().trim(), '<div class="wysiwyg-text-align-left">once upon a time</div><br>there was an unformated text<br>spanning many lines.', "First line wrapper class changed correctly");
         
         editableElement.innerHTML = '<p class="wysiwyg-text-align-left">once upon a time</p><br>there was an unformated text<br>spanning many lines.';
         node = editor.editableElement.querySelector('p').firstChild;

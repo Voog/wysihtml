@@ -10,8 +10,9 @@
   wysihtml5.commands.formatCode = {
 
     exec: function(composer, command, classname) {
-      var pre = this.state(composer),
+      var pre = this.state(composer)[0],
           code, range, selectedNodes;
+
       if (pre) {
         // caret is already within a <pre><code>...</code></pre>
         composer.selection.executeAndRestore(function() {
@@ -40,12 +41,13 @@
     },
 
     state: function(composer) {
-      var selectedNode = composer.selection.getSelectedNode();
+      var selectedNode = composer.selection.getSelectedNode(), node;
       if (selectedNode && selectedNode.nodeName && selectedNode.nodeName == "PRE"&&
           selectedNode.firstChild && selectedNode.firstChild.nodeName && selectedNode.firstChild.nodeName == "CODE") {
-        return selectedNode;
+        return [selectedNode];
       } else {
-        return wysihtml5.dom.getParentElement(selectedNode, { query: "pre code" });
+        node = wysihtml5.dom.getParentElement(selectedNode, { query: "pre code" });
+        return node ? [node.parentNode] : false;
       }
     }
   };

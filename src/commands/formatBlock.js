@@ -12,6 +12,14 @@
       BLOCK_ELEMENTS = "h1, h2, h3, h4, h5, h6, p, pre, div, blockquote",
       INLINE_ELEMENTS = "b, big, i, small, tt, abbr, acronym, cite, code, dfn, em, kbd, strong, samp, var, a, bdo, br, q, span, sub, sup, button, label, textarea, input, select, u";
 
+  function correctOptionsForSimilarityCheck(options) {
+    return {
+      nodeName: options.nodeName || null,
+      className: (!options.classRegExp) ? options.className || null : null,
+      classRegExp: options.classRegExp || null,
+      styleProperty: options.styleProperty || null
+    };
+  }
 
   // Removes empty block level elements
   function cleanup(composer) {
@@ -21,7 +29,7 @@
         elements = wysihtml5.lang.array(allElements).without(uneditables);
 
     for (var i = elements.length; i--;) {
-      if (elements[i].innerHTML === "") {
+      if (elements[i].innerHTML.replace(/[\uFEFF]/g, '') === "") {
         elements[i].parentNode.removeChild(elements[i]);
       }
     }
@@ -214,8 +222,10 @@
         rangeStartContainer = r.startContainer,
         content = r.extractContents(),
         fragment = composer.doc.createDocumentFragment(),
+        similarOptions = defaultOptions ? correctOptionsForSimilarityCheck(defaultOptions) : null,
+        similarOuterBlock = similarOptions ? wysihtml5.dom.getParentElement(rangeStartContainer, similarOptions, null, composer.element) : null,
         splitAllBlocks = !defaultOptions || (defaultName === "BLOCKQUOTE" && defaultOptions.nodeName && defaultOptions.nodeName === "BLOCKQUOTE"),
-        firstOuterBlock = findOuterBlock(rangeStartContainer, composer.element, splitAllBlocks), // The outermost un-nestable block element parent of selection start
+        firstOuterBlock = similarOuterBlock || findOuterBlock(rangeStartContainer, composer.element, splitAllBlocks), // The outermost un-nestable block element parent of selection start
         wrapper, blocks, children;
 
     if (options && options.nodeName && options.nodeName === "BLOCKQUOTE") {
@@ -363,6 +373,13 @@
 
       // Remove empty block elements that may be left behind
       cleanup(composer);
+      // If cleanup removed some new block elements. remove them from array too
+      for (var e = newBlockElements.length; e--;) {
+        if (!newBlockElements[e].parentNode) {
+          newBlockElements.splice(e, 1);
+        }
+      }
+      
       // Restore correct selection
       if (bookmark) {
         rangy.restoreSelection(bookmark);
