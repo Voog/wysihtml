@@ -1,3 +1,10 @@
+* wysihtml5x 0.5.0-beta12* (July 31, 2015)
+* Fixes a many toolbar handling errors
+* Fixes formatBlock misbehaviours: in Safari selected content can be lost in some cases, acting on outer div if heading and paragraph elements are contained in div.
+* Fixes behaviour when deleting with caret in beginning of LI outdents list. Shift+tab will to do this instead.
+* Fixed deleting into block element wrapping contents wrong sometimes
+* Fixed ctrl/meta + a not being able to select content in webkit if uneditable block element is first or last in editable area.
+
 *wysihtml5x 0.5.0-beta11* (July 1, 2015)
 * Minor release that fixes some misbehaviours in Safari
 

@@ -1,5 +1,5 @@
 /**
- * @license wysihtml v0.5.0-beta11
+ * @license wysihtml v0.5.0-beta12
  * https://github.com/Voog/wysihtml
  *
  * Author: Christopher Blum (https://github.com/tiff)
@@ -10,7 +10,7 @@
  *
  */
 var wysihtml5 = {
-  version: "0.5.0-beta11",
+  version: "0.5.0-beta12",
 
   // namespaces
   commands:   {},
@@ -5890,6 +5890,20 @@ wysihtml5.dom.copyAttributes = function(attributesToCopy) {
 })(wysihtml5);
 ;// TODO: Refactor dom tree traversing here
 (function(wysihtml5) {
+
+  // Finds parents of a node, returning the outermost node first in Array
+  // if contain node is given parents search is stopped at the container
+  function parents(node, container) {
+    var nodes = [node], n = node;
+
+    // iterate parents while parent exists and it is not container element
+    while((container && n && n !== container) || (!container && n)) {
+      nodes.unshift(n);
+      n = n.parentNode;
+    }
+    return nodes;
+  }
+
   wysihtml5.dom.domNode = function(node) {
     var defaultNodeTypes = [wysihtml5.ELEMENT_NODE, wysihtml5.TEXT_NODE];
 
@@ -5949,6 +5963,30 @@ wysihtml5.dom.copyAttributes = function(attributesToCopy) {
         }
         
         return nextNode;
+      },
+
+      // Finds the common acnestor container of two nodes
+      // If container given stops search at the container
+      // If no common ancestor found returns null
+      // var node = wysihtml5.dom.domNode(element).commonAncestor(node2, container);
+      commonAncestor: function(node2, container) {
+        var parents1 = parents(node, container),
+            parents2 = parents(node2, container);
+
+        // Ensure we have found a common ancestor, which will be the first one if anything
+        if (parents1[0] != parents2[0]) {
+          return null;
+        }
+
+        // Traverse up the hierarchy of parents until we reach where they're no longer
+        // the same. Then return previous which was the common ancestor.
+        for (var i = 0; i < parents1.length; i++) {
+          if (parents1[i] != parents2[i]) {
+            return parents1[i - 1];
+          }
+        }
+
+        return null;
       },
 
       // Traverses a node for last children and their chidren (including itself), and finds the last node that has no children.
@@ -7443,9 +7481,10 @@ wysihtml5.dom.removeEmptyTextNodes = function(node) {
       childNodes        = wysihtml5.lang.array(node.childNodes).get(),
       childNodesLength  = childNodes.length,
       i                 = 0;
+
   for (; i<childNodesLength; i++) {
     childNode = childNodes[i];
-    if (childNode.nodeType === wysihtml5.TEXT_NODE && childNode.data === "") {
+    if (childNode.nodeType === wysihtml5.TEXT_NODE && (/^[\n\r]*$/).test(childNode.data)) {
       childNode.parentNode.removeChild(childNode);
     }
   }
@@ -7913,7 +7952,7 @@ wysihtml5.dom.replaceWithChildNodes = function(node) {
 
       // initiates an allready existent contenteditable
       _bindElement: function(contentEditable) {
-        contentEditable.className = (contentEditable.className && contentEditable.className !== '') ? contentEditable.className + " wysihtml5-sandbox" : "wysihtml5-sandbox";
+        contentEditable.className = contentEditable.className ? contentEditable.className + " wysihtml5-sandbox" : "wysihtml5-sandbox";
         this._loadElement(contentEditable, true);
         return contentEditable;
       },
@@ -9430,58 +9469,80 @@ wysihtml5.quirks.ensureProperClearing = (function() {
 
 };
 ;(function(wysihtml5) {
-  var supportedColourTypes = {
-      rgba : {
-        regex: /^rgba\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*([\d\.]+)\s*\)/i,
-        name: "rgba"
+  
+  // List of supported color format parsing methods
+  // If radix is not defined 10 is expected as default
+  var colorParseMethods = {
+        rgba : {
+          regex: /^rgba\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*([\d\.]+)\s*\)/i,
+          name: "rgba"
+        },
+        rgb : {
+          regex: /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)/i,
+          name: "rgb"
+        },
+        hex6 : {
+          regex: /^#([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])/i,
+          name: "hex",
+          radix: 16
+        },
+        hex3 : {
+          regex: /^#([0-9a-f])([0-9a-f])([0-9a-f])/i,
+          name: "hex",
+          radix: 16
+        }
       },
-      rgb : {
-        regex: /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)/i,
-        name: "rgb"
-      },
-      hex6 : {
-        regex: /^#([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])/i,
-        name: "hex",
-        radix: 16
-      },
-      hex3 : {
-        regex: /^#([0-9a-f])([0-9a-f])([0-9a-f])/i,
-        name: "hex",
-        radix: 16
-      }
-    },
-    makeParamRegExp = function (p) {
-      return new RegExp("(^|\\s|;)" + p + "\\s*:\\s*[^;$]+", "gi");
-    };
+      // Takes a style key name as an argument and makes a regex that can be used to the match key:value pair from style string
+      makeParamRegExp = function (p) {
+        return new RegExp("(^|\\s|;)" + p + "\\s*:\\s*[^;$]+", "gi");
+      };
 
-  function getColourType (colourStr) {
-    var prop, colourTypeConf;
+  // Takes color string value ("#abc", "rgb(1,2,3)", ...) as an argument and returns suitable parsing method for it
+  function getColorParseMethod (colorStr) {
+    var prop, colorTypeConf;
 
-    for (prop in supportedColourTypes) {
-      if (!supportedColourTypes.hasOwnProperty(prop)) { continue; }
+    for (prop in colorParseMethods) {
+      if (!colorParseMethods.hasOwnProperty(prop)) { continue; }
 
-      colourTypeConf = supportedColourTypes[prop];
+      colorTypeConf = colorParseMethods[prop];
 
-      if (colourTypeConf.regex.test(colourStr)) {
-        return colourTypeConf;
+      if (colorTypeConf.regex.test(colorStr)) {
+        return colorTypeConf;
       }
     }
   }
 
-  function getColourName (colourStr) {
-    var type = getColourType(colourStr);
+  // Takes color string value ("#abc", "rgb(1,2,3)", ...) as an argument and returns the type of that color format "hex", "rgb", "rgba". 
+  function getColorFormat (colorStr) {
+    var type = getColorParseMethod(colorStr);
 
-    return type ? type.name : void 0;
+    return type ? type.name : undefined;
   }
 
+  // Public API functions for styleParser
   wysihtml5.quirks.styleParser = {
 
-    getColorName : getColourName,
-    getColorType : getColourType,
+    // Takes color string value as an argument and returns suitable parsing method for it
+    getColorParseMethod : getColorParseMethod,
 
+    // Takes color string value as an argument and returns the type of that color format "hex", "rgb", "rgba". 
+    getColorFormat : getColorFormat,
+    
+    /* Parses a color string to and array of [red, green, blue, alpha].
+     * paramName: optional argument to parse color value directly from style string parameter
+     *
+     * Examples:
+     *    var colorArray = wysihtml5.quirks.styleParser.parseColor("#ABC");            // [170, 187, 204, 1]
+     *    var colorArray = wysihtml5.quirks.styleParser.parseColor("#AABBCC");         // [170, 187, 204, 1]
+     *    var colorArray = wysihtml5.quirks.styleParser.parseColor("rgb(1,2,3)");      // [1, 2, 3, 1]
+     *    var colorArray = wysihtml5.quirks.styleParser.parseColor("rgba(1,2,3,0.5)"); // [1, 2, 3, 0.5]
+     *
+     *    var colorArray = wysihtml5.quirks.styleParser.parseColor("background-color: #ABC; color: #000;", "background-color"); // [170, 187, 204, 1]
+     *    var colorArray = wysihtml5.quirks.styleParser.parseColor("background-color: #ABC; color: #000;", "color");            // [0, 0, 0, 1]
+     */
     parseColor : function (stylesStr, paramName) {
-      var paramsRegex, params, colourType, colourMatch, radix,
-          colourStr = stylesStr;
+      var paramsRegex, params, colorType, colorMatch, radix,
+          colorStr = stylesStr;
 
       if (paramName) {
         paramsRegex = makeParamRegExp(paramName);
@@ -9489,45 +9550,58 @@ wysihtml5.quirks.ensureProperClearing = (function() {
         if (!(params = stylesStr.match(paramsRegex))) { return false; }
 
         params = params.pop().split(":")[1];
-        colourStr = wysihtml5.lang.string(params).trim();
+        colorStr = wysihtml5.lang.string(params).trim();
       }
 
-      if (!(colourType = getColourType(colourStr))) { return false; }
-      if (!(colourMatch = colourStr.match(colourType.regex))) { return false; }
+      if (!(colorType = getColorParseMethod(colorStr))) { return false; }
+      if (!(colorMatch = colorStr.match(colorType.regex))) { return false; }
 
-      radix = colourType.radix || 10;
+      radix = colorType.radix || 10;
 
-      if (colourType === supportedColourTypes.hex3) {
-        colourMatch.shift();
-        colourMatch.push(1);
-        return wysihtml5.lang.array(colourMatch).map(function(d, idx) {
+      if (colorType === colorParseMethods.hex3) {
+        colorMatch.shift();
+        colorMatch.push(1);
+        return wysihtml5.lang.array(colorMatch).map(function(d, idx) {
           return (idx < 3) ? (parseInt(d, radix) * radix) + parseInt(d, radix): parseFloat(d);
         });
       }
 
-      colourMatch.shift();
+      colorMatch.shift();
 
-      if (!colourMatch[3]) {
-        colourMatch.push(1);
+      if (!colorMatch[3]) {
+        colorMatch.push(1);
       }
 
-      return wysihtml5.lang.array(colourMatch).map(function(d, idx) {
+      return wysihtml5.lang.array(colorMatch).map(function(d, idx) {
         return (idx < 3) ? parseInt(d, radix): parseFloat(d);
       });
     },
 
-    unparseColor: function(val, colourName) {
+    /* Takes rgba color array [r,g,b,a] as a value and formats it to color string with given format type
+     * If no format is given, rgba/rgb is returned based on alpha value
+     *
+     * Example:
+     *    var colorStr = wysihtml5.quirks.styleParser.unparseColor([170, 187, 204, 1], "hash");  // "#AABBCC"
+     *    var colorStr = wysihtml5.quirks.styleParser.unparseColor([170, 187, 204, 1], "hex");  // "AABBCC"
+     *    var colorStr = wysihtml5.quirks.styleParser.unparseColor([170, 187, 204, 1], "csv");  // "170, 187, 204, 1"
+     *    var colorStr = wysihtml5.quirks.styleParser.unparseColor([170, 187, 204, 1], "rgba");  // "rgba(170,187,204,1)"
+     *    var colorStr = wysihtml5.quirks.styleParser.unparseColor([170, 187, 204, 1], "rgb");  // "rgb(170,187,204)"
+     *
+     *    var colorStr = wysihtml5.quirks.styleParser.unparseColor([170, 187, 204, 0.5]);  // "rgba(170,187,204,0.5)"
+     *    var colorStr = wysihtml5.quirks.styleParser.unparseColor([170, 187, 204, 1]);  // "rgb(170,187,204)"
+     */
+    unparseColor: function(val, colorFormat) {
       var hexRadix = 16;
 
-      if (colourName === "hex") {
+      if (colorFormat === "hex") {
         return (val[0].toString(hexRadix) + val[1].toString(hexRadix) + val[2].toString(hexRadix)).toUpperCase();
-      } else if (colourName === "hash") {
+      } else if (colorFormat === "hash") {
         return "#" + (val[0].toString(hexRadix) + val[1].toString(hexRadix) + val[2].toString(hexRadix)).toUpperCase();
-      } else if (colourName === "rgb") {
+      } else if (colorFormat === "rgb") {
         return "rgb(" + val[0] + "," + val[1] + "," + val[2] + ")";
-      } else if (colourName === "rgba") {
+      } else if (colorFormat === "rgba") {
         return "rgba(" + val[0] + "," + val[1] + "," + val[2] + "," + val[3] + ")";
-      } else if (colourName === "csv") {
+      } else if (colorFormat === "csv") {
         return  val[0] + "," + val[1] + "," + val[2] + "," + val[3];
       }
 
@@ -9538,6 +9612,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       }
     },
 
+    // Parses font size value from style string
     parseFontSize: function(stylesStr) {
       var params = stylesStr.match(makeParamRegExp("font-size"));
       if (params) {
@@ -9578,6 +9653,50 @@ wysihtml5.quirks.ensureProperClearing = (function() {
               throw new Error("not a descendant of ancestor!");
       }
       return ret;
+  }
+
+  function getWebkitSelectionFixNode(container) {
+    var blankNode = document.createElement('span');
+
+    var placeholderRemover = function(event) {
+      // Self-destructs the caret and keeps the text inserted into it by user
+      var lastChild;
+
+      container.removeEventListener('mouseup', placeholderRemover);
+      container.removeEventListener('keydown', placeholderRemover);
+      container.removeEventListener('touchstart', placeholderRemover);
+      container.removeEventListener('focus', placeholderRemover);
+      container.removeEventListener('blur', placeholderRemover);
+      container.removeEventListener('paste', delayedPlaceholderRemover);
+      container.removeEventListener('drop', delayedPlaceholderRemover);
+      container.removeEventListener('beforepaste', delayedPlaceholderRemover);
+
+      if (blankNode && blankNode.parentNode) {
+        blankNode.parentNode.removeChild(blankNode);
+      }
+    },
+    delayedPlaceholderRemover = function (event) {
+      if (blankNode && blankNode.parentNode) {
+        setTimeout(placeholderRemover, 0);
+      }
+    };
+
+    blankNode.appendChild(document.createTextNode(wysihtml5.INVISIBLE_SPACE));
+    blankNode.className = '_wysihtml5-temp-caret-fix';
+    blankNode.style.display = 'block';
+    blankNode.style.minWidth = '1px';
+    blankNode.style.height = '0px';
+
+    container.addEventListener('mouseup', placeholderRemover);
+    container.addEventListener('keydown', placeholderRemover);
+    container.addEventListener('touchstart', placeholderRemover);
+    container.addEventListener('focus', placeholderRemover);
+    container.addEventListener('blur', placeholderRemover);
+    container.addEventListener('paste', delayedPlaceholderRemover);
+    container.addEventListener('drop', delayedPlaceholderRemover);
+    container.addEventListener('beforepaste', delayedPlaceholderRemover);
+
+    return blankNode;
   }
 
   // Should fix the obtained ranges that cannot surrond contents normally to apply changes upon
@@ -10646,6 +10765,52 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       return (selection && selection.anchorNode && selection.focusNode) ? selection : null;
     },
 
+
+
+    // Webkit has an ancient error of not selecting all contents when uneditable block element is first or last in editable area
+    selectAll: function() {
+      var range = this.createRange(),
+          composer = this.composer,
+          that = this,
+          blankEndNode = getWebkitSelectionFixNode(this.composer.element),
+          blankStartNode = getWebkitSelectionFixNode(this.composer.element),
+          s;
+
+      var doSelect = function() {
+        range.setStart(composer.element, 0);
+        range.setEnd(composer.element, composer.element.childNodes.length);
+        s = that.setSelection(range);
+      };
+
+      var notSelected = function() {
+        return !s || (s.nativeSelection && s.nativeSelection.type && (s.nativeSelection.type === "Caret" || s.nativeSelection.type === "None"));
+      }
+
+      wysihtml5.dom.removeInvisibleSpaces(this.composer.element);
+      doSelect();
+      
+      if (this.composer.element.firstChild && notSelected())  {
+        // Try fixing end
+        this.composer.element.appendChild(blankEndNode);
+        doSelect();
+
+        if (notSelected()) {
+          // Remove end fix
+          blankEndNode.parentNode.removeChild(blankEndNode);
+          
+          // Try fixing beginning
+          this.composer.element.insertBefore(blankStartNode, this.composer.element.firstChild);
+          doSelect();
+          
+          if (notSelected()) {
+            // Try fixing both
+            this.composer.element.appendChild(blankEndNode);
+            doSelect();
+          }
+        }
+      }
+    },
+
     createRange: function() {
       return rangy.createRange(this.doc);
     },
@@ -10702,6 +10867,25 @@ wysihtml5.quirks.ensureProperClearing = (function() {
         }
 
         return (wysihtml5.lang.array(nodeNames).contains(parentElement.nodeName)) ? parentElement : false;
+    },
+
+    isInThisEditable: function() {
+      var sel = this.getSelection(),
+          fnode = sel.focusNode,
+          anode = sel.anchorNode;
+
+      // In IE node contains will not work for textnodes, thus taking parentNode
+      if (fnode && fnode.nodeType !== 1) {
+        fnode = fnode.parentNode;
+      }
+
+      if (anode && anode.nodeType !== 1) {
+        anode = anode.parentNode;
+      }
+
+      return anode && fnode &&
+             (wysihtml5.dom.contains(this.composer.element, fnode) || this.composer.element === fnode) &&
+             (wysihtml5.dom.contains(this.composer.element, anode) || this.composer.element === anode);
     },
 
     deselect: function() {
@@ -11557,12 +11741,12 @@ wysihtml5.Commands = Base.extend(
     exec: function(composer, command, size) {
       size = size.size || size;
       if (!(/^\s*$/).test(size)) {
-        wysihtml5.commands.formatInline.exec(composer, command, {styleProperty: "fontSize", styleValue: size, toggle: true});
+        wysihtml5.commands.formatInline.exec(composer, command, {styleProperty: "fontSize", styleValue: size, toggle: false});
       }
     },
 
     state: function(composer, command, size) {
-      return wysihtml5.commands.formatInline.state(composer, command, {styleProperty: "fontSize", styleValue: size}, false);
+      return wysihtml5.commands.formatInline.state(composer, command, {styleProperty: "fontSize", styleValue: size || undefined});
     },
 
     remove: function(composer, command) {
@@ -11725,6 +11909,14 @@ wysihtml5.Commands = Base.extend(
       BLOCK_ELEMENTS = "h1, h2, h3, h4, h5, h6, p, pre, div, blockquote",
       INLINE_ELEMENTS = "b, big, i, small, tt, abbr, acronym, cite, code, dfn, em, kbd, strong, samp, var, a, bdo, br, q, span, sub, sup, button, label, textarea, input, select, u";
 
+  function correctOptionsForSimilarityCheck(options) {
+    return {
+      nodeName: options.nodeName || null,
+      className: (!options.classRegExp) ? options.className || null : null,
+      classRegExp: options.classRegExp || null,
+      styleProperty: options.styleProperty || null
+    };
+  }
 
   // Removes empty block level elements
   function cleanup(composer) {
@@ -11734,7 +11926,7 @@ wysihtml5.Commands = Base.extend(
         elements = wysihtml5.lang.array(allElements).without(uneditables);
 
     for (var i = elements.length; i--;) {
-      if (elements[i].innerHTML === "") {
+      if (elements[i].innerHTML.replace(/[\uFEFF]/g, '') === "") {
         elements[i].parentNode.removeChild(elements[i]);
       }
     }
@@ -11861,7 +12053,7 @@ wysihtml5.Commands = Base.extend(
 
     for (var i = contentBlocks.length; i--;) {
       if (!contentBlocks[i].nextSibling || contentBlocks[i].nextSibling.nodeType !== 1 || contentBlocks[i].nextSibling.nodeName !== 'BR') {
-        if ((contentBlocks[i].innerHTML || contentBlocks[i].nodeValue).trim() !== "") {
+        if ((contentBlocks[i].innerHTML || contentBlocks[i].nodeValue || '').trim() !== '') {
           contentBlocks[i].parentNode.insertBefore(contentBlocks[i].ownerDocument.createElement('BR'), contentBlocks[i].nextSibling);
         }
       }
@@ -11927,8 +12119,10 @@ wysihtml5.Commands = Base.extend(
         rangeStartContainer = r.startContainer,
         content = r.extractContents(),
         fragment = composer.doc.createDocumentFragment(),
+        similarOptions = defaultOptions ? correctOptionsForSimilarityCheck(defaultOptions) : null,
+        similarOuterBlock = similarOptions ? wysihtml5.dom.getParentElement(rangeStartContainer, similarOptions, null, composer.element) : null,
         splitAllBlocks = !defaultOptions || (defaultName === "BLOCKQUOTE" && defaultOptions.nodeName && defaultOptions.nodeName === "BLOCKQUOTE"),
-        firstOuterBlock = findOuterBlock(rangeStartContainer, composer.element, splitAllBlocks), // The outermost un-nestable block element parent of selection start
+        firstOuterBlock = similarOuterBlock || findOuterBlock(rangeStartContainer, composer.element, splitAllBlocks), // The outermost un-nestable block element parent of selection start
         wrapper, blocks, children;
 
     if (options && options.nodeName && options.nodeName === "BLOCKQUOTE") {
@@ -12053,7 +12247,7 @@ wysihtml5.Commands = Base.extend(
 
         if (composer.selection.isCollapsed()) {
           parent = wysihtml5.dom.getParentElement(composer.selection.getOwnRanges()[0].startContainer, {
-            query: BLOCK_ELEMENTS
+            query: UNNESTABLE_BLOCK_ELEMENTS + ', ' + (options && options.nodeName ? options.nodeName.toLowerCase() : 'div'),
           }, null, composer.element);
           if (parent) {
             bookmark = rangy.saveSelection(composer.win);
@@ -12066,7 +12260,7 @@ wysihtml5.Commands = Base.extend(
           }
         }
 
-        // And get all selection ranges of current composer and iterat
+        // And get all selection ranges of current composer and iterate
         ranges = composer.selection.getOwnRanges();
         for (var i = ranges.length; i--;) {
           newBlockElements = newBlockElements.concat(wrapRangeWithElement(ranges[i], options, getParentBlockNodeName(ranges[i].startContainer, composer), composer));
@@ -12076,6 +12270,13 @@ wysihtml5.Commands = Base.extend(
 
       // Remove empty block elements that may be left behind
       cleanup(composer);
+      // If cleanup removed some new block elements. remove them from array too
+      for (var e = newBlockElements.length; e--;) {
+        if (!newBlockElements[e].parentNode) {
+          newBlockElements.splice(e, 1);
+        }
+      }
+      
       // Restore correct selection
       if (bookmark) {
         rangy.restoreSelection(bookmark);
@@ -12131,8 +12332,9 @@ wysihtml5.Commands = Base.extend(
   wysihtml5.commands.formatCode = {
 
     exec: function(composer, command, classname) {
-      var pre = this.state(composer),
+      var pre = this.state(composer)[0],
           code, range, selectedNodes;
+
       if (pre) {
         // caret is already within a <pre><code>...</code></pre>
         composer.selection.executeAndRestore(function() {
@@ -12161,12 +12363,13 @@ wysihtml5.Commands = Base.extend(
     },
 
     state: function(composer) {
-      var selectedNode = composer.selection.getSelectedNode();
+      var selectedNode = composer.selection.getSelectedNode(), node;
       if (selectedNode && selectedNode.nodeName && selectedNode.nodeName == "PRE"&&
           selectedNode.firstChild && selectedNode.firstChild.nodeName && selectedNode.firstChild.nodeName == "CODE") {
-        return selectedNode;
+        return [selectedNode];
       } else {
-        return wysihtml5.dom.getParentElement(selectedNode, { query: "pre code" });
+        node = wysihtml5.dom.getParentElement(selectedNode, { query: "pre code" });
+        return node ? [node.parentNode] : false;
       }
     }
   };
@@ -12310,7 +12513,7 @@ wysihtml5.Commands = Base.extend(
   }
 
   function updateFormatOfElement(element, options) {
-    var attr, newNode, a, newAttributes, nodeNameQuery;
+    var attr, newNode, a, newAttributes, nodeNameQuery, nodeQueryMatch;
 
     if (options.className) {
       if (options.toggle !== false && element.classList.contains(options.className)) {
@@ -12345,30 +12548,19 @@ wysihtml5.Commands = Base.extend(
       updateElementAttributes(element, newAttributes, options.toggle);
     }
 
-    // Handle similar semanticallys ame elements (queryAliasMap)
+
+    // Handle similar semantically same elements (queryAliasMap)
     nodeNameQuery = options.nodeName ? queryAliasMap[options.nodeName.toLowerCase()] || options.nodeName.toLowerCase() : null;
+    nodeQueryMatch = nodeNameQuery ? wysihtml5.dom.domNode(element).test({ query: nodeNameQuery }) : false;
     
-    if ((options.nodeName && wysihtml5.dom.domNode(element).test({ query: nodeNameQuery })) || (!options.nodeName && element.nodeName === defaultTag)) {
-
-      
-      if (hasNoClass(element) && hasNoStyle(element) && hasNoAttributes(element)) {
+    // Unwrap element if no attributes present and node name given
+    // or no attributes and if no nodename set but node is the default
+    if (!options.nodeName || options.nodeName === defaultTag || nodeQueryMatch) {
+      if (
+        ((options.toggle !== false && nodeQueryMatch) || (!options.nodeName && element.nodeName === defaultTag)) &&
+        hasNoClass(element) && hasNoStyle(element) && hasNoAttributes(element)
+      ) {
         wysihtml5.dom.unwrap(element);
-      } else if (!options.nodeName) {
-        newNode = element.ownerDocument.createElement(defaultTag);
-        
-        // pass present attributes
-        attr = wysihtml5.dom.getAttributes(element);
-        for (a in attr) {
-          if (attr.hasOwnProperty(a)) {
-            newNode.setAttribute(a, attr[a]);
-          }
-        }
-
-        while (element.firstChild) {
-          newNode.appendChild(element.firstChild);
-        }
-        element.parentNode.insertBefore(newNode, element);
-        element.parentNode.removeChild(element);
       }
 
     }
@@ -12473,35 +12665,39 @@ wysihtml5.Commands = Base.extend(
         partial = false,
         node, range, caretNode;
 
-    if (searchNodes.length === 0 && composer.selection.isCollapsed()) {
-      caretNode = composer.selection.getSelection().anchorNode;
-      if (!caretNode) {
-        // selection not in editor
-        return {
-            nodes: [],
-            partial: false
-        };
-      }
-      if (caretNode.nodeType === 3) {
-        searchNodes = [caretNode];
-      }
-    }
+    if (composer.selection.isInThisEditable()) {
 
-    // Handle collapsed selection caret
-    if (!searchNodes.length) {
-      range = composer.selection.getOwnRanges()[0];
-      if (range) {
-        searchNodes = [range.endContainer];
+      if (searchNodes.length === 0 && composer.selection.isCollapsed()) {
+        caretNode = composer.selection.getSelection().anchorNode;
+        if (!caretNode) {
+          // selection not in editor
+          return {
+              nodes: [],
+              partial: false
+          };
+        }
+        if (caretNode.nodeType === 3) {
+          searchNodes = [caretNode];
+        }
       }
-    }
 
-    for (var i = 0, maxi = searchNodes.length; i < maxi; i++) {
-      node = findSimilarTextNodeWrapper(searchNodes[i], options, composer.element, exact);
-      if (node) {
-        nodes.push(node);
-      } else {
-        partial = true;
+      // Handle collapsed selection caret
+      if (!searchNodes.length) {
+        range = composer.selection.getOwnRanges()[0];
+        if (range) {
+          searchNodes = [range.endContainer];
+        }
       }
+
+      for (var i = 0, maxi = searchNodes.length; i < maxi; i++) {
+        node = findSimilarTextNodeWrapper(searchNodes[i], options, composer.element, exact);
+        if (node) {
+          nodes.push(node);
+        } else {
+          partial = true;
+        }
+      }
+
     }
     
     return {
@@ -12820,12 +13016,9 @@ wysihtml5.Commands = Base.extend(
       composer.element.normalize();
     },
 
-    state: function(composer, command, options, exact) {
+    state: function(composer, command, options) {
       options = fixOptions(options);
-      exact = typeof exact === "boolean" ? exact : true;
-
-      var nodes = getState(composer, options, exact).nodes;
-      
+      var nodes = getState(composer, options, true).nodes;
       return (nodes.length === 0) ? false : nodes;
     }
   };
@@ -14684,14 +14877,14 @@ wysihtml5.views.View = Base.extend(
   // Deletion with caret in the beginning of headings needs special attention
   // Heading does not concate text to previous block node correctly (browsers do unexpected miracles here especially webkit)
   var fixDeleteInTheBeginnigOfHeading = function(composer) {
-    var selection = composer.selection;
+    var selection = composer.selection,
+        prevNode = selection.getPreviousNode();
 
     if (selection.caretIsFirstInSelection() &&
-        selection.getPreviousNode() &&
-        selection.getPreviousNode().nodeName &&
-        (/^H\d$/gi).test(selection.getPreviousNode().nodeName)
+        prevNode &&
+        prevNode.nodeType === 1 &&
+        (/block/).test(composer.win.getComputedStyle(prevNode).display)
     ) {
-      var prevNode = selection.getPreviousNode();
       if ((/^\s*$/).test(prevNode.textContent || prevNode.innerText)) {
         // If heading is empty remove the heading node
         prevNode.parentNode.removeChild(prevNode);
@@ -14699,20 +14892,23 @@ wysihtml5.views.View = Base.extend(
       } else {
         if (prevNode.lastChild) {
           var selNode = prevNode.lastChild,
-              curNode = wysihtml5.dom.getParentElement(selection.getSelectedNode(), { query: "h1, h2, h3, h4, h5, h6, p, pre, div, blockquote" }, false, composer.element);
-          if (prevNode) {
+              selectedNode = selection.getSelectedNode(),
+              commonAncestorNode = wysihtml5.dom.domNode(prevNode).commonAncestor(selectedNode, composer.element);
+              curNode = commonAncestorNode ? wysihtml5.dom.getParentElement(selectedNode, {
+                query: "h1, h2, h3, h4, h5, h6, p, pre, div, blockquote"
+              }, false, commonAncestorNode) : null;
+          
             if (curNode) {
               while (curNode.firstChild) {
                 prevNode.appendChild(curNode.firstChild);
               }
               selection.setAfter(selNode);
               return true;
-            } else if (selection.getSelectedNode().nodeType === 3) {
-              prevNode.appendChild(selection.getSelectedNode());
+            } else if (selectedNode.nodeType === 3) {
+              prevNode.appendChild(selectedNode);
               selection.setAfter(selNode);
               return true;
             }
-          }
         }
       }
     }
@@ -14724,23 +14920,17 @@ wysihtml5.views.View = Base.extend(
         element = composer.element;
 
     if (selection.isCollapsed()) {
-      if (selection.caretIsInTheBeginnig('li')) {
-        // delete in the beginnig of LI will outdent not delete
+      if (fixDeleteInTheBeginnigOfHeading(composer)) {
         event.preventDefault();
-        composer.commands.exec('outdentList');
-      } else {
-        if (fixDeleteInTheBeginnigOfHeading(composer)) {
-          event.preventDefault();
-          return;
-        }
-        if (fixLastBrDeletionInTable(composer)) {
-          event.preventDefault();
-          return;
-        }
-        if (handleUneditableDeletion(composer)) {
-          event.preventDefault();
-          return;
-        }
+        return;
+      }
+      if (fixLastBrDeletionInTable(composer)) {
+        event.preventDefault();
+        return;
+      }
+      if (handleUneditableDeletion(composer)) {
+        event.preventDefault();
+        return;
       }
     } else {
       if (selection.containsUneditable()) {
@@ -14750,11 +14940,15 @@ wysihtml5.views.View = Base.extend(
     }
   };
 
-  var handleTabKeyDown = function(composer, element) {
+  var handleTabKeyDown = function(composer, element, shiftKey) {
     if (!composer.selection.isCollapsed()) {
       composer.selection.deleteContents();
     } else if (composer.selection.caretIsInTheBeginnig('li')) {
-      if (composer.commands.exec('indentList')) return;
+      if (shiftKey) {
+        if (composer.commands.exec('outdentList')) return;
+      } else {
+        if (composer.commands.exec('indentList')) return;
+      }
     }
 
     // Is &emsp; close enough to tab. Could not find enough counter arguments for now.
@@ -14770,9 +14964,9 @@ wysihtml5.views.View = Base.extend(
 
   // Listens to "drop", "paste", "mouseup", "focus", "keyup" events and fires
   var handleUserInteraction = function (event) {
-    this.parent.fire("beforeinteraction").fire("beforeinteraction:composer");
+    this.parent.fire("beforeinteraction", event).fire("beforeinteraction:composer", event);
     setTimeout((function() {
-      this.parent.fire("interaction").fire("interaction:composer");
+      this.parent.fire("interaction", event).fire("interaction:composer", event);
     }).bind(this), 0);
   };
 
@@ -14886,6 +15080,13 @@ wysihtml5.views.View = Base.extend(
         command = shortcuts[keyCode],
         target, parent;
 
+    // Select all (meta/ctrl + a)
+    if ((event.ctrlKey || event.metaKey) && keyCode === 65) {
+      this.selection.selectAll();
+      event.preventDefault();
+      return;
+    }
+
     // Shortcut logic
     if ((event.ctrlKey || event.metaKey) && !event.altKey && command) {
       this.commands.exec(command);
@@ -14908,16 +15109,16 @@ wysihtml5.views.View = Base.extend(
         if (parent.nodeName === "A" && !parent.firstChild) {
           parent.parentNode.removeChild(parent);
         }
-        setTimeout(function() {
+        setTimeout((function() {
           wysihtml5.quirks.redraw(this.element);
-        }, 0);
+        }).bind(this), 0);
       }
     }
 
     if (this.config.handleTabKey && keyCode === wysihtml5.TAB_KEY) {
       // TAB key handling
       event.preventDefault();
-      handleTabKeyDown(this, this.element);
+      handleTabKeyDown(this, this.element, event.shiftKey);
     }
 
   };
@@ -15276,6 +15477,8 @@ wysihtml5.views.View = Base.extend(
     // Whether toolbar is displayed after init by script automatically.
     // Can be set to false if toolobar is set to display only on editable area focus
     showToolbarAfterInit: true,
+    // With default toolbar it shows dialogs in toolbar when their related text format state becomes active (click on link in text opens link dialogue)
+    showToolbarDialogsOnSelection: true,
     // Whether urls, entered by the user should automatically become clickable-links
     autoLink:             true,
     // Includes table editing events and cell selection tracking
@@ -15317,8 +15520,7 @@ wysihtml5.views.View = Base.extend(
     // Also copied source is based directly on selection - 
     // (very useful for webkit based browsers where copy will otherwise contain a lot of code and styles based on whatever and not actually in selection).
     // If falsy value is passed source override is also disabled
-    copyedFromMarking: '<meta name="copied-from" content="wysihtml5">',
-    showDialogsByDefault: true
+    copyedFromMarking: '<meta name="copied-from" content="wysihtml5">'
   };
 
   wysihtml5.Editor = wysihtml5.lang.Dispatcher.extend(
