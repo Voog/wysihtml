@@ -10,9 +10,10 @@ wysihtml5.dom.removeEmptyTextNodes = function(node) {
       childNodes        = wysihtml5.lang.array(node.childNodes).get(),
       childNodesLength  = childNodes.length,
       i                 = 0;
+
   for (; i<childNodesLength; i++) {
     childNode = childNodes[i];
-    if (childNode.nodeType === wysihtml5.TEXT_NODE && childNode.data === "") {
+    if (childNode.nodeType === wysihtml5.TEXT_NODE && (/^[\n\r]*$/).test(childNode.data)) {
       childNode.parentNode.removeChild(childNode);
     }
   }

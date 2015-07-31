@@ -273,6 +273,13 @@
         command = shortcuts[keyCode],
         target, parent;
 
+    // Select all (meta/ctrl + a)
+    if ((event.ctrlKey || event.metaKey) && keyCode === 65) {
+      this.selection.selectAll();
+      event.preventDefault();
+      return;
+    }
+
     // Shortcut logic
     if ((event.ctrlKey || event.metaKey) && !event.altKey && command) {
       this.commands.exec(command);
