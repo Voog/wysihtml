@@ -1,3 +1,6 @@
+* wysihtml5x 0.5.0-beta13* (August 18, 2015)
+* Fixes node.normalize polyfill failing to restore cursor in some cases
+
 * wysihtml5x 0.5.0-beta12* (July 31, 2015)
 * Fixes a many toolbar handling errors
 * Fixes formatBlock misbehaviours: in Safari selected content can be lost in some cases, acting on outer div if heading and paragraph elements are contained in div.
