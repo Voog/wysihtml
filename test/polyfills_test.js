@@ -33,3 +33,63 @@ test("Check element.normalize is preserving caret position", function() {
   ok(s.anchorNode === this.editable.firstChild, "Anchor element is correct after normalize");
   ok(s.anchorOffset === 7 , "Anchor offset is correct after normalize");
 });
+
+test("Check element.normalize is preserving selection", function() {
+  var text1 = document.createTextNode('test'),
+      text2 = document.createTextNode('foo'),
+      text3 = document.createTextNode('third'),
+      text4 = document.createTextNode('fourth'),
+      br = document.createElement('br'),
+      r = rangy.createRange(),
+      s;
+
+  this.editable.appendChild(text1);
+  this.editable.appendChild(text2);
+  this.editable.appendChild(br);
+  this.editable.appendChild(text3);
+  this.editable.appendChild(text4);
+
+  r.setStart(text2, 0);
+  r.setEndAfter(br);
+  r.select();
+
+  this.editable.normalize();
+  s = rangy.getSelection();
+
+  ok(this.editable.childNodes.length === 3, "Normalize merged nodes");
+  equal(s.anchorNode, this.editable.firstChild, "Anchor element is correct after normalize");
+  equal(s.anchorOffset, 4 , "Anchor offset is correct after normalize");
+  equal(s.focusNode, this.editable, "Focus element is correct after normalize");
+  equal(s.focusOffset, 2 , "Focus offset is correct after normalize");
+});
+
+
+test("Check element.normalize is preserving selection  2", function() {
+  var text1 = document.createTextNode('test'),
+      text2 = document.createTextNode('foo'),
+      text3 = document.createTextNode('third'),
+      text4 = document.createTextNode('fourth'),
+      br = document.createElement('br'),
+      r = rangy.createRange(),
+      s;
+
+  this.editable.appendChild(text1);
+  this.editable.appendChild(text2);
+  this.editable.appendChild(br);
+  this.editable.appendChild(text3);
+  this.editable.appendChild(text4);
+
+  r.setStartBefore(br);
+  r.setEnd(text4, 0);
+  r.select();
+
+  this.editable.normalize();
+  s = rangy.getSelection();
+
+  ok(this.editable.childNodes.length === 3, "Normalize merged nodes");
+  equal(s.anchorNode, this.editable, "Anchor element is correct after normalize");
+  equal(s.anchorOffset, 1, "Anchor offset is correct after normalize");
+  equal(s.focusNode, this.editable.childNodes[2], "Focus element is correct after normalize");
+  equal(s.focusOffset, 5 , "Focus offset is correct after normalize");
+});
+

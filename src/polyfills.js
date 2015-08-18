@@ -367,6 +367,8 @@ wysihtml5.polyfills = function(win, doc) {
     return all;
   };
 
+
+
   var normalizeFix = function() {
     var f = Node.prototype.normalize;
     var nf = function() {
@@ -374,13 +376,15 @@ wysihtml5.polyfills = function(win, doc) {
           s = this.ownerDocument.defaultView.getSelection(),
           anode = s.anchorNode,
           aoffset = s.anchorOffset,
+          aelement = anode && anode.nodeType === 1 && anode.childNodes.length > 0 ? anode.childNodes[aoffset] : undefined,
           fnode = s.focusNode,
           foffset = s.focusOffset,
+          felement = fnode && fnode.nodeType === 1 && foffset > 0 ? fnode.childNodes[foffset -1] : undefined,
           r = this.ownerDocument.createRange(),
           prevTxt = texts.shift(),
           curText = prevTxt ? texts.shift() : null;
 
-      if ((anode === fnode && foffset < aoffset) || (anode !== fnode && (anode.compareDocumentPosition(fnode) & Node.DOCUMENT_POSITION_PRECEDING))) {
+      if ((anode === fnode && foffset < aoffset) || (anode !== fnode && (anode.compareDocumentPosition(fnode) & Node.DOCUMENT_POSITION_PRECEDING) && !(anode.compareDocumentPosition(fnode) & Node.DOCUMENT_POSITION_CONTAINS))) {
         fnode = [anode, anode = fnode][0];
         foffset = [aoffset, aoffset = foffset][0];
       }
@@ -404,13 +408,20 @@ wysihtml5.polyfills = function(win, doc) {
         }
       }
 
+      if (felement) {
+        foffset = Array.prototype.indexOf.call(felement.parentNode.childNodes, felement) + 1;
+      }
+
+      if (aelement) {
+        aoffset = Array.prototype.indexOf.call(aelement.parentNode.childNodes, aelement);
+      }
+
       if (anode && anode.parentNode && fnode && fnode.parentNode) {
         r.setStart(anode, aoffset);
         r.setEnd(fnode, foffset);
         s.removeAllRanges();
         s.addRange(r);
       }
-
     };
     Node.prototype.normalize = nf;
   };
