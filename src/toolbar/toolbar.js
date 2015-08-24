@@ -223,12 +223,16 @@
         }
       });
 
-      this.container.ownerDocument.addEventListener("click", function(event) {
+      function updateLinkStatesAndPreventFocus(event) {
         if (!wysihtml5.dom.contains(that.container, event.target) && !wysihtml5.dom.contains(that.composer.element, event.target)) {
           that._updateLinkStates();
           that._preventInstantFocus();
         }
-      }, false);
+      }
+      this.container.ownerDocument.addEventListener("click", updateLinkStatesAndPreventFocus, false);
+      this.editor.on("destroy:composer", function() {
+        that.container.ownerDocument.removeEventListener("click", updateLinkStatesAndPreventFocus);
+      });
 
       if (this.editor.config.handleTables) {
         editor.on("tableselect:composer", function() {
