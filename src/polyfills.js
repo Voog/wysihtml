@@ -384,6 +384,18 @@ wysihtml5.polyfills = function(win, doc) {
           prevTxt = texts.shift(),
           curText = prevTxt ? texts.shift() : null;
 
+      if (felement && felement.nodeType === 3) {
+        fnode = felement;
+        foffset = felement.nodeValue.length;
+        felement = undefined;
+      }
+
+      if (aelement && aelement.nodeType === 3) {
+        anode = aelement;
+        aoffset = aelement.nodeValue.length;
+        aelement = undefined;
+      }
+
       if ((anode === fnode && foffset < aoffset) || (anode !== fnode && (anode.compareDocumentPosition(fnode) & Node.DOCUMENT_POSITION_PRECEDING) && !(anode.compareDocumentPosition(fnode) & Node.DOCUMENT_POSITION_CONTAINS))) {
         fnode = [anode, anode = fnode][0];
         foffset = [aoffset, aoffset = foffset][0];
