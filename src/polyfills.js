@@ -392,7 +392,7 @@ wysihtml5.polyfills = function(win, doc) {
 
       if (aelement && aelement.nodeType === 3) {
         anode = aelement;
-        aoffset = aelement.nodeValue.length;
+        aoffset = 0;
         aelement = undefined;
       }
 
