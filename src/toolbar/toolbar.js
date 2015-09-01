@@ -223,12 +223,14 @@
         }
       });
 
-      this.container.ownerDocument.addEventListener("click", function(event) {
+      this._ownerDocumentClick = function(event) {
         if (!wysihtml5.dom.contains(that.container, event.target) && !wysihtml5.dom.contains(that.composer.element, event.target)) {
           that._updateLinkStates();
           that._preventInstantFocus();
         }
-      }, false);
+      };
+
+      this.container.ownerDocument.addEventListener("click", this._ownerDocumentClick, false);
 
       if (this.editor.config.handleTables) {
         editor.on("tableselect:composer", function() {
@@ -251,6 +253,10 @@
             }
           }, 0);
       });
+    },
+
+    destroy: function() {
+      this.container.ownerDocument.removeEventListener("click", this._ownerDocumentClick, false);
     },
 
     _hideAllDialogs: function() {

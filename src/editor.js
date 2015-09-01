@@ -197,6 +197,16 @@
       return this.currentView.hasPlaceholderSet();
     },
 
+    destroy: function() {
+      if (this.composer && this.composer.sandbox) {
+        this.composer.sandbox.destroy();
+      }
+      if (this.toolbar) {
+        this.toolbar.destroy();
+      }
+      this.off();
+    },
+
     parse: function(htmlOrElement, clearInternals) {
       var parseContext = (this.config.contentEditableMode) ? document : ((this.composer) ? this.composer.sandbox.getDocument() : null);
       var returnValue = this.config.parser(htmlOrElement, {
