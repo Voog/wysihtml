@@ -26,6 +26,10 @@
         }
       },
 
+      destroy: function() {
+
+      },
+
       // creates a new contenteditable and initiates it
       _createElement: function() {
         var element = doc.createElement("div");

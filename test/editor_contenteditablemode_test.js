@@ -21,7 +21,9 @@ if (wysihtml5.browser.supported()) {
 
     teardown: function() {
       var leftover;
-      this.editableArea.parentNode.removeChild(this.editableArea);
+      if (this.editableArea && this.editableArea.parentNode) {
+        this.editableArea.parentNode.removeChild(this.editableArea);
+      }
       while (leftover = document.querySelector("div.wysihtml5-sandbox, div.wysihtml5-test-class")) {
         leftover.parentNode.removeChild(leftover);
       }
@@ -384,6 +386,63 @@ if (wysihtml5.browser.supported()) {
         equal(composerElement.innerHTML.toLowerCase(), html, "Composer still has correct content");
         start();
       }, 500);
+    });
+  });
+
+
+  // currently qunit does not catch the errors for testing (dispatchevent will not work with try catch), but is better than no test at all
+  asyncTest("Test editor.destroy", function() {
+    expect(1);
+
+    var toolbar = document.createElement('div'),
+        that = this,
+        noerror = true;
+
+    toolbar.innerHTML = '<a data-wysihtml5-command="bold">bold</a>';
+    document.body.appendChild(toolbar);
+
+    var editor = new wysihtml5.Editor(this.editableArea, {
+      toolbar: toolbar
+    });
+
+    editor.on("load", function() {
+
+      // destroy the editor
+      editor.destroy();
+      editor.composer.element.parentNode.removeChild(editor.composer.element);
+      toolbar.parentNode.removeChild(toolbar);
+
+      var range = rangy.createRange();
+      range.selectNode(document.body);
+      rangy.getSelection().setSingleRange(range);
+
+      window.onerror = function() {
+        noerror = false;
+      };
+
+      toolbar.dispatchEvent(new MouseEvent('click', {
+        'view': window,
+        'bubbles': true,
+        'cancelable': true
+      }));
+
+      document.body.dispatchEvent(new MouseEvent('click', {
+        'view': window,
+        'bubbles': true,
+        'cancelable': true
+      }));
+
+      editor.composer.element.dispatchEvent(new MouseEvent('click', {
+        'view': window,
+        'bubbles': true,
+        'cancelable': true
+      }));
+
+      setTimeout(function() {
+        ok(noerror, "Toolbar or body click did not bring up any error");
+        start();
+      }, 100);
+      
     });
   });
   
