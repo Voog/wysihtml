@@ -231,6 +231,7 @@
       };
 
       this.container.ownerDocument.addEventListener("click", this._ownerDocumentClick, false);
+      this.editor.on("destroy:composer", this.destroy.bind(this));
 
       if (this.editor.config.handleTables) {
         editor.on("tableselect:composer", function() {
