@@ -919,6 +919,9 @@
         this._selectLine_W3C();
       } else if (this.doc.selection) {
         this._selectLine_MSIE();
+      } else {
+        // For IE Edge as it ditched the old api and did not fully implement the new one (as expected)
+        this._selectLineUniversal();
       }
     },
 
@@ -948,8 +951,75 @@
       }
     },
 
+    getRangeRect: function(r) {
+      var textNode = this.doc.createTextNode("i"),
+          testNode = this.doc.createTextNode("i"),
+          rect, cr;
+
+      /*testNode.style.visibility = "hidden";
+      testNode.style.width = "0px";
+      testNode.style.display = "inline-block";
+      testNode.style.overflow = "hidden";
+      testNode.appendChild(textNode);*/
+
+      if (r.collapsed) {
+        r.insertNode(testNode);
+        r.selectNode(testNode);
+        rect = r.nativeRange.getBoundingClientRect();
+        r.deleteContents();
+
+      } else {
+        rect = r.nativeRange.getBoundingClientRect();
+      }
+
+      return rect;
+
+    },
+
+    _selectLineUniversal: function() {
+      var s = this.getSelection(),
+          r = s.getRangeAt(0),
+          rect,
+          startRange, endRange, testRange,
+          count = 0,
+          amount, testRect, found;
+
+      startRange = r.cloneRange();
+      endRange = r.cloneRange();
+
+      if (r.collapsed) {
+        r.expand('word', 1);
+        rect = r.nativeRange.getBoundingClientRect();
+      }
+
+      do {
+        amount = r.moveStart('character', -1);
+        testRect =  r.nativeRange.getBoundingClientRect();
+        if (!testRect || Math.floor(testRect.top) !== Math.floor(rect.top)) {
+          r.moveStart('character', 1);
+          found = true;
+        }
+        count++;
+      } while (amount !== 0 && !found && count < 2000);
+
+      count = 0;
+      found = false;
+      rect = r.nativeRange.getBoundingClientRect();
+      do {
+        amount = r.moveEnd('character', 1);
+        testRect =  r.nativeRange.getBoundingClientRect();
+        if (!testRect || Math.floor(testRect.bottom) !== Math.floor(rect.bottom)) {
+          r.moveEnd('character', -1);
+          found = true;
+        }
+        count++;
+      } while (amount !== 0 && !found && count < 2000);
+
+      r.select();
+    },
+
     _selectLine_MSIE: function() {
-      var range       = this.doc.selection.createRange(),
+      var range       = this.doc.selection && this.doc.selection.createRange ? this.doc.selection.createRange() : this.doc.createRange(),
           rangeTop    = range.boundingTop,
           scrollWidth = this.doc.body.scrollWidth,
           rangeBottom,
@@ -957,6 +1027,8 @@
           measureNode,
           i,
           j;
+
+      window.r = range;
 
       if (!range.moveToPoint) {
         return;

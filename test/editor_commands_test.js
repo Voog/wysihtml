@@ -156,14 +156,15 @@ if (wysihtml5.browser.supported()) {
 
         editor.setValue(text, true);
         editor.composer.selection.selectNode(editor.editableElement);
-        editor.composer.selection.getSelection().collapseToStart();
+
+        that.setCaretTo(editor, editor.editableElement.childNodes[2], 1);
         editor.composer.commands.exec('justifyRight');
-        equal(editableElement.innerHTML.toLowerCase(), '<div class="wysiwyg-text-align-right">once upon a time</div><br>there was an unformated text<br>spanning many lines.', "Only first line correctly wrapped in aligning div");
+        equal(editableElement.innerHTML.toLowerCase(), 'once upon a time<br><div class="wysiwyg-text-align-right">there was an unformated text</div><br>spanning many lines.', "Only first line correctly wrapped in aligning div");
 
         var node = editor.editableElement.querySelector('.wysiwyg-text-align-right').firstChild;
         editor.composer.selection.selectNode(node);
         editor.composer.commands.exec('justifyLeft');
-        equal(editableElement.innerHTML.toLowerCase().trim(), '<div class="wysiwyg-text-align-left">once upon a time</div><br>there was an unformated text<br>spanning many lines.', "First line wrapper class changed correctly");
+        equal(editableElement.innerHTML.toLowerCase().trim(), 'once upon a time<br><div class="wysiwyg-text-align-left">there was an unformated text</div><br>spanning many lines.', "First line wrapper class changed correctly");
         
         editableElement.innerHTML = '<p class="wysiwyg-text-align-left">once upon a time</p><br>there was an unformated text<br>spanning many lines.';
         node = editor.editableElement.querySelector('p').firstChild;
