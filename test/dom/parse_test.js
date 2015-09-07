@@ -123,7 +123,7 @@ if (wysihtml5.browser.supported()) {
       }
     };
 
-    this.equal(
+    QUnit.equal(
       this.sanitize(
         '<img src="http://url.gif">' +
         '<img src="/path/to/absolute%20href.gif">' +
@@ -143,7 +143,7 @@ if (wysihtml5.browser.supported()) {
       }
     };
 
-    this.equal(
+    QUnit.equal(
       this.sanitize(
         '<img src="HTTP://url.gif">' +
         '<img src="/path/to/absolute%20href.gif">' +
@@ -880,7 +880,7 @@ if (wysihtml5.browser.supported()) {
     },
     input1 = '<div></div>',
     input2 = '<div>   <span>  </span>  </div>',
-    input3 = '<div><img src="pic.jpg"/></div>',
+    input3 = '<div><img src="pic.jpg"></div>',
     input4 = '<div>test</div>',
     input5 = '<div style="width: 10px; height: 10px;">   <span>  </span>  </div>',
     tester = document.createElement('div');
@@ -888,7 +888,7 @@ if (wysihtml5.browser.supported()) {
     this.equal(this.sanitize(input1, rules), "<br>", "Empty DIV gets removed");
     this.equal(this.sanitize(input2, rules), "   <span>  </span>  <br>", "DIV with no textual content gets unwrapped");
 
-    this.equal(this.sanitize(input3, rules), input3, "DIV with img inside is kept");
+    QUnit.equal(this.sanitize(input3, rules), input3, "DIV with img inside is kept");
     this.equal(this.sanitize(input4, rules), input4, "DIV with textual content is kept");
 
     document.body.appendChild(tester);
