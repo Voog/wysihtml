@@ -274,7 +274,7 @@
         target, parent;
 
     // Select all (meta/ctrl + a)
-    if ((event.ctrlKey || event.metaKey) && keyCode === 65) {
+    if ((event.ctrlKey || event.metaKey) && !event.altKey && keyCode === 65) {
       this.selection.selectAll();
       event.preventDefault();
       return;
