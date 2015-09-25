@@ -289,10 +289,9 @@
 
       if (supportsDisablingOfAutoLinking) {
         // I have no idea why IE edge deletes element content here when calling the command,
-        // deferring its execution somehow fixes it correctly
-        setTimeout(function() {
-          this.commands.exec("AutoUrlDetect", false, false);
-        }.bind(this), 0);
+        var tmpHTML = this.element.innerHTML;
+        this.commands.exec("AutoUrlDetect", false, false);
+        this.element.innerHTML = tmpHTML;
       }
 
       if (!this.config.autoLink) {
