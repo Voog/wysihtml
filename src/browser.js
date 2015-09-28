@@ -25,7 +25,11 @@ wysihtml5.browser = (function() {
     if (navigator.appName == 'Microsoft Internet Explorer') {
       re = new RegExp("MSIE ([0-9]{1,}[\.0-9]{0,})");
     } else if (navigator.appName == 'Netscape') {
-      re = new RegExp("Trident/.*rv:([0-9]{1,}[\.0-9]{0,})");
+      if (navigator.userAgent.indexOf("Trident") > -1) {
+        re = new RegExp("Trident/.*rv:([0-9]{1,}[\.0-9]{0,})");
+      } else if ((/Edge\/(\d+)./i).test(navigator.userAgent)) {
+        re = /Edge\/(\d+)./i;
+      }
     }
 
     if (re && re.exec(navigator.userAgent) != null) {
@@ -108,7 +112,7 @@ wysihtml5.browser = (function() {
      * Firefox sometimes shows a huge caret in the beginning after focusing
      */
     displaysCaretInEmptyContentEditableCorrectly: function() {
-      return isIE();
+      return isIE(12, ">");
     },
 
     /**
@@ -180,8 +184,8 @@ wysihtml5.browser = (function() {
          // When inserting unordered or ordered lists in Firefox, Chrome or Safari, the current selection or line gets
          // converted into a list (<ul><li>...</li></ul>, <ol><li>...</li></ol>)
          // IE and Opera act a bit different here as they convert the entire content of the current block element into a list
-        "insertUnorderedList":  isIE(9, ">="),
-        "insertOrderedList":    isIE(9, ">=")
+        "insertUnorderedList":  isIE(9, ">=") || isIE(12, "<="),
+        "insertOrderedList":    isIE(9, ">=")|| isIE(12, "<=")
       };
 
       // Firefox throws errors for queryCommandSupported, so we have to build up our own object of supported commands
@@ -328,7 +332,7 @@ wysihtml5.browser = (function() {
      * IE is the only browser who fires the "focus" event not immediately when .focus() is called on an element
      */
     doesAsyncFocus: function() {
-      return isIE();
+      return isIE(12, ">");
     },
 
     /**

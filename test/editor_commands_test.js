@@ -364,8 +364,6 @@ if (wysihtml5.browser.supported()) {
 
         editor.composer.commands.exec('outdentList');
         equal(editableElement.innerHTML.toLowerCase(), '<ul><li>test</li></ul><br>test<ul><li>test</li></ul>', "List outdent escapes current list item correctly out of list");
-
-
         start();
       });
     });

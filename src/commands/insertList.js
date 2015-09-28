@@ -106,27 +106,33 @@ wysihtml5.commands.insertList = (function(wysihtml5) {
   };
 
   var createListFallback = function(nodeName, composer) {
+    var sel;
+
+    if (!composer.selection.isCollapsed()) {
+      sel = rangy.saveSelection(composer.win);
+    }
+
     // Fallback for Create list
-    composer.selection.executeAndRestoreRangy(function() {
-      var tempClassName =  "_wysihtml5-temp-" + new Date().getTime(),
-          tempElement = composer.selection.deblockAndSurround({
-            "nodeName": "div",
-            "className": tempClassName
-          }),
-          isEmpty, list;
+    var tempClassName =  "_wysihtml5-temp-" + new Date().getTime(),
+        tempElement = composer.selection.deblockAndSurround({
+          "nodeName": "div",
+          "className": tempClassName
+        }),
+        isEmpty, list;
 
-      // This space causes new lists to never break on enter
-      var INVISIBLE_SPACE_REG_EXP = /\uFEFF/g;
-      tempElement.innerHTML = tempElement.innerHTML.replace(wysihtml5.INVISIBLE_SPACE_REG_EXP, "");
-
-      if (tempElement) {
-        isEmpty = wysihtml5.lang.array(["", "<br>", wysihtml5.INVISIBLE_SPACE]).contains(tempElement.innerHTML);
-        list = wysihtml5.dom.convertToList(tempElement, nodeName.toLowerCase(), composer.parent.config.classNames.uneditableContainer);
-        if (isEmpty) {
-          composer.selection.selectNode(list.querySelector("li"), true);
-        }
+    // This space causes new lists to never break on enter
+    var INVISIBLE_SPACE_REG_EXP = /\uFEFF/g;
+    tempElement.innerHTML = tempElement.innerHTML.replace(wysihtml5.INVISIBLE_SPACE_REG_EXP, "");
+    if (tempElement) {
+      isEmpty = (/^(\s|(<br>))+$/i).test(tempElement.innerHTML);
+      list = wysihtml5.dom.convertToList(tempElement, nodeName.toLowerCase(), composer.parent.config.classNames.uneditableContainer);
+      if (sel) {
+        rangy.restoreSelection(sel);
       }
-    });
+      if (isEmpty) {
+        composer.selection.selectNode(list.querySelector("li"), true);
+      }
+    }
   };
 
   return {
@@ -135,7 +141,6 @@ wysihtml5.commands.insertList = (function(wysihtml5) {
           cmd           = (nodeName === "OL") ? "insertOrderedList" : "insertUnorderedList",
           selectedNode  = composer.selection.getSelectedNode(),
           list          = findListEl(selectedNode, nodeName, composer);
-
 
       if (!list.el) {
         if (composer.commands.support(cmd)) {
