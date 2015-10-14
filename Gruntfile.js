@@ -88,6 +88,7 @@ module.exports = function(grunt) {
     "src/commands/alignRightStyle.js",
     "src/commands/alignLeftStyle.js",
     "src/commands/alignCenterStyle.js",
+    "src/commands/alignJustifyStyle.js",
     "src/commands/redo.js",
     "src/commands/underline.js",
     "src/commands/undo.js",
