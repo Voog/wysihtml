@@ -334,9 +334,11 @@
   // If present enableObjectResizing and enableInlineTableEditing command should be called with false to prevent native table handlers
   var initTableHandling = function () {
     var hideHandlers = function () {
+          document.removeEventListener('load', hideHandlers);
           this.doc.execCommand("enableObjectResizing", false, "false");
           this.doc.execCommand("enableInlineTableEditing", false, "false");
-        },
+          
+        }.bind(this),
         iframeInitiator = (function() {
           hideHandlers.call(this);
           removeListeners(this.sandbox.getIframe(), ["focus", "mouseup", "mouseover"], iframeInitiator);
@@ -349,9 +351,7 @@
       if (this.sandbox.getIframe) {
         addListeners(this.sandbox.getIframe(), ["focus", "mouseup", "mouseover"], iframeInitiator);
       } else {
-        setTimeout((function() {
-          hideHandlers.call(this);
-        }).bind(this), 0);
+        document.addEventListener('load', hideHandlers);
       }
     }
     this.tableSelection = wysihtml5.quirks.tableCellsSelection(this.element, this.parent);
