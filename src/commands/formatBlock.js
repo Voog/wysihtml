@@ -382,16 +382,19 @@
       
       // Restore correct selection
       if (bookmark) {
+        wysihtml5.dom.removeInvisibleSpaces(composer.element);
         rangy.restoreSelection(bookmark);
       } else {
+        wysihtml5.dom.removeInvisibleSpaces(composer.element);
+        // Set selection to beging inside first created block element (beginning of it) and end inside (and after content) of last block element
+        // TODO: Checking nodetype might be unnescescary as nodes inserted by formatBlock are nodetype 1 anyway
         range = composer.selection.createRange();
-        range.setStartBefore(newBlockElements[0]);
-        range.setEndAfter(newBlockElements[newBlockElements.length - 1]);
-        composer.selection.setSelection(range);
+        range.setStart(newBlockElements[0], 0);
+        var lastEl = newBlockElements[newBlockElements.length - 1],
+            lastOffset = (lastEl.nodeType === 1 && lastEl.childNodes) ? lastEl.childNodes.length | 0 :  lastEl.length || 0;
+        range.setEnd(lastEl, lastOffset);
+        range.select();
       }
-
-      wysihtml5.dom.removeInvisibleSpaces(composer.element);
-
     },
 
     // If properties as null is passed returns status describing all block level elements

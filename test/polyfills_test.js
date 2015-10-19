@@ -59,10 +59,8 @@ test("Check element.normalize is preserving selection", function() {
   ok(this.editable.childNodes.length === 3, "Normalize merged nodes");
   equal(s.anchorNode, this.editable.firstChild, "Anchor element is correct after normalize");
   equal(s.anchorOffset, 4 , "Anchor offset is correct after normalize");
-  equal(s.focusNode, this.editable, "Focus element is correct after normalize");
-  equal(s.focusOffset, 2 , "Focus offset is correct after normalize");
+  ok((s.focusNode === this.editable && s.focusOffset === 2)|| (s.focusNode === this.editable.lastChild && s.focusOffset === 0), "Focus element and offset is correct after normalize");
 });
-
 
 test("Check element.normalize is preserving selection  2", function() {
   var text1 = document.createTextNode('test'),
@@ -87,9 +85,8 @@ test("Check element.normalize is preserving selection  2", function() {
   s = rangy.getSelection();
 
   ok(this.editable.childNodes.length === 3, "Normalize merged nodes");
-  equal(s.anchorNode, this.editable, "Anchor element is correct after normalize");
-  equal(s.anchorOffset, 1, "Anchor offset is correct after normalize");
+  
+  ok((s.anchorNode === this.editable && s.anchorOffset === 1) || (s.anchorNode === this.editable.firstChild && s.anchorOffset === this.editable.firstChild.length), "Anchor element and offset is correct after normalize");
   equal(s.focusNode, this.editable.childNodes[2], "Focus element is correct after normalize");
   equal(s.focusOffset, 5 , "Focus offset is correct after normalize");
 });
-
