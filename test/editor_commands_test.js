@@ -295,6 +295,7 @@ if (wysihtml5.browser.supported()) {
           text = "test";
         
       editor.on("load", function() {
+        editor.focus();
         var editableElement   = that.editableArea1,
             expectText = '<table style="width: 100%;">' +
                            '<tbody>' +
@@ -309,7 +310,7 @@ if (wysihtml5.browser.supported()) {
                             '</tbody>' +
                           '</table>';
         editor.setValue(text, true);
-        editor.composer.selection.selectNode(editor.editableElement);
+        editor.composer.selection.selectNode(editor.editableElement.firstChild);
         editor.composer.commands.exec('createTable', {
           cols: 2,
           rows: 2,
@@ -328,6 +329,7 @@ if (wysihtml5.browser.supported()) {
           text = "";
         
       editor.on("load", function() {
+        editor.focus();
         var editableElement   = that.editableArea1,
             expectText = '<ul><li></li></ul>',
             expectTextBr = '<ul><li><br></li></ul>',

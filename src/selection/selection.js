@@ -929,9 +929,20 @@
      * See https://developer.mozilla.org/en/DOM/Selection/modify
      */
     _selectLine_W3C: function() {
-      var selection = this.win.getSelection();
+      var selection = this.win.getSelection(),
+          initialBoundry = [selection.anchorNode, selection.anchorOffset, selection.focusNode, selection.focusOffset];
+          
       selection.modify("move", "left", "lineboundary");
       selection.modify("extend", "right", "lineboundary");
+      
+      // IF lineboundary extending did not change selection try universal fallback (FF fails sometimes without a reason)
+      if (selection.anchorNode === initialBoundry[0] &&
+          selection.anchorOffset === initialBoundry[1] &&
+          selection.focusNode === initialBoundry[2] &&
+          selection.focusOffset === initialBoundry[3]
+      ) {
+        this._selectLineUniversal();
+      }
     },
 
     // collapses selection to current line beginning or end
