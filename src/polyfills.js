@@ -437,9 +437,18 @@ wysihtml5.polyfills = function(win, doc) {
     };
     Node.prototype.normalize = nf;
   };
-
-  if ("Node" in window && "normalize" in Node.prototype && normalizeHasCaretError()) {
-    normalizeFix();
+  
+  var F = function() {
+    window.removeEventListener("load", F);
+    if ("Node" in window && "normalize" in Node.prototype && normalizeHasCaretError()) {
+      normalizeFix();
+    }
+  };
+  
+  if (doc.readyState !== "complete") {
+    window.addEventListener("load", F);
+  } else {
+    F();
   }
 };
 
