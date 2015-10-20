@@ -1,3 +1,10 @@
+* wysihtml5x 0.5.0-beta14* (October 20, 2015)
+* Adds editor.destroy() method
+* Adds IE Edge support
+* Fixes issue of inserting ā in windows
+* Fixes issue where wysihtml.js script has to be inside body (error if in head)
+* Some stability updates
+
 * wysihtml5x 0.5.0-beta13* (August 18, 2015)
 * Fixes node.normalize polyfill failing to restore cursor in some cases
 
