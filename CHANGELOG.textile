@@ -1,5 +1,6 @@
 * wysihtml5x 0.5.0-beta14* (October 20, 2015)
 * Adds editor.destroy() method
+* Adds alignJustifyStyle command
 * Adds IE Edge support
 * Fixes issue of inserting ā in windows
 * Fixes issue where wysihtml.js script has to be inside body (error if in head)

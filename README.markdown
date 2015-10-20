@@ -46,11 +46,12 @@ The rich text editing interface is supported in IE8+, FF 29+, Safari 4+, Safari 
 
 ## Development
 
-wysihtml can be built using Grunt. Installation instructions for [Grunt can be found here](http://gruntjs.com/getting-started). Once you have it installed, wysihtml can be built by simply running
+wysihtml can be initialized and built using node package manager:
 
-    grunt
+    npm install
+    npm run build
 
-This builds both minified and development versions, including one with toolbar support.
+This adds dependencies (first line) and builds both minified and development versions (second line), including one with toolbar support.
 
 ## Contributors
 
