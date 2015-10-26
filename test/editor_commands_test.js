@@ -308,7 +308,7 @@ if (wysihtml5.browser.supported()) {
                                 '<td><br></td>' +
                               '</tr>' +
                             '</tbody>' +
-                          '</table>';
+                          '</table><br>';
         editor.setValue(text, true);
         editor.composer.selection.selectNode(editor.editableElement.firstChild);
         editor.composer.commands.exec('createTable', {
