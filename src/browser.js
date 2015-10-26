@@ -385,7 +385,7 @@ wysihtml5.browser = (function() {
       Should actually check for clipboardData on paste event, but cannot in firefox
     */
     supportsModernPaste: function () {
-      return !("clipboardData" in window);
+      return !isIE();
     },
 
     // Unifies the property names of element.style by returning the suitable property name for current browser
