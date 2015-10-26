@@ -8,7 +8,7 @@
 **/
 wysihtml5.dom.getPastedHtml = function(event) {
   var html;
-  if (wysihtml5.browser.supportsModernPaste()) {
+  if (wysihtml5.browser.supportsModernPaste() && event.clipboardData) {
     if (wysihtml5.lang.array(event.clipboardData.types).contains('text/html')) {
       html = event.clipboardData.getData('text/html');
     } else if (wysihtml5.lang.array(event.clipboardData.types).contains('text/plain')) {
