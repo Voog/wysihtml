@@ -1,5 +1,5 @@
 /**
- * @license wysihtml v0.5.0-beta14
+ * @license wysihtml v0.5.0
  * https://github.com/Voog/wysihtml
  *
  * Author: Christopher Blum (https://github.com/tiff)
@@ -10,7 +10,7 @@
  *
  */
 var wysihtml5 = {
-  version: "0.5.0-beta14",
+  version: "0.5.0",
 
   // namespaces
   commands:   {},
@@ -7040,7 +7040,7 @@ wysihtml5.browser = (function() {
       Should actually check for clipboardData on paste event, but cannot in firefox
     */
     supportsModernPaste: function () {
-      return !("clipboardData" in window);
+      return !isIE();
     },
 
     // Unifies the property names of element.style by returning the suitable property name for current browser
@@ -9140,27 +9140,31 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
     }
 
 
-    if (typeof(allowedClasses) === "string" && allowedClasses === "any" && oldNode.getAttribute("class")) {
-      if (currentRules.classes_blacklist) {
-        oldClasses = oldNode.getAttribute("class");
-        if (oldClasses) {
-          classes = classes.concat(oldClasses.split(WHITE_SPACE_REG_EXP));
-        }
-
-        classesLength = classes.length;
-        for (; i<classesLength; i++) {
-          currentClass = classes[i];
-          if (!currentRules.classes_blacklist[currentClass]) {
-            newClasses.push(currentClass);
+    if (typeof(allowedClasses) === "string" && allowedClasses === "any") {
+      if (oldNode.getAttribute("class")) {
+        if (currentRules.classes_blacklist) {
+          oldClasses = oldNode.getAttribute("class");
+          if (oldClasses) {
+            classes = classes.concat(oldClasses.split(WHITE_SPACE_REG_EXP));
           }
-        }
 
-        if (newClasses.length) {
-          attributes["class"] = wysihtml5.lang.array(newClasses).unique().join(" ");
-        }
+          classesLength = classes.length;
+          for (; i<classesLength; i++) {
+            currentClass = classes[i];
+            if (!currentRules.classes_blacklist[currentClass]) {
+              newClasses.push(currentClass);
+            }
+          }
 
+          if (newClasses.length) {
+            attributes["class"] = wysihtml5.lang.array(newClasses).unique().join(" ");
+          }
+
+        } else {
+          attributes["class"] = oldNode.getAttribute("class");
+        }
       } else {
-        attributes["class"] = oldNode.getAttribute("class");
+        attributes["class"] = wysihtml5.lang.array(classes).unique().join(" ");
       }
     } else {
       // make sure that wysihtml5 temp class doesn't get stripped out
@@ -10015,7 +10019,7 @@ wysihtml5.dom.replaceWithChildNodes = function(node) {
         set = function() {
           if (view.isEmpty() && !view.placeholderSet) {
             view.placeholderSet = true;
-            view.setValue(placeholderText);
+            view.setValue(placeholderText, false);
             dom.addClass(view.element, CLASS_NAME);
           }
         };
@@ -11120,7 +11124,7 @@ wysihtml5.dom.unwrap = function(node) {
 **/
 wysihtml5.dom.getPastedHtml = function(event) {
   var html;
-  if (event.clipboardData) {
+  if (wysihtml5.browser.supportsModernPaste() && event.clipboardData) {
     if (wysihtml5.lang.array(event.clipboardData.types).contains('text/html')) {
       html = event.clipboardData.getData('text/html');
     } else if (wysihtml5.lang.array(event.clipboardData.types).contains('text/plain')) {
@@ -11990,9 +11994,15 @@ wysihtml5.quirks.ensureProperClearing = (function() {
     // Deletes selection contents making sure uneditables/unselectables are not partially deleted
     // Triggers wysihtml5:uneditable:delete custom event on all deleted uneditables if customevents suppoorted
     deleteContents: function()  {
-      var range = this.getRange(),
-          startParent, endParent, uneditables, ev;
-
+      var range = this.getRange();
+      this.deleteRangeContents(range);
+      this.setSelection(range);
+    },
+    
+    // Makes sure all uneditable sare notified before deleting contents
+    deleteRangeContents: function (range) {
+      var startParent, endParent, uneditables, ev;
+      
       if (this.unselectableClass) {
         if ((startParent = wysihtml5.dom.getParentElement(range.startContainer, { query: "." + this.unselectableClass }, false, this.contain))) {
           range.setStartBefore(startParent);
@@ -12011,10 +12021,8 @@ wysihtml5.quirks.ensureProperClearing = (function() {
             uneditables[i].dispatchEvent(ev);
           } catch (err) {}
         }
-
       }
       range.deleteContents();
-      this.setSelection(range);
     },
 
     getPreviousNode: function(node, ignoreEmpty) {
@@ -12301,28 +12309,41 @@ wysihtml5.quirks.ensureProperClearing = (function() {
     },
 
     /**
-     * Insert html at the caret position and move the cursor after the inserted html
+     * Insert html at the caret or selection position and move the cursor after the inserted html
+     * Replaces selection content if present
      *
      * @param {String} html HTML string to insert
      * @example
      *    selection.insertHTML("<p>foobar</p>");
      */
     insertHTML: function(html) {
-      var range     = rangy.createRange(this.doc),
+      var range     = this.getRange(),
           node = this.doc.createElement('DIV'),
           fragment = this.doc.createDocumentFragment(),
-          lastChild;
+          lastChild, lastEditorElement;
+      
+      if (range) {
+        range.deleteContents();
+        node.innerHTML = html;
+        lastChild = node.lastChild;
 
-      node.innerHTML = html;
-      lastChild = node.lastChild;
+        while (node.firstChild) {
+          fragment.appendChild(node.firstChild);
+        }
+        range.insertNode(fragment);
+        
+        lastEditorElement = this.contain.lastChild;
+        while (lastEditorElement && lastEditorElement.nodeType === 3 && lastEditorElement.previousSibling && (/^\s*$/).test(lastEditorElement.data)) {
+          lastEditorElement = lastEditorElement.previousSibling;
+        }
 
-      while (node.firstChild) {
-        fragment.appendChild(node.firstChild);
-      }
-      this.insertNode(fragment);
-
-      if (lastChild) {
-        this.setAfter(lastChild);
+        if (lastChild) {
+          // fixes some pad cases mostly on webkit where last nr is needed
+          if (lastEditorElement && lastChild === lastEditorElement && lastChild.nodeType === 1) {
+            this.contain.appendChild(this.doc.createElement('br'));
+          }
+          this.setAfter(lastChild);
+        }
       }
     },
 
@@ -15100,11 +15121,7 @@ wysihtml5.Commands = Base.extend(
 ;(function(wysihtml5){
   wysihtml5.commands.insertHTML = {
     exec: function(composer, command, html) {
-      if (composer.commands.support(command)) {
-        composer.doc.execCommand(command, false, html);
-      } else {
         composer.selection.insertHTML(html);
-      }
     },
 
     state: function() {
@@ -15226,14 +15243,7 @@ wysihtml5.Commands = Base.extend(
 
   wysihtml5.commands.insertLineBreak = {
     exec: function(composer, command) {
-      if (composer.commands.support(command)) {
-        composer.doc.execCommand(command, false, null);
-        if (!wysihtml5.browser.autoScrollsToCaret()) {
-          composer.selection.scrollIntoView();
-        }
-      } else {
-        composer.commands.exec("insertHTML", LINE_BREAK);
-      }
+      composer.selection.insertHTML(LINE_BREAK);
     },
 
     state: function() {
@@ -16195,9 +16205,6 @@ wysihtml5.views.View = Base.extend(
     /** @scope wysihtml5.views.Composer.prototype */ {
     name: "composer",
 
-    // Needed for firefox in order to display a proper caret in an empty contentEditable
-    CARET_HACK: "<br>",
-
     constructor: function(parent, editableElement, config) {
       this.base(parent, editableElement, config);
       if (!this.config.noTextarea) {
@@ -16213,7 +16220,7 @@ wysihtml5.views.View = Base.extend(
     },
 
     clear: function() {
-      this.element.innerHTML = browser.displaysCaretInEmptyContentEditableCorrectly() ? "" : this.CARET_HACK;
+      this.element.innerHTML = browser.displaysCaretInEmptyContentEditableCorrectly() ? "" : "<br>";
     },
 
     getValue: function(parse, clearInternals) {
@@ -16221,12 +16228,11 @@ wysihtml5.views.View = Base.extend(
       if (parse !== false) {
         value = this.parent.parse(value, (clearInternals === false) ? false : true);
       }
-
       return value;
     },
 
     setValue: function(html, parse) {
-      if (parse) {
+      if (parse !== false) {
         html = this.parent.parse(html);
       }
 
@@ -16237,12 +16243,12 @@ wysihtml5.views.View = Base.extend(
       }
     },
 
-    cleanUp: function() {
+    cleanUp: function(rules) {
       var bookmark;
       if (this.selection) {
         bookmark = rangy.saveSelection(this.win);
       }
-      this.parent.parse(this.element);
+      this.parent.parse(this.element, undefined, rules);
       if (bookmark) {
         rangy.restoreSelection(bookmark);
       }
@@ -16629,17 +16635,6 @@ wysihtml5.views.View = Base.extend(
           }
         });
       }
-
-      // Under certain circumstances Chrome + Safari create nested <p> or <hX> tags after paste
-      // Inserting an invisible white space in front of it fixes the issue
-      // This is too hacky and causes selection not to replace content on paste in chrome
-     /* if (browser.createsNestedInvalidMarkupAfterPaste()) {
-        dom.observe(this.element, "paste", function(event) {
-          var invisibleSpace = that.doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
-          that.selection.insertNode(invisibleSpace);
-        });
-      }*/
-
 
       dom.observe(this.element, "keydown", function(event) {
         var keyCode = event.keyCode;
@@ -17087,7 +17082,7 @@ wysihtml5.views.View = Base.extend(
     if (this.config.copyedFromMarking) {
       // If supported the copied source can be based directly on selection
       // Very useful for webkit based browsers where copy will otherwise contain a lot of code and styles based on whatever and not actually in selection.
-      if (event.clipboardData) {
+      if (wysihtml5.browser.supportsModernPaste()) {
         event.clipboardData.setData("text/html", this.config.copyedFromMarking + this.selection.getHtml());
         event.clipboardData.setData("text/plain", this.selection.getPlainText());
         event.preventDefault();
@@ -17466,14 +17461,14 @@ wysihtml5.views.View = Base.extend(
   },
 
   setValue: function(html, parse) {
-    if (parse) {
+    if (parse !== false) {
       html = this.parent.parse(html);
     }
     this.element.value = html;
   },
 
-  cleanUp: function() {
-      var html = this.parent.parse(this.element.value);
+  cleanUp: function(rules) {
+      var html = this.parent.parse(this.element.value, undefined, rules);
       this.element.value = html;
   },
 
@@ -17568,7 +17563,7 @@ wysihtml5.views.View = Base.extend(
     handleTabKey:         true,
     // Object which includes parser rules to apply when html gets cleaned
     // See parser_rules/*.js for examples
-    parserRules:          { tags: { br: {}, span: {}, div: {}, p: {} }, classes: {} },
+    parserRules:          { tags: { br: {}, span: {}, div: {}, p: {}, b: {}, i: {}, u: {} }, classes: {} },
     // Object which includes parser when the user inserts content via copy & paste. If null parserRules will be used instead
     pasteParserRulesets: null,
     // Parser method to use when the user inserts content
@@ -17680,8 +17675,8 @@ wysihtml5.views.View = Base.extend(
       return this;
     },
 
-    cleanUp: function() {
-        this.currentView.cleanUp();
+    cleanUp: function(rules) {
+        this.currentView.cleanUp(rules);
     },
 
     focus: function(setToEnd) {
@@ -17723,10 +17718,10 @@ wysihtml5.views.View = Base.extend(
       this.off();
     },
 
-    parse: function(htmlOrElement, clearInternals) {
+    parse: function(htmlOrElement, clearInternals, customRules) {
       var parseContext = (this.config.contentEditableMode) ? document : ((this.composer) ? this.composer.sandbox.getDocument() : null);
       var returnValue = this.config.parser(htmlOrElement, {
-        "rules": this.config.parserRules,
+        "rules": customRules || this.config.parserRules,
         "cleanUp": this.config.cleanUp,
         "context": parseContext,
         "uneditableClass": this.config.classNames.uneditableContainer,
