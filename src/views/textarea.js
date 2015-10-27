@@ -21,7 +21,7 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
   },
 
   setValue: function(html, parse) {
-    if (parse) {
+    if (parse !== false) {
       html = this.parent.parse(html);
     }
     this.element.value = html;

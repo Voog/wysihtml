@@ -234,7 +234,7 @@ if (wysihtml5.browser.supported()) {
     var that = this;
     
     var editor = new wysihtml5.Editor(this.editableArea, {
-      parserRules:        { tags: { p: { rename_tag: "div" } } },
+      parserRules:        { tags: { p: { rename_tag: "div" }, "strong": {} } },
       classNames: {
         body:      "editor-is-supported",
         composer:  "editor"
@@ -368,7 +368,9 @@ if (wysihtml5.browser.supported()) {
     
     var that = this;
     
-    var editor = new wysihtml5.Editor(this.editableArea);
+    var editor = new wysihtml5.Editor(this.editableArea, {
+      parserRules: { tags: { "img": {} } }
+    });
     editor.on("load", function() {
       var html            = '<img>',
           composerElement = that.editableArea;

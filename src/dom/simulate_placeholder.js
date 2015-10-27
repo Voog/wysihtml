@@ -35,7 +35,7 @@
         set = function() {
           if (view.isEmpty() && !view.placeholderSet) {
             view.placeholderSet = true;
-            view.setValue(placeholderText);
+            view.setValue(placeholderText, false);
             dom.addClass(view.element, CLASS_NAME);
           }
         };

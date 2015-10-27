@@ -52,7 +52,7 @@
     handleTabKey:         true,
     // Object which includes parser rules to apply when html gets cleaned
     // See parser_rules/*.js for examples
-    parserRules:          { tags: { br: {}, span: {}, div: {}, p: {} }, classes: {} },
+    parserRules:          { tags: { br: {}, span: {}, div: {}, p: {}, b: {}, i: {}, u: {} }, classes: {} },
     // Object which includes parser when the user inserts content via copy & paste. If null parserRules will be used instead
     pasteParserRulesets: null,
     // Parser method to use when the user inserts content
