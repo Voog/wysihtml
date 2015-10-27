@@ -566,27 +566,31 @@ wysihtml5.dom.parse = function(elementOrHtml_current, config_current) {
     }
 
 
-    if (typeof(allowedClasses) === "string" && allowedClasses === "any" && oldNode.getAttribute("class")) {
-      if (currentRules.classes_blacklist) {
-        oldClasses = oldNode.getAttribute("class");
-        if (oldClasses) {
-          classes = classes.concat(oldClasses.split(WHITE_SPACE_REG_EXP));
-        }
-
-        classesLength = classes.length;
-        for (; i<classesLength; i++) {
-          currentClass = classes[i];
-          if (!currentRules.classes_blacklist[currentClass]) {
-            newClasses.push(currentClass);
+    if (typeof(allowedClasses) === "string" && allowedClasses === "any") {
+      if (oldNode.getAttribute("class")) {
+        if (currentRules.classes_blacklist) {
+          oldClasses = oldNode.getAttribute("class");
+          if (oldClasses) {
+            classes = classes.concat(oldClasses.split(WHITE_SPACE_REG_EXP));
           }
-        }
 
-        if (newClasses.length) {
-          attributes["class"] = wysihtml5.lang.array(newClasses).unique().join(" ");
-        }
+          classesLength = classes.length;
+          for (; i<classesLength; i++) {
+            currentClass = classes[i];
+            if (!currentRules.classes_blacklist[currentClass]) {
+              newClasses.push(currentClass);
+            }
+          }
 
+          if (newClasses.length) {
+            attributes["class"] = wysihtml5.lang.array(newClasses).unique().join(" ");
+          }
+
+        } else {
+          attributes["class"] = oldNode.getAttribute("class");
+        }
       } else {
-        attributes["class"] = oldNode.getAttribute("class");
+        attributes["class"] = wysihtml5.lang.array(classes).unique().join(" ");
       }
     } else {
       // make sure that wysihtml5 temp class doesn't get stripped out
