@@ -393,6 +393,34 @@ if (wysihtml5.browser.supported()) {
     });
   });
   
+  asyncTest("API editor.cleanUp command", function() {
+    expect(3);
+
+    var parserRules = {
+      tags: {
+        div: true,
+        span: true
+      }
+    };
+
+    var input   = "<p>foo</p><div>bar</div>",
+        output  = "foo<div>bar</div>";
+
+    var editor = new wysihtml5.Editor(this.textareaElement, {
+      parserRules: parserRules
+    });
+
+    editor.on("load", function() {
+      deepEqual(editor.config.parserRules, parserRules, "Parser rules correctly set on config object");
+      // Invoke parsing via second parameter of setValue()
+      editor.setValue(input, false);
+      editor.cleanUp();
+      equal(editor.getValue(false, false).toLowerCase(), output, "HTML got correctly parsed within setValue()");
+      editor.cleanUp({tags: {}});
+      equal(editor.getValue(false, false).toLowerCase(), "foobar", "HTML got correctly parsed within setValue()");
+      start();
+    });
+  });
   
   asyncTest("Parser (default parser method with parserRules as object", function() {
     expect(2);
@@ -451,7 +479,6 @@ if (wysihtml5.browser.supported()) {
       start();
     });
   });
-  
   
   asyncTest("Inserting an element which causes the textContent/innerText of the contentEditable element to be empty works correctly", function() {
     expect(2);

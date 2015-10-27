@@ -44,12 +44,12 @@
       }
     },
 
-    cleanUp: function() {
+    cleanUp: function(rules) {
       var bookmark;
       if (this.selection) {
         bookmark = rangy.saveSelection(this.win);
       }
-      this.parent.parse(this.element);
+      this.parent.parse(this.element, undefined, rules);
       if (bookmark) {
         rangy.restoreSelection(bookmark);
       }
