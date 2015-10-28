@@ -1,4 +1,7 @@
-*wysihtml5x 0.5.0* (October 29, 2015)
+*wysihtml5x 0.5.1* (October 28, 2015)
+* Fixes parser adding empty class attributes to tags
+
+*wysihtml5x 0.5.0* (October 27, 2015)
 * Fixes Microsoft Edge pasting plaintext problem
 * Fixes Microsoft Edge BR with class null entered with enter keypress
 * .getValue() and .setValue() commands parse content as default (parameter must be set false to bypass cleanup)
