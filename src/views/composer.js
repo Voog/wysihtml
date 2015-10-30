@@ -218,6 +218,8 @@
           ]).from(this.textarea.element).to(this.element);
       }
 
+      this._initAutoLinking();
+
       dom.addClass(this.element, this.config.classNames.composer);
       //
       // Make the editor look like the original textarea, by syncing styles
@@ -250,7 +252,6 @@
       // Make sure that the browser avoids using inline styles whenever possible
       this.commands.exec("styleWithCSS", false);
 
-      this._initAutoLinking();
       this._initObjectResizing();
       this._initUndoManager();
       this._initLineBreaking();
@@ -284,10 +285,7 @@
           supportsAutoLinking            = browser.doesAutoLinkingInContentEditable();
 
       if (supportsDisablingOfAutoLinking) {
-        // I have no idea why IE edge deletes element content here when calling the command,
-        var tmpHTML = this.element.innerHTML;
         this.commands.exec("AutoUrlDetect", false, false);
-        this.element.innerHTML = tmpHTML;
       }
 
       if (!this.config.autoLink) {
