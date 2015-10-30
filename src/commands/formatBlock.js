@@ -22,17 +22,26 @@
   }
 
   // Removes empty block level elements
-  function cleanup(composer) {
+  function cleanup(composer, newBlockElements) {
+    wysihtml5.dom.removeInvisibleSpaces(composer.element);
     var container = composer.element,
         allElements = container.querySelectorAll(BLOCK_ELEMENTS),
         uneditables = container.querySelectorAll(composer.config.classNames.uneditableContainer),
-        elements = wysihtml5.lang.array(allElements).without(uneditables);
+        elements = wysihtml5.lang.array(allElements).without(uneditables),
+        nbIdx;
 
     for (var i = elements.length; i--;) {
       if (elements[i].innerHTML.replace(/[\uFEFF]/g, '') === "") {
+        // If cleanup removes some new block elements. remove them from newblocks array too
+        nbIdx = wysihtml5.lang.array(newBlockElements).indexOf(elements[i]);
+        if (nbIdx > -1) {
+          newBlockElements.splice(nbIdx, 1);
+        }
         elements[i].parentNode.removeChild(elements[i]);
       }
     }
+    
+    return newBlockElements;
   }
 
   function defaultNodeName(composer) {
@@ -208,14 +217,26 @@
       return;
     }
   }
+  
+  function getOptionsWithNodename(options) {
+    
+  }
+  
 
   // Wrap the range with a block level element
   // If element is one of unnestable block elements (ex: h2 inside h1), split nodes and insert between so nesting does not occur
   function wrapRangeWithElement(range, options, defaultName, composer) {
+    
+    // If options set 
+    
+    
     var defaultOptions = (options) ? wysihtml5.lang.object(options).clone(true) : null;
-    if (defaultOptions) {
+    
+    
+    if (defaultOptions) {  
       defaultOptions.nodeName = defaultOptions.nodeName || defaultName || defaultNodeName(composer);
     }
+    
     fixRangeCoverage(range, composer);
 
     var r = range.cloneRange(),
@@ -321,11 +342,61 @@
 
     return (parentNode) ? parentNode.nodeName : null;
   }
+  
+  // Expands caret to cover the closest block that:
+  //   * cannot contain other block level elements (h1-6,p, etc)
+  //   * Has the same nodeName that is to be inserted
+  //   * has insertingNodeName
+  //   * is DIV if insertingNodeName is not present
+  //
+  // If nothing found selects the current line
+  function expandCaretToBlock(composer, insertingNodeName) {
+    var parent = wysihtml5.dom.getParentElement(composer.selection.getOwnRanges()[0].startContainer, {
+          query: UNNESTABLE_BLOCK_ELEMENTS + ', ' + (insertingNodeName ? insertingNodeName.toLowerCase() : 'div'),
+        }, null, composer.element),
+        range;
+
+    if (parent) {
+      range = composer.selection.createRange();
+      range.selectNode(parent);
+      composer.selection.setSelection(range);
+    } else if (!composer.isEmpty()) {
+      composer.selection.selectLine();
+    }
+  }
+  
+  // Set selection to begin inside first created block element (beginning of it) and end inside (and after content) of last block element
+  // TODO: Checking nodetype might be unnescescary as nodes inserted by formatBlock are nodetype 1 anyway
+  function selectElements(newBlockElements, composer) {
+    var range = composer.selection.createRange(),
+        lastEl = newBlockElements[newBlockElements.length - 1],
+        lastOffset = (lastEl.nodeType === 1 && lastEl.childNodes) ? lastEl.childNodes.length | 0 :  lastEl.length || 0;
+
+    range.setStart(newBlockElements[0], 0);
+    range.setEnd(lastEl, lastOffset);
+    range.select();
+  }
+  
+  // Get all ranges from selection (takes out uneditables and out of editor parts) and apply format to each
+  // Return created/modified block level elements 
+  function applyFormatToSelection(options, composer) {
+    var ranges = composer.selection.getOwnRanges(),
+        newBlockElements = [],
+        closestBlockName;
+        
+    for (var i = ranges.length; i--;) {
+      closestBlockName = getParentBlockNodeName(ranges[i].startContainer, composer);
+      newBlockElements = newBlockElements.concat(wrapRangeWithElement(ranges[i], options, closestBlockName, composer));
+    }
+    
+    return newBlockElements;
+  }
 
   wysihtml5.commands.formatBlock = {
     exec: function(composer, command, options) {
+      
       var newBlockElements = [],
-          placeholder, ranges, range, parent, bookmark, state;
+          ranges, range, bookmark, state, closestBlockName;
 
       // If properties is passed as a string, look for tag with that tagName/query 
       if (typeof options === "string") {
@@ -333,67 +404,39 @@
           nodeName: options.toUpperCase()
         };
       }
-
-      // Remove state if toggle set and state on and selection is collapsed
+      
+      // Find if current format state is active if options.toggle is set as true
       if (options && options.toggle) {
         state = this.state(composer, command, options);
-        if (state) {
-          bookmark = rangy.saveSelection(composer.win);
-          for (var j = 0, jmax = state.length; j < jmax; j++) {
-            removeOptionsFromElement(state[j], options, composer);
-          }
-        }
       }
 
-      // Otherwise expand selection so it will cover closest block if option caretSelectsBlock is true and selection is collapsed
-      if (!state) {
+      if (state) {
 
+        // Remove format from state nodes if toggle set and state on and selection is collapsed
+        bookmark = rangy.saveSelection(composer.win);
+        for (var j = 0, jmax = state.length; j < jmax; j++) {
+          removeOptionsFromElement(state[j], options, composer);
+        }
+
+      } else {
+        
+        // If selection is caret expand it to cover nearest suitable block element or row if none found
         if (composer.selection.isCollapsed()) {
-          parent = wysihtml5.dom.getParentElement(composer.selection.getOwnRanges()[0].startContainer, {
-            query: UNNESTABLE_BLOCK_ELEMENTS + ', ' + (options && options.nodeName ? options.nodeName.toLowerCase() : 'div'),
-          }, null, composer.element);
-          if (parent) {
-            bookmark = rangy.saveSelection(composer.win);
-            range = composer.selection.createRange();
-            range.selectNode(parent);
-            composer.selection.setSelection(range);
-          } else if (!composer.isEmpty()) {
-            bookmark = rangy.saveSelection(composer.win);
-            composer.selection.selectLine();
-          }
+          bookmark = rangy.saveSelection(composer.win);
+          expandCaretToBlock(composer, options ? options.nodeName : undefined);
         }
-
-        // And get all selection ranges of current composer and iterate
-        ranges = composer.selection.getOwnRanges();
-        for (var i = ranges.length; i--;) {
-          newBlockElements = newBlockElements.concat(wrapRangeWithElement(ranges[i], options, getParentBlockNodeName(ranges[i].startContainer, composer), composer));
-        }
-
+        newBlockElements = applyFormatToSelection(options, composer);
       }
 
       // Remove empty block elements that may be left behind
-      cleanup(composer);
-      // If cleanup removed some new block elements. remove them from array too
-      for (var e = newBlockElements.length; e--;) {
-        if (!newBlockElements[e].parentNode) {
-          newBlockElements.splice(e, 1);
-        }
-      }
+      // Also remove them from new blocks list
+      newBlockElements = cleanup(composer, newBlockElements);
       
-      // Restore correct selection
+      // Restore selection
       if (bookmark) {
-        wysihtml5.dom.removeInvisibleSpaces(composer.element);
         rangy.restoreSelection(bookmark);
       } else {
-        wysihtml5.dom.removeInvisibleSpaces(composer.element);
-        // Set selection to beging inside first created block element (beginning of it) and end inside (and after content) of last block element
-        // TODO: Checking nodetype might be unnescescary as nodes inserted by formatBlock are nodetype 1 anyway
-        range = composer.selection.createRange();
-        range.setStart(newBlockElements[0], 0);
-        var lastEl = newBlockElements[newBlockElements.length - 1],
-            lastOffset = (lastEl.nodeType === 1 && lastEl.childNodes) ? lastEl.childNodes.length | 0 :  lastEl.length || 0;
-        range.setEnd(lastEl, lastOffset);
-        range.select();
+        selectElements(newBlockElements, composer);
       }
     },
 
