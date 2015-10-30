@@ -218,93 +218,124 @@
     }
   }
   
-  function getOptionsWithNodename(options) {
-    
+  // Return options object with nodeName set if original did not have any
+  // Node name is set to local or global default
+  function getOptionsWithNodename(options, defaultName, composer) {
+    var correctedOptions = (options) ? wysihtml5.lang.object(options).clone(true) : null;
+    if (correctedOptions) {  
+      correctedOptions.nodeName = correctedOptions.nodeName || defaultName || defaultNodeName(composer);
+    }
+    return correctedOptions;
   }
   
-
-  // Wrap the range with a block level element
-  // If element is one of unnestable block elements (ex: h2 inside h1), split nodes and insert between so nesting does not occur
-  function wrapRangeWithElement(range, options, defaultName, composer) {
-    
-    // If options set 
-    
-    
-    var defaultOptions = (options) ? wysihtml5.lang.object(options).clone(true) : null;
-    
-    
-    if (defaultOptions) {  
-      defaultOptions.nodeName = defaultOptions.nodeName || defaultName || defaultNodeName(composer);
-    }
-    
+  function clearRangeBlockFromating(range, closestBlockName, composer) {
     fixRangeCoverage(range, composer);
 
     var r = range.cloneRange(),
         rangeStartContainer = r.startContainer,
         content = r.extractContents(),
         fragment = composer.doc.createDocumentFragment(),
-        similarOptions = defaultOptions ? correctOptionsForSimilarityCheck(defaultOptions) : null,
+        firstOuterBlock = findOuterBlock(rangeStartContainer, composer.element, true),
+        children, blocks;
+        
+    while(content.firstChild) {
+      // Iterate over all selection content first level childNodes
+      if (content.firstChild.nodeType == 1) {
+        // If node is a block element
+        // Split block formating and add new block to wrap caret
+        
+        unwrapBlocksFromContent(content.firstChild);
+        children = wysihtml5.dom.unwrap(content.firstChild);
+        for (var c = 0, cmax = children.length; c < cmax; c++) {
+          fragment.appendChild(children[c]);
+        }
+        if (fragment.childNodes.length > 0) {
+          fragment.appendChild(composer.doc.createElement('BR'));
+        }
+        
+      } else {
+        fragment.appendChild(content.firstChild);
+      }
+    }
+    blocks = wysihtml5.lang.array(fragment.childNodes).get();
+    
+    if (firstOuterBlock) {
+      // If selection starts inside un-nestable block, split-escape the unnestable point and insert node between
+      composer.selection.splitElementAtCaret(firstOuterBlock, fragment);
+    } else {
+      // Ensure node does not get inserted into an inline where it is not allowed
+      var outerInlines = cloneOuterInlines(rangeStartContainer, composer.element);
+      if (outerInlines.outerNode && outerInlines.innerNode && outerInlines.parent) {
+        if (fragment.childNodes.length === 1) {
+          while(fragment.firstChild.firstChild) {
+            outerInlines.innerNode.appendChild(fragment.firstChild.firstChild);
+          }
+          fragment.firstChild.appendChild(outerInlines.outerNode);
+        }
+        composer.selection.splitElementAtCaret(outerInlines.parent, fragment);
+      } else {
+        // Otherwise just insert
+        r.insertNode(fragment);
+      }
+    }
+    return blocks;
+  }
+  
+
+  // Wrap the range with a block level element
+  // If element is one of unnestable block elements (ex: h2 inside h1), split nodes and insert between so nesting does not occur
+  function wrapRangeWithElement(range, options, closestBlockName, composer) {
+    fixRangeCoverage(range, composer);
+    
+    var similarOptions = options ? correctOptionsForSimilarityCheck(options) : null,
+        r = range.cloneRange(),
+        rangeStartContainer = r.startContainer,
+        content = r.extractContents(),
+        fragment = composer.doc.createDocumentFragment(),
         similarOuterBlock = similarOptions ? wysihtml5.dom.getParentElement(rangeStartContainer, similarOptions, null, composer.element) : null,
-        splitAllBlocks = !defaultOptions || (defaultName === "BLOCKQUOTE" && defaultOptions.nodeName && defaultOptions.nodeName === "BLOCKQUOTE"),
+        splitAllBlocks = !closestBlockName || !options || (options.nodeName === "BLOCKQUOTE" && closestBlockName === "BLOCKQUOTE"),
         firstOuterBlock = similarOuterBlock || findOuterBlock(rangeStartContainer, composer.element, splitAllBlocks), // The outermost un-nestable block element parent of selection start
         wrapper, blocks, children;
 
-    if (options && options.nodeName && options.nodeName === "BLOCKQUOTE") {
+    if (options && options.nodeName === "BLOCKQUOTE") {
+      
+      // If blockquote is to be inserted no quessing just add it as outermost block on line or selection
       var tmpEl = applyOptionsToElement(null, options, composer);
       tmpEl.appendChild(content);
       fragment.appendChild(tmpEl);
       blocks = [tmpEl];
+      
     } else {
 
       if (!content.firstChild) {
+        // IF selection is caret (can happen if line is empty) add format around tag 
         fragment.appendChild(applyOptionsToElement(null, options, composer));
       } else {
 
         while(content.firstChild) {
+          // Iterate over all selection content first level childNodes
           
           if (content.firstChild.nodeType == 1 && content.firstChild.matches(BLOCK_ELEMENTS)) {
             
-            if (options) {
-              // Escape(split) block formatting at caret
-              applyOptionsToElement(content.firstChild, options, composer);
-              if (content.firstChild.matches(UNNESTABLE_BLOCK_ELEMENTS)) {
-                unwrapBlocksFromContent(content.firstChild);
-              }
-              fragment.appendChild(content.firstChild);
-            
-            } else {
-              // Split block formating and add new block to wrap caret
+            // If node is a block element
+            // Escape(split) block formatting at caret
+            applyOptionsToElement(content.firstChild, options, composer);
+            if (content.firstChild.matches(UNNESTABLE_BLOCK_ELEMENTS)) {
               unwrapBlocksFromContent(content.firstChild);
-              children = wysihtml5.dom.unwrap(content.firstChild);
-              for (var c = 0, cmax = children.length; c < cmax; c++) {
-                fragment.appendChild(children[c]);
-              }
-
-              if (fragment.childNodes.length > 0) {
-                fragment.appendChild(composer.doc.createElement('BR'));
-              }
             }
-          } else {
-
-            if (options) {
-              // Wrap subsequent non-block nodes inside new block element
-              wrapper = applyOptionsToElement(null, defaultOptions, composer);
-              while(content.firstChild && (content.firstChild.nodeType !== 1 || !content.firstChild.matches(BLOCK_ELEMENTS))) {
-                if (content.firstChild.nodeType == 1 && wrapper.matches(UNNESTABLE_BLOCK_ELEMENTS)) {
-                  unwrapBlocksFromContent(content.firstChild);
-                }
-                wrapper.appendChild(content.firstChild);
-              }
-              fragment.appendChild(wrapper);
+            fragment.appendChild(content.firstChild);
             
-            } else {
-              // Escape(split) block formatting at selection 
-              if (content.firstChild.nodeType == 1) {
+          } else {
+            
+            // Wrap subsequent non-block nodes inside new block element
+            wrapper = applyOptionsToElement(null, getOptionsWithNodename(options, closestBlockName, composer), composer);
+            while(content.firstChild && (content.firstChild.nodeType !== 1 || !content.firstChild.matches(BLOCK_ELEMENTS))) {
+              if (content.firstChild.nodeType == 1 && wrapper.matches(UNNESTABLE_BLOCK_ELEMENTS)) {
                 unwrapBlocksFromContent(content.firstChild);
               }
-              fragment.appendChild(content.firstChild);
+              wrapper.appendChild(content.firstChild);
             }
-
+            fragment.appendChild(wrapper);
           }
         }
       }
@@ -383,12 +414,23 @@
     var ranges = composer.selection.getOwnRanges(),
         newBlockElements = [],
         closestBlockName;
-        
     for (var i = ranges.length; i--;) {
       closestBlockName = getParentBlockNodeName(ranges[i].startContainer, composer);
       newBlockElements = newBlockElements.concat(wrapRangeWithElement(ranges[i], options, closestBlockName, composer));
     }
-    
+    return newBlockElements;
+  }
+
+  // Makes the selection plaintext not containing block level elements
+  // and escapes it out of block elements context
+  function removeBlockFormatingFromSelection(composer) {
+    var ranges = composer.selection.getOwnRanges(),
+        newBlockElements = [],
+        closestBlockName;
+    for (var i = ranges.length; i--;) {
+      closestBlockName = getParentBlockNodeName(ranges[i].startContainer, composer);
+      newBlockElements = newBlockElements.concat(clearRangeBlockFromating(ranges[i], closestBlockName, composer));
+    }
     return newBlockElements;
   }
 
@@ -425,7 +467,12 @@
           bookmark = rangy.saveSelection(composer.win);
           expandCaretToBlock(composer, options ? options.nodeName : undefined);
         }
-        newBlockElements = applyFormatToSelection(options, composer);
+        
+        if (options) {
+          newBlockElements = applyFormatToSelection(options, composer);
+        } else {
+          newBlockElements = removeBlockFormatingFromSelection(composer);
+        }
       }
 
       // Remove empty block elements that may be left behind
