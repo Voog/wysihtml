@@ -63,13 +63,15 @@
     return block;
   }
 
+  // Clone for splitting the inner inline element out of its parent inline elements context
+  // For example if selection is in bold and italic, clone the outer nodes and wrap these around content and return
   function cloneOuterInlines(node, container) {
     var n = node,
         innerNode,
         parentNode,
         el = null,
         el2;
-        
+
     while (n && container && n !== container) {
       if (n.nodeType === 1 && n.matches(INLINE_ELEMENTS)) {
         parentNode = n;
@@ -228,14 +230,42 @@
     return correctedOptions;
   }
   
+  // Injects document fragment to range ensuring outer elements are split to a place where block elements are allowed to be inserted
+  // Also wraps empty clones of split parent tags around fragment to keep formatting
+  // If firstOuterBlock is given assume that instead of finding outer (useful for solving cases of some blocks are allowed into others while others are not)
+  function injectFragmentToRange(fragment, range, composer, firstOuterBlock) {
+    var rangeStartContainer = range.startContainer,
+        firstOuterBlock = firstOuterBlock || findOuterBlock(rangeStartContainer, composer.element, true),
+        outerInlines;
+    
+    if (firstOuterBlock) {
+      // If selection starts inside un-nestable block, split-escape the unnestable point and insert node between
+      composer.selection.splitElementAtCaret(firstOuterBlock, fragment);
+    } else {
+      // Ensure node does not get inserted into an inline where it is not allowed
+      outerInlines = cloneOuterInlines(rangeStartContainer, composer.element);
+      if (outerInlines.outerNode && outerInlines.innerNode && outerInlines.parent) {
+        if (fragment.childNodes.length === 1) {
+          while(fragment.firstChild.firstChild) {
+            outerInlines.innerNode.appendChild(fragment.firstChild.firstChild);
+          }
+          fragment.firstChild.appendChild(outerInlines.outerNode);
+        }
+        composer.selection.splitElementAtCaret(outerInlines.parent, fragment);
+      } else {
+        // Otherwise just insert
+        range.insertNode(fragment);
+      }
+    }
+  }
+  
+  // Removes all block formatting from range
   function clearRangeBlockFromating(range, closestBlockName, composer) {
     fixRangeCoverage(range, composer);
 
     var r = range.cloneRange(),
-        rangeStartContainer = r.startContainer,
         content = r.extractContents(),
         fragment = composer.doc.createDocumentFragment(),
-        firstOuterBlock = findOuterBlock(rangeStartContainer, composer.element, true),
         children, blocks;
         
     while(content.firstChild) {
@@ -258,26 +288,7 @@
       }
     }
     blocks = wysihtml5.lang.array(fragment.childNodes).get();
-    
-    if (firstOuterBlock) {
-      // If selection starts inside un-nestable block, split-escape the unnestable point and insert node between
-      composer.selection.splitElementAtCaret(firstOuterBlock, fragment);
-    } else {
-      // Ensure node does not get inserted into an inline where it is not allowed
-      var outerInlines = cloneOuterInlines(rangeStartContainer, composer.element);
-      if (outerInlines.outerNode && outerInlines.innerNode && outerInlines.parent) {
-        if (fragment.childNodes.length === 1) {
-          while(fragment.firstChild.firstChild) {
-            outerInlines.innerNode.appendChild(fragment.firstChild.firstChild);
-          }
-          fragment.firstChild.appendChild(outerInlines.outerNode);
-        }
-        composer.selection.splitElementAtCaret(outerInlines.parent, fragment);
-      } else {
-        // Otherwise just insert
-        r.insertNode(fragment);
-      }
-    }
+    injectFragmentToRange(fragment, r, composer);
     return blocks;
   }
   
@@ -342,26 +353,7 @@
 
       blocks = wysihtml5.lang.array(fragment.childNodes).get();
     }
-    if (firstOuterBlock) {
-      // If selection starts inside un-nestable block, split-escape the unnestable point and insert node between
-      composer.selection.splitElementAtCaret(firstOuterBlock, fragment);
-    } else {
-      // Ensure node does not get inserted into an inline where it is not allowed
-      var outerInlines = cloneOuterInlines(rangeStartContainer, composer.element);
-      if (outerInlines.outerNode && outerInlines.innerNode && outerInlines.parent) {
-        if (fragment.childNodes.length === 1) {
-          while(fragment.firstChild.firstChild) {
-            outerInlines.innerNode.appendChild(fragment.firstChild.firstChild);
-          }
-          fragment.firstChild.appendChild(outerInlines.outerNode);
-        }
-        composer.selection.splitElementAtCaret(outerInlines.parent, fragment);
-      } else {
-        // Otherwise just insert
-        r.insertNode(fragment);
-      }
-    }
-
+    injectFragmentToRange(fragment, r, composer, firstOuterBlock);
     return blocks;
   }
 
@@ -410,26 +402,19 @@
   
   // Get all ranges from selection (takes out uneditables and out of editor parts) and apply format to each
   // Return created/modified block level elements 
-  function applyFormatToSelection(options, composer) {
+  // Method can be either "apply" or "remove"
+  function formatSelection(method, composer, options) {
     var ranges = composer.selection.getOwnRanges(),
         newBlockElements = [],
         closestBlockName;
+        
     for (var i = ranges.length; i--;) {
       closestBlockName = getParentBlockNodeName(ranges[i].startContainer, composer);
-      newBlockElements = newBlockElements.concat(wrapRangeWithElement(ranges[i], options, closestBlockName, composer));
-    }
-    return newBlockElements;
-  }
-
-  // Makes the selection plaintext not containing block level elements
-  // and escapes it out of block elements context
-  function removeBlockFormatingFromSelection(composer) {
-    var ranges = composer.selection.getOwnRanges(),
-        newBlockElements = [],
-        closestBlockName;
-    for (var i = ranges.length; i--;) {
-      closestBlockName = getParentBlockNodeName(ranges[i].startContainer, composer);
-      newBlockElements = newBlockElements.concat(clearRangeBlockFromating(ranges[i], closestBlockName, composer));
+      if (method === "remove") {
+        newBlockElements = newBlockElements.concat(clearRangeBlockFromating(ranges[i], closestBlockName, composer));
+      } else {
+        newBlockElements = newBlockElements.concat(wrapRangeWithElement(ranges[i], options, closestBlockName, composer));
+      }
     }
     return newBlockElements;
   }
@@ -448,10 +433,10 @@
       }
       
       // Find if current format state is active if options.toggle is set as true
+      // In toggle case active state elemets are formatted instead of working directly on selection
       if (options && options.toggle) {
         state = this.state(composer, command, options);
       }
-
       if (state) {
 
         // Remove format from state nodes if toggle set and state on and selection is collapsed
@@ -469,9 +454,10 @@
         }
         
         if (options) {
-          newBlockElements = applyFormatToSelection(options, composer);
+          newBlockElements = formatSelection("apply", composer, options);
         } else {
-          newBlockElements = removeBlockFormatingFromSelection(composer);
+          // Options == null means block formatting should be removed from selection
+          newBlockElements = formatSelection("remove", composer);
         }
       }
 
