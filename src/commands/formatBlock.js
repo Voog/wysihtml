@@ -179,9 +179,11 @@
   function fixRangeCoverage(range, composer) {
     var node;
 
+    // If range has only one childNode and it is end to end the range, extend the range to contain the container element too
+    // This ensures the wrapper node is modified and optios added to it
     if (range.startContainer && range.startContainer.nodeType === 1 && range.startContainer === range.endContainer) {
       if (range.startContainer.firstChild === range.startContainer.lastChild && range.endOffset === 1) {
-        if (range.startContainer !== composer.element) {
+        if (range.startContainer !== composer.element && range.startContainer.nodeName !== 'LI' && range.startContainer.nodeName !== 'TD') {
           range.setStartBefore(range.startContainer);
           range.setEndAfter(range.endContainer);
         }
@@ -189,17 +191,19 @@
       return;
     }
 
+    // If range starts outside of node and ends inside at textrange and covers the whole node visually, extend end to cover the node end too
     if (range.startContainer && range.startContainer.nodeType === 1 && range.endContainer.nodeType === 3) {
-      if (range.startContainer.firstChild === range.endContainer && range.endOffset === 1) {
+      if (range.startContainer.firstChild === range.endContainer && range.endOffset === range.endContainer.data.length) {
         if (range.startContainer !== composer.element) {
           range.setEndAfter(range.startContainer);
         }
       }
       return;
     }
-
+    
+    // If range ends outside of node and starts inside at textrange and covers the whole node visually, extend start to cover the node start too
     if (range.endContainer && range.endContainer.nodeType === 1 && range.startContainer.nodeType === 3) {
-      if (range.endContainer.firstChild === range.startContainer && range.endOffset === 1) {
+      if (range.endContainer.firstChild === range.startContainer && range.startOffset === 0) {
         if (range.endContainer !== composer.element) {
           range.setStartBefore(range.endContainer);
         }
@@ -207,9 +211,9 @@
       return;
     }
 
-
-    if (range.startContainer && range.startContainer.nodeType === 3 && range.startContainer === range.endContainer && range.startContainer.parentNode) {
-      if (range.startContainer.parentNode.firstChild === range.startContainer && range.endOffset == range.endContainer.length && range.startOffset === 0) {
+    // If range covers a whole textnode and the textnode is the only child of node, extend range to node 
+    if (range.startContainer && range.startContainer.nodeType === 3 && range.startContainer === range.endContainer && range.startContainer.parentNode.childNodes.length === 1) {
+      if (range.endOffset == range.endContainer.data.length && range.startOffset === 0) {
         node = range.startContainer.parentNode;
         if (node !== composer.element) {
           range.setStartBefore(node);
@@ -218,6 +222,69 @@
       }
       return;
     }
+  }
+  
+  // Scans ranges array for insertion points that are not allowed to insert block tags fixes/splits illegal ranges
+  // Some places do not allow block level elements inbetween (inside ul and outside li)
+  // TODO: might need extending for other nodes besides li (maybe dd,dl,dt)
+  function fixNotPermittedInsertionPoints(ranges) {
+    var newRanges = [],
+        lis, j, maxj, tmpRange, rangePos, closestLI;
+        
+    for (var i = 0, maxi = ranges.length; i < maxi; i++) {
+      
+      lis = ranges[i].getNodes([1], function(node) {
+        return node.nodeName === "LI";
+      });
+      
+      if (lis.length > 0) {
+      
+        for (j = 0, maxj = lis.length; j < maxj; j++) {
+          rangePos = ranges[i].compareNode(lis[j]);
+
+          // Fixes start of range that crosses LI border
+          if (rangePos === ranges[i].NODE_AFTER || rangePos === ranges[i].NODE_INSIDE) {
+            // Range starts before and ends inside the node
+
+            tmpRange = ranges[i].cloneRange();
+            closestLI = wysihtml5.dom.domNode(lis[j]).prev({nodeTypes: [1]});
+            
+            if (closestLI) {
+              tmpRange.setEnd(closestLI, closestLI.childNodes.length);
+            } else if (lis[j].closest('ul, ol')) {
+              tmpRange.setEndBefore(lis[j].closest('ul, ol'));
+            } else {
+              tmpRange.setEndBefore(lis[j]);
+            }
+            newRanges.push(tmpRange);
+            ranges[i].setStart(lis[j], 0);
+          }
+          
+          // Fixes end of range that crosses li border
+          if (rangePos === ranges[i].NODE_BEFORE || rangePos === ranges[i].NODE_INSIDE) {
+            // Range starts inside the node and ends after node
+            
+            tmpRange = ranges[i].cloneRange();
+            tmpRange.setEnd(lis[j], lis[j].childNodes.length);
+            newRanges.push(tmpRange);
+            
+            // Find next LI in list and if present set range to it, else 
+            closestLI = wysihtml5.dom.domNode(lis[j]).next({nodeTypes: [1]});
+            if (closestLI) {
+              ranges[i].setStart(closestLI, 0);
+            } else if (lis[j].closest('ul, ol')) {
+              ranges[i].setStartAfter(lis[j].closest('ul, ol'));
+            } else {
+              ranges[i].setStartAfter(lis[j]);
+            } 
+          }
+        }
+        newRanges.push(ranges[i]);
+      } else {
+        newRanges.push(ranges[i]);
+      }
+    }
+    return newRanges;
   }
   
   // Return options object with nodeName set if original did not have any
@@ -261,8 +328,6 @@
   
   // Removes all block formatting from range
   function clearRangeBlockFromating(range, closestBlockName, composer) {
-    fixRangeCoverage(range, composer);
-
     var r = range.cloneRange(),
         content = r.extractContents(),
         fragment = composer.doc.createDocumentFragment(),
@@ -296,8 +361,6 @@
   // Wrap the range with a block level element
   // If element is one of unnestable block elements (ex: h2 inside h1), split nodes and insert between so nesting does not occur
   function wrapRangeWithElement(range, options, closestBlockName, composer) {
-    fixRangeCoverage(range, composer);
-    
     var similarOptions = options ? correctOptionsForSimilarityCheck(options) : null,
         r = range.cloneRange(),
         rangeStartContainer = r.startContainer,
@@ -408,7 +471,11 @@
         newBlockElements = [],
         closestBlockName;
         
+    // Some places do not allow block level elements inbetween (inside ul and outside li, inside table and outside of td/th)
+    ranges = fixNotPermittedInsertionPoints(ranges);
+        
     for (var i = ranges.length; i--;) {
+      fixRangeCoverage(ranges[i], composer);
       closestBlockName = getParentBlockNodeName(ranges[i].startContainer, composer);
       if (method === "remove") {
         newBlockElements = newBlockElements.concat(clearRangeBlockFromating(ranges[i], closestBlockName, composer));

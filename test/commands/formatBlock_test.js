@@ -152,7 +152,7 @@ if (wysihtml5.browser.supported()) {
   
   // formatblock (alignment, headings, paragraph, pre, blockquote)
   asyncTest("Format block nesting", function() {
-     expect(1);
+     expect(7);
     var that = this,
         parserRules = {
             tags: {
@@ -167,14 +167,46 @@ if (wysihtml5.browser.supported()) {
           },
         editor = new wysihtml5.Editor(this.editableArea1, {
           parserRules: parserRules
-        });
+        }),
+        range
       
     editor.on("load", function() {
       var editableElement   = that.editableArea1;
       editor.setValue("<ul><li>row1</li><li>row2</li><li>row3</li></ul>", true);
       editor.composer.selection.selectNode(editor.editableElement.querySelectorAll('li')[1]);
       editor.composer.commands.exec('formatBlock', "h1");
-      equal(editableElement.innerHTML.toLowerCase(), '"<ul><li>row1</li><li><h1>row2</h1></li><li>row3</li></ul>"', "Block element insserted into a correct place");
+      equal(editableElement.innerHTML.toLowerCase(), "<ul><li>row1</li><li><h1>row2</h1></li><li>row3</li></ul>", "Block element inserted into LI element not outside");
+      
+      editor.setValue("<ul><li>row1</li><li>row2</li><li>row3</li></ul>", true);
+      that.setSelection(editor, editor.editableElement.querySelectorAll('li')[1], 0, editor.editableElement.querySelectorAll('li')[2], 1);
+      editor.composer.commands.exec('formatBlock', "h1");
+      equal(editableElement.innerHTML.toLowerCase(), "<ul><li>row1</li><li><h1>row2</h1></li><li><h1>row3</h1></li></ul>", "Block elements inserted into li elements when selection crosses multiple li elements");
+      
+      editor.setValue("<ul><li>row1</li><li>row2</li><li>row3</li></ul>", true);
+      that.setSelection(editor, editor.editableElement.querySelectorAll('li')[1].firstChild, 1, editor.editableElement.querySelectorAll('li')[2].firstChild, 1);
+      editor.composer.commands.exec('formatBlock', "h1");
+      equal(editableElement.innerHTML.toLowerCase(), "<ul><li>row1</li><li>r<h1>ow2</h1></li><li><h1>r</h1>ow3</li></ul>", "And keeps selection positions inside LI elements");
+      
+      editor.setValue("tere<ul><li>row1</li><li>row2</li><li>row3</li></ul>", true);
+      that.setSelection(editor, editor.editableElement.firstChild, 1, editor.editableElement.querySelectorAll('li')[2].firstChild, 1);
+      editor.composer.commands.exec('formatBlock', "h1");
+      equal(editableElement.innerHTML.toLowerCase(), "t<h1>ere</h1><ul><li><h1>row1</h1></li><li><h1>row2</h1></li><li><h1>r</h1>ow3</li></ul>", "Block elements inserted into li elements when selection starts outside and ends inside list");
+      
+      editor.setValue("<ul><li>row1</li><li>row2</li><li>row3</li></ul>tore", true);
+      that.setSelection(editor, editor.editableElement.querySelectorAll('li')[1].firstChild, 1, editor.editableElement.lastChild, 1);
+      editor.composer.commands.exec('formatBlock', "h1");
+      equal(editableElement.innerHTML.toLowerCase(), "<ul><li>row1</li><li>r<h1>ow2</h1></li><li><h1>row3</h1></li></ul><h1>t</h1>ore", "Block elements inserted into li elements when selection starts inside and ends outside list");
+      
+      editor.setValue("tere<ul><li>row1</li><li>row2</li><li>row3</li></ul>tore", true);
+      that.setSelection(editor, editor.editableElement.firstChild, 1, editor.editableElement.lastChild, 1);
+      editor.composer.commands.exec('formatBlock', "h1");
+      equal(editableElement.innerHTML.toLowerCase(), "t<h1>ere</h1><ul><li><h1>row1</h1></li><li><h1>row2</h1></li><li><h1>row3</h1></li></ul><h1>t</h1>ore", "Block elements inserted into li elements when selection is around the list");
+      
+      editor.setValue("<ul><li>row1</li><li>row2</li><li>row3</li></ul>", true);
+      that.setSelection(editor, editor.editableElement.querySelectorAll('li')[1].firstChild, 1, editor.editableElement.querySelectorAll('li')[1].firstChild, 2);
+      editor.composer.commands.exec('formatBlock', "h1");
+      equal(editableElement.innerHTML.toLowerCase(), "<ul><li>row1</li><li>r<h1>o</h1>w2</li><li>row3</li></ul>", "Block element inserted into selection inside li element");
+      
       start();
     });
   });
@@ -206,7 +238,6 @@ if (wysihtml5.browser.supported()) {
 
       editor.composer.commands.exec('insertBlockQuote');
       equal(editableElement.innerHTML.toLowerCase(), text, "Blockquote removed with headings and paragraphs preserved.");
-
 
       editor.setValue(text2, true);
       editor.composer.selection.selectNode(editor.editableElement.querySelector('h1'));

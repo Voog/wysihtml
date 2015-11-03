@@ -262,9 +262,6 @@ if (wysihtml5.browser.supported()) {
       });
     });
 
-
-  
-
   // sub/super script
     asyncTest("Create subscript / superscript", function() {
       expect(2);
