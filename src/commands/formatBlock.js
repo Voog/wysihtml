@@ -194,7 +194,7 @@
     // If range starts outside of node and ends inside at textrange and covers the whole node visually, extend end to cover the node end too
     if (range.startContainer && range.startContainer.nodeType === 1 && range.endContainer.nodeType === 3) {
       if (range.startContainer.firstChild === range.endContainer && range.endOffset === range.endContainer.data.length) {
-        if (range.startContainer !== composer.element) {
+        if (range.startContainer !== composer.element && range.startContainer.nodeName !== 'LI' && range.startContainer.nodeName !== 'TD') {
           range.setEndAfter(range.startContainer);
         }
       }
@@ -204,7 +204,7 @@
     // If range ends outside of node and starts inside at textrange and covers the whole node visually, extend start to cover the node start too
     if (range.endContainer && range.endContainer.nodeType === 1 && range.startContainer.nodeType === 3) {
       if (range.endContainer.firstChild === range.startContainer && range.startOffset === 0) {
-        if (range.endContainer !== composer.element) {
+        if (range.endContainer !== composer.element && range.endContainer.nodeName !== 'LI' && range.endContainer.nodeName !== 'TD') {
           range.setStartBefore(range.endContainer);
         }
       }
@@ -215,7 +215,7 @@
     if (range.startContainer && range.startContainer.nodeType === 3 && range.startContainer === range.endContainer && range.startContainer.parentNode.childNodes.length === 1) {
       if (range.endOffset == range.endContainer.data.length && range.startOffset === 0) {
         node = range.startContainer.parentNode;
-        if (node !== composer.element) {
+        if (node !== composer.element && node.nodeName !== 'LI' && node.nodeName !== 'TD') {
           range.setStartBefore(node);
           range.setEndAfter(node);
         }
@@ -233,6 +233,16 @@
         
     for (var i = 0, maxi = ranges.length; i < maxi; i++) {
       
+      if (ranges[i].startContainer.nodeType === 1 && ranges[i].startContainer.matches('ul, ol')) {
+        ranges[i].setStart(ranges[i].startContainer.childNodes[ranges[i].startOffset], 0);
+      }
+      if (ranges[i].endContainer.nodeType === 1 && ranges[i].endContainer.matches('ul, ol')) {
+        closestLI = ranges[i].endContainer.childNodes[Math.max(ranges[i].endOffset - 1, 0)];
+        if (closestLI.childNodes) {
+          ranges[i].setEnd(closestLI, closestLI.childNodes.length);
+        }
+      }
+
       lis = ranges[i].getNodes([1], function(node) {
         return node.nodeName === "LI";
       });

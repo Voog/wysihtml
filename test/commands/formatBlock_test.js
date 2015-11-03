@@ -152,7 +152,7 @@ if (wysihtml5.browser.supported()) {
   
   // formatblock (alignment, headings, paragraph, pre, blockquote)
   asyncTest("Format block nesting", function() {
-     expect(7);
+     expect(8);
     var that = this,
         parserRules = {
             tags: {
@@ -206,6 +206,11 @@ if (wysihtml5.browser.supported()) {
       that.setSelection(editor, editor.editableElement.querySelectorAll('li')[1].firstChild, 1, editor.editableElement.querySelectorAll('li')[1].firstChild, 2);
       editor.composer.commands.exec('formatBlock', "h1");
       equal(editableElement.innerHTML.toLowerCase(), "<ul><li>row1</li><li>r<h1>o</h1>w2</li><li>row3</li></ul>", "Block element inserted into selection inside li element");
+      
+      editor.setValue("<ul><li>row1</li><li>row2</li><li>row3</li></ul>", true);
+      that.setSelection(editor, editor.editableElement.querySelectorAll('li')[1].firstChild, 0, editor.editableElement.querySelectorAll('li')[1], editor.editableElement.querySelectorAll('li')[1].childNodes.length);
+      editor.composer.commands.exec('formatBlock', "h1");
+      equal(editableElement.innerHTML.toLowerCase(), "<ul><li>row1</li><li><h1>row2</h1></li><li>row3</li></ul>", "Block element inserted into selection inside li element");
       
       start();
     });
