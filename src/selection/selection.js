@@ -932,14 +932,39 @@
      * Select line where the caret is in
      */
     selectLine: function() {
+      var r = rangy.createRange();
       if (wysihtml5.browser.supportsSelectionModify()) {
         this._selectLine_W3C();
-      } else if (this.doc.selection) {
-        this._selectLine_MSIE();
-      } else {
-        // For IE Edge as it ditched the old api and did not fully implement the new one (as expected)
-        this._selectLineUniversal();
+      } else if (r.nativeRange && r.nativeRange.getBoundingClientRect) {
+          // For IE Edge as it ditched the old api and did not fully implement the new one (as expected)*/
+          this._selectLineUniversal();
       }
+    },
+    
+    includeRangyRangeHelpers: function() {
+      var s = this.getSelection(),
+          r = s.getRangeAt(0),
+          isHelperNode = function(node) {
+            return (node && node.nodeType === 1 && node.classList.contains('rangySelectionBoundary'));
+          },
+          getNodeLength = function (node) {
+            if (node.nodeType === 1) {
+              return node.childNodes && node.childNodes.length || 0;
+            } else {
+              return node.data && node.data.length || 0;
+            }
+            // body...
+          },
+          anode = s.anchorNode.nodeType === 1 ? s.anchorNode.childNodes[s.anchorOffset] : s.anchorNode,
+          fnode = s.focusNode.nodeType === 1 ? s.focusNode.childNodes[s.focusOffset] : s.focusNode;
+      
+      if (fnode && s.focusOffset === getNodeLength(fnode) && fnode.nextSibling && isHelperNode(fnode.nextSibling)) {
+        r.setEndAfter(fnode.nextSibling);
+      }
+      if (anode && s.anchorOffset === 0 && anode.previousSibling && isHelperNode(anode.previousSibling)) {
+        r.setStartBefore(anode.previousSibling);
+      }
+      r.select();
     },
 
     /**
@@ -959,6 +984,8 @@
           selection.focusOffset === initialBoundry[3]
       ) {
         this._selectLineUniversal();
+      } else {
+        this.includeRangyRangeHelpers();
       }
     },
 
@@ -1010,19 +1037,45 @@
           rect,
           startRange, endRange, testRange,
           count = 0,
-          amount, testRect, found;
+          amount, testRect, found,
+          that = this,
+          isLineBreakingElement = function(el) {
+            return el && el.nodeType === 1 && (that.win.getComputedStyle(el).display === "block" || wysihtml5.lang.array(['BR', 'HR']).contains(el.nodeName));
+          },
+          prevNode = function(node) {
+            var pnode = node;
+            if (pnode) {
+              while (pnode && ((pnode.nodeType === 1 && pnode.classList.contains('rangySelectionBoundary')) || (pnode.nodeType === 3 && (/^\s*$/).test(pnode.data)))) {
+                pnode = pnode.previousSibling;
+              }
+            }
+            return pnode;
+          };
 
       startRange = r.cloneRange();
       endRange = r.cloneRange();
 
       if (r.collapsed) {
-        r.expand('word', 1);
-        rect = r.nativeRange.getBoundingClientRect();
+        // Collapsed state can not have a bounding rect. Thus need to expand it at least by 1 character first while not crossing line boundary
+        // TODO: figure out a shorter and more readable way
+        if (r.startContainer.nodeType === 3 && r.startOffset < r.startContainer.data.length) {
+          r.moveEnd('character', 1);
+        } else if (r.startContainer.nodeType === 1 && r.startContainer.childNodes[r.startOffset] && r.startContainer.childNodes[r.startOffset].nodeType === 3 && r.startContainer.childNodes[r.startOffset].data.length > 0) {
+          r.moveEnd('character', 1);
+        } else if (r.startOffset > 0 && ( r.startContainer.nodeType === 3 || (r.startContainer.nodeType === 1 && !isLineBreakingElement(prevNode(r.startContainer.childNodes[r.startOffset - 1]))))) {
+          r.moveStart('character', -1);
+        }
       }
-
+      if (!r.collapsed) {
+        r.insertNode(this.doc.createTextNode(wysihtml5.INVISIBLE_SPACE));
+      }
+      
+      // Is probably just empty line as can not be expanded
+      rect = r.nativeRange.getBoundingClientRect();
       do {
         amount = r.moveStart('character', -1);
         testRect =  r.nativeRange.getBoundingClientRect();
+        
         if (!testRect || Math.floor(testRect.top) !== Math.floor(rect.top)) {
           r.moveStart('character', 1);
           found = true;
@@ -1044,55 +1097,7 @@
       } while (amount !== 0 && !found && count < 2000);
 
       r.select();
-    },
-
-    _selectLine_MSIE: function() {
-      var range       = this.doc.selection && this.doc.selection.createRange ? this.doc.selection.createRange() : this.doc.createRange(),
-          rangeTop    = range.boundingTop,
-          scrollWidth = this.doc.body.scrollWidth,
-          rangeBottom,
-          rangeEnd,
-          measureNode,
-          i,
-          j;
-
-      window.r = range;
-
-      if (!range.moveToPoint) {
-        return;
-      }
-
-      if (rangeTop === 0) {
-        // Don't know why, but when the selection ends at the end of a line
-        // range.boundingTop is 0
-        measureNode = this.doc.createElement("span");
-        this.insertNode(measureNode);
-        rangeTop = measureNode.offsetTop;
-        measureNode.parentNode.removeChild(measureNode);
-      }
-
-      rangeTop += 1;
-
-      for (i=-10; i<scrollWidth; i+=2) {
-        try {
-          range.moveToPoint(i, rangeTop);
-          break;
-        } catch(e1) {}
-      }
-
-      // Investigate the following in order to handle multi line selections
-      // rangeBottom = rangeTop + (rangeHeight ? (rangeHeight - 1) : 0);
-      rangeBottom = rangeTop;
-      rangeEnd = this.doc.selection.createRange();
-      for (j=scrollWidth; j>=0; j--) {
-        try {
-          rangeEnd.moveToPoint(j, rangeBottom);
-          break;
-        } catch(e2) {}
-      }
-
-      range.setEndPoint("EndToEnd", rangeEnd);
-      range.select();
+      this.includeRangyRangeHelpers();
     },
 
     getText: function() {

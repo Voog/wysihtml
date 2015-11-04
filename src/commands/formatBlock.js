@@ -527,8 +527,7 @@
         // If selection is caret expand it to cover nearest suitable block element or row if none found
         if (composer.selection.isCollapsed()) {
           bookmark = rangy.saveSelection(composer.win);
-          expandCaretToBlock(composer, options ? options.nodeName : undefined);
-        }
+          expandCaretToBlock(composer, options ? options.nodeName : undefined);        }
         
         if (options) {
           newBlockElements = formatSelection("apply", composer, options);
@@ -536,6 +535,7 @@
           // Options == null means block formatting should be removed from selection
           newBlockElements = formatSelection("remove", composer);
         }
+        
       }
 
       // Remove empty block elements that may be left behind
