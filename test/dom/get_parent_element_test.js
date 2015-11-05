@@ -80,12 +80,6 @@ test("Basic test - nodeName + className", function() {
   });
   equal(result, spanElement);
   
-  result = wysihtml5.dom.getParentElement(spanElement, {
-    nodeName:   "span",
-    className:  "wysiwyg-color-green",
-    classRegExp: /wysiwyg-color-[a-z]+/g
-  });
-  equal(result, null);
 });
 
 
@@ -180,4 +174,3 @@ test("Test with parent container limit", function() {
 
   equal(result, null);
 });
-

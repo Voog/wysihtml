@@ -21,6 +21,14 @@
     };
   }
 
+  function getRangeNode(node, offset) {
+    if (node.nodeType === 3) {
+      return node;
+    } else {
+      return node.childNodes[offset] || node;
+    }
+  }
+
   // Removes empty block level elements
   function cleanup(composer, newBlockElements) {
     wysihtml5.dom.removeInvisibleSpaces(composer.element);
@@ -367,6 +375,31 @@
     return blocks;
   }
   
+  function removeSurroundingLineBreaks(prevNode, nextNode, composer) {
+    var isBr = function(n) {
+          return n && n.nodeType === 1 && n.nodeName === "BR";
+        },
+        isBookmark = function(n) {
+          return n && n.nodeType === 1 && n.classList.contains('rangySelectionBoundary');
+        },
+        prevPrev;
+
+    if (prevNode && isBookmark(prevNode)) {
+      prevNode = prevNode.previousSibling;
+    }
+    if (nextNode && isBookmark(nextNode)) {
+      nextNode = nextNode.nextSibling;
+    }
+
+    prevPrev = prevNode && prevNode.previousSibling;
+
+    if (isBr(nextNode)) {
+      nextNode.parentNode.removeChild(nextNode);
+    }
+    if (isBr(prevNode) && (!prevPrev || prevPrev.nodeType !== 1 || composer.win.getComputedStyle(prevPrev).display !== "block")) {
+      prevNode.parentNode.removeChild(prevNode);
+    }
+  }
 
   // Wrap the range with a block level element
   // If element is one of unnestable block elements (ex: h2 inside h1), split nodes and insert between so nesting does not occur
@@ -374,6 +407,8 @@
     var similarOptions = options ? correctOptionsForSimilarityCheck(options) : null,
         r = range.cloneRange(),
         rangeStartContainer = r.startContainer,
+        prevNode = getRangeNode(r.startContainer, r.startOffset).previousSibling,
+        nextNode = getRangeNode(r.endContainer, r.endOffset).nextSibling,
         content = r.extractContents(),
         fragment = composer.doc.createDocumentFragment(),
         similarOuterBlock = similarOptions ? wysihtml5.dom.getParentElement(rangeStartContainer, similarOptions, null, composer.element) : null,
@@ -427,6 +462,7 @@
       blocks = wysihtml5.lang.array(fragment.childNodes).get();
     }
     injectFragmentToRange(fragment, r, composer, firstOuterBlock);
+    removeSurroundingLineBreaks(prevNode, nextNode, composer);
     return blocks;
   }
 
