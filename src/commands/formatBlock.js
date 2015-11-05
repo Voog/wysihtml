@@ -145,7 +145,7 @@
       element.removeAttribute('class');
     }
 
-    if (options.nodeName && element.nodeName === options.nodeName) {
+    if (options.nodeName && element.nodeName.toLowerCase() === options.nodeName.toLowerCase()) {
       style = element.getAttribute('style');
       if (!style || style.trim() === '') {
         dom.unwrap(element);
@@ -527,7 +527,7 @@
         // If selection is caret expand it to cover nearest suitable block element or row if none found
         if (composer.selection.isCollapsed()) {
           bookmark = rangy.saveSelection(composer.win);
-          expandCaretToBlock(composer, options ? options.nodeName : undefined);        }
+          expandCaretToBlock(composer, options && options.nodeName ? options.nodeName.toUpperCase() : undefined);        }
         
         if (options) {
           newBlockElements = formatSelection("apply", composer, options);

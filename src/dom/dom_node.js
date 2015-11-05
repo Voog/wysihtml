@@ -227,7 +227,7 @@
           }
         }
 
-        if (properties.nodeName && node.nodeName !== properties.nodeName) {
+        if (properties.nodeName && node.nodeName.toLowerCase() !== properties.nodeName.toLowerCase()) {
           return false;
         }
 
