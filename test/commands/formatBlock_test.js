@@ -216,6 +216,65 @@ if (wysihtml5.browser.supported()) {
     });
   });
   
+  // formatblock (alignment, headings, paragraph, pre, blockquote)
+  asyncTest("Format block linebreaks", function() {
+    expect(7);
+    var that = this,
+        parserRules = {
+            tags: {
+              h1: true,
+              p: true,
+              br: true
+            }
+          },
+        editor = new wysihtml5.Editor(this.editableArea1, {
+          parserRules: parserRules
+        }),
+        range
+      
+    editor.on("load", function() {
+      var editableElement   = that.editableArea1;
+      editor.setValue("foo<br>goo<br>bar", true);
+      editor.composer.selection.selectNode(editor.editableElement.childNodes[2]);
+      editor.composer.commands.exec('formatBlock', "h1");
+      equal(editableElement.innerHTML.toLowerCase(), "foo<h1>goo</h1>bar", "Surrounding linebreaks removed on inserting block");
+      
+      editor.setValue("foo<br><br>goo<br><br>bar", true);
+      editor.composer.selection.selectNode(editor.editableElement.childNodes[2]);
+      editor.composer.commands.exec('formatBlock', "h1");
+      equal(editableElement.innerHTML.toLowerCase(), "foo<br><h1>goo</h1><br>bar", "Surrounding linebreaks removed but not too much on inserting block");
+      
+      editor.setValue("foo<br><br>goo<br><br>bar", true);
+      editor.composer.selection.selectNode(editor.editableElement.childNodes[3]);
+      editor.composer.commands.exec('formatBlock', "h1");
+      equal(editableElement.innerHTML.toLowerCase(), "foo<br><h1>goo</h1><br>bar", "Surrounding linebreaks removed but not too much on inserting block");
+      
+      editor.setValue("<p>foo</p><br>goo<br><p>bar</p>", true);
+      editor.composer.selection.selectNode(editor.editableElement.childNodes[2]);
+      editor.composer.commands.exec('formatBlock', "h1");
+      equal(editableElement.innerHTML.toLowerCase(), "<p>foo</p><br><h1>goo</h1><p>bar</p>", "Surrounding visual linebreaks removed and nearby block elements taken into equation");
+      
+      editor.setValue("foo<h1>goo</h1>bar", true);
+      editor.composer.selection.selectNode(editor.editableElement.childNodes[1]);
+      editor.composer.commands.exec('formatBlock', {nodeName: "h1", toggle: true});
+      equal(editableElement.innerHTML.toLowerCase(), "foo<br>goo<br>bar", "Removing block format in simple text adds linebreaks");
+      
+      editor.setValue("<p>foo</p><h1>goo</h1><p>bar</p>", true);
+      editor.composer.selection.selectNode(editor.editableElement.childNodes[1]);
+      editor.composer.commands.exec('formatBlock', {nodeName: "h1", toggle: true});
+      equal(editableElement.innerHTML.toLowerCase(), "<p>foo</p>goo<p>bar</p>", "Removing block format in between other block formatting does not add linebreaks");
+      
+      editor.setValue("<p>foo</p><br><h1>goo</h1><br><p>bar</p>", true);
+      editor.composer.selection.selectNode(editor.editableElement.childNodes[2]);
+      editor.composer.commands.exec('formatBlock', {nodeName: "h1", toggle: true});
+      equal(editableElement.innerHTML.toLowerCase(), "<p>foo</p><br>goo<br><p>bar</p>", "Removing block format in between linebreaks does not add additional linebreaks");
+
+      start();
+    });
+  });
+  
+  
+  
   // create blockQuote
   asyncTest("Create blockquote", function() {
     expect(4);
