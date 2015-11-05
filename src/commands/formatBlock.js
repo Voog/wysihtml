@@ -29,6 +29,14 @@
     }
   }
 
+  function isBr(n) {
+    return n && n.nodeType === 1 && n.nodeName === "BR";
+  }
+
+  function isBookmark(n) {
+    return n && n.nodeType === 1 && n.classList.contains('rangySelectionBoundary');
+  }
+
   // Removes empty block level elements
   function cleanup(composer, newBlockElements) {
     wysihtml5.dom.removeInvisibleSpaces(composer.element);
@@ -135,7 +143,10 @@
   // Unsets element properties by options
   // If nodename given and matches current element, element is unwrapped or converted to default node (depending on presence of class and style attributes)
   function removeOptionsFromElement(element, options, composer) {
-    var style, classes;
+    var style, classes,
+        prevNode = element.previousSibling,
+        nextNode = element.nextSibling,
+        unwrapped = false;
 
     if (options.styleProperty) {
       element.style[wysihtml5.browser.fixStyleKey(options.styleProperty)] = '';
@@ -157,6 +168,7 @@
       style = element.getAttribute('style');
       if (!style || style.trim() === '') {
         dom.unwrap(element);
+        unwrapped = true;
       } else {
         element = dom.renameElement(element, defaultNodeName(composer));
       }
@@ -165,6 +177,10 @@
     // Clean up blank style attribute
     if (element.getAttribute('style') !== null && element.getAttribute('style').trim() === "") {
       element.removeAttribute('style');
+    }
+
+    if (unwrapped) {
+      applySurroundingLineBreaks(prevNode, nextNode, composer);
     }
   }
 
@@ -347,6 +363,8 @@
   // Removes all block formatting from range
   function clearRangeBlockFromating(range, closestBlockName, composer) {
     var r = range.cloneRange(),
+        prevNode = getRangeNode(r.startContainer, r.startOffset).previousSibling,
+        nextNode = getRangeNode(r.endContainer, r.endOffset).nextSibling,
         content = r.extractContents(),
         fragment = composer.doc.createDocumentFragment(),
         children, blocks;
@@ -372,17 +390,13 @@
     }
     blocks = wysihtml5.lang.array(fragment.childNodes).get();
     injectFragmentToRange(fragment, r, composer);
+    applySurroundingLineBreaks(prevNode, nextNode, composer);
     return blocks;
   }
   
+  // When block node is inserted, look surrounding nodes and remove surplous linebreak tags (as block format breaks line itself)
   function removeSurroundingLineBreaks(prevNode, nextNode, composer) {
-    var isBr = function(n) {
-          return n && n.nodeType === 1 && n.nodeName === "BR";
-        },
-        isBookmark = function(n) {
-          return n && n.nodeType === 1 && n.classList.contains('rangySelectionBoundary');
-        },
-        prevPrev;
+    var prevPrev;
 
     if (prevNode && isBookmark(prevNode)) {
       prevNode = prevNode.previousSibling;
@@ -398,6 +412,27 @@
     }
     if (isBr(prevNode) && (!prevPrev || prevPrev.nodeType !== 1 || composer.win.getComputedStyle(prevPrev).display !== "block")) {
       prevNode.parentNode.removeChild(prevNode);
+    }
+  }
+
+  function applySurroundingLineBreaks(prevNode, nextNode, composer) {
+    var prevPrev;
+
+    if (prevNode && isBookmark(prevNode)) {
+      prevNode = prevNode.previousSibling;
+    }
+    if (nextNode && isBookmark(nextNode)) {
+      nextNode = nextNode.nextSibling;
+    }
+
+    prevPrev = prevNode && prevNode.previousSibling;
+
+    if (prevNode && (prevNode.nodeType !== 1 || (composer.win.getComputedStyle(prevNode).display !== "block" && !isBr(prevNode))) && prevNode.parentNode) {
+      prevNode.parentNode.insertBefore(composer.doc.createElement('br'), prevNode.nextSibling);
+    }
+
+    if (nextNode && (nextNode.nodeType !== 1 || composer.win.getComputedStyle(nextNode).display !== "block") && nextNode.parentNode) {
+      nextNode.parentNode.insertBefore(composer.doc.createElement('br'), nextNode);
     }
   }
 

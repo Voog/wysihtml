@@ -263,10 +263,10 @@ if (wysihtml5.browser.supported()) {
       editor.composer.commands.exec('formatBlock', {nodeName: "h1", toggle: true});
       equal(editableElement.innerHTML.toLowerCase(), "<p>foo</p>goo<p>bar</p>", "Removing block format in between other block formatting does not add linebreaks");
       
-      editor.setValue("<p>foo</p><br><h1>goo</h1><br><p>bar</p>", true);
+      editor.setValue("foo<br><h1>goo</h1><br>bar", true);
       editor.composer.selection.selectNode(editor.editableElement.childNodes[2]);
       editor.composer.commands.exec('formatBlock', {nodeName: "h1", toggle: true});
-      equal(editableElement.innerHTML.toLowerCase(), "<p>foo</p><br>goo<br><p>bar</p>", "Removing block format in between linebreaks does not add additional linebreaks");
+      equal(editableElement.innerHTML.toLowerCase(), "foo<br>goo<br><br>bar", "Removing block format in between linebreaks does not add additional linebreaks");
 
       start();
     });
@@ -308,7 +308,7 @@ if (wysihtml5.browser.supported()) {
       equal(editableElement.innerHTML.toLowerCase(), "test<blockquote><h1>heading</h1></blockquote>test" , "Blockquote created.");
 
       editor.composer.commands.exec('insertBlockQuote');
-      equal(editableElement.innerHTML.toLowerCase(), "test<h1>heading</h1>test" , "Blockquote removed.");
+      equal(editableElement.innerHTML.toLowerCase(), "test<br><h1>heading</h1><br>test" , "Blockquote removed.");
 
       start();
     });
