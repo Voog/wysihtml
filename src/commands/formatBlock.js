@@ -29,10 +29,12 @@
     }
   }
 
+  // Returns if node is a line break
   function isBr(n) {
     return n && n.nodeType === 1 && n.nodeName === "BR";
   }
 
+  // Returns if node is the rangy selection bookmark element (that must not be taken into account in most situatons and is removed on selection restoring)
   function isBookmark(n) {
     return n && n.nodeType === 1 && n.classList.contains('rangySelectionBoundary');
   }
@@ -42,8 +44,9 @@
     wysihtml5.dom.removeInvisibleSpaces(composer.element);
     var container = composer.element,
         allElements = container.querySelectorAll(BLOCK_ELEMENTS),
-        uneditables = container.querySelectorAll(composer.config.classNames.uneditableContainer),
-        elements = wysihtml5.lang.array(allElements).without(uneditables),
+        noEditQuery = composer.config.classNames.uneditableContainer + ([""]).concat(BLOCK_ELEMENTS.split(',')).join(", " + composer.config.classNames.uneditableContainer + ' '),
+        uneditables = container.querySelectorAll(noEditQuery),
+        elements = wysihtml5.lang.array(allElements).without(uneditables), // Lets not touch uneditable elements and their contents
         nbIdx;
 
     for (var i = elements.length; i--;) {
@@ -187,58 +190,69 @@
   // Unwraps block level elements from inside content
   // Useful as not all block level elements can contain other block-levels
   function unwrapBlocksFromContent(element) {
-    var contentBlocks = element.querySelectorAll(BLOCK_ELEMENTS) || []; // Find unnestable block elements in extracted contents
+    var blocks = element.querySelectorAll(BLOCK_ELEMENTS) || [], // Find unnestable block elements in extracted contents
+        nextEl; 
 
-    for (var i = contentBlocks.length; i--;) {
-      if (!contentBlocks[i].nextSibling || contentBlocks[i].nextSibling.nodeType !== 1 || contentBlocks[i].nextSibling.nodeName !== 'BR') {
-        if ((contentBlocks[i].innerHTML || contentBlocks[i].nodeValue || '').trim() !== '') {
-          contentBlocks[i].parentNode.insertBefore(contentBlocks[i].ownerDocument.createElement('BR'), contentBlocks[i].nextSibling);
+    for (var i = blocks.length; i--;) {
+      nextEl = blocks[i].nextSibling,
+      prevEl = blocks[i].previousSibling;
+      
+      if (nextEl && nextEl.nodeType !== 1 && nextEl.nodeName !== 'BR') {
+        if ((blocks[i].innerHTML || blocks[i].nodeValue || '').trim() !== '') {
+          blocks[i].parentNode.insertBefore(blocks[i].ownerDocument.createElement('BR'), nextEl);
         }
       }
-      wysihtml5.dom.unwrap(contentBlocks[i]);
+      if (nextEl && nextEl.nodeType !== 1 && nextEl.nodeName !== 'BR') {
+        if ((blocks[i].innerHTML || blocks[i].nodeValue || '').trim() !== '') {
+          blocks[i].parentNode.insertBefore(blocks[i].ownerDocument.createElement('BR'), nextEl);
+        }
+      }
+      wysihtml5.dom.unwrap(blocks[i]);
     }
   }
 
   // Fix ranges that visually cover whole block element to actually cover the block
   function fixRangeCoverage(range, composer) {
-    var node;
+    var node,
+        start = range.startContainer,
+        end = range.endContainer;
 
     // If range has only one childNode and it is end to end the range, extend the range to contain the container element too
     // This ensures the wrapper node is modified and optios added to it
-    if (range.startContainer && range.startContainer.nodeType === 1 && range.startContainer === range.endContainer) {
-      if (range.startContainer.firstChild === range.startContainer.lastChild && range.endOffset === 1) {
-        if (range.startContainer !== composer.element && range.startContainer.nodeName !== 'LI' && range.startContainer.nodeName !== 'TD') {
-          range.setStartBefore(range.startContainer);
-          range.setEndAfter(range.endContainer);
+    if (start && start.nodeType === 1 && start === end) {
+      if (start.firstChild === start.lastChild && range.endOffset === 1) {
+        if (start !== composer.element && start.nodeName !== 'LI' && start.nodeName !== 'TD') {
+          range.setStartBefore(start);
+          range.setEndAfter(end);
         }
       }
       return;
     }
 
     // If range starts outside of node and ends inside at textrange and covers the whole node visually, extend end to cover the node end too
-    if (range.startContainer && range.startContainer.nodeType === 1 && range.endContainer.nodeType === 3) {
-      if (range.startContainer.firstChild === range.endContainer && range.endOffset === range.endContainer.data.length) {
-        if (range.startContainer !== composer.element && range.startContainer.nodeName !== 'LI' && range.startContainer.nodeName !== 'TD') {
-          range.setEndAfter(range.startContainer);
+    if (start && start.nodeType === 1 && end.nodeType === 3) {
+      if (start.firstChild === end && range.endOffset === end.data.length) {
+        if (start !== composer.element && start.nodeName !== 'LI' && start.nodeName !== 'TD') {
+          range.setEndAfter(start);
         }
       }
       return;
     }
     
     // If range ends outside of node and starts inside at textrange and covers the whole node visually, extend start to cover the node start too
-    if (range.endContainer && range.endContainer.nodeType === 1 && range.startContainer.nodeType === 3) {
-      if (range.endContainer.firstChild === range.startContainer && range.startOffset === 0) {
-        if (range.endContainer !== composer.element && range.endContainer.nodeName !== 'LI' && range.endContainer.nodeName !== 'TD') {
-          range.setStartBefore(range.endContainer);
+    if (end && end.nodeType === 1 && start.nodeType === 3) {
+      if (end.firstChild === start && range.startOffset === 0) {
+        if (end !== composer.element && end.nodeName !== 'LI' && end.nodeName !== 'TD') {
+          range.setStartBefore(end);
         }
       }
       return;
     }
 
     // If range covers a whole textnode and the textnode is the only child of node, extend range to node 
-    if (range.startContainer && range.startContainer.nodeType === 3 && range.startContainer === range.endContainer && range.startContainer.parentNode.childNodes.length === 1) {
-      if (range.endOffset == range.endContainer.data.length && range.startOffset === 0) {
-        node = range.startContainer.parentNode;
+    if (start && start.nodeType === 3 && start === end && start.parentNode.childNodes.length === 1) {
+      if (range.endOffset == end.data.length && range.startOffset === 0) {
+        node = start.parentNode;
         if (node !== composer.element && node.nodeName !== 'LI' && node.nodeName !== 'TD') {
           range.setStartBefore(node);
           range.setEndAfter(node);
@@ -257,6 +271,7 @@
         
     for (var i = 0, maxi = ranges.length; i < maxi; i++) {
       
+      // Fixes range start and end positions if inside UL or OL element (outside of LI)
       if (ranges[i].startContainer.nodeType === 1 && ranges[i].startContainer.matches('ul, ol')) {
         ranges[i].setStart(ranges[i].startContainer.childNodes[ranges[i].startOffset], 0);
       }
@@ -267,10 +282,13 @@
         }
       }
 
+      // Get all LI eleemnts in selection (fully or partially covered)
+      // And make sure ranges are either inside LI or outside UL/OL
+      // Split and add new ranges as needed to cover same range content
+      // TODO: Needs improvement to accept DL, DD, DT
       lis = ranges[i].getNodes([1], function(node) {
         return node.nodeName === "LI";
       });
-      
       if (lis.length > 0) {
       
         for (j = 0, maxj = lis.length; j < maxj; j++) {
@@ -367,30 +385,48 @@
         nextNode = getRangeNode(r.endContainer, r.endOffset).nextSibling,
         content = r.extractContents(),
         fragment = composer.doc.createDocumentFragment(),
-        children, blocks;
+        children, blocks,
+        first = true;
         
     while(content.firstChild) {
       // Iterate over all selection content first level childNodes
-      if (content.firstChild.nodeType == 1) {
+      if (content.firstChild.nodeType == 1 && content.firstChild.matches(BLOCK_ELEMENTS)) {
         // If node is a block element
         // Split block formating and add new block to wrap caret
         
         unwrapBlocksFromContent(content.firstChild);
         children = wysihtml5.dom.unwrap(content.firstChild);
+        
+        // Add line break before if needed
+        if (children.length > 0) {  
+          if (fragment.lastChild && (fragment.lastChild.nodeType !== 1 || (fragment.lastChild.nodeName !== "BR" && !fragment.lastChild.matches(BLOCK_ELEMENTS)))) {
+            if (prevNode || !first) {
+              fragment.appendChild(composer.doc.createElement('BR'));
+            }
+          }
+        }
+        
         for (var c = 0, cmax = children.length; c < cmax; c++) {
           fragment.appendChild(children[c]);
         }
-        if (fragment.childNodes.length > 0) {
-          fragment.appendChild(composer.doc.createElement('BR'));
+        
+        // Add line break after if needed
+        if (children.length > 0) {
+          if (fragment.lastChild.nodeType !== 1 || (fragment.lastChild.nodeName !== "BR" && !fragment.lastChild.matches(BLOCK_ELEMENTS))) {
+            if (nextNode || fragment.lastChild !== content.lastChild) {
+              fragment.appendChild(composer.doc.createElement('BR'));
+            }
+          }
         }
         
       } else {
         fragment.appendChild(content.firstChild);
       }
+      
+      first = false;
     }
     blocks = wysihtml5.lang.array(fragment.childNodes).get();
     injectFragmentToRange(fragment, r, composer);
-    applySurroundingLineBreaks(prevNode, nextNode, composer);
     return blocks;
   }
   
@@ -566,20 +602,23 @@
     }
     return newBlockElements;
   }
+  
+  // If properties is passed as a string, look for tag with that tagName/query 
+  function parseOptions(options) {
+    if (typeof options === "string") {
+      options = {
+        nodeName: options.toUpperCase()
+      };
+    }
+    return options;
+  }
 
   wysihtml5.commands.formatBlock = {
     exec: function(composer, command, options) {
-      
+      options = parseOptions(options);
       var newBlockElements = [],
           ranges, range, bookmark, state, closestBlockName;
 
-      // If properties is passed as a string, look for tag with that tagName/query 
-      if (typeof options === "string") {
-        options = {
-          nodeName: options.toUpperCase()
-        };
-      }
-      
       // Find if current format state is active if options.toggle is set as true
       // In toggle case active state elemets are formatted instead of working directly on selection
       if (options && options.toggle) {
@@ -598,7 +637,8 @@
         // If selection is caret expand it to cover nearest suitable block element or row if none found
         if (composer.selection.isCollapsed()) {
           bookmark = rangy.saveSelection(composer.win);
-          expandCaretToBlock(composer, options && options.nodeName ? options.nodeName.toUpperCase() : undefined);        }
+          expandCaretToBlock(composer, options && options.nodeName ? options.nodeName.toUpperCase() : undefined);
+        }
         
         if (options) {
           newBlockElements = formatSelection("apply", composer, options);
@@ -620,26 +660,41 @@
         selectElements(newBlockElements, composer);
       }
     },
-
-    // If properties as null is passed returns status describing all block level elements
-    state: function(composer, command, properties) {
+    
+    // Removes all block formatting from selection
+    remove: function(composer, command, options) {
+      options = parseOptions(options);
+      var newBlockElements, bookmark;
       
-      // If properties is passed as a string, look for tag with that tagName/query 
-      if (typeof properties === "string") {
-        properties = {
-          query: properties
-        };
+      // If selection is caret expand it to cover nearest suitable block element or row if none found
+      if (composer.selection.isCollapsed()) {
+        bookmark = rangy.saveSelection(composer.win);
+        expandCaretToBlock(composer, options && options.nodeName ? options.nodeName.toUpperCase() : undefined);
       }
+      
+      newBlockElements = formatSelection("remove", composer);
+      
+      // Restore selection
+      if (bookmark) {
+        rangy.restoreSelection(bookmark);
+      } else {
+        selectElements(newBlockElements, composer);
+      }
+    },
+
+    // If options as null is passed returns status describing all block level elements
+    state: function(composer, command, options) {
+      options = parseOptions(options);
 
       var nodes = composer.selection.filterElements((function (element) { // Finds matching elements inside selection
-            return wysihtml5.dom.domNode(element).test(properties || { query: BLOCK_ELEMENTS });
+            return wysihtml5.dom.domNode(element).test(options || { query: BLOCK_ELEMENTS });
           }).bind(this)),
           parentNodes = composer.selection.getSelectedOwnNodes(),
           parent;
 
       // Finds matching elements that are parents of selection and adds to nodes list
       for (var i = 0, maxi = parentNodes.length; i < maxi; i++) {
-        parent = dom.getParentElement(parentNodes[i], properties || { query: BLOCK_ELEMENTS }, null, composer.element);
+        parent = dom.getParentElement(parentNodes[i], options || { query: BLOCK_ELEMENTS }, null, composer.element);
         if (parent && nodes.indexOf(parent) === -1) {
           nodes.push(parent);
         }

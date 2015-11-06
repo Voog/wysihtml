@@ -166,8 +166,7 @@ if (wysihtml5.browser.supported()) {
           },
         editor = new wysihtml5.Editor(this.editableArea1, {
           parserRules: parserRules
-        }),
-        range
+        });
       
     editor.on("load", function() {
       var editableElement   = that.editableArea1;
@@ -228,8 +227,7 @@ if (wysihtml5.browser.supported()) {
           },
         editor = new wysihtml5.Editor(this.editableArea1, {
           parserRules: parserRules
-        }),
-        range
+        });
       
     editor.on("load", function() {
       var editableElement   = that.editableArea1;
@@ -239,7 +237,7 @@ if (wysihtml5.browser.supported()) {
       equal(editableElement.innerHTML.toLowerCase(), "foo<h1>goo</h1>bar", "Surrounding linebreaks removed on inserting block");
       
       editor.setValue("foo<br><br>goo<br><br>bar", true);
-      editor.composer.selection.selectNode(editor.editableElement.childNodes[2]);
+      editor.composer.selection.selectNode(editor.editableElement.childNodes[3]);
       editor.composer.commands.exec('formatBlock', "h1");
       equal(editableElement.innerHTML.toLowerCase(), "foo<br><h1>goo</h1><br>bar", "Surrounding linebreaks removed but not too much on inserting block");
       
@@ -272,6 +270,34 @@ if (wysihtml5.browser.supported()) {
     });
   });
   
+  
+  // formatblock (alignment, headings, paragraph, pre, blockquote)
+  asyncTest("Format block remove", function() {
+    expect(1);
+    var that = this,
+        parserRules = {
+            tags: {
+              h1: true,
+              p: true,
+              div: true,
+              br: true
+            }
+          },
+        editor = new wysihtml5.Editor(this.editableArea1, {
+          parserRules: parserRules
+        });
+      
+    editor.on("load", function() {
+      var editableElement   = that.editableArea1;
+      
+      editor.setValue('foo<div>test</div>foo<p>bar</p>', true);
+      editor.composer.selection.selectNode(editor.editableElement);
+      editor.composer.commands.remove('formatBlock');
+      equal(editableElement.innerHTML.toLowerCase(), 'foo<br>test<br>foo<br>bar<br>', "Removed blocks");
+
+      start();
+    });
+  });
   
   
   // create blockQuote
