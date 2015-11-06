@@ -673,6 +673,7 @@
       }
       
       newBlockElements = formatSelection("remove", composer);
+      newBlockElements = cleanup(composer, newBlockElements);
       
       // Restore selection
       if (bookmark) {
