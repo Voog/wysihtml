@@ -44,7 +44,7 @@ if (wysihtml5.browser.supported()) {
 
   // formatblock (alignment, headings, paragraph, pre, blockquote)
   asyncTest("Format block", function() {
-     expect(14);
+    expect(16);
     var that = this,
         parserRules = {
             tags: {
@@ -144,6 +144,21 @@ if (wysihtml5.browser.supported()) {
       editor.composer.commands.exec('formatBlock', "h1");
       editor.composer.commands.exec('formatBlock', "h2");
       equal(editableElement.innerHTML.toLowerCase(), '<h1>once </h1><h2>upon a time</h2><h2>there</h2><p> was a formated text</p>spanning many lines.', "Selection covering multiple blocks preserved fot subsequent modifications");
+
+      // Tests selection preserving on toggle and line breaks handling to it
+
+      editor.setValue("test<br>foo</br>test", true);
+      editor.composer.selection.selectNode(editor.editableElement.childNodes[2]);
+      editor.composer.commands.exec('formatBlock', "h1");
+      editor.composer.commands.remove('formatBlock');
+      equal(editableElement.innerHTML.toLowerCase(), 'test<br>foo<br>test', "Adding and removing block format restored initial situation");
+
+      editor.setValue("test<br>foo</br>test", true);
+      that.setCaretTo(editor, editor.editableElement.childNodes[2], 1);
+      editor.composer.commands.exec('formatBlock', "h1");
+      editor.composer.commands.remove('formatBlock');
+      equal(editableElement.innerHTML.toLowerCase(), 'test<br>foo<br>test', "Adding and removing block format restored initial situation (with caret)");
+
 
       start();
     });

@@ -34,9 +34,19 @@
     return n && n.nodeType === 1 && n.nodeName === "BR";
   }
 
+  // Is block level element
+  function isBlock(n, composer) {
+    return n && n.nodeType === 1 && composer.win.getComputedStyle(n).display === "block";
+  }
+
   // Returns if node is the rangy selection bookmark element (that must not be taken into account in most situatons and is removed on selection restoring)
   function isBookmark(n) {
     return n && n.nodeType === 1 && n.classList.contains('rangySelectionBoundary');
+  }
+
+  // Is line breaking node
+  function isLineBreaking(n, composer) {
+    return isBr(n) || isBlock(n, composer);
   }
 
   // Removes empty block level elements
@@ -191,11 +201,11 @@
   // Useful as not all block level elements can contain other block-levels
   function unwrapBlocksFromContent(element) {
     var blocks = element.querySelectorAll(BLOCK_ELEMENTS) || [], // Find unnestable block elements in extracted contents
-        nextEl; 
+        nextEl, prevEl;
 
     for (var i = blocks.length; i--;) {
-      nextEl = blocks[i].nextSibling,
-      prevEl = blocks[i].previousSibling;
+      nextEl = wysihtml5.dom.domNode(blocks[i]).next({nodeTypes: [1,3], ignoreBlankTexts: true}),
+      prevEl = wysihtml5.dom.domNode(blocks[i]).prev({nodeTypes: [1,3], ignoreBlankTexts: true});
       
       if (nextEl && nextEl.nodeType !== 1 && nextEl.nodeName !== 'BR') {
         if ((blocks[i].innerHTML || blocks[i].nodeValue || '').trim() !== '') {
@@ -355,11 +365,26 @@
   function injectFragmentToRange(fragment, range, composer, firstOuterBlock) {
     var rangeStartContainer = range.startContainer,
         firstOuterBlock = firstOuterBlock || findOuterBlock(rangeStartContainer, composer.element, true),
-        outerInlines;
+        outerInlines, first, last, prev, next;
     
     if (firstOuterBlock) {
       // If selection starts inside un-nestable block, split-escape the unnestable point and insert node between
+      first = fragment.firstChild;
+      last = fragment.lastChild;
+
       composer.selection.splitElementAtCaret(firstOuterBlock, fragment);
+
+      next = wysihtml5.dom.domNode(last).next({nodeTypes: [1,3], ignoreBlankTexts: true});
+      prev = wysihtml5.dom.domNode(first).prev({nodeTypes: [1,3], ignoreBlankTexts: true});
+
+      if (first && !isLineBreaking(first, composer) && prev && !isLineBreaking(prev, composer)) {
+        first.parentNode.insertBefore(composer.doc.createElement('br'), first);
+      }
+
+      if (last && !isLineBreaking(last, composer) && next && !isLineBreaking(next, composer)) {
+        next.parentNode.insertBefore(composer.doc.createElement('br'), next);
+      }
+
     } else {
       // Ensure node does not get inserted into an inline where it is not allowed
       outerInlines = cloneOuterInlines(rangeStartContainer, composer.element);
@@ -390,7 +415,7 @@
         
     while(content.firstChild) {
       // Iterate over all selection content first level childNodes
-      if (content.firstChild.nodeType == 1 && content.firstChild.matches(BLOCK_ELEMENTS)) {
+      if (content.firstChild.nodeType === 1 && content.firstChild.matches(BLOCK_ELEMENTS)) {
         // If node is a block element
         // Split block formating and add new block to wrap caret
         
@@ -398,11 +423,12 @@
         children = wysihtml5.dom.unwrap(content.firstChild);
         
         // Add line break before if needed
-        if (children.length > 0) {  
-          if (fragment.lastChild && (fragment.lastChild.nodeType !== 1 || (fragment.lastChild.nodeName !== "BR" && !fragment.lastChild.matches(BLOCK_ELEMENTS)))) {
-            if (prevNode || !first) {
-              fragment.appendChild(composer.doc.createElement('BR'));
-            }
+        if (children.length > 0) {
+          if (
+            (fragment.lastChild && (fragment.lastChild.nodeType !== 1 || !isLineBreaking(fragment.lastChild))) ||
+            (!fragment.lastChild && prevNode && (prevNode.nodeType !== 1 || isLineBreaking(prevNode)))
+          ){
+            fragment.appendChild(composer.doc.createElement('BR'));
           }
         }
         
@@ -412,7 +438,7 @@
         
         // Add line break after if needed
         if (children.length > 0) {
-          if (fragment.lastChild.nodeType !== 1 || (fragment.lastChild.nodeName !== "BR" && !fragment.lastChild.matches(BLOCK_ELEMENTS))) {
+          if (fragment.lastChild.nodeType !== 1 || !isLineBreaking(fragment.lastChild)) {
             if (nextNode || fragment.lastChild !== content.lastChild) {
               fragment.appendChild(composer.doc.createElement('BR'));
             }
@@ -432,17 +458,7 @@
   
   // When block node is inserted, look surrounding nodes and remove surplous linebreak tags (as block format breaks line itself)
   function removeSurroundingLineBreaks(prevNode, nextNode, composer) {
-    var prevPrev;
-
-    if (prevNode && isBookmark(prevNode)) {
-      prevNode = prevNode.previousSibling;
-    }
-    if (nextNode && isBookmark(nextNode)) {
-      nextNode = nextNode.nextSibling;
-    }
-
-    prevPrev = prevNode && prevNode.previousSibling;
-
+    var prevPrev = prevNode && wysihtml5.dom.domNode(prevNode).prev({nodeTypes: [1,3], ignoreBlankTexts: true});
     if (isBr(nextNode)) {
       nextNode.parentNode.removeChild(nextNode);
     }
@@ -478,8 +494,8 @@
     var similarOptions = options ? correctOptionsForSimilarityCheck(options) : null,
         r = range.cloneRange(),
         rangeStartContainer = r.startContainer,
-        prevNode = getRangeNode(r.startContainer, r.startOffset).previousSibling,
-        nextNode = getRangeNode(r.endContainer, r.endOffset).nextSibling,
+        prevNode = wysihtml5.dom.domNode(getRangeNode(r.startContainer, r.startOffset)).prev({nodeTypes: [1,3], ignoreBlankTexts: true}),
+        nextNode = wysihtml5.dom.domNode(getRangeNode(r.endContainer, r.endOffset)).next({nodeTypes: [1,3], ignoreBlankTexts: true}),
         content = r.extractContents(),
         fragment = composer.doc.createDocumentFragment(),
         similarOuterBlock = similarOptions ? wysihtml5.dom.getParentElement(rangeStartContainer, similarOptions, null, composer.element) : null,
@@ -625,7 +641,6 @@
         state = this.state(composer, command, options);
       }
       if (state) {
-
         // Remove format from state nodes if toggle set and state on and selection is collapsed
         bookmark = rangy.saveSelection(composer.win);
         for (var j = 0, jmax = state.length; j < jmax; j++) {
@@ -633,13 +648,11 @@
         }
 
       } else {
-        
         // If selection is caret expand it to cover nearest suitable block element or row if none found
         if (composer.selection.isCollapsed()) {
           bookmark = rangy.saveSelection(composer.win);
           expandCaretToBlock(composer, options && options.nodeName ? options.nodeName.toUpperCase() : undefined);
         }
-        
         if (options) {
           newBlockElements = formatSelection("apply", composer, options);
         } else {
