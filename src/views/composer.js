@@ -46,7 +46,7 @@
 
     cleanUp: function(rules) {
       var bookmark;
-      if (this.selection) {
+      if (this.selection && this.selection.isInThisEditable()) {
         bookmark = rangy.saveSelection(this.win);
       }
       this.parent.parse(this.element, undefined, rules);

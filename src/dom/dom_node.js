@@ -14,6 +14,11 @@
     return nodes;
   }
 
+  // Returns if node is the rangy selection bookmark element (that must not be taken into account in most situatons and is removed on selection restoring)
+  function isBookmark(n) {
+    return n && n.nodeType === 1 && n.classList.contains('rangySelectionBoundary');
+  }
+
   wysihtml5.dom.domNode = function(node) {
     var defaultNodeTypes = [wysihtml5.ELEMENT_NODE, wysihtml5.TEXT_NODE];
 
@@ -47,6 +52,7 @@
         }
 
         if (
+          isBookmark(prevNode) || // is Rangy temporary boomark element (bypass)
           (!wysihtml5.lang.array(types).contains(prevNode.nodeType)) || // nodeTypes check.
           (options && options.ignoreBlankTexts && wysihtml5.dom.domNode(prevNode).is.emptyTextNode(true)) // Blank text nodes bypassed if set
         ) {
@@ -66,6 +72,7 @@
         }
 
         if (
+          isBookmark(nextNode) || // is Rangy temporary boomark element (bypass)
           (!wysihtml5.lang.array(types).contains(nextNode.nodeType)) || // nodeTypes check.
           (options && options.ignoreBlankTexts && wysihtml5.dom.domNode(nextNode).is.emptyTextNode(true)) // blank text nodes bypassed if set
         ) {
@@ -227,7 +234,7 @@
           }
         }
 
-        if (properties.nodeName && node.nodeName !== properties.nodeName) {
+        if (properties.nodeName && node.nodeName.toLowerCase() !== properties.nodeName.toLowerCase()) {
           return false;
         }
 
