@@ -1,3 +1,8 @@
+*wysihtml5x 0.5.2* ()
+* Fixes some formatBlock nesting problems (mainly with lists)
+* Adds formatBlock to .remove() command
+* Improves selection and line breaks adding/removing of formatBlock
+
 *wysihtml5x 0.5.1* (October 28, 2015)
 * Fixes parser adding empty class attributes to tags
 
