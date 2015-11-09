@@ -1091,6 +1091,17 @@
         testRect =  r.nativeRange.getBoundingClientRect();
         if (!testRect || Math.floor(testRect.bottom) !== Math.floor(rect.bottom)) {
           r.moveEnd('character', -1);
+
+          // Fix a IE line end marked by linebreak element although caret is before it
+          // If causes problems should be changed to be applied only to IE
+          if (r.endContainer && r.endContainer.nodeType === 1 && r.endContainer.childNodes[r.endOffset] && r.endContainer.childNodes[r.endOffset].nodeType === 1 && r.endContainer.childNodes[r.endOffset].nodeName === "BR" && r.endContainer.childNodes[r.endOffset].previousSibling) {
+            if (r.endContainer.childNodes[r.endOffset].previousSibling.nodeType === 1) {
+              r.setEnd(r.endContainer.childNodes[r.endOffset].previousSibling, r.endContainer.childNodes[r.endOffset].previousSibling.childNodes.length);
+            } else if (r.endContainer.childNodes[r.endOffset].previousSibling.nodeType === 3) {
+              r.setEnd(r.endContainer.childNodes[r.endOffset].previousSibling, r.endContainer.childNodes[r.endOffset].previousSibling.data.length);
+            }
+          }
+
           found = true;
         }
         count++;
