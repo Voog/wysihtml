@@ -143,6 +143,9 @@
       if (options.toggle !== false && element.classList.contains(options.className)) {
         element.classList.remove(options.className);
       } else {
+        if (options.classRegExp) {
+          element.className = element.className.replace(options.classRegExp, '');
+        }
         element.classList.add(options.className);
       }
       if (hasNoClass(element)) {

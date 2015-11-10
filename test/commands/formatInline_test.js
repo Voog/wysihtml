@@ -43,7 +43,7 @@ if (wysihtml5.browser.supported()) {
   });
 
   asyncTest("Format inline", function() {
-    expect(30);
+    expect(32);
     var that = this,
         parserRules = {
           "classes": "any",
@@ -154,7 +154,13 @@ if (wysihtml5.browser.supported()) {
       that.equal(('<a href="http://www.google.com" target="_self"></a>'), editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, '').replace(/<br\/?>/gi, ''), "FormatInline given different attribute at first changes to new attribute");
       editor.composer.commands.exec("formatInline", {nodeName: "a", attribute : {"href": "http://www.google.com", "target": "_self"}});
       equal(!!editableElement.querySelector('a'), false, "Previous Insert is toggleable");
-     
+
+      blankSelectionStart(editor);
+      editor.composer.commands.exec("formatInline", { className: "color-red", classRegExp: /^color-[0-9a-z]+/});
+      that.equal(('<span class="color-red">test this text</span>'), editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, '').replace(/<br\/?>/gi, ''), "Classname color-red added");
+      editor.composer.commands.exec("formatInline", { className: "color-blue", classRegExp: /^color-[0-9a-z]+/});
+      that.equal(('<span class="color-blue">test this text</span>'), editableElement.innerHTML.toLowerCase().replace(/\uFEFF/g, '').replace(/<br\/?>/gi, ''), "Classname regex mathing classname changed to color-blue");
+
       blankSelectionStart(editor);
       editor.composer.commands.exec("formatInline", "strong");
       editor.composer.commands.exec("formatInline", "b");
