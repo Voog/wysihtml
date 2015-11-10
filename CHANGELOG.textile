@@ -1,7 +1,9 @@
-*wysihtml5x 0.5.2* ()
+*wysihtml5x 0.5.2* (November 10, 2015)
 * Fixes some formatBlock nesting problems (mainly with lists)
 * Adds formatBlock to .remove() command
 * Improves selection and line breaks adding/removing of formatBlock
+* Fixes formatInline classRegExp not used to replace similar classes
+* IE8 is no longer supported
 
 *wysihtml5x 0.5.1* (October 28, 2015)
 * Fixes parser adding empty class attributes to tags
