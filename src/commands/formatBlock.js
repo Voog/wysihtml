@@ -425,8 +425,8 @@
         // Add line break before if needed
         if (children.length > 0) {
           if (
-            (fragment.lastChild && (fragment.lastChild.nodeType !== 1 || !isLineBreaking(fragment.lastChild))) ||
-            (!fragment.lastChild && prevNode && (prevNode.nodeType !== 1 || isLineBreaking(prevNode)))
+            (fragment.lastChild && (fragment.lastChild.nodeType !== 1 || !isLineBreaking(fragment.lastChild, composer))) ||
+            (!fragment.lastChild && prevNode && (prevNode.nodeType !== 1 || isLineBreaking(prevNode, composer)))
           ){
             fragment.appendChild(composer.doc.createElement('BR'));
           }
@@ -438,7 +438,7 @@
         
         // Add line break after if needed
         if (children.length > 0) {
-          if (fragment.lastChild.nodeType !== 1 || !isLineBreaking(fragment.lastChild)) {
+          if (fragment.lastChild.nodeType !== 1 || !isLineBreaking(fragment.lastChild, composer)) {
             if (nextNode || fragment.lastChild !== content.lastChild) {
               fragment.appendChild(composer.doc.createElement('BR'));
             }
