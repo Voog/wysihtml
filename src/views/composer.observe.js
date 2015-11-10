@@ -228,26 +228,6 @@
     }
   };
 
-  // TODO: mouseover is not actually a foolproof and obvious place for this, must be changed as it modifies dom on random basis
-  // Shows url in tooltip when hovering links or images
-  var handleMouseOver = function(event) {
-    var titlePrefixes = {
-          IMG: "Image: ",
-          A:   "Link: "
-        },
-        target   = event.target,
-        nodeName = target.nodeName,
-        title;
-
-    if (nodeName !== "A" && nodeName !== "IMG") {
-      return;
-    }
-    if(!target.hasAttribute("title")){
-      title = titlePrefixes[nodeName] + (target.getAttribute("href") || target.getAttribute("src"));
-      target.setAttribute("title", title);
-    }
-  };
-
   var handleClick = function(event) {
     if (this.config.classNames.uneditableContainer) {
       // If uneditables is configured, makes clicking on uneditable move caret after clicked element (so it can be deleted like text)
@@ -390,7 +370,6 @@
     addListeners(this.element, ["drop", "paste", "beforepaste"], handlePaste.bind(this), false);
     this.element.addEventListener("copy",       handleCopy.bind(this), false);
     this.element.addEventListener("mousedown",  handleMouseDown.bind(this), false);
-    this.element.addEventListener("mouseover",  handleMouseOver.bind(this), false);
     this.element.addEventListener("click",      handleClick.bind(this), false);
     this.element.addEventListener("drop",       handleDrop.bind(this), false);
     this.element.addEventListener("keyup",      handleKeyUp.bind(this), false);
