@@ -109,18 +109,18 @@ if (wysihtml5.browser.supported()) {
       node = editor.editableElement.querySelector('p').firstChild;
       editor.composer.selection.selectNode(node);
       editor.composer.commands.exec('formatBlock', "h1");
-      equal(editableElement.innerHTML.toLowerCase(), '<h1 class="wysiwyg-text-align-left">once upon a time</h1><br>there was an unformated text<br>spanning many lines.', "Alignment div changed to heading ok");
+      equal(editableElement.innerHTML.toLowerCase(), '<h1 class="wysiwyg-text-align-left">once upon a time</h1>there was an unformated text<br>spanning many lines.', "Alignment div changed to heading ok");
       
       editor.composer.commands.exec('justifyRight');
       editor.composer.commands.exec('formatBlock', "h1");
       editor.composer.commands.exec('justifyRight');
-      equal(editableElement.innerHTML.toLowerCase(), '<h1>once upon a time</h1><br>there was an unformated text<br>spanning many lines.', "heading alignment removed sucessfully");
+      equal(editableElement.innerHTML.toLowerCase(), '<h1>once upon a time</h1>there was an unformated text<br>spanning many lines.', "heading alignment removed sucessfully");
 
       editor.composer.commands.exec('alignRightStyle');
       editor.composer.commands.exec('alignRightStyle');
-      equal(editableElement.innerHTML.toLowerCase(), '<h1>once upon a time</h1><br>there was an unformated text<br>spanning many lines.', "heading alignment with style removed sucessfully");        
+      equal(editableElement.innerHTML.toLowerCase(), '<h1>once upon a time</h1>there was an unformated text<br>spanning many lines.', "heading alignment with style removed sucessfully");        
       editor.composer.commands.exec('formatBlock', "p");
-      equal(editableElement.innerHTML.toLowerCase(), '<p>once upon a time</p><br>there was an unformated text<br>spanning many lines.', "heading changed to paragraph");
+      equal(editableElement.innerHTML.toLowerCase(), '<p>once upon a time</p>there was an unformated text<br>spanning many lines.', "heading changed to paragraph");
 
       // Tests covering multiple block elements
 

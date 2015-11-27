@@ -493,6 +493,11 @@
     return (/^\s*$/).test(str);
   }
 
+  var isWhitespaceAfter = function (textNode, offset) {
+    var str = textNode.data ? textNode.data.slice(offset) : "";
+    return (/^\s*$/).test(str);
+  }
+
   var trimBlankTextsAndBreaks = function(fragment) {
     if (fragment) {
       while (fragment.firstChild && fragment.firstChild.nodeType === 3 && fragment.firstChild.data === "" && fragment.lastChild !== fragment.firstChild) {
@@ -516,8 +521,9 @@
         r = range.cloneRange(),
         rangeStartContainer = r.startContainer,
         startNode = getRangeNode(r.startContainer, r.startOffset),
+        endNode = getRangeNode(r.endContainer, r.endOffset),
         prevNode = (r.startContainer === startNode && startNode.nodeType === 3 && !isWhitespaceBefore(startNode, r.startOffset)) ? startNode :  wysihtml5.dom.domNode(startNode).prev({nodeTypes: [1,3], ignoreBlankTexts: true}),
-        nextNode = wysihtml5.dom.domNode(getRangeNode(r.endContainer, r.endOffset)).next({nodeTypes: [1,3], ignoreBlankTexts: true}),
+        nextNode = ((r.endContainer.nodeType === 1 && r.endContainer.childNodes[r.endOffset] === endNode) || (r.endContainer === endNode && endNode.nodeType === 3 && !isWhitespaceAfter(endNode, r.endOffset))) ? endNode : wysihtml5.dom.domNode(getRangeNode(r.endContainer, r.endOffset)).next({nodeTypes: [1,3], ignoreBlankTexts: true}),
         content = r.extractContents(),
         fragment = composer.doc.createDocumentFragment(),
         similarOuterBlock = similarOptions ? wysihtml5.dom.getParentElement(rangeStartContainer, similarOptions, null, composer.element) : null,
