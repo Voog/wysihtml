@@ -488,13 +488,35 @@
     }
   }
 
+  var isWhitespaceBefore = function (textNode, offset) {
+    var str = textNode.data ? textNode.data.slice(0, offset) : "";
+    return (/^\s*$/).test(str);
+  }
+
+  var trimBlankTextsAndBreaks = function(fragment) {
+    if (fragment) {
+      while (fragment.firstChild && fragment.firstChild.nodeType === 3 && fragment.firstChild.data === "" && fragment.lastChild !== fragment.firstChild) {
+        fragment.removeChild(fragment.firstChild);
+      }
+
+      while (fragment.lastChild && fragment.lastChild.nodeType === 3 && fragment.lastChild.data === "" && fragment.lastChild !== fragment.firstChild) {
+        fragment.removeChild(fragment.lastChild);
+      }
+
+      if (fragment.firstChild && fragment.firstChild.nodeType === 1 && fragment.firstChild.nodeName === "BR" && fragment.lastChild !== fragment.firstChild) {
+        fragment.removeChild(fragment.firstChild);
+      }
+    }
+  }
+
   // Wrap the range with a block level element
   // If element is one of unnestable block elements (ex: h2 inside h1), split nodes and insert between so nesting does not occur
   function wrapRangeWithElement(range, options, closestBlockName, composer) {
     var similarOptions = options ? correctOptionsForSimilarityCheck(options) : null,
         r = range.cloneRange(),
         rangeStartContainer = r.startContainer,
-        prevNode = wysihtml5.dom.domNode(getRangeNode(r.startContainer, r.startOffset)).prev({nodeTypes: [1,3], ignoreBlankTexts: true}),
+        startNode = getRangeNode(r.startContainer, r.startOffset),
+        prevNode = (r.startContainer === startNode && startNode.nodeType === 3 && !isWhitespaceBefore(startNode, r.startOffset)) ? startNode :  wysihtml5.dom.domNode(startNode).prev({nodeTypes: [1,3], ignoreBlankTexts: true}),
         nextNode = wysihtml5.dom.domNode(getRangeNode(r.endContainer, r.endOffset)).next({nodeTypes: [1,3], ignoreBlankTexts: true}),
         content = r.extractContents(),
         fragment = composer.doc.createDocumentFragment(),
@@ -502,6 +524,8 @@
         splitAllBlocks = !closestBlockName || !options || (options.nodeName === "BLOCKQUOTE" && closestBlockName === "BLOCKQUOTE"),
         firstOuterBlock = similarOuterBlock || findOuterBlock(rangeStartContainer, composer.element, splitAllBlocks), // The outermost un-nestable block element parent of selection start
         wrapper, blocks, children;
+
+    trimBlankTextsAndBreaks(content);
 
     if (options && options.nodeName === "BLOCKQUOTE") {
       
