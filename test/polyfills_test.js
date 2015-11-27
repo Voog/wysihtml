@@ -62,7 +62,7 @@ test("Check element.normalize is preserving selection", function() {
   ok((s.focusNode === this.editable && s.focusOffset === 2)|| (s.focusNode === this.editable.lastChild && s.focusOffset === 0), "Focus element and offset is correct after normalize");
 });
 
-test("Check element.normalize is preserving selection  2", function() {
+test("Check element.normalize is preserving selection 2", function() {
   var text1 = document.createTextNode('test'),
       text2 = document.createTextNode('foo'),
       text3 = document.createTextNode('third'),

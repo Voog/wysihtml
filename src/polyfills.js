@@ -383,7 +383,19 @@ wysihtml5.polyfills = function(win, doc) {
     return all;
   };
 
+  var isInDom = function(node) {
+    var doc = node.ownerDocument,
+        n = node;
 
+    do {
+      if (n === doc) {
+        return true;
+      }
+      n = n.parentNode;
+    } while(n);
+
+    return false;
+  };
 
   var normalizeFix = function() {
     var f = Node.prototype.normalize;
@@ -444,7 +456,7 @@ wysihtml5.polyfills = function(win, doc) {
         aoffset = Array.prototype.indexOf.call(aelement.parentNode.childNodes, aelement);
       }
 
-      if (anode && anode.parentNode && fnode && fnode.parentNode) {
+      if (isInDom(this) && anode && anode.parentNode && fnode && fnode.parentNode) {
         r.setStart(anode, aoffset);
         r.setEnd(fnode, foffset);
         s.removeAllRanges();
