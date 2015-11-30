@@ -178,14 +178,15 @@ wysihtml5.browser = (function() {
      */
     supportsCommand: (function() {
       // Following commands are supported but contain bugs in some browsers
+      // TODO: investigate if some of these bugs can be tested without altering selection on page, instead of targeting browsers and versions directly
       var buggyCommands = {
         // formatBlock fails with some tags (eg. <blockquote>)
         "formatBlock":          isIE(10, "<="),
          // When inserting unordered or ordered lists in Firefox, Chrome or Safari, the current selection or line gets
          // converted into a list (<ul><li>...</li></ul>, <ol><li>...</li></ol>)
          // IE and Opera act a bit different here as they convert the entire content of the current block element into a list
-        "insertUnorderedList":  isIE(9, ">=") || isIE(12, "<="),
-        "insertOrderedList":    isIE(9, ">=")|| isIE(12, "<=")
+        "insertUnorderedList":  isIE(),
+        "insertOrderedList":    isIE()
       };
 
       // Firefox throws errors for queryCommandSupported, so we have to build up our own object of supported commands

@@ -500,16 +500,20 @@
 
   var trimBlankTextsAndBreaks = function(fragment) {
     if (fragment) {
-      while (fragment.firstChild && fragment.firstChild.nodeType === 3 && fragment.firstChild.data === "" && fragment.lastChild !== fragment.firstChild) {
+      while (fragment.firstChild && fragment.firstChild.nodeType === 3 && (/^\s*$/).test(fragment.firstChild.data) && fragment.lastChild !== fragment.firstChild) {
         fragment.removeChild(fragment.firstChild);
       }
 
-      while (fragment.lastChild && fragment.lastChild.nodeType === 3 && fragment.lastChild.data === "" && fragment.lastChild !== fragment.firstChild) {
+      while (fragment.lastChild && fragment.lastChild.nodeType === 3 && (/^\s*$/).test(fragment.lastChild.data) && fragment.lastChild !== fragment.firstChild) {
         fragment.removeChild(fragment.lastChild);
       }
 
       if (fragment.firstChild && fragment.firstChild.nodeType === 1 && fragment.firstChild.nodeName === "BR" && fragment.lastChild !== fragment.firstChild) {
         fragment.removeChild(fragment.firstChild);
+      }
+
+      if (fragment.lastChild && fragment.lastChild.nodeType === 1 && fragment.lastChild.nodeName === "BR" && fragment.lastChild !== fragment.firstChild) {
+        fragment.removeChild(fragment.lastChild);
       }
     }
   }
@@ -529,7 +533,8 @@
         similarOuterBlock = similarOptions ? wysihtml5.dom.getParentElement(rangeStartContainer, similarOptions, null, composer.element) : null,
         splitAllBlocks = !closestBlockName || !options || (options.nodeName === "BLOCKQUOTE" && closestBlockName === "BLOCKQUOTE"),
         firstOuterBlock = similarOuterBlock || findOuterBlock(rangeStartContainer, composer.element, splitAllBlocks), // The outermost un-nestable block element parent of selection start
-        wrapper, blocks, children;
+        wrapper, blocks, children,
+        firstc, lastC;
 
     trimBlankTextsAndBreaks(content);
 

@@ -106,19 +106,18 @@ wysihtml5.commands.insertList = (function(wysihtml5) {
   };
 
   var createListFallback = function(nodeName, composer) {
-    var sel;
-
-    if (!composer.selection.isCollapsed()) {
-      sel = rangy.saveSelection(composer.win);
-    }
+    var sel = rangy.saveSelection(composer.win);
 
     // Fallback for Create list
     var tempClassName =  "_wysihtml5-temp-" + new Date().getTime(),
-        tempElement = composer.selection.deblockAndSurround({
-          "nodeName": "div",
-          "className": tempClassName
-        }),
         isEmpty, list;
+
+    composer.commands.exec("formatBlock", {
+      "nodeName": "div",
+      "className": tempClassName
+    });
+
+    var tempElement = composer.element.querySelector("." + tempClassName);
 
     // This space causes new lists to never break on enter
     var INVISIBLE_SPACE_REG_EXP = /\uFEFF/g;
