@@ -108,12 +108,67 @@
     return false;
   };
 
+  /* In IE when deleting with caret at the begining of LI, list gets broken into half instead of merging the LI with previous */
+  /* This does not match other browsers an is less intuitive from UI standpoint, thus has to be fixed */
+  var fixDeleteInTheBeginnigOfLi = function(composer) {
+    if (wysihtml5.browser.hasLiDeletingProblem()) {
+      var selection = composer.selection.getSelection(),
+          aNode = selection.anchorNode,
+          listNode, prevNode, firstNode,
+          isInBeginnig = composer.selection.caretIsFirstInSelection();
+
+      // Fix caret at the beginnig of first textNode in LI
+      if (aNode.nodeType === 3 && selection.anchorOffset === 0 && aNode === aNode.parentNode.firstChild) {
+        aNode = aNode.parentNode;
+        isInBeginnig = true;
+      }
+
+      if (isInBeginnig && aNode && aNode.nodeType === 1 && aNode.nodeName === "LI") {
+        prevNode = wysihtml5.dom.domNode(aNode).prev({nodeTypes: [1,3], ignoreBlankTexts: true});
+        if (!prevNode && aNode.parentNode && (aNode.parentNode.nodeName === "UL" || aNode.parentNode.nodeName === "OL")) {
+          prevNode = wysihtml5.dom.domNode(aNode.parentNode).prev({nodeTypes: [1,3], ignoreBlankTexts: true});
+        }
+        if (prevNode) {
+          firstNode = aNode.firstChild;
+          if (prevNode.nodeType === 1) {
+            while (aNode.firstChild) {
+                prevNode.appendChild(aNode.firstChild);
+            }
+          } else {
+            while (aNode.lastChild) {
+                prevNode.parentNode.insertBefore(aNode.lastChild, prevNode.nextSibling);
+            }
+          }
+          aNode.parentNode.removeChild(aNode);
+          if (firstNode) {
+            composer.selection.setBefore(firstNode);
+          } else if (prevNode) {
+            if (prevNode.nodeType === 1) {
+              if (prevNode.lastChild) {
+                composer.selection.setAfter(prevNode.lastChild);
+              } else {
+                composer.selection.selectNode(prevNode);
+              }
+            } else {
+              composer.selection.setAfter(prevNode);
+            }
+          }
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   var handleDeleteKeyPress = function(event, composer) {
     var selection = composer.selection,
         element = composer.element;
 
     if (selection.isCollapsed()) {
-      if (fixDeleteInTheBeginnigOfHeading(composer)) {
+      if (fixDeleteInTheBeginnigOfLi(composer)) {
+        event.preventDefault();
+        return;
+      } else if (fixDeleteInTheBeginnigOfHeading(composer)) {
         event.preventDefault();
         return;
       }

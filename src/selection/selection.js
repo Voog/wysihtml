@@ -862,43 +862,6 @@
       return nodes;
     },
 
-    deblockAndSurround: function(nodeOptions) {
-      var tempElement = this.doc.createElement('div'),
-          range = rangy.createRange(this.doc),
-          tempDivElements,
-          tempElements,
-          firstChild;
-
-      tempElement.className = nodeOptions.className;
-
-      this.composer.commands.exec("formatBlock", nodeOptions);
-      tempDivElements = this.contain.querySelectorAll("." + nodeOptions.className);
-      if (tempDivElements[0]) {
-        tempDivElements[0].parentNode.insertBefore(tempElement, tempDivElements[0]);
-
-        range.setStartBefore(tempDivElements[0]);
-        range.setEndAfter(tempDivElements[tempDivElements.length - 1]);
-        tempElements = range.extractContents();
-
-        while (tempElements.firstChild) {
-          firstChild = tempElements.firstChild;
-          if (firstChild.nodeType == 1 && wysihtml5.dom.hasClass(firstChild, nodeOptions.className)) {
-            while (firstChild.firstChild) {
-              tempElement.appendChild(firstChild.firstChild);
-            }
-            if (firstChild.nodeName !== "BR") { tempElement.appendChild(this.doc.createElement('br')); }
-            tempElements.removeChild(firstChild);
-          } else {
-            tempElement.appendChild(firstChild);
-          }
-        }
-      } else {
-        tempElement = null;
-      }
-
-      return tempElement;
-    },
-
     /**
      * Scroll the current caret position into the view
      * FIXME: This is a bit hacky, there might be a smarter way of doing this

@@ -343,6 +343,11 @@ wysihtml5.browser = (function() {
       return isIE();
     },
 
+    /* In IE when deleting with caret at the begining of LI, List get broken into half instead of merging the LI with previous */
+    hasLiDeletingProblem: function() {
+      return isIE();
+    },
+
     hasUndoInContextMenu: function() {
       return isGecko || isChrome || isOpera;
     },
