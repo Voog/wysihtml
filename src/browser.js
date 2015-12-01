@@ -5,10 +5,11 @@ wysihtml5.browser = (function() {
   var userAgent   = navigator.userAgent,
       testElement = document.createElement("div"),
       // Browser sniffing is unfortunately needed since some behaviors are impossible to feature detect
-      isGecko     = userAgent.indexOf("Gecko")        !== -1 && userAgent.indexOf("KHTML") === -1,
-      isWebKit    = userAgent.indexOf("AppleWebKit/") !== -1,
-      isChrome    = userAgent.indexOf("Chrome/")      !== -1,
-      isOpera     = userAgent.indexOf("Opera/")       !== -1;
+      // We need to be extra careful about Microsoft as it shows increasing tendency of tainting its userAgent strings with false feathers
+      isGecko     = userAgent.indexOf("Gecko")        !== -1 && userAgent.indexOf("KHTML") === -1 && !isIE(),
+      isWebKit    = userAgent.indexOf("AppleWebKit/") !== -1 && !isIE(),
+      isChrome    = userAgent.indexOf("Chrome/")      !== -1 && !isIE(),
+      isOpera     = userAgent.indexOf("Opera/")       !== -1 && !isIE();
 
   function iosVersion(userAgent) {
     return +((/ipad|iphone|ipod/.test(userAgent) && userAgent.match(/ os (\d+).+? like mac os x/)) || [undefined, 0])[1];

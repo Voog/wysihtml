@@ -409,7 +409,7 @@
       function adjust(selectedNode) {
         var parentElement = dom.getParentElement(selectedNode, { query: "p, div" }, 2);
         if (parentElement && dom.contains(that.element, parentElement)) {
-          that.selection.executeAndRestore(function() {
+          that.selection.executeAndRestoreRangy(function() {
             if (that.config.useLineBreaks) {
               dom.replaceWithChildNodes(parentElement);
             } else if (parentElement.nodeName !== "P") {
@@ -470,11 +470,9 @@
           }, 0);
           return;
         }
-
         if (that.config.useLineBreaks && keyCode === wysihtml5.ENTER_KEY && !wysihtml5.browser.insertsLineBreaksOnReturn()) {
           event.preventDefault();
           that.commands.exec("insertLineBreak");
-
         }
       });
     }
