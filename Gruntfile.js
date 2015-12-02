@@ -70,6 +70,7 @@ module.exports = function(grunt) {
     "src/commands/foreColor.js",
     "src/commands/foreColorStyle.js",
     "src/commands/bgColorStyle.js",
+    "src/commands/fontFamily.js",
     "src/commands/formatBlock.js",
     "src/commands/formatCode.js",
     "src/commands/formatInline.js",
