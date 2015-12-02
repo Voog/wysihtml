@@ -3,7 +3,7 @@
  */
 
 (function(wysihtml5) {
-  var REG_EXP = /wysiwyg-font-family-.+/g;
+  var REG_EXP = /wysiwyg-font-family-[0-9a-z]+/g;
 
   wysihtml5.commands.fontFamily = {
     exec: function(composer, command, v) {
