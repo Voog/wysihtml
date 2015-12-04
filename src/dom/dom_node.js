@@ -39,6 +39,12 @@
             }
           }
           return isVisible;
+        },
+        lineBreak: function() {
+          return node && node.nodeType === 1 && node.nodeName === "BR";
+        },
+        block: function() {
+          return node && node.nodeType === 1 && node.ownerDocument.defaultView.getComputedStyle(node).display === "block";
         }
       },
 

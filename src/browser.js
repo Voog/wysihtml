@@ -382,6 +382,12 @@ wysihtml5.browser = (function() {
       return isWebKit;
     },
 
+    // In all webkit browsers there are some places where caret can not be placed at the end of blocks and directly before block level element
+    //   when startContainer is element.
+    hasCaretBlockElementIssue: function() {
+      return isWebKit;
+    },
+
     supportsMutationEvents: function() {
       return ("MutationEvent" in window);
     },
