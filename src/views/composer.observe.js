@@ -194,10 +194,9 @@
       // Fixes some misbehaviours of enters in linebreaks mode (natively a bit unsupported feature)
 
       var breakNodes = "p, pre, div, blockquote",
-          r = composer.selection.getOwnRanges(),
           caretInfo, parent, txtNode;
 
-      if (composer.selection.isCollapsed() && r && r.length > 0) {
+      if (composer.selection.isCollapsed()) {
         caretInfo = composer.selection.getNodesNearCaret();
         if (caretInfo) {
           
