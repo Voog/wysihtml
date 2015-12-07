@@ -195,72 +195,62 @@
 
       var breakNodes = "p, pre, div, blockquote",
           r = composer.selection.getOwnRanges(),
-          caretNode, prevNode, nextNode, parent, txtNode;
+          caretInfo, parent, txtNode;
 
       if (composer.selection.isCollapsed() && r && r.length > 0) {
-
-        // Gather info about caret location for further modifications
-        if (r[0].startContainer.nodeType === 1) {
-          caretNode = r[0].startContainer.childNodes[r[0].startOffset - 1];
-          if (!caretNode && r[0].startOffset === 0) {
-            // Is first position before all nodes
-            nextNode = r[0].startContainer.childNodes[0];
-          } else if (caretNode) {
-            prevNode = caretNode.previousSibling;
-            nextNode = caretNode.nextSibling;
-          }
-        } else {
-          caretNode = r[0].startContainer;
-          prevNode = caretNode.previousSibling;
-          nextNode = caretNode.nextSibling;
-        }
-        if (caretNode || nextNode) {
-          parent = dom.getParentElement(caretNode || nextNode, { query: breakNodes }, 2);
-          if (parent === composer.element) {
-            parent = undefined;
-          }
-        }
-
-        if (parent && caretNode) {
-          if (domNode(caretNode).is.lineBreak()) {
-
-            if (composer.config.doubleLineBreakEscapesBlock) {
-              // Double enter (enter on blank line) exits block element in useLineBreaks mode.
-              event.preventDefault();
-              caretNode.parentNode.removeChild(caretNode);
-
-              var brNode = composer.doc.createElement('br');
-              if (domNode(nextNode).is.lineBreak() && nextNode === parent.lastChild) {
-                parent.parentNode.insertBefore(brNode, parent.nextSibling);
-              } else {
-                composer.selection.splitElementAtCaret(parent, brNode);
-              }
-
-              // Ensure surplous lines are not added to preceding element
-              if (domNode(nextNode).is.lineBreak()) {
-                //nextNode.parentNode.removeChild(nextNode);
-              } else if (nextNode && nextNode.nodeType === 3) {
-                // Replaces blank lines at the beginning of textnode
-                nextNode.data = nextNode.data.replace(/^ *[\r\n]+/, '');
-              }
-              composer.selection.setBefore(brNode);
+        caretInfo = composer.selection.getNodesNearCaret();
+        if (caretInfo) {
+          
+          if (caretInfo.caretNode || caretInfo.nextNode) {
+            parent = dom.getParentElement(caretInfo.caretNode || caretInfo.nextNode, { query: breakNodes }, 2);
+            if (parent === composer.element) {
+              parent = undefined;
             }
-
-          } else if (caretNode.nodeType === 3 && wysihtml5.browser.hasCaretBlockElementIssue() && r[0].startOffset === caretNode.data.length && !nextNode) {
-
-            // This fixes annoying webkit issue when you press enter at the end of a block then seemingly nothing happens.
-            // in reality one line break is generated and cursor is reported after it, but when entering something cursor jumps before the br
-            event.preventDefault();
-            var br1 = composer.doc.createElement('br'),
-                br2 = composer.doc.createElement('br'),
-                f = composer.doc.createDocumentFragment();
-            f.appendChild(br1);
-            f.appendChild(br2);
-            composer.selection.insertNode(f);
-            composer.selection.setBefore(br2);
-
           }
 
+          if (parent && caretInfo.caretNode) {
+            if (domNode(caretInfo.caretNode).is.lineBreak()) {
+
+              if (composer.config.doubleLineBreakEscapesBlock) {
+                // Double enter (enter on blank line) exits block element in useLineBreaks mode.
+                event.preventDefault();
+                caretInfo.caretNode.parentNode.removeChild(caretInfo.caretNode);
+                
+                // Ensure surplous line breaks are not added to preceding element
+                if (domNode(caretInfo.nextNode).is.lineBreak()) {
+                  caretInfo.nextNode.parentNode.removeChild(caretInfo.nextNode);
+                }
+
+                var brNode = composer.doc.createElement('br');
+                if (domNode(caretInfo.nextNode).is.lineBreak() && caretInfo.nextNode === parent.lastChild) {
+                  parent.parentNode.insertBefore(brNode, parent.nextSibling);
+                } else {
+                  composer.selection.splitElementAtCaret(parent, brNode);
+                }
+
+                // Ensure surplous blank lines are not added to preceding element
+                if (caretInfo.nextNode && caretInfo.nextNode.nodeType === 3) {
+                  // Replaces blank lines at the beginning of textnode
+                  caretInfo.nextNode.data = caretInfo.nextNode.data.replace(/^ *[\r\n]+/, '');
+                }
+                composer.selection.setBefore(brNode);
+              }
+
+            } else if (caretInfo.caretNode.nodeType === 3 && wysihtml5.browser.hasCaretBlockElementIssue() && caretInfo.textOffset === caretInfo.caretNode.data.length && !caretInfo.nextNode) {
+
+              // This fixes annoying webkit issue when you press enter at the end of a block then seemingly nothing happens.
+              // in reality one line break is generated and cursor is reported after it, but when entering something cursor jumps before the br
+              event.preventDefault();
+              var br1 = composer.doc.createElement('br'),
+                  br2 = composer.doc.createElement('br'),
+                  f = composer.doc.createDocumentFragment();
+              f.appendChild(br1);
+              f.appendChild(br2);
+              composer.selection.insertNode(f);
+              composer.selection.setBefore(br2);
+
+            }
+          }
         }
       }
     }
