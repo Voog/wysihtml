@@ -59,6 +59,9 @@
     parser:               wysihtml5.dom.parse,
     // By default wysihtml5 will insert a <br> for line breaks, set this to false to use <p>
     useLineBreaks:        true,
+    // Double enter (enter on blank line) exits block element in useLineBreaks mode.
+    // It enables a way of escaping out of block elements and splitting block elements
+    doubleLineBreakEscapesBlock: true,
     // Array (or single string) of stylesheet urls to be loaded in the editor's iframe
     stylesheets:          [],
     // Placeholder text to use, defaults to the placeholder attribute on the textarea element
