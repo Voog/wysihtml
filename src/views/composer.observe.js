@@ -68,9 +68,9 @@
     return false;
   };
 
-  // Deletion with caret in the beginning of headings needs special attention
-  // Heading does not concate text to previous block node correctly (browsers do unexpected miracles here especially webkit)
-  var fixDeleteInTheBeginnigOfHeading = function(composer) {
+  // Deletion with caret in the beginning of headings and other block elvel elements needs special attention
+  // Not allways does it concate text to previous block node correctly (browsers do unexpected miracles here especially webkit)
+  var fixDeleteInTheBeginniNgOfBlock = function(composer) {
     var selection = composer.selection,
         prevNode = selection.getPreviousNode();
 
@@ -88,14 +88,14 @@
           var selNode = prevNode.lastChild,
               selectedNode = selection.getSelectedNode(),
               commonAncestorNode = domNode(prevNode).commonAncestor(selectedNode, composer.element);
-              curNode = commonAncestorNode ? wysihtml5.dom.getParentElement(selectedNode, {
+              curNode = wysihtml5.dom.getParentElement(selectedNode, {
                 query: "h1, h2, h3, h4, h5, h6, p, pre, div, blockquote"
-              }, false, commonAncestorNode) : null;
-          
+              }, false, commonAncestorNode || composer.element);
             if (curNode) {
               while (curNode.firstChild) {
                 prevNode.appendChild(curNode.firstChild);
               }
+              curNode.parentNode.removeChild(curNode);
               selection.setAfter(selNode);
               return true;
             } else if (selectedNode.nodeType === 3) {
@@ -169,7 +169,7 @@
       if (fixDeleteInTheBeginnigOfLi(composer)) {
         event.preventDefault();
         return;
-      } else if (fixDeleteInTheBeginnigOfHeading(composer)) {
+      } else if (fixDeleteInTheBeginniNgOfBlock(composer)) {
         event.preventDefault();
         return;
       }
@@ -220,15 +220,25 @@
         if (parent && caretNode) {
           if (domNode(caretNode).is.lineBreak()) {
             event.preventDefault();
-            prevNode.parentNode.removeChild(caretNode);
+            caretNode.parentNode.removeChild(caretNode);
+
             var brNode = composer.doc.createElement('br');
             if (domNode(nextNode).is.lineBreak() && nextNode === parent.lastChild) {
               parent.parentNode.insertBefore(brNode, parent.nextSibling);
             } else {
               composer.selection.splitElementAtCaret(parent, brNode);
             }
+
+            // Ensure surplous lines are not added to preceding element
+            if (domNode(nextNode).is.lineBreak()) {
+              //nextNode.parentNode.removeChild(nextNode);
+            } else if (nextNode && nextNode.nodeType === 3) {
+              // Replaces blank lines at the beginning of textnode
+              nextNode.data = nextNode.data.replace(/^ *[\r\n]+/, '');
+            }
+
             composer.selection.setBefore(brNode);
-          } else if (caretNode.nodeType === 3 && wysihtml5.browser.hasCaretBlockElementIssue() && r[0].startOffset === caretNode.data.length) {
+          } else if (caretNode.nodeType === 3 && wysihtml5.browser.hasCaretBlockElementIssue() && r[0].startOffset === caretNode.data.length && !nextNode) {
             // This fixes annoying webkit issue when you press enter at th end of a block then seemingly nothing happens.
             // in reality one line break is generated and cursor is reported after it, but when entering something cursor jumps before the br
             event.preventDefault();
