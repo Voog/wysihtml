@@ -441,7 +441,7 @@
       dom.observe(this.element, "keydown", function(event) {
         var keyCode = event.keyCode;
 
-        if (event.shiftKey || event.defaultPrevented) {
+        if (event.shiftKey || event.ctrlKey || event.defaultPrevented) {
           return;
         }
 

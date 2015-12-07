@@ -190,7 +190,7 @@
   };
 
   var handleEnterKeyPress = function(event, composer) {
-    if (composer.config.useLineBreaks && !event.shiftKey) {
+    if (composer.config.useLineBreaks && !event.shiftKey && !event.ctrlKey) {
       var breakNodes = "p, pre, div, blockquote",
           r = composer.selection.getOwnRanges(),
           caretNode, prevNode, nextNode, parent, txtNode;
