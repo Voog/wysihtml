@@ -70,7 +70,7 @@
 
   // Deletion with caret in the beginning of headings and other block elvel elements needs special attention
   // Not allways does it concate text to previous block node correctly (browsers do unexpected miracles here especially webkit)
-  var fixDeleteInTheBeginniNgOfBlock = function(composer) {
+  var fixDeleteInTheBeginningOfBlock = function(composer) {
     var selection = composer.selection,
         prevNode = selection.getPreviousNode();
 
@@ -111,7 +111,7 @@
 
   /* In IE when deleting with caret at the begining of LI, list gets broken into half instead of merging the LI with previous */
   /* This does not match other browsers an is less intuitive from UI standpoint, thus has to be fixed */
-  var fixDeleteInTheBeginnigOfLi = function(composer) {
+  var fixDeleteInTheBeginningOfLi = function(composer) {
     if (wysihtml5.browser.hasLiDeletingProblem()) {
       var selection = composer.selection.getSelection(),
           aNode = selection.anchorNode,
@@ -166,10 +166,10 @@
         element = composer.element;
 
     if (selection.isCollapsed()) {
-      if (fixDeleteInTheBeginnigOfLi(composer)) {
+      if (fixDeleteInTheBeginningOfLi(composer)) {
         event.preventDefault();
         return;
-      } else if (fixDeleteInTheBeginniNgOfBlock(composer)) {
+      } else if (fixDeleteInTheBeginningOfBlock(composer)) {
         event.preventDefault();
         return;
       }
