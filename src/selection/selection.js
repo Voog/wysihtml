@@ -472,6 +472,43 @@
       return (ret !== this.contain) ? ret : false;
     },
 
+    // Gather info about caret location (caret node, previous and next node)
+    getNodesNearCaret: function() {
+      if (!this.isCollapsed()) {
+        throw "Selection must be caret when using selection.getNodesNearCaret()";
+      }
+
+      var r = this.getOwnRanges(),
+          caretNode, prevNode, nextNode, offset;
+
+      if (r && r.length > 0) {
+        if (r[0].startContainer.nodeType === 1) {
+          caretNode = r[0].startContainer.childNodes[r[0].startOffset - 1];
+          if (!caretNode && r[0].startOffset === 0) {
+            // Is first position before all nodes
+            nextNode = r[0].startContainer.childNodes[0];
+          } else if (caretNode) {
+            prevNode = caretNode.previousSibling;
+            nextNode = caretNode.nextSibling;
+          }
+        } else {
+          caretNode = r[0].startContainer;
+          prevNode = caretNode.previousSibling;
+          nextNode = caretNode.nextSibling;
+          offset = r[0].startOffset;
+        }
+
+        return {
+          "caretNode": caretNode,
+          "prevNode": prevNode,
+          "nextNode": nextNode,
+          "textOffset": offset
+        };
+      }
+
+      return null;
+    },
+
     getSelectionParentsByTag: function(tagName) {
       var nodes = this.getSelectedOwnNodes(),
           curEl, parents = [];

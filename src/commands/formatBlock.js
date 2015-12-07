@@ -664,6 +664,29 @@
     return options;
   }
 
+  function caretIsOnEmptyLine(composer) {
+    var caretInfo;
+    if (composer.selection.isCollapsed()) {
+      caretInfo = composer.selection.getNodesNearCaret();
+      if (caretInfo && caretInfo.caretNode) {
+        if (
+          // caret is allready breaknode
+          wysihtml5.dom.domNode(caretInfo.caretNode).is.lineBreak() ||
+          // caret is textnode
+          (caretInfo.caretNode.nodeType === 3 && caretInfo.textOffset === 0 && (!caretInfo.prevNode || wysihtml5.dom.domNode(caretInfo.prevNode).is.lineBreak())) ||
+          // Caret is temprorary rangy selection marker
+          (caretInfo.caretNode.nodeType === 1 && caretInfo.caretNode.classList.contains('rangySelectionBoundary') &&
+            (!caretInfo.prevNode || wysihtml5.dom.domNode(caretInfo.prevNode).is.lineBreak() || wysihtml5.dom.domNode(caretInfo.prevNode).is.block()) &&
+            (!caretInfo.nextNode || wysihtml5.dom.domNode(caretInfo.nextNode).is.lineBreak() || wysihtml5.dom.domNode(caretInfo.nextNode).is.block())
+          )
+        ) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   wysihtml5.commands.formatBlock = {
     exec: function(composer, command, options) {
       options = parseOptions(options);
@@ -686,7 +709,11 @@
         // If selection is caret expand it to cover nearest suitable block element or row if none found
         if (composer.selection.isCollapsed()) {
           bookmark = rangy.saveSelection(composer.win);
-          expandCaretToBlock(composer, options && options.nodeName ? options.nodeName.toUpperCase() : undefined);
+          if (caretIsOnEmptyLine(composer)) {
+            composer.selection.selectLine();
+          } else {
+            expandCaretToBlock(composer, options && options.nodeName ? options.nodeName.toUpperCase() : undefined);
+          }
         }
         if (options) {
           newBlockElements = formatSelection("apply", composer, options);

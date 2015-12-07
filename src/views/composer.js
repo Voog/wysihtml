@@ -419,18 +419,21 @@
         }
       }
 
+      // Ensures when editor is empty and not line breaks mode, the inital state has a paragraph in it on focus with caret inside paragraph
       if (!this.config.useLineBreaks) {
-        dom.observe(this.element, ["focus", "keydown"], function() {
+        dom.observe(this.element, ["focus"], function() {
           if (that.isEmpty()) {
-            var paragraph = that.doc.createElement("P");
-            that.element.innerHTML = "";
-            that.element.appendChild(paragraph);
-            if (!browser.displaysCaretInEmptyContentEditableCorrectly()) {
-              paragraph.innerHTML = "<br>";
-              that.selection.setBefore(paragraph.firstChild);
-            } else {
-              that.selection.selectNode(paragraph, true);
-            }
+            setTimeout(function() {
+              var paragraph = that.doc.createElement("P");
+              that.element.innerHTML = "";
+              that.element.appendChild(paragraph);
+              if (!browser.displaysCaretInEmptyContentEditableCorrectly()) {
+                paragraph.innerHTML = "<br>";
+                that.selection.setBefore(paragraph.firstChild);
+              } else {
+                that.selection.selectNode(paragraph, true);
+              }
+            }, 0);
           }
         });
       }
@@ -438,7 +441,7 @@
       dom.observe(this.element, "keydown", function(event) {
         var keyCode = event.keyCode;
 
-        if (event.shiftKey) {
+        if (event.shiftKey || event.ctrlKey || event.defaultPrevented) {
           return;
         }
 

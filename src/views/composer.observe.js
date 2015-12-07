@@ -8,6 +8,7 @@
  */
 (function(wysihtml5) {
   var dom       = wysihtml5.dom,
+      domNode = dom.domNode,
       browser   = wysihtml5.browser,
       /**
        * Map keyCodes to query commands
@@ -67,9 +68,9 @@
     return false;
   };
 
-  // Deletion with caret in the beginning of headings needs special attention
-  // Heading does not concate text to previous block node correctly (browsers do unexpected miracles here especially webkit)
-  var fixDeleteInTheBeginnigOfHeading = function(composer) {
+  // Deletion with caret in the beginning of headings and other block elvel elements needs special attention
+  // Not allways does it concate text to previous block node correctly (browsers do unexpected miracles here especially webkit)
+  var fixDeleteInTheBeginniNgOfBlock = function(composer) {
     var selection = composer.selection,
         prevNode = selection.getPreviousNode();
 
@@ -86,15 +87,15 @@
         if (prevNode.lastChild) {
           var selNode = prevNode.lastChild,
               selectedNode = selection.getSelectedNode(),
-              commonAncestorNode = wysihtml5.dom.domNode(prevNode).commonAncestor(selectedNode, composer.element);
-              curNode = commonAncestorNode ? wysihtml5.dom.getParentElement(selectedNode, {
+              commonAncestorNode = domNode(prevNode).commonAncestor(selectedNode, composer.element);
+              curNode = wysihtml5.dom.getParentElement(selectedNode, {
                 query: "h1, h2, h3, h4, h5, h6, p, pre, div, blockquote"
-              }, false, commonAncestorNode) : null;
-          
+              }, false, commonAncestorNode || composer.element);
             if (curNode) {
               while (curNode.firstChild) {
                 prevNode.appendChild(curNode.firstChild);
               }
+              curNode.parentNode.removeChild(curNode);
               selection.setAfter(selNode);
               return true;
             } else if (selectedNode.nodeType === 3) {
@@ -124,9 +125,9 @@
       }
 
       if (isInBeginnig && aNode && aNode.nodeType === 1 && aNode.nodeName === "LI") {
-        prevNode = wysihtml5.dom.domNode(aNode).prev({nodeTypes: [1,3], ignoreBlankTexts: true});
+        prevNode = domNode(aNode).prev({nodeTypes: [1,3], ignoreBlankTexts: true});
         if (!prevNode && aNode.parentNode && (aNode.parentNode.nodeName === "UL" || aNode.parentNode.nodeName === "OL")) {
-          prevNode = wysihtml5.dom.domNode(aNode.parentNode).prev({nodeTypes: [1,3], ignoreBlankTexts: true});
+          prevNode = domNode(aNode.parentNode).prev({nodeTypes: [1,3], ignoreBlankTexts: true});
         }
         if (prevNode) {
           firstNode = aNode.firstChild;
@@ -168,7 +169,7 @@
       if (fixDeleteInTheBeginnigOfLi(composer)) {
         event.preventDefault();
         return;
-      } else if (fixDeleteInTheBeginnigOfHeading(composer)) {
+      } else if (fixDeleteInTheBeginniNgOfBlock(composer)) {
         event.preventDefault();
         return;
       }
@@ -184,6 +185,72 @@
       if (selection.containsUneditable()) {
         event.preventDefault();
         selection.deleteContents();
+      }
+    }
+  };
+
+  var handleEnterKeyPress = function(event, composer) {
+    if (composer.config.useLineBreaks && !event.shiftKey && !event.ctrlKey) {
+      // Fixes some misbehaviours of enters in linebreaks mode (natively a bit unsupported feature)
+
+      var breakNodes = "p, pre, div, blockquote",
+          caretInfo, parent, txtNode;
+
+      if (composer.selection.isCollapsed()) {
+        caretInfo = composer.selection.getNodesNearCaret();
+        if (caretInfo) {
+          
+          if (caretInfo.caretNode || caretInfo.nextNode) {
+            parent = dom.getParentElement(caretInfo.caretNode || caretInfo.nextNode, { query: breakNodes }, 2);
+            if (parent === composer.element) {
+              parent = undefined;
+            }
+          }
+
+          if (parent && caretInfo.caretNode) {
+            if (domNode(caretInfo.caretNode).is.lineBreak()) {
+
+              if (composer.config.doubleLineBreakEscapesBlock) {
+                // Double enter (enter on blank line) exits block element in useLineBreaks mode.
+                event.preventDefault();
+                caretInfo.caretNode.parentNode.removeChild(caretInfo.caretNode);
+                
+                // Ensure surplous line breaks are not added to preceding element
+                if (domNode(caretInfo.nextNode).is.lineBreak()) {
+                  caretInfo.nextNode.parentNode.removeChild(caretInfo.nextNode);
+                }
+
+                var brNode = composer.doc.createElement('br');
+                if (domNode(caretInfo.nextNode).is.lineBreak() && caretInfo.nextNode === parent.lastChild) {
+                  parent.parentNode.insertBefore(brNode, parent.nextSibling);
+                } else {
+                  composer.selection.splitElementAtCaret(parent, brNode);
+                }
+
+                // Ensure surplous blank lines are not added to preceding element
+                if (caretInfo.nextNode && caretInfo.nextNode.nodeType === 3) {
+                  // Replaces blank lines at the beginning of textnode
+                  caretInfo.nextNode.data = caretInfo.nextNode.data.replace(/^ *[\r\n]+/, '');
+                }
+                composer.selection.setBefore(brNode);
+              }
+
+            } else if (caretInfo.caretNode.nodeType === 3 && wysihtml5.browser.hasCaretBlockElementIssue() && caretInfo.textOffset === caretInfo.caretNode.data.length && !caretInfo.nextNode) {
+
+              // This fixes annoying webkit issue when you press enter at the end of a block then seemingly nothing happens.
+              // in reality one line break is generated and cursor is reported after it, but when entering something cursor jumps before the br
+              event.preventDefault();
+              var br1 = composer.doc.createElement('br'),
+                  br2 = composer.doc.createElement('br'),
+                  f = composer.doc.createDocumentFragment();
+              f.appendChild(br1);
+              f.appendChild(br2);
+              composer.selection.insertNode(f);
+              composer.selection.setBefore(br2);
+
+            }
+          }
+        }
       }
     }
   };
@@ -347,6 +414,10 @@
       // TAB key handling
       event.preventDefault();
       handleTabKeyDown(this, this.element, event.shiftKey);
+    }
+
+    if (keyCode === wysihtml5.ENTER_KEY) {
+      handleEnterKeyPress(event, this);
     }
 
   };
