@@ -411,6 +411,9 @@
         if (parentElement && dom.contains(that.element, parentElement)) {
           that.selection.executeAndRestoreRangy(function() {
             if (that.config.useLineBreaks) {
+              if (!parentElement.firstChild || (parentElement.firstChild === parentElement.lastChild && parentElement.firstChild.nodeType === 1 && parentElement.firstChild.classList.contains('rangySelectionBoundary'))) {
+                parentElement.appendChild(that.doc.createElement('br'));
+              }
               dom.replaceWithChildNodes(parentElement);
             } else if (parentElement.nodeName !== "P") {
               dom.renameElement(parentElement, "p");
