@@ -45,6 +45,14 @@
         },
         block: function() {
           return node && node.nodeType === 1 && node.ownerDocument.defaultView.getComputedStyle(node).display === "block";
+        },
+        // Void elements are elemens that can not have content
+        // In most cases browsers should solve the cases for you when you try to insert content into those,
+        //    but IE does not and it is not nice to do so anyway.
+        voidElement: function() {
+          return wysihtml5.dom.domNode(node).test({
+            query: wysihtml5.VOID_ELEMENTS
+          });
         }
       },
 
@@ -199,6 +207,29 @@
         if (newWrapper && curNode) {
           curNode.parentNode.insertBefore(newWrapper, curNode);
           newWrapper.appendChild(curNode);
+        }
+      },
+
+      transferContentTo: function(targetNode, removeOldWrapper) {
+        if (node.nodeType === 1) {
+          if (wysihtml5.dom.domNode(targetNode).is.voidElement()) {
+            while (node.firstChild) {
+              targetNode.parentNode.insertBefore(node.lastChild, targetNode.nextSibling);
+            }
+          } else {
+            while (node.firstChild) {
+              targetNode.appendChild(node.firstChild);
+            }
+          }
+          if (removeOldWrapper) {
+            node.parentNode.removeChild(node);
+          }
+        } else if (node.nodeType === 3 || node.nodeType === 8){
+          if (wysihtml5.dom.domNode(targetNode).is.voidElement()) {
+            targetNode.parentNode.insertBefore(node, targetNode.nextSibling);
+          } else {
+            targetNode.appendChild(node);
+          }
         }
       },
 

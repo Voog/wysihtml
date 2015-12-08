@@ -77,7 +77,10 @@
     if (selection.caretIsFirstInSelection() &&
         prevNode &&
         prevNode.nodeType === 1 &&
-        (/block/).test(composer.win.getComputedStyle(prevNode).display)
+        (/block/).test(composer.win.getComputedStyle(prevNode).display) &&
+        !domNode(prevNode).test({
+          query: "ol, ul, table, tr, dl"
+        })
     ) {
       if ((/^\s*$/).test(prevNode.textContent || prevNode.innerText)) {
         // If heading is empty remove the heading node
@@ -88,21 +91,15 @@
           var selNode = prevNode.lastChild,
               selectedNode = selection.getSelectedNode(),
               commonAncestorNode = domNode(prevNode).commonAncestor(selectedNode, composer.element);
-              curNode = wysihtml5.dom.getParentElement(selectedNode, {
+              curNode = selectedNode.nodeType === 3 ? selectedNode : wysihtml5.dom.getParentElement(selectedNode, {
                 query: "h1, h2, h3, h4, h5, h6, p, pre, div, blockquote"
               }, false, commonAncestorNode || composer.element);
-            if (curNode) {
-              while (curNode.firstChild) {
-                prevNode.appendChild(curNode.firstChild);
-              }
-              curNode.parentNode.removeChild(curNode);
-              selection.setAfter(selNode);
-              return true;
-            } else if (selectedNode.nodeType === 3) {
-              prevNode.appendChild(selectedNode);
-              selection.setAfter(selNode);
-              return true;
-            }
+
+          if (curNode) {
+            domNode(curNode).transferContentTo(prevNode, true);
+            selection.setAfter(selNode);
+            return true;
+          }
         }
       }
     }
@@ -131,16 +128,7 @@
         }
         if (prevNode) {
           firstNode = aNode.firstChild;
-          if (prevNode.nodeType === 1) {
-            while (aNode.firstChild) {
-                prevNode.appendChild(aNode.firstChild);
-            }
-          } else {
-            while (aNode.lastChild) {
-                prevNode.parentNode.insertBefore(aNode.lastChild, prevNode.nextSibling);
-            }
-          }
-          aNode.parentNode.removeChild(aNode);
+          domNode(aNode).transferContentTo(prevNode, true);
           if (firstNode) {
             composer.selection.setBefore(firstNode);
           } else if (prevNode) {

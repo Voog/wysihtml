@@ -24,6 +24,8 @@ var wysihtml5 = {
   INVISIBLE_SPACE: "\uFEFF",
   INVISIBLE_SPACE_REG_EXP: /\uFEFF/g,
 
+  VOID_ELEMENTS: "area, base, br, col, embed, hr, img, input, keygen, link, meta, param, source, track, wbr",
+
   EMPTY_FUNCTION: function() {},
 
   ELEMENT_NODE: 1,
