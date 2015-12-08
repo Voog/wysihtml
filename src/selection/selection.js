@@ -580,6 +580,11 @@
           startOffset = (sel.isBackwards()) ? sel.focusOffset : sel.anchorOffset,
           rng = this.createRange(), endNode, inTmpCaret;
 
+      // If start is textnode and all is whitespace before caret. Set start offset to 0
+      if (startNode && startNode.nodeType === 3 && (/^\s*$/).test(startNode.data.slice(0, startOffset))) {
+        startOffset = 0;
+      }
+
       // Escape temproray helper nodes if selection in them
       inTmpCaret = wysihtml5.dom.getParentElement(startNode, { query: '._wysihtml5-temp-caret-fix' }, 1);
       if (inTmpCaret) {

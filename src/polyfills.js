@@ -478,6 +478,31 @@ wysihtml5.polyfills = function(win, doc) {
   } else {
     F();
   }
+
+  // CustomEvent for ie9 and up
+  function nativeCustomEventSupported() {
+    try {
+      var p = new CustomEvent('cat', {detail: {foo: 'bar'}});
+      return  'cat' === p.type && 'bar' === p.detail.foo;
+    } catch (e) {}
+    return false;
+  }
+  var customEventSupported = nativeCustomEventSupported();
+
+  // Polyfills CustomEvent object for IE9 and up
+  (function() {
+    if (!customEventSupported && "CustomEvent" in window) {
+      function CustomEvent(event, params) {
+        params = params || {bubbles: false, cancelable: false, detail: undefined};
+        var evt = doc.createEvent('CustomEvent');
+        evt.initCustomEvent(event, params.bubbles, params.cancelable, params.detail);
+        return evt;
+      }
+      CustomEvent.prototype = win.Event.prototype;
+      win.CustomEvent = CustomEvent;
+      customEventSupported = true;
+    }
+  })();
 };
 
 wysihtml5.polyfills(window, document);

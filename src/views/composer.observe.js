@@ -59,7 +59,7 @@
         return true;
       }
       try {
-        var ev = new CustomEvent("wysihtml5:uneditable:delete");
+        var ev = new CustomEvent("wysihtml5:uneditable:delete", {bubbles: true, cancelable: false});
         before.node.dispatchEvent(ev);
       } catch (err) {}
       before.node.parentNode.removeChild(before.node);
@@ -154,18 +154,19 @@
         element = composer.element;
 
     if (selection.isCollapsed()) {
+      if (handleUneditableDeletion(composer)) {
+        event.preventDefault();
+        return;
+      }
       if (fixDeleteInTheBeginningOfLi(composer)) {
         event.preventDefault();
         return;
-      } else if (fixDeleteInTheBeginningOfBlock(composer)) {
+      }
+      if (fixDeleteInTheBeginningOfBlock(composer)) {
         event.preventDefault();
         return;
       }
       if (fixLastBrDeletionInTable(composer)) {
-        event.preventDefault();
-        return;
-      }
-      if (handleUneditableDeletion(composer)) {
         event.preventDefault();
         return;
       }
