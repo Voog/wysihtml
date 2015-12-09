@@ -1,3 +1,13 @@
+*wysihtml5x 0.5.3* (December 9, 2015)
+* Removed automatic forced title attributes on links and images
+* Improved line breaks addition/removal when applying/removing format with formatBlock command
+* Improve (and unify cross-browser) enter and backspace handling in and around lists (espacially IE)
+* Fix IE list inserting problem where only one bullet is inserted on multi-line selection
+* Improve block level elements merge when using backspace key
+* formatBlock on last empty line of a block element now adds new block instead of changing format of the whole block
+* Add double enter escapes block elements in useLineBreaks mode (optional, can be turned off setting parameter `doubleLineBreakEscapesBlock: false`)
+* Fixes un-editable container delete problem in IE
+
 *wysihtml5x 0.5.2* (November 10, 2015)
 * Fixes some formatBlock nesting problems (mainly with lists)
 * Adds formatBlock to .remove() command

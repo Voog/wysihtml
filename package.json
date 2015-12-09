@@ -1,6 +1,6 @@
 {
   "name": "wysihtml",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "devDependencies": {
     "grunt": "~0.4.4",
     "grunt-cli": "^0.1.13",
