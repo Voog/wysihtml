@@ -492,10 +492,17 @@
             nextNode = caretNode.nextSibling;
           }
         } else {
-          caretNode = r[0].startContainer;
+          if (r[0].startOffset === 0 && r[0].startContainer.previousSibling) {
+            caretNode = r[0].startContainer.previousSibling;
+            if (caretNode.nodeType === 3) {
+              offset = caretNode.data.length; 
+            }
+          } else {
+            caretNode = r[0].startContainer;
+            offset = r[0].startOffset;
+          }
           prevNode = caretNode.previousSibling;
           nextNode = caretNode.nextSibling;
-          offset = r[0].startOffset;
         }
 
         return {

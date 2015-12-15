@@ -37,7 +37,7 @@ if (wysihtml5.browser.supported()) {
   
 // Editor initiation tests
   asyncTest("fixDeleteInTheBeginningOfBlock", function() {
-    expect(2);
+    expect(3);
     var that = this;
     var editor = new wysihtml5.Editor(this.editableArea, this.rules);
     editor.on("load", function() {
@@ -54,6 +54,10 @@ if (wysihtml5.browser.supported()) {
       composer.observeActions.fixDeleteInTheBeginningOfBlock(composer);
       equal(e.innerHTML, "<p>test<br>line1<br>line2</p>", "Merges previous and current paragraph node correctly");
       
+      e.innerHTML = "<pre>test<br>ing</pre>";
+      that.setCaretTo(editor, e.childNodes[0], 2);
+      composer.observeActions.doLineBreaksModeEnterWithCaret(composer);
+      equal(e.innerHTML, "<pre>test</pre><br><pre>ing</pre>", "Splits block node with double blank lines");
       
       start();
     });
