@@ -27,7 +27,7 @@
       is: {
         emptyTextNode: function(ignoreWhitespace) {
           var regx = ignoreWhitespace ? (/^\s*$/g) : (/^[\r\n]*$/g);
-          return node.nodeType === wysihtml5.TEXT_NODE && (regx).test(node.data);
+          return node && node.nodeType === wysihtml5.TEXT_NODE && (regx).test(node.data);
         },
 
         visible: function() {

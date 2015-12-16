@@ -70,7 +70,9 @@ wysihtml5.commands.insertList = (function(wysihtml5) {
         for (var i = innerLists.length; i--;) {
           wysihtml5.dom.resolveList(innerLists[i], composer.config.useLineBreaks);
         }
-        wysihtml5.dom.resolveList(el, composer.config.useLineBreaks);
+        if (innerLists.length === 0) {
+          wysihtml5.dom.resolveList(el, composer.config.useLineBreaks);
+        }
       }
     });
   };
@@ -138,8 +140,34 @@ wysihtml5.commands.insertList = (function(wysihtml5) {
     exec: function(composer, command, nodeName) {
       var doc           = composer.doc,
           cmd           = (nodeName === "OL") ? "insertOrderedList" : "insertUnorderedList",
-          selectedNode  = composer.selection.getSelectedNode(),
-          list          = findListEl(selectedNode, nodeName, composer);
+          s = composer.selection.getSelection(),
+          anode = s.anchorNode.nodeType === 1 && s.anchorNode.firstChild ? s.anchorNode.childNodes[s.anchorOffset] : s.anchorNode,
+          fnode = s.focusNode.nodeType === 1 && s.focusNode.firstChild ? s.focusNode.childNodes[s.focusOffset] || s.focusNode.lastChild : s.focusNode,
+          selectedNode, list;
+
+      if (s.isBackwards()) {
+        // swap variables
+        anode = [fnode, fnode = anode][0];
+      }
+
+      if (wysihtml5.dom.domNode(fnode).is.emptyTextNode(true) && fnode) {
+        fnode = wysihtml5.dom.domNode(fnode).prev({nodeTypes: [1,3], ignoreBlankTexts: true});
+      }
+      if (wysihtml5.dom.domNode(anode).is.emptyTextNode(true) && anode) {
+        anode = wysihtml5.dom.domNode(anode).next({nodeTypes: [1,3], ignoreBlankTexts: true});
+      }
+
+      if (anode && fnode) {
+        if (anode === fnode) {
+          selectedNode = anode;
+        } else {
+          selectedNode = wysihtml5.dom.domNode(anode).commonAncestor(fnode, composer.element);
+        }
+      } else {
+        selectedNode  = composer.selection.getSelectedNode();
+      }
+
+      list = findListEl(selectedNode, nodeName, composer);
 
       if (!list.el) {
         if (composer.commands.support(cmd)) {
