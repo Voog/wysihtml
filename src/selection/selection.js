@@ -100,7 +100,7 @@
     /** @scope wysihtml5.Selection.prototype */ {
     constructor: function(editor, contain, unselectableClass) {
       // Make sure that our external range library is initialized
-      window.rangy.init();
+      rangy.init();
 
       this.editor   = editor;
       this.composer = editor.composer;
