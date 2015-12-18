@@ -1,5 +1,5 @@
 /**
- * @license wysihtml v0.5.3
+ * @license wysihtml v0.5.4
  * https://github.com/Voog/wysihtml
  *
  * Author: Christopher Blum (https://github.com/tiff)
@@ -10,7 +10,7 @@
  *
  */
 var wysihtml5 = {
-  version: "0.5.3",
+  version: "0.5.4",
 
   // namespaces
   commands:   {},
@@ -7938,11 +7938,6 @@ wysihtml5.dom.copyAttributes = function(attributesToCopy) {
     return nodes;
   }
 
-  // Returns if node is the rangy selection bookmark element (that must not be taken into account in most situatons and is removed on selection restoring)
-  function isBookmark(n) {
-    return n && n.nodeType === 1 && n.classList.contains('rangySelectionBoundary');
-  }
-
   wysihtml5.dom.domNode = function(node) {
     var defaultNodeTypes = [wysihtml5.ELEMENT_NODE, wysihtml5.TEXT_NODE];
 
@@ -7951,7 +7946,12 @@ wysihtml5.dom.copyAttributes = function(attributesToCopy) {
       is: {
         emptyTextNode: function(ignoreWhitespace) {
           var regx = ignoreWhitespace ? (/^\s*$/g) : (/^[\r\n]*$/g);
-          return node.nodeType === wysihtml5.TEXT_NODE && (regx).test(node.data);
+          return node && node.nodeType === wysihtml5.TEXT_NODE && (regx).test(node.data);
+        },
+
+        // Returns if node is the rangy selection bookmark element (that must not be taken into account in most situatons and is removed on selection restoring)
+        rangyBookmark: function() {
+          return node && node.nodeType === 1 && node.classList.contains('rangySelectionBoundary');
         },
 
         visible: function() {
@@ -7990,7 +7990,7 @@ wysihtml5.dom.copyAttributes = function(attributesToCopy) {
         }
 
         if (
-          isBookmark(prevNode) || // is Rangy temporary boomark element (bypass)
+          wysihtml5.dom.domNode(prevNode).is.rangyBookmark() || // is Rangy temporary boomark element (bypass)
           (!wysihtml5.lang.array(types).contains(prevNode.nodeType)) || // nodeTypes check.
           (options && options.ignoreBlankTexts && wysihtml5.dom.domNode(prevNode).is.emptyTextNode(true)) // Blank text nodes bypassed if set
         ) {
@@ -8010,7 +8010,7 @@ wysihtml5.dom.copyAttributes = function(attributesToCopy) {
         }
 
         if (
-          isBookmark(nextNode) || // is Rangy temporary boomark element (bypass)
+          wysihtml5.dom.domNode(nextNode).is.rangyBookmark() || // is Rangy temporary boomark element (bypass)
           (!wysihtml5.lang.array(types).contains(nextNode.nodeType)) || // nodeTypes check.
           (options && options.ignoreBlankTexts && wysihtml5.dom.domNode(nextNode).is.emptyTextNode(true)) // blank text nodes bypassed if set
         ) {
@@ -11762,7 +11762,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       }
     };
 
-    blankNode.appendChild(document.createTextNode(wysihtml5.INVISIBLE_SPACE));
+    blankNode.appendChild(container.ownerDocument.createTextNode(wysihtml5.INVISIBLE_SPACE));
     blankNode.className = '_wysihtml5-temp-caret-fix';
     blankNode.style.display = 'block';
     blankNode.style.minWidth = '1px';
@@ -12198,10 +12198,17 @@ wysihtml5.quirks.ensureProperClearing = (function() {
             nextNode = caretNode.nextSibling;
           }
         } else {
-          caretNode = r[0].startContainer;
+          if (r[0].startOffset === 0 && r[0].startContainer.previousSibling) {
+            caretNode = r[0].startContainer.previousSibling;
+            if (caretNode.nodeType === 3) {
+              offset = caretNode.data.length; 
+            }
+          } else {
+            caretNode = r[0].startContainer;
+            offset = r[0].startOffset;
+          }
           prevNode = caretNode.previousSibling;
           nextNode = caretNode.nextSibling;
-          offset = r[0].startOffset;
         }
 
         return {
@@ -12647,8 +12654,8 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       if (wysihtml5.browser.supportsSelectionModify()) {
         this._selectLine_W3C();
       } else if (r.nativeRange && r.nativeRange.getBoundingClientRect) {
-          // For IE Edge as it ditched the old api and did not fully implement the new one (as expected)*/
-          this._selectLineUniversal();
+        // For IE Edge as it ditched the old api and did not fully implement the new one (as expected)
+        this._selectLineUniversal();
       }
     },
     
@@ -12664,7 +12671,6 @@ wysihtml5.quirks.ensureProperClearing = (function() {
             } else {
               return node.data && node.data.length || 0;
             }
-            // body...
           },
           anode = s.anchorNode.nodeType === 1 ? s.anchorNode.childNodes[s.anchorOffset] : s.anchorNode,
           fnode = s.focusNode.nodeType === 1 ? s.focusNode.childNodes[s.focusOffset] : s.focusNode;
@@ -12773,7 +12779,16 @@ wysihtml5.quirks.ensureProperClearing = (function() {
           r.moveEnd('character', 1);
         } else if (r.startContainer.nodeType === 1 && r.startContainer.childNodes[r.startOffset] && r.startContainer.childNodes[r.startOffset].nodeType === 3 && r.startContainer.childNodes[r.startOffset].data.length > 0) {
           r.moveEnd('character', 1);
-        } else if (r.startOffset > 0 && ( r.startContainer.nodeType === 3 || (r.startContainer.nodeType === 1 && !isLineBreakingElement(prevNode(r.startContainer.childNodes[r.startOffset - 1]))))) {
+        } else if (
+          r.startOffset > 0 &&
+          (
+            r.startContainer.nodeType === 3 ||
+            (
+              r.startContainer.nodeType === 1 &&
+              !isLineBreakingElement(prevNode(r.startContainer.childNodes[r.startOffset - 1]))
+            )
+          )
+        ) {
           r.moveStart('character', -1);
         }
       }
@@ -12783,6 +12798,7 @@ wysihtml5.quirks.ensureProperClearing = (function() {
       
       // Is probably just empty line as can not be expanded
       rect = r.nativeRange.getBoundingClientRect();
+      // If startnode is not line break allready move the start position of range by -1 character until clientRect top changes;
       do {
         amount = r.moveStart('character', -1);
         testRect =  r.nativeRange.getBoundingClientRect();
@@ -12793,31 +12809,31 @@ wysihtml5.quirks.ensureProperClearing = (function() {
         }
         count++;
       } while (amount !== 0 && !found && count < 2000);
-
       count = 0;
       found = false;
       rect = r.nativeRange.getBoundingClientRect();
-      do {
-        amount = r.moveEnd('character', 1);
-        testRect =  r.nativeRange.getBoundingClientRect();
-        if (!testRect || Math.floor(testRect.bottom) !== Math.floor(rect.bottom)) {
-          r.moveEnd('character', -1);
+      
+      if (r.endContainer !== this.contain || (this.contain.lastChild && this.contain.childNodes[r.endOffset] !== this.contain.lastChild)) {
+        do {
+          amount = r.moveEnd('character', 1);
+          testRect =  r.nativeRange.getBoundingClientRect();
+          if (!testRect || Math.floor(testRect.bottom) !== Math.floor(rect.bottom)) {
+            r.moveEnd('character', -1);
 
-          // Fix a IE line end marked by linebreak element although caret is before it
-          // If causes problems should be changed to be applied only to IE
-          if (r.endContainer && r.endContainer.nodeType === 1 && r.endContainer.childNodes[r.endOffset] && r.endContainer.childNodes[r.endOffset].nodeType === 1 && r.endContainer.childNodes[r.endOffset].nodeName === "BR" && r.endContainer.childNodes[r.endOffset].previousSibling) {
-            if (r.endContainer.childNodes[r.endOffset].previousSibling.nodeType === 1) {
-              r.setEnd(r.endContainer.childNodes[r.endOffset].previousSibling, r.endContainer.childNodes[r.endOffset].previousSibling.childNodes.length);
-            } else if (r.endContainer.childNodes[r.endOffset].previousSibling.nodeType === 3) {
-              r.setEnd(r.endContainer.childNodes[r.endOffset].previousSibling, r.endContainer.childNodes[r.endOffset].previousSibling.data.length);
+            // Fix a IE line end marked by linebreak element although caret is before it
+            // If causes problems should be changed to be applied only to IE
+            if (r.endContainer && r.endContainer.nodeType === 1 && r.endContainer.childNodes[r.endOffset] && r.endContainer.childNodes[r.endOffset].nodeType === 1 && r.endContainer.childNodes[r.endOffset].nodeName === "BR" && r.endContainer.childNodes[r.endOffset].previousSibling) {
+              if (r.endContainer.childNodes[r.endOffset].previousSibling.nodeType === 1) {
+                r.setEnd(r.endContainer.childNodes[r.endOffset].previousSibling, r.endContainer.childNodes[r.endOffset].previousSibling.childNodes.length);
+              } else if (r.endContainer.childNodes[r.endOffset].previousSibling.nodeType === 3) {
+                r.setEnd(r.endContainer.childNodes[r.endOffset].previousSibling, r.endContainer.childNodes[r.endOffset].previousSibling.data.length);
+              }
             }
+            found = true;
           }
-
-          found = true;
-        }
-        count++;
-      } while (amount !== 0 && !found && count < 2000);
-
+          count++;
+        } while (amount !== 0 && !found && count < 2000);
+      }
       r.select();
       this.includeRangyRangeHelpers();
     },
@@ -14159,7 +14175,7 @@ wysihtml5.Commands = Base.extend(
         nbIdx;
 
     for (var i = elements.length; i--;) {
-      if (elements[i].innerHTML.replace(/[\uFEFF]/g, '') === "") {
+      if (elements[i].innerHTML.replace(/[\uFEFF]/g, '') === "" && (newBlockElements.length === 0 || elements[i] !== newBlockElements[newBlockElements.length - 1])) {
         // If cleanup removes some new block elements. remove them from newblocks array too
         nbIdx = wysihtml5.lang.array(newBlockElements).indexOf(elements[i]);
         if (nbIdx > -1) {
@@ -14496,8 +14512,13 @@ wysihtml5.Commands = Base.extend(
         }
         composer.selection.splitElementAtCaret(outerInlines.parent, fragment);
       } else {
-        // Otherwise just insert
+        var fc = fragment.firstChild,
+            lc = fragment.lastChild;
+
         range.insertNode(fragment);
+        // restore range position as it might get lost in webkit sometimes
+        range.setStartBefore(fc);
+        range.setEndAfter(lc);
       }
     }
   }
@@ -14626,7 +14647,21 @@ wysihtml5.Commands = Base.extend(
         startNode = getRangeNode(r.startContainer, r.startOffset),
         endNode = getRangeNode(r.endContainer, r.endOffset),
         prevNode = (r.startContainer === startNode && startNode.nodeType === 3 && !isWhitespaceBefore(startNode, r.startOffset)) ? startNode :  wysihtml5.dom.domNode(startNode).prev({nodeTypes: [1,3], ignoreBlankTexts: true}),
-        nextNode = ((r.endContainer.nodeType === 1 && r.endContainer.childNodes[r.endOffset] === endNode) || (r.endContainer === endNode && endNode.nodeType === 3 && !isWhitespaceAfter(endNode, r.endOffset))) ? endNode : wysihtml5.dom.domNode(getRangeNode(r.endContainer, r.endOffset)).next({nodeTypes: [1,3], ignoreBlankTexts: true}),
+        nextNode = (
+          (
+            r.endContainer.nodeType === 1 &&
+            r.endContainer.childNodes[r.endOffset] === endNode &&
+            (
+              endNode.nodeType === 1 ||
+              !isWhitespaceAfter(endNode, r.endOffset) &&
+              !wysihtml5.dom.domNode(endNode).is.rangyBookmark()
+            )
+          ) || (
+            r.endContainer === endNode &&
+            endNode.nodeType === 3 &&
+            !isWhitespaceAfter(endNode, r.endOffset)
+          )
+        ) ? endNode : wysihtml5.dom.domNode(endNode).next({nodeTypes: [1,3], ignoreBlankTexts: true}),
         content = r.extractContents(),
         fragment = composer.doc.createDocumentFragment(),
         similarOuterBlock = similarOptions ? wysihtml5.dom.getParentElement(rangeStartContainer, similarOptions, null, composer.element) : null,
@@ -14634,6 +14669,11 @@ wysihtml5.Commands = Base.extend(
         firstOuterBlock = similarOuterBlock || findOuterBlock(rangeStartContainer, composer.element, splitAllBlocks), // The outermost un-nestable block element parent of selection start
         wrapper, blocks, children,
         firstc, lastC;
+
+    if (wysihtml5.dom.domNode(nextNode).is.rangyBookmark()) {
+      endNode = nextNode;
+      nextNode = endNode.nextSibling;
+    }
 
     trimBlankTextsAndBreaks(content);
 
@@ -14684,6 +14724,16 @@ wysihtml5.Commands = Base.extend(
     }
     injectFragmentToRange(fragment, r, composer, firstOuterBlock);
     removeSurroundingLineBreaks(prevNode, nextNode, composer);
+
+    // Fix webkit madness by inserting linebreak rangy after cursor marker to blank last block
+    // (if it contains rangy bookmark, so selection can be restored later correctly)
+    if (blocks.length > 0 &&
+      (
+        typeof blocks[blocks.length - 1].lastChild === "undefined" || wysihtml5.dom.domNode(blocks[blocks.length - 1].lastChild).is.rangyBookmark()
+      )
+    ) {
+      blocks[blocks.length - 1].appendChild(composer.doc.createElement('br'));
+    }
     return blocks;
   }
 
@@ -15832,7 +15882,9 @@ wysihtml5.Commands = Base.extend(
         for (var i = innerLists.length; i--;) {
           wysihtml5.dom.resolveList(innerLists[i], composer.config.useLineBreaks);
         }
-        wysihtml5.dom.resolveList(el, composer.config.useLineBreaks);
+        if (innerLists.length === 0) {
+          wysihtml5.dom.resolveList(el, composer.config.useLineBreaks);
+        }
       }
     });
   };
@@ -15900,8 +15952,34 @@ wysihtml5.Commands = Base.extend(
     exec: function(composer, command, nodeName) {
       var doc           = composer.doc,
           cmd           = (nodeName === "OL") ? "insertOrderedList" : "insertUnorderedList",
-          selectedNode  = composer.selection.getSelectedNode(),
-          list          = findListEl(selectedNode, nodeName, composer);
+          s = composer.selection.getSelection(),
+          anode = s.anchorNode.nodeType === 1 && s.anchorNode.firstChild ? s.anchorNode.childNodes[s.anchorOffset] : s.anchorNode,
+          fnode = s.focusNode.nodeType === 1 && s.focusNode.firstChild ? s.focusNode.childNodes[s.focusOffset] || s.focusNode.lastChild : s.focusNode,
+          selectedNode, list;
+
+      if (s.isBackwards()) {
+        // swap variables
+        anode = [fnode, fnode = anode][0];
+      }
+
+      if (wysihtml5.dom.domNode(fnode).is.emptyTextNode(true) && fnode) {
+        fnode = wysihtml5.dom.domNode(fnode).prev({nodeTypes: [1,3], ignoreBlankTexts: true});
+      }
+      if (wysihtml5.dom.domNode(anode).is.emptyTextNode(true) && anode) {
+        anode = wysihtml5.dom.domNode(anode).next({nodeTypes: [1,3], ignoreBlankTexts: true});
+      }
+
+      if (anode && fnode) {
+        if (anode === fnode) {
+          selectedNode = anode;
+        } else {
+          selectedNode = wysihtml5.dom.domNode(anode).commonAncestor(fnode, composer.element);
+        }
+      } else {
+        selectedNode  = composer.selection.getSelectedNode();
+      }
+
+      list = findListEl(selectedNode, nodeName, composer);
 
       if (!list.el) {
         if (composer.commands.support(cmd)) {
@@ -17390,155 +17468,248 @@ wysihtml5.views.View = Base.extend(
         "73": "italic",   // I
         "85": "underline" // U
       };
+      
+  var actions = {
 
-  // Adds multiple eventlisteners to target, bound to one callback
-  // TODO: If needed elsewhere make it part of wysihtml5.dom or sth
-  var addListeners = function (target, events, callback) {
-    for(var i = 0, max = events.length; i < max; i++) {
-      target.addEventListener(events[i], callback, false);
-    }
-  };
-
-  // Removes multiple eventlisteners from target, bound to one callback
-  // TODO: If needed elsewhere make it part of wysihtml5.dom or sth
-  var removeListeners = function (target, events, callback) {
-    for(var i = 0, max = events.length; i < max; i++) {
-      target.removeEventListener(events[i], callback, false);
-    }
-  };
-
-  // Override for giving user ability to delete last line break in table cell
-  var fixLastBrDeletionInTable = function(composer, force) {
-    if (composer.selection.caretIsLastInSelection()) {
-      var sel = composer.selection.getSelection(),
-          aNode = sel.anchorNode;
-      if (aNode && aNode.nodeType === 1 && (wysihtml5.dom.getParentElement(aNode, {query: 'td, th'}, false, composer.element) || force)) {
-        var nextNode = aNode.childNodes[sel.anchorOffset];
-        if (nextNode && nextNode.nodeType === 1 & nextNode.nodeName === "BR") {
-          nextNode.parentNode.removeChild(nextNode);
-          return true;
-        }
+    // Adds multiple eventlisteners to target, bound to one callback
+    // TODO: If needed elsewhere make it part of wysihtml5.dom or sth
+    addListeners: function (target, events, callback) {
+      for(var i = 0, max = events.length; i < max; i++) {
+        target.addEventListener(events[i], callback, false);
       }
-    }
-    return false;
-  };
+    },
 
-  // If found an uneditable before caret then notify it before deletion
-  var handleUneditableDeletion = function(composer) {
-    var before = composer.selection.getBeforeSelection(true);
-    if (before && (before.type === "element" || before.type === "leafnode") && before.node.nodeType === 1 && before.node.classList.contains(composer.config.classNames.uneditableContainer)) {
-      if (fixLastBrDeletionInTable(composer, true)) {
-        return true;
+    // Removes multiple eventlisteners from target, bound to one callback
+    // TODO: If needed elsewhere make it part of wysihtml5.dom or sth
+    removeListeners: function (target, events, callback) {
+      for(var i = 0, max = events.length; i < max; i++) {
+        target.removeEventListener(events[i], callback, false);
       }
-      try {
-        var ev = new CustomEvent("wysihtml5:uneditable:delete", {bubbles: true, cancelable: false});
-        before.node.dispatchEvent(ev);
-      } catch (err) {}
-      before.node.parentNode.removeChild(before.node);
-      return true;
-    }
-    return false;
-  };
+    },
 
-  // Deletion with caret in the beginning of headings and other block elvel elements needs special attention
-  // Not allways does it concate text to previous block node correctly (browsers do unexpected miracles here especially webkit)
-  var fixDeleteInTheBeginningOfBlock = function(composer) {
-    var selection = composer.selection,
-        prevNode = selection.getPreviousNode();
-
-    if (selection.caretIsFirstInSelection() &&
-        prevNode &&
-        prevNode.nodeType === 1 &&
-        (/block/).test(composer.win.getComputedStyle(prevNode).display) &&
-        !domNode(prevNode).test({
-          query: "ol, ul, table, tr, dl"
-        })
-    ) {
-      if ((/^\s*$/).test(prevNode.textContent || prevNode.innerText)) {
-        // If heading is empty remove the heading node
-        prevNode.parentNode.removeChild(prevNode);
-        return true;
-      } else {
-        if (prevNode.lastChild) {
-          var selNode = prevNode.lastChild,
-              selectedNode = selection.getSelectedNode(),
-              commonAncestorNode = domNode(prevNode).commonAncestor(selectedNode, composer.element);
-              curNode = selectedNode.nodeType === 3 ? selectedNode : wysihtml5.dom.getParentElement(selectedNode, {
-                query: "h1, h2, h3, h4, h5, h6, p, pre, div, blockquote"
-              }, false, commonAncestorNode || composer.element);
-
-          if (curNode) {
-            domNode(curNode).transferContentTo(prevNode, true);
-            selection.setAfter(selNode);
+    // Override for giving user ability to delete last line break in table cell
+    fixLastBrDeletionInTable: function(composer, force) {
+      if (composer.selection.caretIsLastInSelection()) {
+        var sel = composer.selection.getSelection(),
+            aNode = sel.anchorNode;
+        if (aNode && aNode.nodeType === 1 && (wysihtml5.dom.getParentElement(aNode, {query: 'td, th'}, false, composer.element) || force)) {
+          var nextNode = aNode.childNodes[sel.anchorOffset];
+          if (nextNode && nextNode.nodeType === 1 & nextNode.nodeName === "BR") {
+            nextNode.parentNode.removeChild(nextNode);
             return true;
           }
         }
       }
-    }
-    return false;
-  };
+      return false;
+    },
 
-  /* In IE when deleting with caret at the begining of LI, list gets broken into half instead of merging the LI with previous */
-  /* This does not match other browsers an is less intuitive from UI standpoint, thus has to be fixed */
-  var fixDeleteInTheBeginningOfLi = function(composer) {
-    if (wysihtml5.browser.hasLiDeletingProblem()) {
-      var selection = composer.selection.getSelection(),
-          aNode = selection.anchorNode,
-          listNode, prevNode, firstNode,
-          isInBeginnig = composer.selection.caretIsFirstInSelection();
-
-      // Fix caret at the beginnig of first textNode in LI
-      if (aNode.nodeType === 3 && selection.anchorOffset === 0 && aNode === aNode.parentNode.firstChild) {
-        aNode = aNode.parentNode;
-        isInBeginnig = true;
-      }
-
-      if (isInBeginnig && aNode && aNode.nodeType === 1 && aNode.nodeName === "LI") {
-        prevNode = domNode(aNode).prev({nodeTypes: [1,3], ignoreBlankTexts: true});
-        if (!prevNode && aNode.parentNode && (aNode.parentNode.nodeName === "UL" || aNode.parentNode.nodeName === "OL")) {
-          prevNode = domNode(aNode.parentNode).prev({nodeTypes: [1,3], ignoreBlankTexts: true});
-        }
-        if (prevNode) {
-          firstNode = aNode.firstChild;
-          domNode(aNode).transferContentTo(prevNode, true);
-          if (firstNode) {
-            composer.selection.setBefore(firstNode);
-          } else if (prevNode) {
-            if (prevNode.nodeType === 1) {
-              if (prevNode.lastChild) {
-                composer.selection.setAfter(prevNode.lastChild);
-              } else {
-                composer.selection.selectNode(prevNode);
-              }
-            } else {
-              composer.selection.setAfter(prevNode);
-            }
-          }
+    // If found an uneditable before caret then notify it before deletion
+    handleUneditableDeletion: function(composer) {
+      var before = composer.selection.getBeforeSelection(true);
+      if (before && (before.type === "element" || before.type === "leafnode") && before.node.nodeType === 1 && before.node.classList.contains(composer.config.classNames.uneditableContainer)) {
+        if (actions.fixLastBrDeletionInTable(composer, true)) {
           return true;
         }
+        try {
+          var ev = new CustomEvent("wysihtml5:uneditable:delete", {bubbles: true, cancelable: false});
+          before.node.dispatchEvent(ev);
+        } catch (err) {}
+        before.node.parentNode.removeChild(before.node);
+        return true;
       }
+      return false;
+    },
+
+    // Deletion with caret in the beginning of headings and other block elvel elements needs special attention
+    // Not allways does it concate text to previous block node correctly (browsers do unexpected miracles here especially webkit)
+    fixDeleteInTheBeginningOfBlock: function(composer) {
+      var selection = composer.selection,
+          prevNode = selection.getPreviousNode();
+
+      if (selection.caretIsFirstInSelection() &&
+          prevNode &&
+          prevNode.nodeType === 1 &&
+          (/block/).test(composer.win.getComputedStyle(prevNode).display) &&
+          !domNode(prevNode).test({
+            query: "ol, ul, table, tr, dl"
+          })
+      ) {
+        if ((/^\s*$/).test(prevNode.textContent || prevNode.innerText)) {
+          // If heading is empty remove the heading node
+          prevNode.parentNode.removeChild(prevNode);
+          return true;
+        } else {
+          if (prevNode.lastChild) {
+            var selNode = prevNode.lastChild,
+                selectedNode = selection.getSelectedNode(),
+                commonAncestorNode = domNode(prevNode).commonAncestor(selectedNode, composer.element),
+                curNode = wysihtml5.dom.getParentElement(selectedNode, {
+                  query: "h1, h2, h3, h4, h5, h6, p, pre, div, blockquote"
+                }, false, commonAncestorNode || composer.element);
+
+            if (curNode) {
+              domNode(curNode).transferContentTo(prevNode, true);
+              selection.setAfter(selNode);
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    },
+
+    /* In IE when deleting with caret at the begining of LI, list gets broken into half instead of merging the LI with previous */
+    /* This does not match other browsers an is less intuitive from UI standpoint, thus has to be fixed */
+    fixDeleteInTheBeginningOfLi: function(composer) {
+      if (wysihtml5.browser.hasLiDeletingProblem()) {
+        var selection = composer.selection.getSelection(),
+            aNode = selection.anchorNode,
+            listNode, prevNode, firstNode,
+            isInBeginnig = composer.selection.caretIsFirstInSelection();
+
+        // Fix caret at the beginnig of first textNode in LI
+        if (aNode.nodeType === 3 && selection.anchorOffset === 0 && aNode === aNode.parentNode.firstChild) {
+          aNode = aNode.parentNode;
+          isInBeginnig = true;
+        }
+
+        if (isInBeginnig && aNode && aNode.nodeType === 1 && aNode.nodeName === "LI") {
+          prevNode = domNode(aNode).prev({nodeTypes: [1,3], ignoreBlankTexts: true});
+          if (!prevNode && aNode.parentNode && (aNode.parentNode.nodeName === "UL" || aNode.parentNode.nodeName === "OL")) {
+            prevNode = domNode(aNode.parentNode).prev({nodeTypes: [1,3], ignoreBlankTexts: true});
+          }
+          if (prevNode) {
+            firstNode = aNode.firstChild;
+            domNode(aNode).transferContentTo(prevNode, true);
+            if (firstNode) {
+              composer.selection.setBefore(firstNode);
+            } else if (prevNode) {
+              if (prevNode.nodeType === 1) {
+                if (prevNode.lastChild) {
+                  composer.selection.setAfter(prevNode.lastChild);
+                } else {
+                  composer.selection.selectNode(prevNode);
+                }
+              } else {
+                composer.selection.setAfter(prevNode);
+              }
+            }
+            return true;
+          }
+        }
+      }
+      return false;
+    },
+    
+    // Table management
+    // If present enableObjectResizing and enableInlineTableEditing command should be called with false to prevent native table handlers
+    initTableHandling: function() {
+      var hideHandlers = function() {
+            window.removeEventListener('load', hideHandlers);
+            this.doc.execCommand("enableObjectResizing", false, "false");
+            this.doc.execCommand("enableInlineTableEditing", false, "false");
+          }.bind(this),
+          iframeInitiator = (function() {
+            hideHandlers.call(this);
+            actions.removeListeners(this.sandbox.getIframe(), ["focus", "mouseup", "mouseover"], iframeInitiator);
+          }).bind(this);
+
+      if( this.doc.execCommand &&
+          wysihtml5.browser.supportsCommand(this.doc, "enableObjectResizing") &&
+          wysihtml5.browser.supportsCommand(this.doc, "enableInlineTableEditing"))
+      {
+        if (this.sandbox.getIframe) {
+          actions.addListeners(this.sandbox.getIframe(), ["focus", "mouseup", "mouseover"], iframeInitiator);
+        } else {
+          window.addEventListener('load', hideHandlers);
+        }
+      }
+      this.tableSelection = wysihtml5.quirks.tableCellsSelection(this.element, this.parent);
+    },
+
+    // Fixes some misbehaviours of enters in linebreaks mode (natively a bit unsupported feature)
+    // Returns true if some corrections is applied so events know when to prevent default
+    doLineBreaksModeEnterWithCaret: function(composer) {
+      var breakNodes = "p, pre, div, blockquote",
+          caretInfo, parent, txtNode,
+          ret = false;
+
+      caretInfo = composer.selection.getNodesNearCaret();
+      if (caretInfo) {
+
+        if (caretInfo.caretNode || caretInfo.nextNode) {
+          parent = dom.getParentElement(caretInfo.caretNode || caretInfo.nextNode, { query: breakNodes }, 2);
+          if (parent === composer.element) {
+            parent = undefined;
+          }
+        }
+
+        if (parent && caretInfo.caretNode) {
+          if (domNode(caretInfo.caretNode).is.lineBreak()) {
+
+            if (composer.config.doubleLineBreakEscapesBlock) {
+              // Double enter (enter on blank line) exits block element in useLineBreaks mode.
+              ret = true;
+              caretInfo.caretNode.parentNode.removeChild(caretInfo.caretNode);
+
+              // Ensure surplous line breaks are not added to preceding element
+              if (domNode(caretInfo.nextNode).is.lineBreak()) {
+                caretInfo.nextNode.parentNode.removeChild(caretInfo.nextNode);
+              }
+
+              var brNode = composer.doc.createElement('br');
+              if (domNode(caretInfo.nextNode).is.lineBreak() && caretInfo.nextNode === parent.lastChild) {
+                parent.parentNode.insertBefore(brNode, parent.nextSibling);
+              } else {
+                composer.selection.splitElementAtCaret(parent, brNode);
+              }
+
+              // Ensure surplous blank lines are not added to preceding element
+              if (caretInfo.nextNode && caretInfo.nextNode.nodeType === 3) {
+                // Replaces blank lines at the beginning of textnode
+                caretInfo.nextNode.data = caretInfo.nextNode.data.replace(/^ *[\r\n]+/, '');
+              }
+              composer.selection.setBefore(brNode);
+            }
+
+          } else if (caretInfo.caretNode.nodeType === 3 && wysihtml5.browser.hasCaretBlockElementIssue() && caretInfo.textOffset === caretInfo.caretNode.data.length && !caretInfo.nextNode) {
+
+            // This fixes annoying webkit issue when you press enter at the end of a block then seemingly nothing happens.
+            // in reality one line break is generated and cursor is reported after it, but when entering something cursor jumps before the br
+            ret = true;
+            var br1 = composer.doc.createElement('br'),
+                br2 = composer.doc.createElement('br'),
+                f = composer.doc.createDocumentFragment();
+            f.appendChild(br1);
+            f.appendChild(br2);
+            composer.selection.insertNode(f);
+            composer.selection.setBefore(br2);
+
+          }
+        }
+      }
+      return ret;
     }
-    return false;
-  }
+  };
 
   var handleDeleteKeyPress = function(event, composer) {
     var selection = composer.selection,
         element = composer.element;
 
     if (selection.isCollapsed()) {
-      if (handleUneditableDeletion(composer)) {
+      if (actions.handleUneditableDeletion(composer)) {
         event.preventDefault();
         return;
       }
-      if (fixDeleteInTheBeginningOfLi(composer)) {
+      if (actions.fixDeleteInTheBeginningOfLi(composer)) {
         event.preventDefault();
         return;
       }
-      if (fixDeleteInTheBeginningOfBlock(composer)) {
+      if (actions.fixDeleteInTheBeginningOfBlock(composer)) {
         event.preventDefault();
         return;
       }
-      if (fixLastBrDeletionInTable(composer)) {
+      if (actions.fixLastBrDeletionInTable(composer)) {
         event.preventDefault();
         return;
       }
@@ -17558,59 +17729,8 @@ wysihtml5.views.View = Base.extend(
           caretInfo, parent, txtNode;
 
       if (composer.selection.isCollapsed()) {
-        caretInfo = composer.selection.getNodesNearCaret();
-        if (caretInfo) {
-          
-          if (caretInfo.caretNode || caretInfo.nextNode) {
-            parent = dom.getParentElement(caretInfo.caretNode || caretInfo.nextNode, { query: breakNodes }, 2);
-            if (parent === composer.element) {
-              parent = undefined;
-            }
-          }
-
-          if (parent && caretInfo.caretNode) {
-            if (domNode(caretInfo.caretNode).is.lineBreak()) {
-
-              if (composer.config.doubleLineBreakEscapesBlock) {
-                // Double enter (enter on blank line) exits block element in useLineBreaks mode.
-                event.preventDefault();
-                caretInfo.caretNode.parentNode.removeChild(caretInfo.caretNode);
-                
-                // Ensure surplous line breaks are not added to preceding element
-                if (domNode(caretInfo.nextNode).is.lineBreak()) {
-                  caretInfo.nextNode.parentNode.removeChild(caretInfo.nextNode);
-                }
-
-                var brNode = composer.doc.createElement('br');
-                if (domNode(caretInfo.nextNode).is.lineBreak() && caretInfo.nextNode === parent.lastChild) {
-                  parent.parentNode.insertBefore(brNode, parent.nextSibling);
-                } else {
-                  composer.selection.splitElementAtCaret(parent, brNode);
-                }
-
-                // Ensure surplous blank lines are not added to preceding element
-                if (caretInfo.nextNode && caretInfo.nextNode.nodeType === 3) {
-                  // Replaces blank lines at the beginning of textnode
-                  caretInfo.nextNode.data = caretInfo.nextNode.data.replace(/^ *[\r\n]+/, '');
-                }
-                composer.selection.setBefore(brNode);
-              }
-
-            } else if (caretInfo.caretNode.nodeType === 3 && wysihtml5.browser.hasCaretBlockElementIssue() && caretInfo.textOffset === caretInfo.caretNode.data.length && !caretInfo.nextNode) {
-
-              // This fixes annoying webkit issue when you press enter at the end of a block then seemingly nothing happens.
-              // in reality one line break is generated and cursor is reported after it, but when entering something cursor jumps before the br
-              event.preventDefault();
-              var br1 = composer.doc.createElement('br'),
-                  br2 = composer.doc.createElement('br'),
-                  f = composer.doc.createDocumentFragment();
-              f.appendChild(br1);
-              f.appendChild(br2);
-              composer.selection.insertNode(f);
-              composer.selection.setBefore(br2);
-
-            }
-          }
+        if (actions.doLineBreaksModeEnterWithCaret(composer)) {
+          event.preventDefault();
         }
       }
     }
@@ -17797,31 +17917,10 @@ wysihtml5.views.View = Base.extend(
     }).bind(this), 0);
   };
 
-  // Table management
-  // If present enableObjectResizing and enableInlineTableEditing command should be called with false to prevent native table handlers
-  var initTableHandling = function () {
-    var hideHandlers = function () {
-          window.removeEventListener('load', hideHandlers);
-          this.doc.execCommand("enableObjectResizing", false, "false");
-          this.doc.execCommand("enableInlineTableEditing", false, "false");
-        }.bind(this),
-        iframeInitiator = (function() {
-          hideHandlers.call(this);
-          removeListeners(this.sandbox.getIframe(), ["focus", "mouseup", "mouseover"], iframeInitiator);
-        }).bind(this);
-
-    if( this.doc.execCommand &&
-        wysihtml5.browser.supportsCommand(this.doc, "enableObjectResizing") &&
-        wysihtml5.browser.supportsCommand(this.doc, "enableInlineTableEditing"))
-    {
-      if (this.sandbox.getIframe) {
-        addListeners(this.sandbox.getIframe(), ["focus", "mouseup", "mouseover"], iframeInitiator);
-      } else {
-        window.addEventListener('load', hideHandlers);
-      }
-    }
-    this.tableSelection = wysihtml5.quirks.tableCellsSelection(this.element, this.parent);
-  };
+  
+  
+  // Testing requires actions to be accessible from out of scope
+  wysihtml5.views.Composer.prototype.observeActions = actions;
 
   wysihtml5.views.Composer.prototype.observe = function() {
     var that                = this,
@@ -17847,14 +17946,14 @@ wysihtml5.views.View = Base.extend(
     // --------- User interactions --
     if (this.config.handleTables) {
       // If handleTables option is true, table handling functions are bound
-      initTableHandling.call(this);
+      actions.initTableHandling.call(this);
     }
 
-    addListeners(focusBlurElement, ["drop", "paste", "mouseup", "focus", "keyup"], handleUserInteraction.bind(this));
+    actions.addListeners(focusBlurElement, ["drop", "paste", "mouseup", "focus", "keyup"], handleUserInteraction.bind(this));
     focusBlurElement.addEventListener("focus", handleFocus.bind(this), false);
     focusBlurElement.addEventListener("blur",  handleBlur.bind(this), false);
     
-    addListeners(this.element, ["drop", "paste", "beforepaste"], handlePaste.bind(this), false);
+    actions.addListeners(this.element, ["drop", "paste", "beforepaste"], handlePaste.bind(this), false);
     this.element.addEventListener("copy",       handleCopy.bind(this), false);
     this.element.addEventListener("mousedown",  handleMouseDown.bind(this), false);
     this.element.addEventListener("click",      handleClick.bind(this), false);
