@@ -56,7 +56,7 @@
       }
     };
 
-    blankNode.appendChild(document.createTextNode(wysihtml5.INVISIBLE_SPACE));
+    blankNode.appendChild(container.ownerDocument.createTextNode(wysihtml5.INVISIBLE_SPACE));
     blankNode.className = '_wysihtml5-temp-caret-fix';
     blankNode.style.display = 'block';
     blankNode.style.minWidth = '1px';
@@ -948,8 +948,8 @@
       if (wysihtml5.browser.supportsSelectionModify()) {
         this._selectLine_W3C();
       } else if (r.nativeRange && r.nativeRange.getBoundingClientRect) {
-          // For IE Edge as it ditched the old api and did not fully implement the new one (as expected)*/
-          this._selectLineUniversal();
+        // For IE Edge as it ditched the old api and did not fully implement the new one (as expected)
+        this._selectLineUniversal();
       }
     },
     
@@ -965,7 +965,6 @@
             } else {
               return node.data && node.data.length || 0;
             }
-            // body...
           },
           anode = s.anchorNode.nodeType === 1 ? s.anchorNode.childNodes[s.anchorOffset] : s.anchorNode,
           fnode = s.focusNode.nodeType === 1 ? s.focusNode.childNodes[s.focusOffset] : s.focusNode;
@@ -1074,7 +1073,16 @@
           r.moveEnd('character', 1);
         } else if (r.startContainer.nodeType === 1 && r.startContainer.childNodes[r.startOffset] && r.startContainer.childNodes[r.startOffset].nodeType === 3 && r.startContainer.childNodes[r.startOffset].data.length > 0) {
           r.moveEnd('character', 1);
-        } else if (r.startOffset > 0 && ( r.startContainer.nodeType === 3 || (r.startContainer.nodeType === 1 && !isLineBreakingElement(prevNode(r.startContainer.childNodes[r.startOffset - 1]))))) {
+        } else if (
+          r.startOffset > 0 &&
+          (
+            r.startContainer.nodeType === 3 ||
+            (
+              r.startContainer.nodeType === 1 &&
+              !isLineBreakingElement(prevNode(r.startContainer.childNodes[r.startOffset - 1]))
+            )
+          )
+        ) {
           r.moveStart('character', -1);
         }
       }
@@ -1084,6 +1092,7 @@
       
       // Is probably just empty line as can not be expanded
       rect = r.nativeRange.getBoundingClientRect();
+      // If startnode is not line break allready move the start position of range by -1 character until clientRect top changes;
       do {
         amount = r.moveStart('character', -1);
         testRect =  r.nativeRange.getBoundingClientRect();
@@ -1094,31 +1103,31 @@
         }
         count++;
       } while (amount !== 0 && !found && count < 2000);
-
       count = 0;
       found = false;
       rect = r.nativeRange.getBoundingClientRect();
-      do {
-        amount = r.moveEnd('character', 1);
-        testRect =  r.nativeRange.getBoundingClientRect();
-        if (!testRect || Math.floor(testRect.bottom) !== Math.floor(rect.bottom)) {
-          r.moveEnd('character', -1);
+      
+      if (r.endContainer !== this.contain || (this.contain.lastChild && this.contain.childNodes[r.endOffset] !== this.contain.lastChild)) {
+        do {
+          amount = r.moveEnd('character', 1);
+          testRect =  r.nativeRange.getBoundingClientRect();
+          if (!testRect || Math.floor(testRect.bottom) !== Math.floor(rect.bottom)) {
+            r.moveEnd('character', -1);
 
-          // Fix a IE line end marked by linebreak element although caret is before it
-          // If causes problems should be changed to be applied only to IE
-          if (r.endContainer && r.endContainer.nodeType === 1 && r.endContainer.childNodes[r.endOffset] && r.endContainer.childNodes[r.endOffset].nodeType === 1 && r.endContainer.childNodes[r.endOffset].nodeName === "BR" && r.endContainer.childNodes[r.endOffset].previousSibling) {
-            if (r.endContainer.childNodes[r.endOffset].previousSibling.nodeType === 1) {
-              r.setEnd(r.endContainer.childNodes[r.endOffset].previousSibling, r.endContainer.childNodes[r.endOffset].previousSibling.childNodes.length);
-            } else if (r.endContainer.childNodes[r.endOffset].previousSibling.nodeType === 3) {
-              r.setEnd(r.endContainer.childNodes[r.endOffset].previousSibling, r.endContainer.childNodes[r.endOffset].previousSibling.data.length);
+            // Fix a IE line end marked by linebreak element although caret is before it
+            // If causes problems should be changed to be applied only to IE
+            if (r.endContainer && r.endContainer.nodeType === 1 && r.endContainer.childNodes[r.endOffset] && r.endContainer.childNodes[r.endOffset].nodeType === 1 && r.endContainer.childNodes[r.endOffset].nodeName === "BR" && r.endContainer.childNodes[r.endOffset].previousSibling) {
+              if (r.endContainer.childNodes[r.endOffset].previousSibling.nodeType === 1) {
+                r.setEnd(r.endContainer.childNodes[r.endOffset].previousSibling, r.endContainer.childNodes[r.endOffset].previousSibling.childNodes.length);
+              } else if (r.endContainer.childNodes[r.endOffset].previousSibling.nodeType === 3) {
+                r.setEnd(r.endContainer.childNodes[r.endOffset].previousSibling, r.endContainer.childNodes[r.endOffset].previousSibling.data.length);
+              }
             }
+            found = true;
           }
-
-          found = true;
-        }
-        count++;
-      } while (amount !== 0 && !found && count < 2000);
-
+          count++;
+        } while (amount !== 0 && !found && count < 2000);
+      }
       r.select();
       this.includeRangyRangeHelpers();
     },

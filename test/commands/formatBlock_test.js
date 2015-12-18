@@ -44,7 +44,7 @@ if (wysihtml5.browser.supported()) {
 
   // formatblock (alignment, headings, paragraph, pre, blockquote)
   asyncTest("Format block", function() {
-    expect(16);
+    expect(18);
     var that = this,
         parserRules = {
             tags: {
@@ -153,12 +153,18 @@ if (wysihtml5.browser.supported()) {
       editor.composer.commands.remove('formatBlock');
       equal(editableElement.innerHTML.toLowerCase(), 'test<br>foo<br>test', "Adding and removing block format restored initial situation");
 
-      editor.setValue("test<br>foo</br>test", true);
+      editor.setValue("test<br>foo<br>test", true);
       that.setCaretTo(editor, editor.editableElement.childNodes[2], 1);
       editor.composer.commands.exec('formatBlock', "h1");
       editor.composer.commands.remove('formatBlock');
       equal(editableElement.innerHTML.toLowerCase(), 'test<br>foo<br>test', "Adding and removing block format restored initial situation (with caret)");
-
+      
+      editor.setValue("test<br>foo<br><br>", true);
+      that.setCaretTo(editor, editor.editableElement, 4);
+      editor.composer.commands.exec('formatBlock', "h1");
+      equal(editableElement.innerHTML.toLowerCase(), 'test<br>foo<h1><br></h1>', "Adding block before last enter worked");
+      editor.composer.commands.exec('insertHTML', "test");
+      equal(editableElement.innerHTML.toLowerCase(), 'test<br>foo<h1>test<br></h1>', "... and caret is in the new empty block");
 
       start();
     });

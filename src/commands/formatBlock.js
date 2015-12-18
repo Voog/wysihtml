@@ -60,7 +60,7 @@
         nbIdx;
 
     for (var i = elements.length; i--;) {
-      if (elements[i].innerHTML.replace(/[\uFEFF]/g, '') === "") {
+      if (elements[i].innerHTML.replace(/[\uFEFF]/g, '') === "" && (newBlockElements.length === 0 || elements[i] !== newBlockElements[newBlockElements.length - 1])) {
         // If cleanup removes some new block elements. remove them from newblocks array too
         nbIdx = wysihtml5.lang.array(newBlockElements).indexOf(elements[i]);
         if (nbIdx > -1) {
@@ -397,8 +397,13 @@
         }
         composer.selection.splitElementAtCaret(outerInlines.parent, fragment);
       } else {
-        // Otherwise just insert
+        var fc = fragment.firstChild,
+            lc = fragment.lastChild;
+
         range.insertNode(fragment);
+        // restore range position as it might get lost in webkit sometimes
+        range.setStartBefore(fc);
+        range.setEndAfter(lc);
       }
     }
   }
@@ -527,7 +532,21 @@
         startNode = getRangeNode(r.startContainer, r.startOffset),
         endNode = getRangeNode(r.endContainer, r.endOffset),
         prevNode = (r.startContainer === startNode && startNode.nodeType === 3 && !isWhitespaceBefore(startNode, r.startOffset)) ? startNode :  wysihtml5.dom.domNode(startNode).prev({nodeTypes: [1,3], ignoreBlankTexts: true}),
-        nextNode = ((r.endContainer.nodeType === 1 && r.endContainer.childNodes[r.endOffset] === endNode) || (r.endContainer === endNode && endNode.nodeType === 3 && !isWhitespaceAfter(endNode, r.endOffset))) ? endNode : wysihtml5.dom.domNode(getRangeNode(r.endContainer, r.endOffset)).next({nodeTypes: [1,3], ignoreBlankTexts: true}),
+        nextNode = (
+          (
+            r.endContainer.nodeType === 1 &&
+            r.endContainer.childNodes[r.endOffset] === endNode &&
+            (
+              endNode.nodeType === 1 ||
+              !isWhitespaceAfter(endNode, r.endOffset) &&
+              !wysihtml5.dom.domNode(endNode).is.rangyBookmark()
+            )
+          ) || (
+            r.endContainer === endNode &&
+            endNode.nodeType === 3 &&
+            !isWhitespaceAfter(endNode, r.endOffset)
+          )
+        ) ? endNode : wysihtml5.dom.domNode(endNode).next({nodeTypes: [1,3], ignoreBlankTexts: true}),
         content = r.extractContents(),
         fragment = composer.doc.createDocumentFragment(),
         similarOuterBlock = similarOptions ? wysihtml5.dom.getParentElement(rangeStartContainer, similarOptions, null, composer.element) : null,
@@ -535,6 +554,11 @@
         firstOuterBlock = similarOuterBlock || findOuterBlock(rangeStartContainer, composer.element, splitAllBlocks), // The outermost un-nestable block element parent of selection start
         wrapper, blocks, children,
         firstc, lastC;
+
+    if (wysihtml5.dom.domNode(nextNode).is.rangyBookmark()) {
+      endNode = nextNode;
+      nextNode = endNode.nextSibling;
+    }
 
     trimBlankTextsAndBreaks(content);
 
@@ -585,6 +609,16 @@
     }
     injectFragmentToRange(fragment, r, composer, firstOuterBlock);
     removeSurroundingLineBreaks(prevNode, nextNode, composer);
+
+    // Fix webkit madness by inserting linebreak rangy after cursor marker to blank last block
+    // (if it contains rangy bookmark, so selection can be restored later correctly)
+    if (blocks.length > 0 &&
+      (
+        typeof blocks[blocks.length - 1].lastChild === "undefined" || wysihtml5.dom.domNode(blocks[blocks.length - 1].lastChild).is.rangyBookmark()
+      )
+    ) {
+      blocks[blocks.length - 1].appendChild(composer.doc.createElement('br'));
+    }
     return blocks;
   }
 

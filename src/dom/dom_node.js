@@ -14,11 +14,6 @@
     return nodes;
   }
 
-  // Returns if node is the rangy selection bookmark element (that must not be taken into account in most situatons and is removed on selection restoring)
-  function isBookmark(n) {
-    return n && n.nodeType === 1 && n.classList.contains('rangySelectionBoundary');
-  }
-
   wysihtml5.dom.domNode = function(node) {
     var defaultNodeTypes = [wysihtml5.ELEMENT_NODE, wysihtml5.TEXT_NODE];
 
@@ -28,6 +23,11 @@
         emptyTextNode: function(ignoreWhitespace) {
           var regx = ignoreWhitespace ? (/^\s*$/g) : (/^[\r\n]*$/g);
           return node && node.nodeType === wysihtml5.TEXT_NODE && (regx).test(node.data);
+        },
+
+        // Returns if node is the rangy selection bookmark element (that must not be taken into account in most situatons and is removed on selection restoring)
+        rangyBookmark: function() {
+          return node && node.nodeType === 1 && node.classList.contains('rangySelectionBoundary');
         },
 
         visible: function() {
@@ -66,7 +66,7 @@
         }
 
         if (
-          isBookmark(prevNode) || // is Rangy temporary boomark element (bypass)
+          wysihtml5.dom.domNode(prevNode).is.rangyBookmark() || // is Rangy temporary boomark element (bypass)
           (!wysihtml5.lang.array(types).contains(prevNode.nodeType)) || // nodeTypes check.
           (options && options.ignoreBlankTexts && wysihtml5.dom.domNode(prevNode).is.emptyTextNode(true)) // Blank text nodes bypassed if set
         ) {
@@ -86,7 +86,7 @@
         }
 
         if (
-          isBookmark(nextNode) || // is Rangy temporary boomark element (bypass)
+          wysihtml5.dom.domNode(nextNode).is.rangyBookmark() || // is Rangy temporary boomark element (bypass)
           (!wysihtml5.lang.array(types).contains(nextNode.nodeType)) || // nodeTypes check.
           (options && options.ignoreBlankTexts && wysihtml5.dom.domNode(nextNode).is.emptyTextNode(true)) // blank text nodes bypassed if set
         ) {
