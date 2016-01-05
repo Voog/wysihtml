@@ -212,8 +212,8 @@
 
       transferContentTo: function(targetNode, removeOldWrapper) {
         if (node.nodeType === 1) {
-          if (wysihtml5.dom.domNode(targetNode).is.voidElement()) {
-            while (node.firstChild) {
+          if (wysihtml5.dom.domNode(targetNode).is.voidElement() || targetNode.nodeType === 3) {
+            while (node.lastChild) {
               targetNode.parentNode.insertBefore(node.lastChild, targetNode.nextSibling);
             }
           } else {

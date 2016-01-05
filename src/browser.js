@@ -408,6 +408,10 @@ wysihtml5.browser = (function() {
         return ("styleFloat" in document.createElement("div").style) ? "styleFloat" : "cssFloat";
       }
       return key;
+    },
+
+    usesControlRanges: function() {
+      return document.body && "createControlRange" in document.body;
     }
   };
 })();

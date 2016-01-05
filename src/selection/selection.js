@@ -559,7 +559,14 @@
       
       if (startNode) {
         if (startNode.nodeType === wysihtml5.TEXT_NODE) {
-          return this.isCollapsed() && (startNode.nodeType === wysihtml5.TEXT_NODE && (/^\s*$/).test(startNode.data.substr(0,range.startOffset)));
+          if (!startNode.parentNode) {
+            return false;
+          }
+          if (!this.isCollapsed() || startNode.parentNode.firstChild !== startNode) {
+            return false;
+          }
+          var ws = this.win.getComputedStyle(startNode.parentNode).whiteSpace;
+          return (ws === "pre" || ws === "pre-wrap") ? range.startOffset === 0 : (/^\s*$/).test(startNode.data.substr(0,range.startOffset));
         } else {
           r.selectNodeContents(this.getRange().commonAncestorContainer);
           r.collapse(true);

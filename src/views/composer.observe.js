@@ -151,6 +151,26 @@
       return false;
     },
     
+    fixDeleteInTheBeginningOfControlSelection: function(composer) {
+      var selection = composer.selection,
+          prevNode = selection.getPreviousNode(),
+          selectedNode = selection.getSelectedNode(),
+          afterCaretNode;
+
+      if (selection.caretIsFirstInSelection()) {
+        if (selectedNode.nodeType === 3) {
+          selectedNode = selectedNode.parentNode;
+        }
+        afterCaretNode = selectedNode.firstChild;
+        domNode(selectedNode).transferContentTo(prevNode, true);
+        if (afterCaretNode) {
+          composer.selection.setBefore(afterCaretNode);
+        }
+        return true;
+      }
+      return false;
+    },
+
     // Table management
     // If present enableObjectResizing and enableInlineTableEditing command should be called with false to prevent native table handlers
     initTableHandling: function() {
@@ -262,6 +282,12 @@
       if (actions.fixLastBrDeletionInTable(composer)) {
         event.preventDefault();
         return;
+      }
+      if (wysihtml5.browser.usesControlRanges) {
+        if (actions.fixDeleteInTheBeginningOfControlSelection(composer)) {
+          event.preventDefault();
+          return;
+        }
       }
     } else {
       if (selection.containsUneditable()) {
@@ -379,6 +405,30 @@
         this.selection.selectNode(target);
       }
     }
+
+    // Saves mousedown position for IE controlSelect fix
+    if (wysihtml5.browser.usesControlRanges()) {
+      this.selection.lastMouseDownPos = {x: event.clientX, y: event.clientY};
+      setTimeout(function() {
+        delete this.selection.lastMouseDownPos;
+      }.bind(this), 0);
+    }
+  };
+
+  // IE has this madness of control selects of overflowed and some other elements (weird box around element on selection and second click selects text)
+  // This fix handles the second click problem by adding cursor to the right position under cursor inside when controlSelection is made
+  var handleIEControlSelect = function(event) {
+    var target = event.target,
+        pos = this.selection.lastMouseDownPos;
+    if (pos) {
+      var caretPosition = document.body.createTextRange();
+        setTimeout(function() {
+          try {
+            caretPosition.moveToPoint(pos.x, pos.y);
+            caretPosition.select();
+          } catch (e) {}
+        }.bind(this), 0);
+    }
   };
 
   var handleClick = function(event) {
@@ -466,8 +516,6 @@
       this.selection.getSelection().removeAllRanges();
     }).bind(this), 0);
   };
-
-  
   
   // Testing requires actions to be accessible from out of scope
   wysihtml5.views.Composer.prototype.observeActions = actions;
@@ -510,6 +558,11 @@
     this.element.addEventListener("drop",       handleDrop.bind(this), false);
     this.element.addEventListener("keyup",      handleKeyUp.bind(this), false);
     this.element.addEventListener("keydown",    handleKeyDown.bind(this), false);
+
+    // IE controlselect madness fix
+    if (wysihtml5.browser.usesControlRanges()) {
+      this.element.addEventListener('mscontrolselect', handleIEControlSelect.bind(this), false);
+    }
 
     this.element.addEventListener("dragenter", (function() {
       this.parent.fire("unset_placeholder");
