@@ -1,3 +1,6 @@
+*wysihtml5x 0.5.5* (January 6, 2016)
+* Fixes some editing issues with IE proprietary control selection
+
 *wysihtml5x 0.5.4* (December 18, 2015)
 * Fixes some errors of inserting block nodes on blank last line (mostly chrome and safari)
 * Fixes some errors of merging contents of block nodes on delete
