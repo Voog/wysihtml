@@ -30,6 +30,14 @@
       return ret;
   }
 
+  function getRangeNode(node, offset) {
+    if (node.nodeType === 3) {
+      return node;
+    } else {
+      return node.childNodes[offset] || node;
+    }
+  }
+
   function getWebkitSelectionFixNode(container) {
     var blankNode = document.createElement('span');
 
@@ -427,11 +435,16 @@
       range.deleteContents();
     },
 
+    getCaretNode: function () {
+      var selection = this.getSelection();
+      return (selection && selection.anchorNode) ? getRangeNode(selection.anchorNode, selection.anchorOffset) : null;
+    },
+
     getPreviousNode: function(node, ignoreEmpty) {
       var displayStyle;
       if (!node) {
         var selection = this.getSelection();
-        node = selection.anchorNode;
+        node = (selection && selection.anchorNode) ? getRangeNode(selection.anchorNode, selection.anchorOffset) : null;
       }
 
       if (node === this.contain) {
@@ -551,22 +564,24 @@
       return (/^\s*$/).test(endtxt);
     },
 
-    caretIsFirstInSelection: function() {
+    caretIsFirstInSelection: function(includeLineBreaks) {
       var r = rangy.createRange(this.doc),
           s = this.getSelection(),
           range = this.getRange(),
-          startNode = range.startContainer;
+          startNode = getRangeNode(range.startContainer, range.startOffset);
       
       if (startNode) {
         if (startNode.nodeType === wysihtml5.TEXT_NODE) {
           if (!startNode.parentNode) {
             return false;
           }
-          if (!this.isCollapsed() || startNode.parentNode.firstChild !== startNode) {
+          if (!this.isCollapsed() || (startNode.parentNode.firstChild !== startNode && !wysihtml5.dom.domNode(startNode.previousSibling).is.block())) {
             return false;
           }
           var ws = this.win.getComputedStyle(startNode.parentNode).whiteSpace;
           return (ws === "pre" || ws === "pre-wrap") ? range.startOffset === 0 : (/^\s*$/).test(startNode.data.substr(0,range.startOffset));
+        } else if (includeLineBreaks && wysihtml5.dom.domNode(startNode).is.lineBreak()) {
+          return true;
         } else {
           r.selectNodeContents(this.getRange().commonAncestorContainer);
           r.collapse(true);

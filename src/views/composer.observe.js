@@ -76,31 +76,36 @@
       var selection = composer.selection,
           prevNode = selection.getPreviousNode();
 
-      if (selection.caretIsFirstInSelection() &&
-          prevNode &&
-          prevNode.nodeType === 1 &&
-          (/block/).test(composer.win.getComputedStyle(prevNode).display) &&
-          !domNode(prevNode).test({
-            query: "ol, ul, table, tr, dl"
-          })
-      ) {
-        if ((/^\s*$/).test(prevNode.textContent || prevNode.innerText)) {
-          // If heading is empty remove the heading node
-          prevNode.parentNode.removeChild(prevNode);
-          return true;
-        } else {
-          if (prevNode.lastChild) {
-            var selNode = prevNode.lastChild,
-                selectedNode = selection.getSelectedNode(),
-                commonAncestorNode = domNode(prevNode).commonAncestor(selectedNode, composer.element),
-                curNode = wysihtml5.dom.getParentElement(selectedNode, {
-                  query: "h1, h2, h3, h4, h5, h6, p, pre, div, blockquote"
-                }, false, commonAncestorNode || composer.element);
+      if (selection.caretIsFirstInSelection(wysihtml5.browser.usesControlRanges()) && prevNode) {
+        if (prevNode.nodeType === 1 &&
+            wysihtml5.dom.domNode(prevNode).is.block() &&
+            !domNode(prevNode).test({
+              query: "ol, ul, table, tr, dl"
+            })
+        ) {
+          if ((/^\s*$/).test(prevNode.textContent || prevNode.innerText)) {
+            // If heading is empty remove the heading node
+            prevNode.parentNode.removeChild(prevNode);
+            return true;
+          } else {
+            if (prevNode.lastChild) {
+              var selNode = prevNode.lastChild,
+                  selectedNode = selection.getSelectedNode(),
+                  commonAncestorNode = domNode(prevNode).commonAncestor(selectedNode, composer.element),
+                  curNode = wysihtml5.dom.getParentElement(selectedNode, {
+                    query: "h1, h2, h3, h4, h5, h6, p, pre, div, blockquote"
+                  }, false, commonAncestorNode || composer.element);
 
-            if (curNode) {
-              domNode(curNode).transferContentTo(prevNode, true);
-              selection.setAfter(selNode);
-              return true;
+              if (curNode) {
+                domNode(curNode).transferContentTo(prevNode, true);
+                selection.setAfter(selNode);
+                return true;
+              } else if (wysihtml5.browser.usesControlRanges()) {
+                selectedNode = selection.getCaretNode();
+                domNode(selectedNode).transferContentTo(prevNode, true);
+                selection.setAfter(selNode);
+                return true;
+              }
             }
           }
         }
@@ -283,7 +288,7 @@
         event.preventDefault();
         return;
       }
-      if (wysihtml5.browser.usesControlRanges) {
+      if (wysihtml5.browser.usesControlRanges()) {
         if (actions.fixDeleteInTheBeginningOfControlSelection(composer)) {
           event.preventDefault();
           return;
