@@ -72,6 +72,8 @@
 
       // Insert listener for change
       this.textarea.addEventListener("blur", function(event) {
+        self.editor.fire(event.type, event).fire(event.type + ":texarea", event);
+        
         // Check if the state has changed
         if (self.focusState != event.target.value) {
           self.editor.fire("change", event).fire("change:texarea", event);
