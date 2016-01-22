@@ -18,6 +18,7 @@
       if (!this.textarea) {
         this.textarea = this.composer.doc.createElement('textarea');
         this.textarea.className = "wysihtml5-source-view";
+        this._observeTextArea();
       }
       this.textarea.style.width = width + 'px';
       this.textarea.style.height = height + 'px';
@@ -48,6 +49,35 @@
           this.switchToTextarea(true);
         }
       }.bind(this));
+    },
+
+    // Adds event listeners to the textarea
+    _observeTextArea: function() {
+      self = this
+
+      // Insert listener for key up
+      this.textarea.addEventListener("keyup", function(event) {
+        self.editor.fire(event.type, event).fire(event.type + ":texarea", event);
+      }, false);
+
+      // Insert listener for focus
+      this.textarea.addEventListener("focus", function(event) {
+        self.editor.fire(event.type, event).fire(event.type + ":texarea", event);
+
+        // Save current focus state
+        setTimeout((function() {
+          self.focusState = event.target.value;
+        }).bind(this), 0);
+      }, false);
+
+      // Insert listener for change
+      this.textarea.addEventListener("blur", function(event) {
+        // Check if the state has changed
+        if (self.focusState != event.target.value) {
+          self.editor.fire("change", event).fire("change:texarea", event);
+        }
+
+      }, false);
     }
 
   });
