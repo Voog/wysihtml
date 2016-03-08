@@ -41,7 +41,7 @@ This project is supported by [Voog](http://voog.com).
 
 ## Browser Support
 
-The rich text editing interface is supported in IE8+, FF 29+, Safari 4+, Safari on iOS 5+, Opera 12+ and Chrome.
+The rich text editing interface is supported in IE9+, FF 29+, Safari 5+, Safari on iOS 5+, Opera 12+ and Chrome.
 **Graceful Degradation:** Users with other browsers will see the textarea and are still able to write plain HTML by themselves.
 
 ## Development
