@@ -18,7 +18,7 @@
         "73": "italic",   // I
         "85": "underline" // U
       };
-      
+
   var actions = {
 
     // Adds multiple eventlisteners to target, bound to one callback
@@ -155,7 +155,7 @@
       }
       return false;
     },
-    
+
     fixDeleteInTheBeginningOfControlSelection: function(composer) {
       var selection = composer.selection,
           prevNode = selection.getPreviousNode(),
@@ -272,6 +272,14 @@
         element = composer.element;
 
     if (selection.isCollapsed()) {
+      /**
+       * when the editor is empty in useLineBreaks = false mode, preserve
+       * the default value in it which is <p><br></p>
+       */
+      if (composer.isEmpty() && !composer.config.useLineBreaks) {
+        event.preventDefault();
+        return;
+      }
       if (actions.handleUneditableDeletion(composer)) {
         event.preventDefault();
         return;
@@ -521,7 +529,7 @@
       this.selection.getSelection().removeAllRanges();
     }).bind(this), 0);
   };
-  
+
   // Testing requires actions to be accessible from out of scope
   wysihtml5.views.Composer.prototype.observeActions = actions;
 
@@ -555,7 +563,7 @@
     actions.addListeners(focusBlurElement, ["drop", "paste", "mouseup", "focus", "keyup"], handleUserInteraction.bind(this));
     focusBlurElement.addEventListener("focus", handleFocus.bind(this), false);
     focusBlurElement.addEventListener("blur",  handleBlur.bind(this), false);
-    
+
     actions.addListeners(this.element, ["drop", "paste", "beforepaste"], handlePaste.bind(this), false);
     this.element.addEventListener("copy",       handleCopy.bind(this), false);
     this.element.addEventListener("mousedown",  handleMouseDown.bind(this), false);
