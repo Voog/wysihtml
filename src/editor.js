@@ -139,6 +139,9 @@
           this.sourceView = new wysihtml5.views.SourceView(this, this.composer);
         }
         if (this.config.toolbar) {
+          if (typeof wysihtml5.toolbar === "undefined") {
+            throw Error("Toolbar not found. Make sure you're loading wysihtml-toolbar.js or wysihtml-toolbar.min.js");
+          }
           this.toolbar = new wysihtml5.toolbar.Toolbar(this, this.config.toolbar, this.config.showToolbarAfterInit);
         }
     },
