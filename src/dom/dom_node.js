@@ -255,7 +255,7 @@
       test: function(properties) {
         var prop;
 
-        // retuern false if properties object is not defined
+        // return false if properties object is not defined
         if (!properties) {
           return false;
         }
