@@ -727,7 +727,7 @@
           doAdd = (!cell.isColspan || cell.firstCol);
         break;
         case "after":
-          doAdd = (!cell.isColspan || cell.lastCol || (cell.isColspan && c.el == this.cell));
+          doAdd = (!cell.isColspan || cell.lastCol || (cell.isColspan && cell.el == this.cell));
         break;
       }
 
