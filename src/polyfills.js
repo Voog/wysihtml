@@ -95,7 +95,7 @@ wysihtml5.polyfills = function(win, doc) {
     };
   }
 
-  // closest and matches polyfill
+  // closest, matches, and remove polyfill
   // https://github.com/jonathantneal/closest
   (function (ELEMENT) {
     ELEMENT.matches = ELEMENT.matches || ELEMENT.mozMatchesSelector || ELEMENT.msMatchesSelector || ELEMENT.oMatchesSelector || ELEMENT.webkitMatchesSelector || function matches(selector) {
@@ -124,7 +124,14 @@ wysihtml5.polyfills = function(win, doc) {
 
       return element;
     };
-  }(Element.prototype));
+
+    ELEMENT.remove = ELEMENT.remove || function remove() {
+      if (this.parentNode) {
+        this.parentNode.removeChild(this);
+      }
+    };
+
+  }(win.Element.prototype));
 
   // Element.classList for ie8-9 (toggle all IE)
   // source http://purl.eligrey.com/github/classList.js/blob/master/classList.js

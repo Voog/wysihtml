@@ -120,7 +120,9 @@
         var selection = composer.selection.getSelection(),
             aNode = selection.anchorNode,
             listNode, prevNode, firstNode,
-            isInBeginnig = composer.selection.caretIsFirstInSelection();
+            isInBeginnig = composer.selection.caretIsFirstInSelection(),
+            prevNode,
+            intermediaryNode;
 
         // Fix caret at the beginnig of first textNode in LI
         if (aNode.nodeType === 3 && selection.anchorOffset === 0 && aNode === aNode.parentNode.firstChild) {
@@ -132,10 +134,16 @@
           prevNode = domNode(aNode).prev({nodeTypes: [1,3], ignoreBlankTexts: true});
           if (!prevNode && aNode.parentNode && (aNode.parentNode.nodeName === "UL" || aNode.parentNode.nodeName === "OL")) {
             prevNode = domNode(aNode.parentNode).prev({nodeTypes: [1,3], ignoreBlankTexts: true});
+            intermediaryNode = aNode.parentNode;
           }
           if (prevNode) {
             firstNode = aNode.firstChild;
             domNode(aNode).transferContentTo(prevNode, true);
+
+            if (intermediaryNode && intermediaryNode.children.length === 0){
+              intermediaryNode.remove();
+            }
+
             if (firstNode) {
               composer.selection.setBefore(firstNode);
             } else if (prevNode) {
@@ -147,6 +155,12 @@
                 }
               } else {
                 composer.selection.setAfter(prevNode);
+              }
+            } else {
+              domNode(aNode).transferContentTo(aNode.parentNode.parentNode, true);
+
+              if (intermediaryNode && intermediaryNode.children.length === 0){
+                intermediaryNode.remove();
               }
             }
             return true;
