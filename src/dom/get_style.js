@@ -5,10 +5,10 @@
  * @param {String} property The CSS property to retrieve ("float", "display", "text-align", ...)
  *
  * @example
- *    wysihtml5.dom.getStyle("display").from(document.body);
+ *    wysihtml.dom.getStyle("display").from(document.body);
  *    // => "block"
  */
-wysihtml5.dom.getStyle = (function() {
+wysihtml.dom.getStyle = (function() {
   var stylePropertyMapping = {
         "float": ("styleFloat" in document.createElement("div").style) ? "styleFloat" : "cssFloat"
       },
@@ -23,7 +23,7 @@ wysihtml5.dom.getStyle = (function() {
   return function(property) {
     return {
       from: function(element) {
-        if (element.nodeType !== wysihtml5.ELEMENT_NODE) {
+        if (element.nodeType !== wysihtml.ELEMENT_NODE) {
           return;
         }
 

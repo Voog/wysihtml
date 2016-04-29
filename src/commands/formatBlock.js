@@ -3,9 +3,9 @@
  * It tries to solve the case that some block elements should not contain other block level elements (h1-6, p, ...)
  * 
 */
-(function(wysihtml5) {
+(function(wysihtml) {
 
-  var dom = wysihtml5.dom,
+  var dom = wysihtml.dom,
       // When the caret is within a H1 and the H4 is invoked, the H1 should turn into H4
       // instead of creating a H4 within a H1 which would result in semantically invalid html
       UNNESTABLE_BLOCK_ELEMENTS = "h1, h2, h3, h4, h5, h6, p, pre",
@@ -51,18 +51,18 @@
 
   // Removes empty block level elements
   function cleanup(composer, newBlockElements) {
-    wysihtml5.dom.removeInvisibleSpaces(composer.element);
+    wysihtml.dom.removeInvisibleSpaces(composer.element);
     var container = composer.element,
         allElements = container.querySelectorAll(BLOCK_ELEMENTS),
         noEditQuery = composer.config.classNames.uneditableContainer + ([""]).concat(BLOCK_ELEMENTS.split(',')).join(", " + composer.config.classNames.uneditableContainer + ' '),
         uneditables = container.querySelectorAll(noEditQuery),
-        elements = wysihtml5.lang.array(allElements).without(uneditables), // Lets not touch uneditable elements and their contents
+        elements = wysihtml.lang.array(allElements).without(uneditables), // Lets not touch uneditable elements and their contents
         nbIdx;
 
     for (var i = elements.length; i--;) {
       if (elements[i].innerHTML.replace(/[\uFEFF]/g, '') === "" && (newBlockElements.length === 0 || elements[i] !== newBlockElements[newBlockElements.length - 1])) {
         // If cleanup removes some new block elements. remove them from newblocks array too
-        nbIdx = wysihtml5.lang.array(newBlockElements).indexOf(elements[i]);
+        nbIdx = wysihtml.lang.array(newBlockElements).indexOf(elements[i]);
         if (nbIdx > -1) {
           newBlockElements.splice(nbIdx, 1);
         }
@@ -131,7 +131,7 @@
     if (!element) {
       element = composer.doc.createElement(options.nodeName || defaultNodeName(composer));
       // Add invisible space as otherwise webkit cannot set selection or range to it correctly
-      element.appendChild(composer.doc.createTextNode(wysihtml5.INVISIBLE_SPACE));
+      element.appendChild(composer.doc.createTextNode(wysihtml.INVISIBLE_SPACE));
     }
 
     if (options.nodeName && element.nodeName !== options.nodeName) {
@@ -147,7 +147,7 @@
     }
 
     if (options.styleProperty && typeof options.styleValue !== "undefined") {
-      element.style[wysihtml5.browser.fixStyleKey(options.styleProperty)] = options.styleValue;
+      element.style[wysihtml.browser.fixStyleKey(options.styleProperty)] = options.styleValue;
     }
 
     return element;
@@ -162,7 +162,7 @@
         unwrapped = false;
 
     if (options.styleProperty) {
-      element.style[wysihtml5.browser.fixStyleKey(options.styleProperty)] = '';
+      element.style[wysihtml.browser.fixStyleKey(options.styleProperty)] = '';
     }
     if (options.className) {
       element.classList.remove(options.className);
@@ -204,8 +204,8 @@
         nextEl, prevEl;
 
     for (var i = blocks.length; i--;) {
-      nextEl = wysihtml5.dom.domNode(blocks[i]).next({nodeTypes: [1,3], ignoreBlankTexts: true}),
-      prevEl = wysihtml5.dom.domNode(blocks[i]).prev({nodeTypes: [1,3], ignoreBlankTexts: true});
+      nextEl = wysihtml.dom.domNode(blocks[i]).next({nodeTypes: [1,3], ignoreBlankTexts: true}),
+      prevEl = wysihtml.dom.domNode(blocks[i]).prev({nodeTypes: [1,3], ignoreBlankTexts: true});
       
       if (nextEl && nextEl.nodeType !== 1 && nextEl.nodeName !== 'BR') {
         if ((blocks[i].innerHTML || blocks[i].nodeValue || '').trim() !== '') {
@@ -217,7 +217,7 @@
           blocks[i].parentNode.insertBefore(blocks[i].ownerDocument.createElement('BR'), nextEl);
         }
       }
-      wysihtml5.dom.unwrap(blocks[i]);
+      wysihtml.dom.unwrap(blocks[i]);
     }
   }
 
@@ -309,7 +309,7 @@
             // Range starts before and ends inside the node
 
             tmpRange = ranges[i].cloneRange();
-            closestLI = wysihtml5.dom.domNode(lis[j]).prev({nodeTypes: [1]});
+            closestLI = wysihtml.dom.domNode(lis[j]).prev({nodeTypes: [1]});
             
             if (closestLI) {
               tmpRange.setEnd(closestLI, closestLI.childNodes.length);
@@ -331,7 +331,7 @@
             newRanges.push(tmpRange);
             
             // Find next LI in list and if present set range to it, else 
-            closestLI = wysihtml5.dom.domNode(lis[j]).next({nodeTypes: [1]});
+            closestLI = wysihtml.dom.domNode(lis[j]).next({nodeTypes: [1]});
             if (closestLI) {
               ranges[i].setStart(closestLI, 0);
             } else if (lis[j].closest('ul, ol')) {
@@ -352,7 +352,7 @@
   // Return options object with nodeName set if original did not have any
   // Node name is set to local or global default
   function getOptionsWithNodename(options, defaultName, composer) {
-    var correctedOptions = (options) ? wysihtml5.lang.object(options).clone(true) : null;
+    var correctedOptions = (options) ? wysihtml.lang.object(options).clone(true) : null;
     if (correctedOptions) {  
       correctedOptions.nodeName = correctedOptions.nodeName || defaultName || defaultNodeName(composer);
     }
@@ -374,8 +374,8 @@
 
       composer.selection.splitElementAtCaret(firstOuterBlock, fragment);
 
-      next = wysihtml5.dom.domNode(last).next({nodeTypes: [1,3], ignoreBlankTexts: true});
-      prev = wysihtml5.dom.domNode(first).prev({nodeTypes: [1,3], ignoreBlankTexts: true});
+      next = wysihtml.dom.domNode(last).next({nodeTypes: [1,3], ignoreBlankTexts: true});
+      prev = wysihtml.dom.domNode(first).prev({nodeTypes: [1,3], ignoreBlankTexts: true});
 
       if (first && !isLineBreaking(first, composer) && prev && !isLineBreaking(prev, composer)) {
         first.parentNode.insertBefore(composer.doc.createElement('br'), first);
@@ -425,7 +425,7 @@
         // Split block formating and add new block to wrap caret
         
         unwrapBlocksFromContent(content.firstChild);
-        children = wysihtml5.dom.unwrap(content.firstChild);
+        children = wysihtml.dom.unwrap(content.firstChild);
         
         // Add line break before if needed
         if (children.length > 0) {
@@ -456,14 +456,14 @@
       
       first = false;
     }
-    blocks = wysihtml5.lang.array(fragment.childNodes).get();
+    blocks = wysihtml.lang.array(fragment.childNodes).get();
     injectFragmentToRange(fragment, r, composer);
     return blocks;
   }
   
   // When block node is inserted, look surrounding nodes and remove surplous linebreak tags (as block format breaks line itself)
   function removeSurroundingLineBreaks(prevNode, nextNode, composer) {
-    var prevPrev = prevNode && wysihtml5.dom.domNode(prevNode).prev({nodeTypes: [1,3], ignoreBlankTexts: true});
+    var prevPrev = prevNode && wysihtml.dom.domNode(prevNode).prev({nodeTypes: [1,3], ignoreBlankTexts: true});
     if (isBr(nextNode)) {
       nextNode.parentNode.removeChild(nextNode);
     }
@@ -531,7 +531,7 @@
         rangeStartContainer = r.startContainer,
         startNode = getRangeNode(r.startContainer, r.startOffset),
         endNode = getRangeNode(r.endContainer, r.endOffset),
-        prevNode = (r.startContainer === startNode && startNode.nodeType === 3 && !isWhitespaceBefore(startNode, r.startOffset)) ? startNode :  wysihtml5.dom.domNode(startNode).prev({nodeTypes: [1,3], ignoreBlankTexts: true}),
+        prevNode = (r.startContainer === startNode && startNode.nodeType === 3 && !isWhitespaceBefore(startNode, r.startOffset)) ? startNode :  wysihtml.dom.domNode(startNode).prev({nodeTypes: [1,3], ignoreBlankTexts: true}),
         nextNode = (
           (
             r.endContainer.nodeType === 1 &&
@@ -539,23 +539,23 @@
             (
               endNode.nodeType === 1 ||
               !isWhitespaceAfter(endNode, r.endOffset) &&
-              !wysihtml5.dom.domNode(endNode).is.rangyBookmark()
+              !wysihtml.dom.domNode(endNode).is.rangyBookmark()
             )
           ) || (
             r.endContainer === endNode &&
             endNode.nodeType === 3 &&
             !isWhitespaceAfter(endNode, r.endOffset)
           )
-        ) ? endNode : wysihtml5.dom.domNode(endNode).next({nodeTypes: [1,3], ignoreBlankTexts: true}),
+        ) ? endNode : wysihtml.dom.domNode(endNode).next({nodeTypes: [1,3], ignoreBlankTexts: true}),
         content = r.extractContents(),
         fragment = composer.doc.createDocumentFragment(),
-        similarOuterBlock = similarOptions ? wysihtml5.dom.getParentElement(rangeStartContainer, similarOptions, null, composer.element) : null,
+        similarOuterBlock = similarOptions ? wysihtml.dom.getParentElement(rangeStartContainer, similarOptions, null, composer.element) : null,
         splitAllBlocks = !closestBlockName || !options || (options.nodeName === "BLOCKQUOTE" && closestBlockName === "BLOCKQUOTE"),
         firstOuterBlock = similarOuterBlock || findOuterBlock(rangeStartContainer, composer.element, splitAllBlocks), // The outermost un-nestable block element parent of selection start
         wrapper, blocks, children,
         firstc, lastC;
 
-    if (wysihtml5.dom.domNode(nextNode).is.rangyBookmark()) {
+    if (wysihtml.dom.domNode(nextNode).is.rangyBookmark()) {
       endNode = nextNode;
       nextNode = endNode.nextSibling;
     }
@@ -605,7 +605,7 @@
         }
       }
 
-      blocks = wysihtml5.lang.array(fragment.childNodes).get();
+      blocks = wysihtml.lang.array(fragment.childNodes).get();
     }
     injectFragmentToRange(fragment, r, composer, firstOuterBlock);
     removeSurroundingLineBreaks(prevNode, nextNode, composer);
@@ -614,7 +614,7 @@
     // (if it contains rangy bookmark, so selection can be restored later correctly)
     if (blocks.length > 0 &&
       (
-        typeof blocks[blocks.length - 1].lastChild === "undefined" || wysihtml5.dom.domNode(blocks[blocks.length - 1].lastChild).is.rangyBookmark()
+        typeof blocks[blocks.length - 1].lastChild === "undefined" || wysihtml.dom.domNode(blocks[blocks.length - 1].lastChild).is.rangyBookmark()
       )
     ) {
       blocks[blocks.length - 1].appendChild(composer.doc.createElement('br'));
@@ -624,7 +624,7 @@
 
   // Find closest block level element
   function getParentBlockNodeName(element, composer) {
-    var parentNode = wysihtml5.dom.getParentElement(element, {
+    var parentNode = wysihtml.dom.getParentElement(element, {
           query: BLOCK_ELEMENTS
         }, null, composer.element);
 
@@ -639,7 +639,7 @@
   //
   // If nothing found selects the current line
   function expandCaretToBlock(composer, insertingNodeName) {
-    var parent = wysihtml5.dom.getParentElement(composer.selection.getOwnRanges()[0].startContainer, {
+    var parent = wysihtml.dom.getParentElement(composer.selection.getOwnRanges()[0].startContainer, {
           query: UNNESTABLE_BLOCK_ELEMENTS + ', ' + (insertingNodeName ? insertingNodeName.toLowerCase() : 'div'),
         }, null, composer.element),
         range;
@@ -705,13 +705,13 @@
       if (caretInfo && caretInfo.caretNode) {
         if (
           // caret is allready breaknode
-          wysihtml5.dom.domNode(caretInfo.caretNode).is.lineBreak() ||
+          wysihtml.dom.domNode(caretInfo.caretNode).is.lineBreak() ||
           // caret is textnode
-          (caretInfo.caretNode.nodeType === 3 && caretInfo.textOffset === 0 && (!caretInfo.prevNode || wysihtml5.dom.domNode(caretInfo.prevNode).is.lineBreak())) ||
+          (caretInfo.caretNode.nodeType === 3 && caretInfo.textOffset === 0 && (!caretInfo.prevNode || wysihtml.dom.domNode(caretInfo.prevNode).is.lineBreak())) ||
           // Caret is temprorary rangy selection marker
           (caretInfo.caretNode.nodeType === 1 && caretInfo.caretNode.classList.contains('rangySelectionBoundary') &&
-            (!caretInfo.prevNode || wysihtml5.dom.domNode(caretInfo.prevNode).is.lineBreak() || wysihtml5.dom.domNode(caretInfo.prevNode).is.block()) &&
-            (!caretInfo.nextNode || wysihtml5.dom.domNode(caretInfo.nextNode).is.lineBreak() || wysihtml5.dom.domNode(caretInfo.nextNode).is.block())
+            (!caretInfo.prevNode || wysihtml.dom.domNode(caretInfo.prevNode).is.lineBreak() || wysihtml.dom.domNode(caretInfo.prevNode).is.block()) &&
+            (!caretInfo.nextNode || wysihtml.dom.domNode(caretInfo.nextNode).is.lineBreak() || wysihtml.dom.domNode(caretInfo.nextNode).is.block())
           )
         ) {
           return true;
@@ -721,7 +721,7 @@
     return false;
   }
 
-  wysihtml5.commands.formatBlock = {
+  wysihtml.commands.formatBlock = {
     exec: function(composer, command, options) {
       options = parseOptions(options);
       var newBlockElements = [],
@@ -797,7 +797,7 @@
       options = parseOptions(options);
 
       var nodes = composer.selection.filterElements((function (element) { // Finds matching elements inside selection
-            return wysihtml5.dom.domNode(element).test(options || { query: BLOCK_ELEMENTS });
+            return wysihtml.dom.domNode(element).test(options || { query: BLOCK_ELEMENTS });
           }).bind(this)),
           parentNodes = composer.selection.getSelectedOwnNodes(),
           parent;
@@ -814,4 +814,4 @@
     }
 
   };
-})(wysihtml5);
+})(wysihtml);

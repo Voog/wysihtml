@@ -1,6 +1,6 @@
-if (wysihtml5.browser.supportsCommand(document, "insertHTML")) {
+if (wysihtml.browser.supportsCommand(document, "insertHTML")) {
 
-  module("wysihtml5.UndoManager", {
+  module("wysihtml.UndoManager", {
     setup: function() {
       this.textareaElement        = document.createElement("textarea");
       this.textareaElement.value  = "1";
@@ -44,7 +44,7 @@ if (wysihtml5.browser.supportsCommand(document, "insertHTML")) {
     expect(5);
     
     var that   = this,
-        editor = new wysihtml5.Editor(this.textareaElement);
+        editor = new wysihtml.Editor(this.textareaElement);
     editor.on("load", function() {
       editor.setValue("1 2").fire("newword:composer");
       editor.setValue("1 2 3").fire("newword:composer");
@@ -75,7 +75,7 @@ if (wysihtml5.browser.supportsCommand(document, "insertHTML")) {
     expect(3);
     
     var that   = this,
-        editor = new wysihtml5.Editor(this.textareaElement);
+        editor = new wysihtml.Editor(this.textareaElement);
     editor.on("load", function() {
       editor.setValue("<b>1</b>").fire("beforecommand:composer");
       editor.setValue("<i><b>1</b></i>").fire("beforecommand:composer");

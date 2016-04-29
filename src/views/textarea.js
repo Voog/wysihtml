@@ -1,5 +1,5 @@
-wysihtml5.views.Textarea = wysihtml5.views.View.extend(
-  /** @scope wysihtml5.views.Textarea.prototype */ {
+wysihtml.views.Textarea = wysihtml.views.View.extend(
+  /** @scope wysihtml.views.Textarea.prototype */ {
   name: "textarea",
 
   constructor: function(parent, textareaElement, config) {
@@ -33,7 +33,7 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
   },
 
   hasPlaceholderSet: function() {
-    var supportsPlaceholder = wysihtml5.browser.supportsPlaceholderAttributeOn(this.element),
+    var supportsPlaceholder = wysihtml.browser.supportsPlaceholderAttributeOn(this.element),
         placeholderText     = this.element.getAttribute("placeholder") || null,
         value               = this.element.value,
         isEmpty             = !value;
@@ -41,7 +41,7 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
   },
 
   isEmpty: function() {
-    return !wysihtml5.lang.string(this.element.value).trim() || this.hasPlaceholderSet();
+    return !wysihtml.lang.string(this.element.value).trim() || this.hasPlaceholderSet();
   },
 
   _observe: function() {
@@ -55,15 +55,15 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
          * Calling focus() or blur() on an element doesn't synchronously trigger the attached focus/blur events
          * This is the case for focusin and focusout, so let's use them whenever possible, kkthxbai
          */
-        events = wysihtml5.browser.supportsEvent("focusin") ? ["focusin", "focusout", "change"] : ["focus", "blur", "change"];
+        events = wysihtml.browser.supportsEvent("focusin") ? ["focusin", "focusout", "change"] : ["focus", "blur", "change"];
 
     parent.on("beforeload", function() {
-      wysihtml5.dom.observe(element, events, function(event) {
+      wysihtml.dom.observe(element, events, function(event) {
         var eventName = eventMapping[event.type] || event.type;
         parent.fire(eventName).fire(eventName + ":textarea");
       });
 
-      wysihtml5.dom.observe(element, ["paste", "drop"], function() {
+      wysihtml.dom.observe(element, ["paste", "drop"], function() {
         setTimeout(function() { parent.fire("paste").fire("paste:textarea"); }, 0);
       });
     });

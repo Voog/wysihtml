@@ -1,4 +1,4 @@
-wysihtml5.dom.setStyles = function(styles) {
+wysihtml.dom.setStyles = function(styles) {
   return {
     on: function(element) {
       var style = element.style;

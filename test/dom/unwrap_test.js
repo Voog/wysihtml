@@ -1,4 +1,4 @@
-module("wysihtml5.dom.unwrap", {
+module("wysihtml.dom.unwrap", {
   setup: function() {
     this.inner = "<span>test</span><p>tes2</p>";
     this.container = document.createElement("div");
@@ -9,6 +9,6 @@ module("wysihtml5.dom.unwrap", {
 });
 
 test("Basic test", function() {
-  wysihtml5.dom.unwrap(this.containerInner);
+  wysihtml.dom.unwrap(this.containerInner);
   equal(this.container.innerHTML, this.inner, "Unwrapping element works splendid.");
 });

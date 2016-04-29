@@ -1,4 +1,4 @@
-wysihtml5.dom.insert = function(elementToInsert) {
+wysihtml.dom.insert = function(elementToInsert) {
   return {
     after: function(element) {
       element.parentNode.insertBefore(elementToInsert, element.nextSibling);

@@ -1,7 +1,7 @@
-(function(wysihtml5) {
+(function(wysihtml) {
 
-  wysihtml5.views.SourceView = Base.extend(
-    /** @scope wysihtml5.views.SourceView.prototype */ {
+  wysihtml.views.SourceView = Base.extend(
+    /** @scope wysihtml.views.SourceView.prototype */ {
 
     constructor: function(editor, composer) {
       this.editor   = editor;
@@ -52,4 +52,4 @@
 
   });
 
-})(wysihtml5);
+})(wysihtml);

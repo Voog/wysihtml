@@ -6,10 +6,10 @@
  *  - Dispatch proprietary newword:composer event
  *  - Keyboard shortcuts
  */
-(function(wysihtml5) {
-  var dom       = wysihtml5.dom,
+(function(wysihtml) {
+  var dom       = wysihtml.dom,
       domNode = dom.domNode,
-      browser   = wysihtml5.browser,
+      browser   = wysihtml.browser,
       /**
        * Map keyCodes to query commands
        */
@@ -22,7 +22,7 @@
   var actions = {
 
     // Adds multiple eventlisteners to target, bound to one callback
-    // TODO: If needed elsewhere make it part of wysihtml5.dom or sth
+    // TODO: If needed elsewhere make it part of wysihtml.dom or sth
     addListeners: function (target, events, callback) {
       for(var i = 0, max = events.length; i < max; i++) {
         target.addEventListener(events[i], callback, false);
@@ -30,7 +30,7 @@
     },
 
     // Removes multiple eventlisteners from target, bound to one callback
-    // TODO: If needed elsewhere make it part of wysihtml5.dom or sth
+    // TODO: If needed elsewhere make it part of wysihtml.dom or sth
     removeListeners: function (target, events, callback) {
       for(var i = 0, max = events.length; i < max; i++) {
         target.removeEventListener(events[i], callback, false);
@@ -42,7 +42,7 @@
       if (composer.selection.caretIsLastInSelection()) {
         var sel = composer.selection.getSelection(),
             aNode = sel.anchorNode;
-        if (aNode && aNode.nodeType === 1 && (wysihtml5.dom.getParentElement(aNode, {query: 'td, th'}, false, composer.element) || force)) {
+        if (aNode && aNode.nodeType === 1 && (wysihtml.dom.getParentElement(aNode, {query: 'td, th'}, false, composer.element) || force)) {
           var nextNode = aNode.childNodes[sel.anchorOffset];
           if (nextNode && nextNode.nodeType === 1 & nextNode.nodeName === "BR") {
             nextNode.parentNode.removeChild(nextNode);
@@ -76,9 +76,9 @@
       var selection = composer.selection,
           prevNode = selection.getPreviousNode();
 
-      if (selection.caretIsFirstInSelection(wysihtml5.browser.usesControlRanges()) && prevNode) {
+      if (selection.caretIsFirstInSelection(wysihtml.browser.usesControlRanges()) && prevNode) {
         if (prevNode.nodeType === 1 &&
-            wysihtml5.dom.domNode(prevNode).is.block() &&
+            wysihtml.dom.domNode(prevNode).is.block() &&
             !domNode(prevNode).test({
               query: "ol, ul, table, tr, dl"
             })
@@ -92,7 +92,7 @@
               var selNode = prevNode.lastChild,
                   selectedNode = selection.getSelectedNode(),
                   commonAncestorNode = domNode(prevNode).commonAncestor(selectedNode, composer.element),
-                  curNode = wysihtml5.dom.getParentElement(selectedNode, {
+                  curNode = wysihtml.dom.getParentElement(selectedNode, {
                     query: "h1, h2, h3, h4, h5, h6, p, pre, div, blockquote"
                   }, false, commonAncestorNode || composer.element);
 
@@ -100,7 +100,7 @@
                 domNode(curNode).transferContentTo(prevNode, true);
                 selection.setAfter(selNode);
                 return true;
-              } else if (wysihtml5.browser.usesControlRanges()) {
+              } else if (wysihtml.browser.usesControlRanges()) {
                 selectedNode = selection.getCaretNode();
                 domNode(selectedNode).transferContentTo(prevNode, true);
                 selection.setAfter(selNode);
@@ -116,7 +116,7 @@
     /* In IE when deleting with caret at the begining of LI, list gets broken into half instead of merging the LI with previous */
     /* This does not match other browsers an is less intuitive from UI standpoint, thus has to be fixed */
     fixDeleteInTheBeginningOfLi: function(composer) {
-      if (wysihtml5.browser.hasLiDeletingProblem()) {
+      if (wysihtml.browser.hasLiDeletingProblem()) {
         var selection = composer.selection.getSelection(),
             aNode = selection.anchorNode,
             listNode, prevNode, firstNode,
@@ -190,8 +190,8 @@
           }).bind(this);
 
       if( this.doc.execCommand &&
-          wysihtml5.browser.supportsCommand(this.doc, "enableObjectResizing") &&
-          wysihtml5.browser.supportsCommand(this.doc, "enableInlineTableEditing"))
+          wysihtml.browser.supportsCommand(this.doc, "enableObjectResizing") &&
+          wysihtml.browser.supportsCommand(this.doc, "enableInlineTableEditing"))
       {
         if (this.sandbox.getIframe) {
           actions.addListeners(this.sandbox.getIframe(), ["focus", "mouseup", "mouseover"], iframeInitiator);
@@ -199,7 +199,7 @@
           window.addEventListener('load', hideHandlers);
         }
       }
-      this.tableSelection = wysihtml5.quirks.tableCellsSelection(this.element, this.parent);
+      this.tableSelection = wysihtml.quirks.tableCellsSelection(this.element, this.parent);
     },
 
     // Fixes some misbehaviours of enters in linebreaks mode (natively a bit unsupported feature)
@@ -247,7 +247,7 @@
               composer.selection.setBefore(brNode);
             }
 
-          } else if (caretInfo.caretNode.nodeType === 3 && wysihtml5.browser.hasCaretBlockElementIssue() && caretInfo.textOffset === caretInfo.caretNode.data.length && !caretInfo.nextNode) {
+          } else if (caretInfo.caretNode.nodeType === 3 && wysihtml.browser.hasCaretBlockElementIssue() && caretInfo.textOffset === caretInfo.caretNode.data.length && !caretInfo.nextNode) {
 
             // This fixes annoying webkit issue when you press enter at the end of a block then seemingly nothing happens.
             // in reality one line break is generated and cursor is reported after it, but when entering something cursor jumps before the br
@@ -296,7 +296,7 @@
         event.preventDefault();
         return;
       }
-      if (wysihtml5.browser.usesControlRanges()) {
+      if (wysihtml.browser.usesControlRanges()) {
         if (actions.fixDeleteInTheBeginningOfControlSelection(composer)) {
           event.preventDefault();
           return;
@@ -390,7 +390,7 @@
     if (this.config.copyedFromMarking) {
       // If supported the copied source can be based directly on selection
       // Very useful for webkit based browsers where copy will otherwise contain a lot of code and styles based on whatever and not actually in selection.
-      if (wysihtml5.browser.supportsModernPaste()) {
+      if (wysihtml.browser.supportsModernPaste()) {
         event.clipboardData.setData("text/html", this.config.copyedFromMarking + this.selection.getHtml());
         event.clipboardData.setData("text/plain", this.selection.getPlainText());
         event.preventDefault();
@@ -401,7 +401,7 @@
 
   var handleKeyUp = function(event) {
     var keyCode = event.keyCode;
-    if (keyCode === wysihtml5.SPACE_KEY || keyCode === wysihtml5.ENTER_KEY) {
+    if (keyCode === wysihtml.SPACE_KEY || keyCode === wysihtml.ENTER_KEY) {
       this.parent.fire("newword:composer");
     }
   };
@@ -412,15 +412,15 @@
       var target = event.target,
           allImages = this.element.querySelectorAll('img'),
           notMyImages = this.element.querySelectorAll('.' + this.config.classNames.uneditableContainer + ' img'),
-          myImages = wysihtml5.lang.array(allImages).without(notMyImages);
+          myImages = wysihtml.lang.array(allImages).without(notMyImages);
 
-      if (target.nodeName === "IMG" && wysihtml5.lang.array(myImages).contains(target)) {
+      if (target.nodeName === "IMG" && wysihtml.lang.array(myImages).contains(target)) {
         this.selection.selectNode(target);
       }
     }
 
     // Saves mousedown position for IE controlSelect fix
-    if (wysihtml5.browser.usesControlRanges()) {
+    if (wysihtml.browser.usesControlRanges()) {
       this.selection.lastMouseDownPos = {x: event.clientX, y: event.clientY};
       setTimeout(function() {
         delete this.selection.lastMouseDownPos;
@@ -448,7 +448,7 @@
     if (this.config.classNames.uneditableContainer) {
       // If uneditables is configured, makes clicking on uneditable move caret after clicked element (so it can be deleted like text)
       // If uneditable needs text selection itself event.stopPropagation can be used to prevent this behaviour
-      var uneditable = wysihtml5.dom.getParentElement(event.target, { query: "." + this.config.classNames.uneditableContainer }, false, this.element);
+      var uneditable = wysihtml.dom.getParentElement(event.target, { query: "." + this.config.classNames.uneditableContainer }, false, this.element);
       if (uneditable) {
         this.selection.setAfter(uneditable);
       }
@@ -482,13 +482,13 @@
       event.preventDefault();
     }
 
-    if (keyCode === wysihtml5.BACKSPACE_KEY) {
+    if (keyCode === wysihtml.BACKSPACE_KEY) {
       // Delete key override for special cases
       handleDeleteKeyPress(event, this);
     }
 
     // Make sure that when pressing backspace/delete on selected images deletes the image and it's anchor
-    if (keyCode === wysihtml5.BACKSPACE_KEY || keyCode === wysihtml5.DELETE_KEY) {
+    if (keyCode === wysihtml.BACKSPACE_KEY || keyCode === wysihtml.DELETE_KEY) {
       target = this.selection.getSelectedNode(true);
       if (target && target.nodeName === "IMG") {
         event.preventDefault();
@@ -499,18 +499,18 @@
           parent.parentNode.removeChild(parent);
         }
         setTimeout((function() {
-          wysihtml5.quirks.redraw(this.element);
+          wysihtml.quirks.redraw(this.element);
         }).bind(this), 0);
       }
     }
 
-    if (this.config.handleTabKey && keyCode === wysihtml5.TAB_KEY) {
+    if (this.config.handleTabKey && keyCode === wysihtml.TAB_KEY) {
       // TAB key handling
       event.preventDefault();
       handleTabKeyDown(this, this.element, event.shiftKey);
     }
 
-    if (keyCode === wysihtml5.ENTER_KEY) {
+    if (keyCode === wysihtml.ENTER_KEY) {
       handleEnterKeyPress(event, this);
     }
 
@@ -531,9 +531,9 @@
   };
 
   // Testing requires actions to be accessible from out of scope
-  wysihtml5.views.Composer.prototype.observeActions = actions;
+  wysihtml.views.Composer.prototype.observeActions = actions;
 
-  wysihtml5.views.Composer.prototype.observe = function() {
+  wysihtml.views.Composer.prototype.observe = function() {
     var that                = this,
         container           = (this.sandbox.getIframe) ? this.sandbox.getIframe() : this.sandbox.getContentEditable(),
         element             = this.element,
@@ -573,7 +573,7 @@
     this.element.addEventListener("keydown",    handleKeyDown.bind(this), false);
 
     // IE controlselect madness fix
-    if (wysihtml5.browser.usesControlRanges()) {
+    if (wysihtml.browser.usesControlRanges()) {
       this.element.addEventListener('mscontrolselect', handleIEControlSelect.bind(this), false);
     }
 
@@ -582,4 +582,4 @@
     }).bind(this), false);
 
   };
-})(wysihtml5);
+})(wysihtml);

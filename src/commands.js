@@ -2,10 +2,10 @@
  * Rich Text Query/Formatting Commands
  *
  * @example
- *    var commands = new wysihtml5.Commands(editor);
+ *    var commands = new wysihtml.Commands(editor);
  */
-wysihtml5.Commands = Base.extend(
-  /** @scope wysihtml5.Commands.prototype */ {
+wysihtml.Commands = Base.extend(
+  /** @scope wysihtml.Commands.prototype */ {
   constructor: function(editor) {
     this.editor   = editor;
     this.composer = editor.composer;
@@ -20,7 +20,7 @@ wysihtml5.Commands = Base.extend(
    *    commands.supports("createLink");
    */
   support: function(command) {
-    return wysihtml5.browser.supportsCommand(this.doc, command);
+    return wysihtml.browser.supportsCommand(this.doc, command);
   },
 
   /**
@@ -32,14 +32,14 @@ wysihtml5.Commands = Base.extend(
    *    commands.exec("insertImage", "http://a1.twimg.com/profile_images/113868655/schrei_twitter_reasonably_small.jpg");
    */
   exec: function(command, value) {
-    var obj     = wysihtml5.commands[command],
-        args    = wysihtml5.lang.array(arguments).get(),
+    var obj     = wysihtml.commands[command],
+        args    = wysihtml.lang.array(arguments).get(),
         method  = obj && obj.exec,
         result  = null;
 
     // If composer ahs placeholder unset it before command
     // Do not apply on commands that are behavioral 
-    if (this.composer.hasPlaceholderSet() && !wysihtml5.lang.array(['styleWithCSS', 'enableObjectResizing', 'enableInlineTableEditing']).contains(command)) {
+    if (this.composer.hasPlaceholderSet() && !wysihtml.lang.array(['styleWithCSS', 'enableObjectResizing', 'enableInlineTableEditing']).contains(command)) {
       this.composer.element.innerHTML = "";
       this.composer.selection.selectNode(this.composer.element);
     }
@@ -61,8 +61,8 @@ wysihtml5.Commands = Base.extend(
   },
 
   remove: function(command, commandValue) {
-    var obj     = wysihtml5.commands[command],
-        args    = wysihtml5.lang.array(arguments).get(),
+    var obj     = wysihtml.commands[command],
+        args    = wysihtml.lang.array(arguments).get(),
         method  = obj && obj.remove;
     if (method) {
       args.unshift(this.composer);
@@ -81,8 +81,8 @@ wysihtml5.Commands = Base.extend(
    *    var isCurrentSelectionBold = commands.state("bold");
    */
   state: function(command, commandValue) {
-    var obj     = wysihtml5.commands[command],
-        args    = wysihtml5.lang.array(arguments).get(),
+    var obj     = wysihtml.commands[command],
+        args    = wysihtml.lang.array(arguments).get(),
         method  = obj && obj.state;
     if (method) {
       args.unshift(this.composer);
@@ -99,8 +99,8 @@ wysihtml5.Commands = Base.extend(
 
   /* Get command state parsed value if command has stateValue parsing function */
   stateValue: function(command) {
-    var obj     = wysihtml5.commands[command],
-        args    = wysihtml5.lang.array(arguments).get(),
+    var obj     = wysihtml.commands[command],
+        args    = wysihtml.lang.array(arguments).get(),
         method  = obj && obj.stateValue;
     if (method) {
       args.unshift(this.composer);

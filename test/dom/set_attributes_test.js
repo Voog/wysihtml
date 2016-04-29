@@ -1,11 +1,11 @@
-module("wysihtml5.dom.setAttributes", {
+module("wysihtml.dom.setAttributes", {
   setup: function() {
     this.element = document.createElement("div");
   }
 });
 
 test("Basic test", function() {
-  wysihtml5.dom.setAttributes({
+  wysihtml.dom.setAttributes({
     id:       "foo",
     "class":  "bar"
   }).on(this.element);

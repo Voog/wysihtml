@@ -5,8 +5,8 @@
  *    - div[contentEditable] elements don't support it
  *    - older browsers (such as IE8 and Firefox 3.6) don't support it at all
  *
- * @param {Object} parent Instance of main wysihtml5.Editor class
- * @param {Element} view Instance of wysihtml5.views.* class
+ * @param {Object} parent Instance of main wysihtml.Editor class
+ * @param {Element} view Instance of wysihtml.views.* class
  * @param {String} placeholderText
  *
  * @example
@@ -49,4 +49,4 @@
 
     set();
   };
-})(wysihtml5.dom);
+})(wysihtml.dom);

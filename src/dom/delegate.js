@@ -2,12 +2,12 @@
  * Event Delegation
  *
  * @example
- *    wysihtml5.dom.delegate(document.body, "a", "click", function() {
+ *    wysihtml.dom.delegate(document.body, "a", "click", function() {
  *      // foo
  *    });
  */
-(function(wysihtml5) {
-  wysihtml5.dom.delegate = function(container, selector, eventName, handler) {
+(function(wysihtml) {
+  wysihtml.dom.delegate = function(container, selector, eventName, handler) {
     var callback = function(event) {
       var target = event.target,
           element = (target.nodeType === 3) ? target.parentNode : target, // IE has .contains only seeing elements not textnodes
@@ -27,4 +27,4 @@
       }
     };
   };
-})(wysihtml5);
+})(wysihtml);

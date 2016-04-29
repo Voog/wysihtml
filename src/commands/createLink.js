@@ -1,4 +1,4 @@
-(function(wysihtml5) {
+(function(wysihtml) {
 
   var nodeOptions = {
     nodeName: "A",
@@ -7,10 +7,10 @@
 
   function getOptions(value) {
     var options = typeof value === 'object' ? value : {'href': value};
-    return wysihtml5.lang.object({}).merge(nodeOptions).merge({'attribute': value}).get();
+    return wysihtml.lang.object({}).merge(nodeOptions).merge({'attribute': value}).get();
   }
 
-  wysihtml5.commands.createLink  = {
+  wysihtml.commands.createLink  = {
     exec: function(composer, command, value) {
       var opts = getOptions(value);
 
@@ -19,12 +19,12 @@
         composer.selection.insertNode(textNode);
         composer.selection.selectNode(textNode);
       }
-      wysihtml5.commands.formatInline.exec(composer, command, opts);
+      wysihtml.commands.formatInline.exec(composer, command, opts);
     },
 
     state: function(composer, command) {
-      return wysihtml5.commands.formatInline.state(composer, command, nodeOptions);
+      return wysihtml.commands.formatInline.state(composer, command, nodeOptions);
     }
   };
 
-})(wysihtml5);
+})(wysihtml);

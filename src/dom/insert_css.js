@@ -1,4 +1,4 @@
-wysihtml5.dom.insertCSS = function(rules) {
+wysihtml.dom.insertCSS = function(rules) {
   rules = rules.join("\n");
 
   return {

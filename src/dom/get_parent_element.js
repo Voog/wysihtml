@@ -15,12 +15,12 @@
  * @return {null|Element} Returns the first element that matched the desiredNodeName(s)
 */
 
-wysihtml5.dom.getParentElement = (function() {
+wysihtml.dom.getParentElement = (function() {
 
   return function(node, properties, levels, container) {
     levels = levels || 50;
     while (levels-- && node && node.nodeName !== "BODY" && (!container || node !== container)) {
-      if (wysihtml5.dom.domNode(node).test(properties)) {
+      if (wysihtml.dom.domNode(node).test(properties)) {
         return node;
       }
       node = node.parentNode;

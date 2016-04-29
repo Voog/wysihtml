@@ -5,10 +5,8 @@
  *
  * editorInstance.composer.commands.exec("formatCode", "language-html");
 */
-
-(function(wysihtml5){
-  wysihtml5.commands.formatCode = {
-
+wysihtml.commands.formatCode = (function() {
+  return {
     exec: function(composer, command, classname) {
       var pre = this.state(composer)[0],
           code, range, selectedNodes;
@@ -17,9 +15,9 @@
         // caret is already within a <pre><code>...</code></pre>
         composer.selection.executeAndRestore(function() {
           code = pre.querySelector("code");
-          wysihtml5.dom.replaceWithChildNodes(pre);
+          wysihtml.dom.replaceWithChildNodes(pre);
           if (code) {
-            wysihtml5.dom.replaceWithChildNodes(code);
+            wysihtml.dom.replaceWithChildNodes(code);
           }
         });
       } else {
@@ -46,9 +44,9 @@
           selectedNode.firstChild && selectedNode.firstChild.nodeName && selectedNode.firstChild.nodeName == "CODE") {
         return [selectedNode];
       } else {
-        node = wysihtml5.dom.getParentElement(selectedNode, { query: "pre code" });
+        node = wysihtml.dom.getParentElement(selectedNode, { query: "pre code" });
         return node ? [node.parentNode] : false;
       }
     }
   };
-}(wysihtml5));
+})();

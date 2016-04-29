@@ -1,5 +1,5 @@
-(function(wysihtml5){
-  wysihtml5.commands.createTable = {
+(function(wysihtml){
+  wysihtml.commands.createTable = {
     exec: function(composer, command, value) {
       var col, row, html;
       if (value && value.cols && value.rows && parseInt(value.cols, 10) > 0 && parseInt(value.rows, 10) > 0) {
@@ -27,4 +27,4 @@
     }
   };
 
-}(wysihtml5));
+}(wysihtml));

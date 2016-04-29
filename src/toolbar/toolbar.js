@@ -11,18 +11,18 @@
  *    </div>
  *
  *    <script>
- *      var toolbar = new wysihtml5.toolbar.Toolbar(editor, document.getElementById("toolbar"));
+ *      var toolbar = new wysihtml.toolbar.Toolbar(editor, document.getElementById("toolbar"));
  *    </script>
  */
-(function(wysihtml5) {
+(function(wysihtml) {
   var CLASS_NAME_COMMAND_DISABLED   = "wysihtml5-command-disabled",
       CLASS_NAME_COMMANDS_DISABLED  = "wysihtml5-commands-disabled",
       CLASS_NAME_COMMAND_ACTIVE     = "wysihtml5-command-active",
       CLASS_NAME_ACTION_ACTIVE      = "wysihtml5-action-active",
-      dom                           = wysihtml5.dom;
+      dom                           = wysihtml.dom;
 
-  wysihtml5.toolbar.Toolbar = Base.extend(
-    /** @scope wysihtml5.toolbar.Toolbar.prototype */ {
+  wysihtml.toolbar.Toolbar = Base.extend(
+    /** @scope wysihtml.toolbar.Toolbar.prototype */ {
     constructor: function(editor, container, showOnInit) {
       this.editor     = editor;
       this.container  = typeof(container) === "string" ? document.getElementById(container) : container;
@@ -51,12 +51,12 @@
           length            = speechInputLinks.length,
           i                 = 0;
       for (; i<length; i++) {
-        new wysihtml5.toolbar.Speech(this, speechInputLinks[i]);
+        new wysihtml.toolbar.Speech(this, speechInputLinks[i]);
       }
     },
 
     _getLinks: function(type) {
-      var links   = this[type + "Links"] = wysihtml5.lang.array(this.container.querySelectorAll("[data-wysihtml5-" + type + "]")).get(),
+      var links   = this[type + "Links"] = wysihtml.lang.array(this.container.querySelectorAll("[data-wysihtml5-" + type + "]")).get(),
           length  = links.length,
           i       = 0,
           mapping = this[type + "Mapping"] = {},
@@ -93,10 +93,10 @@
           dialog, caretBookmark;
 
       if (dialogElement) {
-        if (wysihtml5.toolbar["Dialog_" + command]) {
-            dialog = new wysihtml5.toolbar["Dialog_" + command](link, dialogElement);
+        if (wysihtml.toolbar["Dialog_" + command]) {
+            dialog = new wysihtml.toolbar["Dialog_" + command](link, dialogElement);
         } else {
-            dialog = new wysihtml5.toolbar.Dialog(link, dialogElement);
+            dialog = new wysihtml.toolbar.Dialog(link, dialogElement);
         }
 
         dialog.on("show", function() {
@@ -136,7 +136,7 @@
 
     /**
      * @example
-     *    var toolbar = new wysihtml5.Toolbar();
+     *    var toolbar = new wysihtml.Toolbar();
      *    // Insert a <blockquote> element or wrap current selection in <blockquote>
      *    toolbar.execCommand("formatBlock", "blockquote");
      */
@@ -224,7 +224,7 @@
       });
 
       this._ownerDocumentClick = function(event) {
-        if (!wysihtml5.dom.contains(that.container, event.target) && !wysihtml5.dom.contains(that.composer.element, event.target)) {
+        if (!wysihtml.dom.contains(that.container, event.target) && !wysihtml.dom.contains(that.composer.element, event.target)) {
           that._updateLinkStates();
           that._preventInstantFocus();
         }
@@ -380,11 +380,11 @@
     // to avoid showing a dialog for multiple selected elements which may have different attributes
     // eg. when two links with different href are selected, the state will be an array consisting of both link elements
     // but the dialog interface can only update one
-    if (!command.dialog.multiselect && wysihtml5.lang.object(state).isArray()) {
+    if (!command.dialog.multiselect && wysihtml.lang.object(state).isArray()) {
       state = state.length === 1 ? state[0] : true;
     }
 
     return state;
   }
 
-})(wysihtml5);
+})(wysihtml);

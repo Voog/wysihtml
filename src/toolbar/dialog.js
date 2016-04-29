@@ -19,7 +19,7 @@
  *    </div>
  *
  *    <script>
- *      var dialog = new wysihtml5.toolbar.Dialog(
+ *      var dialog = new wysihtml.toolbar.Dialog(
  *        document.querySelector("[data-wysihtml5-command='insertImage']"),
  *        document.querySelector("[data-wysihtml5-dialog='insertImage']")
  *      );
@@ -28,16 +28,16 @@
  *      });
  *    </script>
  */
-(function(wysihtml5) {
-  var dom                     = wysihtml5.dom,
+(function(wysihtml) {
+  var dom                     = wysihtml.dom,
       CLASS_NAME_OPENED       = "wysihtml5-command-dialog-opened",
       SELECTOR_FORM_ELEMENTS  = "input, select, textarea",
       SELECTOR_FIELDS         = "[data-wysihtml5-dialog-field]",
       ATTRIBUTE_FIELDS        = "data-wysihtml5-dialog-field";
 
 
-  wysihtml5.toolbar.Dialog = wysihtml5.lang.Dispatcher.extend(
-    /** @scope wysihtml5.toolbar.Dialog.prototype */ {
+  wysihtml.toolbar.Dialog = wysihtml.lang.Dispatcher.extend(
+    /** @scope wysihtml.toolbar.Dialog.prototype */ {
     constructor: function(link, container) {
       this.link       = link;
       this.container  = container;
@@ -65,10 +65,10 @@
 
       dom.observe(this.container, "keydown", function(event) {
         var keyCode = event.keyCode;
-        if (keyCode === wysihtml5.ENTER_KEY) {
+        if (keyCode === wysihtml.ENTER_KEY) {
           callbackWrapper(event);
         }
-        if (keyCode === wysihtml5.ESCAPE_KEY) {
+        if (keyCode === wysihtml.ESCAPE_KEY) {
           that.cancel();
         }
       });
@@ -192,4 +192,4 @@
       this.fire("cancel");
     }
   });
-})(wysihtml5); //jshint ignore:line
+})(wysihtml); //jshint ignore:line

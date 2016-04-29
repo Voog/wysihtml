@@ -1,4 +1,4 @@
-module("wysihtml5.dom.getParentElement", {
+module("wysihtml.dom.getParentElement", {
   setup: function() {
     this.container = document.createElement("div");
   }
@@ -11,12 +11,12 @@ test("Basic test - nodeName only", function() {
   var listItem = this.container.querySelector("li"),
       textNode = listItem.firstChild,
       list     = this.container.querySelector("ul");
-  equal(wysihtml5.dom.getParentElement(listItem, { query: "li" }), listItem);
-  equal(wysihtml5.dom.getParentElement(listItem, { query: "li, ul" }), listItem);
-  equal(wysihtml5.dom.getParentElement(listItem, { query: "ul" }), list);
-  equal(wysihtml5.dom.getParentElement(listItem, { nodeName: "UL" }), list);
-  equal(wysihtml5.dom.getParentElement(textNode, { query: "ul" }), list);
-  equal(wysihtml5.dom.getParentElement(listItem, { query: "span" }), null);
+  equal(wysihtml.dom.getParentElement(listItem, { query: "li" }), listItem);
+  equal(wysihtml.dom.getParentElement(listItem, { query: "li, ul" }), listItem);
+  equal(wysihtml.dom.getParentElement(listItem, { query: "ul" }), list);
+  equal(wysihtml.dom.getParentElement(listItem, { nodeName: "UL" }), list);
+  equal(wysihtml.dom.getParentElement(textNode, { query: "ul" }), list);
+  equal(wysihtml.dom.getParentElement(listItem, { query: "span" }), null);
 });
 
 
@@ -25,8 +25,8 @@ test("Check 'levels' param - nodeName only", function() {
   
   var listItem  = this.container.querySelector("li"),
       nestedDiv = this.container.querySelector("div").querySelector("div");
-  equal(wysihtml5.dom.getParentElement(listItem, { nodeName: "DIV" }, 2), null);
-  equal(wysihtml5.dom.getParentElement(listItem, { nodeName: "DIV" }, 3), nestedDiv);
+  equal(wysihtml.dom.getParentElement(listItem, { nodeName: "DIV" }, 2), null);
+  equal(wysihtml.dom.getParentElement(listItem, { nodeName: "DIV" }, 3), nestedDiv);
   
 });
 
@@ -38,42 +38,42 @@ test("Basic test - nodeName + className", function() {
       textNode    = this.container.firstChild.firstChild,
       result;
   
-  result = wysihtml5.dom.getParentElement(textNode, {
+  result = wysihtml.dom.getParentElement(textNode, {
     nodeName:   "SPAN",
     className:  "wysiwyg-color-green",
     classRegExp: /wysiwyg-color-[a-z]+/g
   });
   equal(result, spanElement);
   
-  result = wysihtml5.dom.getParentElement(textNode, {
+  result = wysihtml.dom.getParentElement(textNode, {
     query:   "strong, span",
     className:  "wysiwyg-color-green",
     classRegExp: /wysiwyg-color-[a-z]+/g
   });
   equal(result, spanElement);
   
-  result = wysihtml5.dom.getParentElement(textNode, {
+  result = wysihtml.dom.getParentElement(textNode, {
     nodeName:   "STRONG",
     className:  "wysiwyg-color-green",
     classRegExp: /wysiwyg-color-[a-z]+/g
   });
   equal(result, null);
   
-  result = wysihtml5.dom.getParentElement(textNode, {
+  result = wysihtml.dom.getParentElement(textNode, {
     nodeName:   "DIV",
     className:  "wysiwyg-color-green",
     classRegExp: /wysiwyg-color-[a-z]+/g
   });
   equal(result, null);
   
-  result = wysihtml5.dom.getParentElement(textNode, {
+  result = wysihtml.dom.getParentElement(textNode, {
     nodeName:   "SPAN",
     className:  "wysiwyg-color-blue",
     classRegExp: /wysiwyg-color-[a-z]+/g
   });
   equal(result, null);
   
-  result = wysihtml5.dom.getParentElement(spanElement, {
+  result = wysihtml.dom.getParentElement(spanElement, {
     nodeName:   "SPAN",
     className:  "wysiwyg-color-green",
     classRegExp: /wysiwyg-color-[a-z]+/g
@@ -90,14 +90,14 @@ test("Check 'levels' param - nodeName + className", function() {
       nestedDiv = this.container.querySelector("div").querySelector("div"),
       result;
   
-  result = wysihtml5.dom.getParentElement(listItem, {
+  result = wysihtml.dom.getParentElement(listItem, {
     nodeName:     "DIV",
     className:    "wysiwyg-color-green",
     classRegExp:  /wysiwyg-color-[a-z]+/g
   }, 2);
   equal(result, null);
   
-  result = wysihtml5.dom.getParentElement(listItem, {
+  result = wysihtml.dom.getParentElement(listItem, {
     nodeName:     "DIV",
     className:    "wysiwyg-color-green",
     classRegExp:  /wysiwyg-color-[a-z]+/g
@@ -113,7 +113,7 @@ test("Check  - no nodeName", function() {
       alignedDiv  = this.container.querySelector("div").querySelector("div"),
       result;
   
-  result = wysihtml5.dom.getParentElement(spanElement, {
+  result = wysihtml.dom.getParentElement(spanElement, {
     className:    "wysiwyg-text-align-right",
     classRegExp:  /wysiwyg-text-align-[a-z]+/g
   });
@@ -127,7 +127,7 @@ test("Test - with no nodeName", function() {
       alignedDiv  = this.container.querySelector("div").querySelector("div"),
       result;
   
-  result = wysihtml5.dom.getParentElement(spanElement, {
+  result = wysihtml.dom.getParentElement(spanElement, {
     className:    "wysiwyg-text-align-right",
     classRegExp:  /wysiwyg-text-align-[a-z]+/g
   });
@@ -141,7 +141,7 @@ test("Test - with only a classRegExp", function() {
       alignedDiv  = this.container.querySelector("div").querySelector("div"),
       result;
   
-  result = wysihtml5.dom.getParentElement(spanElement, {
+  result = wysihtml.dom.getParentElement(spanElement, {
     classRegExp:  /wysiwyg-text-align-[a-z]+/g
   });
   equal(result, alignedDiv);
@@ -154,7 +154,7 @@ test("Test - with only a className", function() {
       alignedDiv  = this.container.querySelector("div").querySelector("div"),
       result;
 
-  result = wysihtml5.dom.getParentElement(spanElement, {
+  result = wysihtml.dom.getParentElement(spanElement, {
     className:  "wysiwyg-text-align-right"
   });
   equal(result, alignedDiv);
@@ -168,7 +168,7 @@ test("Test with parent container limit", function() {
       nestedDiv = this.container.querySelector("div").querySelector("div"),
       result;
   
-  result = wysihtml5.dom.getParentElement(spanElement, {
+  result = wysihtml.dom.getParentElement(spanElement, {
     nodeName: "DIV"
   }, false, limitEl);
 

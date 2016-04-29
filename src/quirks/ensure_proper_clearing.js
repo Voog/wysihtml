@@ -3,9 +3,9 @@
  *
  * @param {Object} contentEditableElement The contentEditable element to observe for clearing events
  * @exaple
- *    wysihtml5.quirks.ensureProperClearing(myContentEditableElement);
+ *    wysihtml.quirks.ensureProperClearing(myContentEditableElement);
  */
-wysihtml5.quirks.ensureProperClearing = (function() {
+wysihtml.quirks.ensureProperClearing = (function() {
   var clearIfNecessary = function() {
     var element = this;
     setTimeout(function() {
@@ -18,6 +18,6 @@ wysihtml5.quirks.ensureProperClearing = (function() {
   };
 
   return function(composer) {
-    wysihtml5.dom.observe(composer.element, ["cut", "keydown"], clearIfNecessary);
+    wysihtml.dom.observe(composer.element, ["cut", "keydown"], clearIfNecessary);
   };
 })();

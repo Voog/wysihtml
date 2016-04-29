@@ -1,5 +1,5 @@
-(function(wysihtml5){
-  wysihtml5.commands.redo = {
+(function(wysihtml){
+  wysihtml.commands.redo = {
     exec: function(composer) {
       return composer.undoManager.redo();
     },
@@ -8,4 +8,4 @@
       return false;
     }
   };
-}(wysihtml5));
+}(wysihtml));

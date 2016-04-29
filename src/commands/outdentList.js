@@ -1,6 +1,6 @@
-(function(wysihtml5){
+(function(wysihtml){
 
-  wysihtml5.commands.outdentList = {
+  wysihtml.commands.outdentList = {
     exec: function(composer, command, value) {
       var listEls = composer.selection.getSelectionParentsByTag('LI');
       if (listEls) {
@@ -28,8 +28,8 @@
             if (listNode.tagName === 'OL' || listNode.tagName === 'UL') {
               found = true;
 
-              outerListNode = wysihtml5.dom.getParentElement(listNode.parentNode, { query: 'ol, ul' }, false, composer.element);
-              outerLiNode = wysihtml5.dom.getParentElement(listNode.parentNode, { query: 'li' }, false, composer.element);
+              outerListNode = wysihtml.dom.getParentElement(listNode.parentNode, { query: 'ol, ul' }, false, composer.element);
+              outerLiNode = wysihtml.dom.getParentElement(listNode.parentNode, { query: 'li' }, false, composer.element);
 
               if (outerListNode && outerLiNode) {
 
@@ -78,4 +78,4 @@
     }
 
   };
-}(wysihtml5));
+}(wysihtml));

@@ -12,7 +12,7 @@
  *    </ul>
  *
  *    <script>
- *      wysihtml5.dom.resolveList(document.getElementById("list"));
+ *      wysihtml.dom.resolveList(document.getElementById("list"));
  *    </script>
  *
  *    <!-- Will result in: -->
@@ -41,8 +41,8 @@
 
     var doc             = list.ownerDocument,
         fragment        = doc.createDocumentFragment(),
-        previousSibling = wysihtml5.dom.domNode(list).prev({ignoreBlankTexts: true}),
-        nextSibling = wysihtml5.dom.domNode(list).next({ignoreBlankTexts: true}),
+        previousSibling = wysihtml.dom.domNode(list).prev({ignoreBlankTexts: true}),
+        nextSibling = wysihtml.dom.domNode(list).next({ignoreBlankTexts: true}),
         firstChild,
         lastChild,
         isLastChild,
@@ -94,4 +94,4 @@
   }
 
   dom.resolveList = resolveList;
-})(wysihtml5.dom);
+})(wysihtml.dom);

@@ -1,20 +1,20 @@
-wysihtml5.lang.object = function(obj) {
+wysihtml.lang.object = function(obj) {
   return {
     /**
      * @example
-     *    wysihtml5.lang.object({ foo: 1, bar: 1 }).merge({ bar: 2, baz: 3 }).get();
+     *    wysihtml.lang.object({ foo: 1, bar: 1 }).merge({ bar: 2, baz: 3 }).get();
      *    // => { foo: 1, bar: 2, baz: 3 }
      */
     merge: function(otherObj, deep) {
       for (var i in otherObj) {
-        if (deep && wysihtml5.lang.object(otherObj[i]).isPlainObject() && (typeof obj[i] === "undefined" || wysihtml5.lang.object(obj[i]).isPlainObject())) {
+        if (deep && wysihtml.lang.object(otherObj[i]).isPlainObject() && (typeof obj[i] === "undefined" || wysihtml.lang.object(obj[i]).isPlainObject())) {
           if (typeof obj[i] === "undefined") {
-            obj[i] = wysihtml5.lang.object(otherObj[i]).clone(true);
+            obj[i] = wysihtml.lang.object(otherObj[i]).clone(true);
           } else {
-            wysihtml5.lang.object(obj[i]).merge(wysihtml5.lang.object(otherObj[i]).clone(true));
+            wysihtml.lang.object(obj[i]).merge(wysihtml.lang.object(otherObj[i]).clone(true));
           }
         } else {
-          obj[i] = wysihtml5.lang.object(otherObj[i]).isPlainObject() ? wysihtml5.lang.object(otherObj[i]).clone(true) : otherObj[i];
+          obj[i] = wysihtml.lang.object(otherObj[i]).isPlainObject() ? wysihtml.lang.object(otherObj[i]).clone(true) : otherObj[i];
         }
       }
       return this;
@@ -49,23 +49,23 @@ wysihtml5.lang.object = function(obj) {
 
     /**
      * @example
-     *    wysihtml5.lang.object({ foo: 1 }).clone();
+     *    wysihtml.lang.object({ foo: 1 }).clone();
      *    // => { foo: 1 }
      *
-     *    v0.4.14 adds options for deep clone : wysihtml5.lang.object({ foo: 1 }).clone(true);
+     *    v0.4.14 adds options for deep clone : wysihtml.lang.object({ foo: 1 }).clone(true);
      */
     clone: function(deep) {
       var newObj = {},
           i;
 
-      if (obj === null || !wysihtml5.lang.object(obj).isPlainObject()) {
+      if (obj === null || !wysihtml.lang.object(obj).isPlainObject()) {
         return obj;
       }
 
       for (i in obj) {
         if(obj.hasOwnProperty(i)) {
           if (deep) {
-            newObj[i] = wysihtml5.lang.object(obj[i]).clone(deep);
+            newObj[i] = wysihtml.lang.object(obj[i]).clone(deep);
           } else {
             newObj[i] = obj[i];
           }
@@ -76,7 +76,7 @@ wysihtml5.lang.object = function(obj) {
 
     /**
      * @example
-     *    wysihtml5.lang.object([]).isArray();
+     *    wysihtml.lang.object([]).isArray();
      *    // => true
      */
     isArray: function() {
@@ -85,7 +85,7 @@ wysihtml5.lang.object = function(obj) {
 
     /**
      * @example
-     *    wysihtml5.lang.object(function() {}).isFunction();
+     *    wysihtml.lang.object(function() {}).isFunction();
      *    // => true
      */
     isFunction: function() {
@@ -98,7 +98,7 @@ wysihtml5.lang.object = function(obj) {
 
     /**
      * @example
-     *    wysihtml5.lang.object({}).isEmpty();
+     *    wysihtml.lang.object({}).isEmpty();
      *    // => true
      */
     isEmpty: function() {

@@ -3,7 +3,7 @@
    * FIXME: Returns undefined when unknown (Chrome, Safari)
 */
 
-wysihtml5.dom.isLoadedImage = function (node) {
+wysihtml.dom.isLoadedImage = function (node) {
   try {
     return node.complete && !node.mozMatchesSelector(":-moz-broken");
   } catch(e) {

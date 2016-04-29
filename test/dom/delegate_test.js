@@ -1,4 +1,4 @@
-module("wysihtml5.dom.delegate", {
+module("wysihtml.dom.delegate", {
   setup: function() {
     this.container    = document.createElement("div");
     this.link1        = document.createElement("a");
@@ -22,7 +22,7 @@ test("Basic test", function() {
   
   var that = this;
   
-  wysihtml5.dom.delegate(this.container, "a", "click", function(event) {
+  wysihtml.dom.delegate(this.container, "a", "click", function(event) {
     ok(true, "Callback handler executed");
     equal(this, that.link1, "Callback handler executed in correct scope");
     ok(event.stopPropagation && event.preventDefault, "Parameter passed into callback handler is a proper event object");
@@ -36,7 +36,7 @@ test("Click on nested element works as well", function() {
   
   var that = this;
   
-  wysihtml5.dom.delegate(this.container, "a", "click", function(event) {
+  wysihtml.dom.delegate(this.container, "a", "click", function(event) {
     ok(true, "Callback handler executed");
     equal(this, that.link2, "Callback handler executed in correct scope");
     ok(event.stopPropagation && event.preventDefault, "Parameter passed into callback handler is a proper event object");
@@ -48,7 +48,7 @@ test("Click on nested element works as well", function() {
 test("Delegation on the body", function() {
   expect(1);
   
-  var delegater = wysihtml5.dom.delegate(document.body, ".delegation-test", "mousedown", function() {
+  var delegater = wysihtml.dom.delegate(document.body, ".delegation-test", "mousedown", function() {
     ok(true, "Callback handler executed");
   });
   

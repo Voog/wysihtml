@@ -9,7 +9,7 @@
  * Licensed under the MIT license (MIT)
  *
  */
-var wysihtml5 = {
+var wysihtml = {
   version: "@VERSION",
 
   // namespaces

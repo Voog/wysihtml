@@ -1,4 +1,4 @@
-wysihtml5.dom.compareDocumentPosition = (function() {
+wysihtml.dom.compareDocumentPosition = (function() {
   var documentElement = document.documentElement;
   if (documentElement.compareDocumentPosition) {
     return function(container, element) {
@@ -25,10 +25,10 @@ wysihtml5.dom.compareDocumentPosition = (function() {
       if( thisOwner !== otherOwner ) return 1; // Node.DOCUMENT_POSITION_DISCONNECTED;
 
       // Text nodes for attributes does not have a _parentNode. So we need to find them as attribute child.
-      if( container.nodeType === 2 /*Node.ATTRIBUTE_NODE*/ && container.childNodes && wysihtml5.lang.array(container.childNodes).indexOf( element ) !== -1)
+      if( container.nodeType === 2 /*Node.ATTRIBUTE_NODE*/ && container.childNodes && wysihtml.lang.array(container.childNodes).indexOf( element ) !== -1)
         return 4 + 16; //Node.DOCUMENT_POSITION_FOLLOWING + Node.DOCUMENT_POSITION_CONTAINED_BY;
 
-      if( element.nodeType === 2 /*Node.ATTRIBUTE_NODE*/ && element.childNodes && wysihtml5.lang.array(element.childNodes).indexOf( container ) !== -1)
+      if( element.nodeType === 2 /*Node.ATTRIBUTE_NODE*/ && element.childNodes && wysihtml.lang.array(element.childNodes).indexOf( container ) !== -1)
         return 2 + 8; //Node.DOCUMENT_POSITION_PRECEDING + Node.DOCUMENT_POSITION_CONTAINS;
 
       var point = container;
@@ -43,11 +43,11 @@ wysihtml5.dom.compareDocumentPosition = (function() {
       previous = null;
       while( point ) {
         if( point == container ) return 4 + 16; //Node.DOCUMENT_POSITION_FOLLOWING + Node.DOCUMENT_POSITION_CONTAINED_BY;
-        var location_index = wysihtml5.lang.array(parents).indexOf( point );
+        var location_index = wysihtml.lang.array(parents).indexOf( point );
         if( location_index !== -1) {
          var smallest_common_ancestor = parents[ location_index ];
-         var this_index = wysihtml5.lang.array(smallest_common_ancestor.childNodes).indexOf( parents[location_index - 1]);//smallest_common_ancestor.childNodes.toArray().indexOf( parents[location_index - 1] );
-         var other_index = wysihtml5.lang.array(smallest_common_ancestor.childNodes).indexOf( previous ); //smallest_common_ancestor.childNodes.toArray().indexOf( previous );
+         var this_index = wysihtml.lang.array(smallest_common_ancestor.childNodes).indexOf( parents[location_index - 1]);//smallest_common_ancestor.childNodes.toArray().indexOf( parents[location_index - 1] );
+         var other_index = wysihtml.lang.array(smallest_common_ancestor.childNodes).indexOf( previous ); //smallest_common_ancestor.childNodes.toArray().indexOf( previous );
          if( this_index > other_index ) {
                return 2; //Node.DOCUMENT_POSITION_PRECEDING;
          }

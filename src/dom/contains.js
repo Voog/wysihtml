@@ -1,8 +1,8 @@
-wysihtml5.dom.contains = (function() {
+wysihtml.dom.contains = (function() {
   var documentElement = document.documentElement;
   if (documentElement.contains) {
     return function(container, element) {
-      if (element.nodeType !== wysihtml5.ELEMENT_NODE) {
+      if (element.nodeType !== wysihtml.ELEMENT_NODE) {
         if (element.parentNode === container) {
           return true;
         }

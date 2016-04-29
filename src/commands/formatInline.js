@@ -3,7 +3,7 @@
  * See https://github.com/Voog/wysihtml/pull/169 for specification of action
  */
 
-(function(wysihtml5) {
+(function(wysihtml) {
 
   var defaultTag = "SPAN",
       INLINE_ELEMENTS = "b, big, i, small, tt, abbr, acronym, cite, code, dfn, em, kbd, strong, samp, var, a, bdo, br, q, span, sub, sup, button, label, textarea, input, select, u",
@@ -25,8 +25,8 @@
   // Associative arrays in javascript are really objects and do not have length defined
   // Thus have to check emptyness in a different way
   function hasNoAttributes(element) {
-    var attr = wysihtml5.dom.getAttributes(element);
-    return wysihtml5.lang.object(attr).isEmpty();
+    var attr = wysihtml.dom.getAttributes(element);
+    return wysihtml.lang.object(attr).isEmpty();
   }
 
   // compares two nodes if they are semantically the same
@@ -45,14 +45,14 @@
 
     classes1 = element1.className.trim().replace(/\s+/g, ' ').split(' ');
     classes2 = element2.className.trim().replace(/\s+/g, ' ').split(' ');
-    if (wysihtml5.lang.array(classes1).without(classes2).length > 0) {
+    if (wysihtml.lang.array(classes1).without(classes2).length > 0) {
       return false;
     }
 
-    attr1 = wysihtml5.dom.getAttributes(element1);
-    attr2 = wysihtml5.dom.getAttributes(element2);
+    attr1 = wysihtml.dom.getAttributes(element1);
+    attr2 = wysihtml.dom.getAttributes(element2);
 
-    if (attr1.length !== attr2.length || !wysihtml5.lang.object(wysihtml5.lang.object(attr1).difference(attr2)).isEmpty()) {
+    if (attr1.length !== attr2.length || !wysihtml.lang.object(wysihtml.lang.object(attr1).difference(attr2)).isEmpty()) {
       return false;
     }
 
@@ -73,7 +73,7 @@
     }
 
     if (options.styleProperty && typeof options.styleValue !== "undefined") {
-      element.style[wysihtml5.browser.fixStyleKey(options.styleProperty)] = options.styleValue;
+      element.style[wysihtml.browser.fixStyleKey(options.styleProperty)] = options.styleValue;
     }
 
     if (options.attribute) {
@@ -107,9 +107,9 @@
   // If attrbutes and values are the same > remove
   // if attributes or values 
   function updateElementAttributes(element, newAttributes, toggle) {
-    var attr = wysihtml5.dom.getAttributes(element),
+    var attr = wysihtml.dom.getAttributes(element),
         fullContain = containsSameAttributes(newAttributes, attr),
-        attrDifference = wysihtml5.lang.object(attr).difference(newAttributes),
+        attrDifference = wysihtml.lang.object(attr).difference(newAttributes),
         a, b;
 
     if (fullContain && toggle !== false) {
@@ -120,7 +120,7 @@
       }
     } else {
 
-      /*if (!wysihtml5.lang.object(attrDifference).isEmpty()) {
+      /*if (!wysihtml.lang.object(attrDifference).isEmpty()) {
         for (b in attrDifference) {
           if (attrDifference.hasOwnProperty(b)) {
             element.removeAttribute(b);
@@ -155,10 +155,10 @@
 
     // change/remove style
     if (options.styleProperty) {
-      if (options.toggle !== false && element.style[wysihtml5.browser.fixStyleKey(options.styleProperty)].trim().replace(/, /g, ",") === options.styleValue) {
-        element.style[wysihtml5.browser.fixStyleKey(options.styleProperty)] = '';
+      if (options.toggle !== false && element.style[wysihtml.browser.fixStyleKey(options.styleProperty)].trim().replace(/, /g, ",") === options.styleValue) {
+        element.style[wysihtml.browser.fixStyleKey(options.styleProperty)] = '';
       } else {
-        element.style[wysihtml5.browser.fixStyleKey(options.styleProperty)] = options.styleValue;
+        element.style[wysihtml.browser.fixStyleKey(options.styleProperty)] = options.styleValue;
       }
     }
     if (hasNoStyle(element)) {
@@ -178,7 +178,7 @@
 
     // Handle similar semantically same elements (queryAliasMap)
     nodeNameQuery = options.nodeName ? queryAliasMap[options.nodeName.toLowerCase()] || options.nodeName.toLowerCase() : null;
-    nodeQueryMatch = nodeNameQuery ? wysihtml5.dom.domNode(element).test({ query: nodeNameQuery }) : false;
+    nodeQueryMatch = nodeNameQuery ? wysihtml.dom.domNode(element).test({ query: nodeNameQuery }) : false;
     
     // Unwrap element if no attributes present and node name given
     // or no attributes and if no nodename set but node is the default
@@ -187,7 +187,7 @@
         ((options.toggle !== false && nodeQueryMatch) || (!options.nodeName && element.nodeName === defaultTag)) &&
         hasNoClass(element) && hasNoStyle(element) && hasNoAttributes(element)
       ) {
-        wysihtml5.dom.unwrap(element);
+        wysihtml.dom.unwrap(element);
       }
 
     }
@@ -201,7 +201,7 @@
     if (!selection.isCollapsed()) {
       textNodes = textNodes.concat(selection.getOwnNodes([3], function(node) {
         // Exclude empty nodes except caret node
-        return (!wysihtml5.dom.domNode(node).is.emptyTextNode());
+        return (!wysihtml.dom.domNode(node).is.emptyTextNode());
       }, splitBounds));
     }
 
@@ -237,11 +237,11 @@
     var o;
     if (options.nodeName) {
       var query = queryAliasMap[options.nodeName.toLowerCase()] || options.nodeName.toLowerCase();
-      return wysihtml5.dom.domNode(node).test({ query: query });
+      return wysihtml.dom.domNode(node).test({ query: query });
     } else {
-      o = wysihtml5.lang.object(options).clone();
+      o = wysihtml.lang.object(options).clone();
       o.query = INLINE_ELEMENTS; // make sure only inline elements with styles and classes are counted
-      return wysihtml5.dom.domNode(node).test(o);
+      return wysihtml.dom.domNode(node).test(o);
     }
   }
 
@@ -257,7 +257,7 @@
     try {
       rangy.getSelection(composer.win).addRange(range);
     } catch (e) {}
-    if (!composer.doc.activeElement || !wysihtml5.dom.contains(composer.element, composer.doc.activeElement)) {
+    if (!composer.doc.activeElement || !wysihtml.dom.contains(composer.element, composer.doc.activeElement)) {
       composer.element.focus();
       d.scrollTop  = oldScrollTop;
       d.scrollLeft = oldScrollLeft;
@@ -374,7 +374,7 @@
         range.setStartAndEnd(anchor, offsetStart, offsetEnd);
         range.splitBoundaries();
         txtNodes = range.getNodes([3], function(node) {
-          return (!wysihtml5.dom.domNode(node).is.emptyTextNode());
+          return (!wysihtml.dom.domNode(node).is.emptyTextNode());
         });
 
         return {
@@ -446,7 +446,7 @@
     if (wrapNode) {
       newWrapNode = wrapNode.cloneNode(false);
 
-      wysihtml5.dom.domNode(textNode).escapeParent(wrapNode, newWrapNode);
+      wysihtml.dom.domNode(textNode).escapeParent(wrapNode, newWrapNode);
       updateFormatOfElement(newWrapNode, options);
     }
   }
@@ -457,7 +457,7 @@
         wrapNode = findSimilarTextNodeWrapper(textNode, options, container);
 
     if (wrapNode) {
-      wysihtml5.dom.domNode(textNode).escapeParent(wrapNode);
+      wysihtml.dom.domNode(textNode).escapeParent(wrapNode);
     }
   }
 
@@ -491,7 +491,7 @@
         } else {
 
           // Escape caret out of format
-          textNode = composer.doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
+          textNode = composer.doc.createTextNode(wysihtml.INVISIBLE_SPACE);
           newNode = state.nodes[0].cloneNode(false);
           newNode.appendChild(textNode);
           composer.selection.splitElementAtCaret(state.nodes[0], newNode);
@@ -556,7 +556,7 @@
       textOffset = selection.anchorOffset;
 
       for (i = state.nodes.length; i--;) {
-        wysihtml5.dom.unwrap(state.nodes[i]);
+        wysihtml.dom.unwrap(state.nodes[i]);
       }
 
       cleanupAndSetCaret(composer, textNode, textOffset, options);
@@ -604,7 +604,7 @@
     return options;
   }
 
-  wysihtml5.commands.formatInline = {
+  wysihtml.commands.formatInline = {
 
     // Basics:
     // In case of plain text or inline state not set wrap all non-empty textnodes with
@@ -650,4 +650,4 @@
     }
   };
 
-})(wysihtml5);
+})(wysihtml);
