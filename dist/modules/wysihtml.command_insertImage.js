@@ -35,7 +35,7 @@ wysihtml.commands.insertImage = (function() {
         parent = image.parentNode;
         parent.removeChild(image);
 
-        // and it's parent <a> too if it hasn't got any other relevant child nodes
+        // and its parent <a> too if it hasn't got any other relevant child nodes
         wysihtml.dom.removeEmptyTextNodes(parent);
         if (parent.nodeName === "A" && !parent.firstChild) {
           composer.selection.setAfter(parent);

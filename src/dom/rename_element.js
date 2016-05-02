@@ -1,5 +1,5 @@
 /**
- * Renames an element (eg. a <div> to a <p>) and keeps its childs
+ * Renames an element (eg. a <div> to a <p>) and keeps its children
  *
  * @param {Element} element The list element which should be renamed
  * @param {Element} newNodeName The desired tag name

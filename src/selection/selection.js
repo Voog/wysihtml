@@ -946,7 +946,7 @@
           hasScrollBars = doc.documentElement.scrollHeight > doc.documentElement.offsetHeight,
           tempElement   = doc._wysihtml5ScrollIntoViewElement = doc._wysihtml5ScrollIntoViewElement || (function() {
             var element = doc.createElement("span");
-            // The element needs content in order to be able to calculate it's position properly
+            // The element needs content in order to be able to calculate its position properly
             element.innerHTML = wysihtml.INVISIBLE_SPACE;
             return element;
           })(),

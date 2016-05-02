@@ -33,7 +33,7 @@ if (wysihtml.browser.supported()) {
     this.equal(
       this.sanitize("<p>foo</p>", rules),
       "<div>foo</div>",
-      "Known tag gets renamed to it's corresponding conversion"
+      "Known tag gets renamed to its corresponding conversion"
     );
 
     this.equal(

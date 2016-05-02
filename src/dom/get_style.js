@@ -38,7 +38,7 @@ wysihtml.dom.getStyle = (function() {
 
         // currentStyle is no standard and only supported by Opera and IE but it has one important advantage over the standard-compliant
         // window.getComputedStyle, since it returns css property values in their original unit:
-        // If you set an elements width to "50%", window.getComputedStyle will give you it's current width in px while currentStyle
+        // If you set an elements width to "50%", window.getComputedStyle will give you its current width in px while currentStyle
         // gives you the original "50%".
         // Opera supports both, currentStyle and window.getComputedStyle, that's why checking for currentStyle should have higher prio
         if (currentStyle) {

@@ -167,7 +167,7 @@ wysihtml.browser = (function() {
 
     /**
      * Checks whether a document supports a certain queryCommand
-     * In particular, Opera needs a reference to a document that has a contentEditable in it's dom tree
+     * In particular, Opera needs a reference to a document that has a contentEditable in its dom tree
      * in oder to report correct results
      *
      * @param {Object} doc Document object on which to check for a query command

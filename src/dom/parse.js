@@ -76,7 +76,7 @@ wysihtml.dom.parse = function(elementOrHtml_current, config_current) {
                              "NOFRAMES", "NOSCRIPT" ,"OL" ,"P" ,"PRE","TABLE", "UL"];
 
   /**
-   * Iterates over all childs of the element, recreates them, appends them into a document fragment
+   * Iterates over all children of the element, recreates them, appends them into a document fragment
    * which later replaces the entire body content
    */
    function parse(elementOrHtml, config) {
@@ -635,7 +635,7 @@ wysihtml.dom.parse = function(elementOrHtml_current, config_current) {
     // set attributes on newNode
     for (attributeName in attributes) {
       // Setting attributes can cause a js error in IE under certain circumstances
-      // eg. on a <img> under https when it's new attribute value is non-https
+      // eg. on a <img> under https when its new attribute value is non-https
       // TODO: Investigate this further and check for smarter handling
       try {
         newNode.setAttribute(attributeName, attributes[attributeName]);

@@ -56,7 +56,7 @@
    *
    * Other browsers need a more hacky way: (pssst don't tell my mama)
    * In order to prevent the element being scrolled into view when focusing it, we simply
-   * move it out of the scrollable area, focus it, and reset it's position
+   * move it out of the scrollable area, focus it, and reset its position
    */
   var focusWithoutScrolling = function(element) {
     if (element.setActive) {

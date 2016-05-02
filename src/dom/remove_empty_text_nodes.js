@@ -1,5 +1,5 @@
 /**
- * Checks for empty text node childs and removes them
+ * Checks for empty text node children and removes them
  *
  * @param {Element} node The element in which to cleanup
  * @example

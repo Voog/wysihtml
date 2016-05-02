@@ -487,14 +487,14 @@
       handleDeleteKeyPress(event, this);
     }
 
-    // Make sure that when pressing backspace/delete on selected images deletes the image and it's anchor
+    // Make sure that when pressing backspace/delete on selected images deletes the image and its anchor
     if (keyCode === wysihtml.BACKSPACE_KEY || keyCode === wysihtml.DELETE_KEY) {
       target = this.selection.getSelectedNode(true);
       if (target && target.nodeName === "IMG") {
         event.preventDefault();
         parent = target.parentNode;
         parent.removeChild(target);// delete the <img>
-        // And it's parent <a> too if it hasn't got any other child nodes
+        // And its parent <a> too if it hasn't got any other child nodes
         if (parent.nodeName === "A" && !parent.firstChild) {
           parent.parentNode.removeChild(parent);
         }

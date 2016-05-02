@@ -272,7 +272,7 @@ if (wysihtml.browser.supported()) {
         
         that.textareaElement.value = "<i>hey </i><strong>richard!</strong>";
         editor.fire("change_view", "composer");
-        equal(composerElement.innerHTML.toLowerCase(), "hey <strong>richard!</strong>", "Textarea sanitized and copied over it's value to the editor after switch");
+        equal(composerElement.innerHTML.toLowerCase(), "hey <strong>richard!</strong>", "Textarea sanitized and copied over its value to the editor after switch");
         
         composerElement.innerHTML = "<i>hey </i><strong>timmay!</strong>";
         happen.once(that.form, {type: "submit"});

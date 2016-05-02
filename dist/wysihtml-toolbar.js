@@ -6888,7 +6888,7 @@ wysihtml.browser = (function() {
 
     /**
      * Checks whether a document supports a certain queryCommand
-     * In particular, Opera needs a reference to a document that has a contentEditable in it's dom tree
+     * In particular, Opera needs a reference to a document that has a contentEditable in its dom tree
      * in oder to report correct results
      *
      * @param {Object} doc Document object on which to check for a query command
@@ -8437,7 +8437,7 @@ wysihtml.dom.getStyle = (function() {
 
         // currentStyle is no standard and only supported by Opera and IE but it has one important advantage over the standard-compliant
         // window.getComputedStyle, since it returns css property values in their original unit:
-        // If you set an elements width to "50%", window.getComputedStyle will give you it's current width in px while currentStyle
+        // If you set an elements width to "50%", window.getComputedStyle will give you its current width in px while currentStyle
         // gives you the original "50%".
         // Opera supports both, currentStyle and window.getComputedStyle, that's why checking for currentStyle should have higher prio
         if (currentStyle) {
@@ -8777,7 +8777,7 @@ wysihtml.dom.parse = function(elementOrHtml_current, config_current) {
                              "NOFRAMES", "NOSCRIPT" ,"OL" ,"P" ,"PRE","TABLE", "UL"];
 
   /**
-   * Iterates over all childs of the element, recreates them, appends them into a document fragment
+   * Iterates over all children of the element, recreates them, appends them into a document fragment
    * which later replaces the entire body content
    */
    function parse(elementOrHtml, config) {
@@ -9336,7 +9336,7 @@ wysihtml.dom.parse = function(elementOrHtml_current, config_current) {
     // set attributes on newNode
     for (attributeName in attributes) {
       // Setting attributes can cause a js error in IE under certain circumstances
-      // eg. on a <img> under https when it's new attribute value is non-https
+      // eg. on a <img> under https when its new attribute value is non-https
       // TODO: Investigate this further and check for smarter handling
       try {
         newNode.setAttribute(attributeName, attributes[attributeName]);
@@ -9568,7 +9568,7 @@ wysihtml.dom.parse = function(elementOrHtml_current, config_current) {
   return parse(elementOrHtml_current, config_current);
 };
 ;/**
- * Checks for empty text node childs and removes them
+ * Checks for empty text node children and removes them
  *
  * @param {Element} node The element in which to cleanup
  * @example
@@ -9588,7 +9588,7 @@ wysihtml.dom.removeEmptyTextNodes = function(node) {
   }
 };
 ;/**
- * Renames an element (eg. a <div> to a <p>) and keeps its childs
+ * Renames an element (eg. a <div> to a <p>) and keeps its children
  *
  * @param {Element} element The list element which should be renamed
  * @param {Element} newNodeName The desired tag name
@@ -9627,15 +9627,15 @@ wysihtml.dom.renameElement = function(element, newNodeName) {
   return newElement;
 };
 ;/**
- * Takes an element, removes it and replaces it with it's childs
+ * Takes an element, removes it and replaces it with its children
  *
- * @param {Object} node The node which to replace with it's child nodes
+ * @param {Object} node The node which to replace with its child nodes
  * @example
  *    <div id="foo">
  *      <span>hello</span>
  *    </div>
  *    <script>
- *      // Remove #foo and replace with it's children
+ *      // Remove #foo and replace with its children
  *      wysihtml.dom.replaceWithChildNodes(document.getElementById("foo"));
  *    </script>
  */
@@ -12666,7 +12666,7 @@ wysihtml.quirks.ensureProperClearing = (function() {
           hasScrollBars = doc.documentElement.scrollHeight > doc.documentElement.offsetHeight,
           tempElement   = doc._wysihtml5ScrollIntoViewElement = doc._wysihtml5ScrollIntoViewElement || (function() {
             var element = doc.createElement("span");
-            // The element needs content in order to be able to calculate it's position properly
+            // The element needs content in order to be able to calculate its position properly
             element.innerHTML = wysihtml.INVISIBLE_SPACE;
             return element;
           })(),
@@ -16080,7 +16080,7 @@ wysihtml.views.View = Base.extend(
    *
    * Other browsers need a more hacky way: (pssst don't tell my mama)
    * In order to prevent the element being scrolled into view when focusing it, we simply
-   * move it out of the scrollable area, focus it, and reset it's position
+   * move it out of the scrollable area, focus it, and reset its position
    */
   var focusWithoutScrolling = function(element) {
     if (element.setActive) {
@@ -16712,14 +16712,14 @@ wysihtml.views.View = Base.extend(
       handleDeleteKeyPress(event, this);
     }
 
-    // Make sure that when pressing backspace/delete on selected images deletes the image and it's anchor
+    // Make sure that when pressing backspace/delete on selected images deletes the image and its anchor
     if (keyCode === wysihtml.BACKSPACE_KEY || keyCode === wysihtml.DELETE_KEY) {
       target = this.selection.getSelectedNode(true);
       if (target && target.nodeName === "IMG") {
         event.preventDefault();
         parent = target.parentNode;
         parent.removeChild(target);// delete the <img>
-        // And it's parent <a> too if it hasn't got any other child nodes
+        // And its parent <a> too if it hasn't got any other child nodes
         if (parent.nodeName === "A" && !parent.firstChild) {
           parent.parentNode.removeChild(parent);
         }
