@@ -9,7 +9,7 @@ if(typeof define === 'function' && define.amd) {
 })(this, function() {
 
 /**
- * @license wysihtml v0.5.5
+ * @license wysihtml v0.6.beta
  * https://github.com/Voog/wysihtml
  *
  * Author: Christopher Blum (https://github.com/tiff)
@@ -20,7 +20,7 @@ if(typeof define === 'function' && define.amd) {
  *
  */
 var wysihtml = {
-  version: "0.5.5",
+  version: "0.6.beta",
 
   // namespaces
   commands:   {},
