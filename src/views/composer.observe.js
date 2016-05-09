@@ -156,7 +156,7 @@
               } else {
                 composer.selection.setAfter(prevNode);
               }
-            } 
+            }
             return true;
           }
         }
