@@ -156,13 +156,7 @@
               } else {
                 composer.selection.setAfter(prevNode);
               }
-            } else {
-              domNode(aNode).transferContentTo(aNode.parentNode.parentNode, true);
-
-              if (intermediaryNode && intermediaryNode.children.length === 0){
-                intermediaryNode.remove();
-              }
-            }
+            } 
             return true;
           }
         }
