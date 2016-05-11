@@ -1,13 +1,3 @@
-(function (root, factory) {
-if(typeof define === 'function' && define.amd) {
-  define(factory);
-} else if(typeof module === 'object' && module.exports) {
-  module.exports = factory();
-} else {
-  factory();
-}
-})(this, function() {
-
 /**
  * @license wysihtml v0.6.beta
  * https://github.com/Voog/wysihtml
@@ -48,7 +38,8 @@ var wysihtml = {
   TAB_KEY:        9,
   DELETE_KEY:     46
 };
-;wysihtml.polyfills = function(win, doc) {
+
+wysihtml.polyfills = function(win, doc) {
 
   // TODO: in future try to replace most inline compability checks with polyfills for code readability 
 
@@ -556,29 +547,160 @@ var wysihtml = {
 };
 
 wysihtml.polyfills(window, document);
-;/**
+
+/*
+	Base.js, version 1.1a
+	Copyright 2006-2010, Dean Edwards
+	License: http://www.opensource.org/licenses/mit-license.php
+*/
+
+var Base = function() {
+	// dummy
+};
+
+Base.extend = function(_instance, _static) { // subclass
+	var extend = Base.prototype.extend;
+	
+	// build the prototype
+	Base._prototyping = true;
+	var proto = new this;
+	extend.call(proto, _instance);
+  proto.base = function() {
+    // call this method from any other method to invoke that method's ancestor
+  };
+	delete Base._prototyping;
+	
+	// create the wrapper for the constructor function
+	//var constructor = proto.constructor.valueOf(); //-dean
+	var constructor = proto.constructor;
+	var klass = proto.constructor = function() {
+		if (!Base._prototyping) {
+			if (this._constructing || this.constructor == klass) { // instantiation
+				this._constructing = true;
+				constructor.apply(this, arguments);
+				delete this._constructing;
+			} else if (arguments[0] != null) { // casting
+				return (arguments[0].extend || extend).call(arguments[0], proto);
+			}
+		}
+	};
+	
+	// build the class interface
+	klass.ancestor = this;
+	klass.extend = this.extend;
+	klass.forEach = this.forEach;
+	klass.implement = this.implement;
+	klass.prototype = proto;
+	klass.toString = this.toString;
+	klass.valueOf = function(type) {
+		//return (type == "object") ? klass : constructor; //-dean
+		return (type == "object") ? klass : constructor.valueOf();
+	};
+	extend.call(klass, _static);
+	// class initialisation
+	if (typeof klass.init == "function") klass.init();
+	return klass;
+};
+
+Base.prototype = {	
+	extend: function(source, value) {
+		if (arguments.length > 1) { // extending with a name/value pair
+			var ancestor = this[source];
+			if (ancestor && (typeof value == "function") && // overriding a method?
+				// the valueOf() comparison is to avoid circular references
+				(!ancestor.valueOf || ancestor.valueOf() != value.valueOf()) &&
+				/\bbase\b/.test(value)) {
+				// get the underlying method
+				var method = value.valueOf();
+				// override
+				value = function() {
+					var previous = this.base || Base.prototype.base;
+					this.base = ancestor;
+					var returnValue = method.apply(this, arguments);
+					this.base = previous;
+					return returnValue;
+				};
+				// point to the underlying method
+				value.valueOf = function(type) {
+					return (type == "object") ? value : method;
+				};
+				value.toString = Base.toString;
+			}
+			this[source] = value;
+		} else if (source) { // extending with an object literal
+			var extend = Base.prototype.extend;
+			// if this object has a customised extend method then use it
+			if (!Base._prototyping && typeof this != "function") {
+				extend = this.extend || extend;
+			}
+			var proto = {toSource: null};
+			// do the "toString" and other methods manually
+			var hidden = ["constructor", "toString", "valueOf"];
+			// if we are prototyping then include the constructor
+			var i = Base._prototyping ? 0 : 1;
+			while (key = hidden[i++]) {
+				if (source[key] != proto[key]) {
+					extend.call(this, key, source[key]);
+
+				}
+			}
+			// copy each of the source object's properties to this object
+			for (var key in source) {
+				if (!proto[key]) extend.call(this, key, source[key]);
+			}
+		}
+		return this;
+	}
+};
+
+// initialise
+Base = Base.extend({
+	constructor: function() {
+		this.extend(arguments[0]);
+	}
+}, {
+	ancestor: Object,
+	version: "1.1",
+	
+	forEach: function(object, block, context) {
+		for (var key in object) {
+			if (this.prototype[key] === undefined) {
+				block.call(context, object[key], key, object);
+			}
+		}
+	},
+		
+	implement: function() {
+		for (var i = 0; i < arguments.length; i++) {
+			if (typeof arguments[i] == "function") {
+				// if it's a function, call it
+				arguments[i](this.prototype);
+			} else {
+				// add the interface using the extend method
+				this.prototype.extend(arguments[i]);
+			}
+		}
+		return this;
+	},
+	
+	toString: function() {
+		return String(this.valueOf());
+	}
+});
+/**
  * Rangy, a cross-browser JavaScript range and selection library
  * https://github.com/timdown/rangy
  *
  * Copyright 2015, Tim Down
  * Licensed under the MIT license.
- * Version: 1.3.0
- * Build date: 10 May 2015
+ * Version: 1.3.1-dev
+ * Build date: 20 May 2015
+ *
+ * NOTE: UMD wrapper removed manually for bundling (Oliver Pulges)
  */
+var rangy;
 
-(function(factory, root) {
-    if (typeof define == "function" && define.amd) {
-        // AMD. Register as an anonymous module.
-        define(factory);
-    } else if (typeof module != "undefined" && typeof exports == "object") {
-        // Node/CommonJS style
-        module.exports = factory();
-    } else {
-        // No AMD or CommonJS support so we place Rangy in (probably) the global variable
-        root.rangy = factory();
-    }
-})(function() {
-
+(function() {
     var OBJECT = "object", FUNCTION = "function", UNDEFINED = "undefined";
 
     // Minimal set of properties required for DOM Level 2 Range compliance. Comparison constants such as START_TO_START
@@ -667,7 +789,7 @@ wysihtml.polyfills(window, document);
     };
 
     var api = {
-        version: "1.3.0",
+        version: "1.3.1-dev",
         initialized: false,
         isBrowser: isBrowser,
         supported: true,
@@ -4399,9 +4521,250 @@ wysihtml.polyfills(window, document);
         }
     }
 
-    return api;
-}, this);
-;/**
+    rangy = api;
+})();
+
+/**
+ * Selection save and restore module for Rangy.
+ * Saves and restores user selections using marker invisible elements in the DOM.
+ *
+ * Part of Rangy, a cross-browser JavaScript range and selection library
+ * https://github.com/timdown/rangy
+ *
+ * Depends on Rangy core.
+ *
+ * Copyright 2015, Tim Down
+ * Licensed under the MIT license.
+ * Version: 1.3.1-dev
+ * Build date: 20 May 2015
+ *
+* NOTE: UMD wrapper removed manually for bundling (Oliver Pulges)
+*/
+rangy.createModule("SaveRestore", ["WrappedRange"], function(api, module) {
+    var dom = api.dom;
+    var removeNode = dom.removeNode;
+    var isDirectionBackward = api.Selection.isDirectionBackward;
+    var markerTextChar = "\ufeff";
+
+    function gEBI(id, doc) {
+        return (doc || document).getElementById(id);
+    }
+
+    function insertRangeBoundaryMarker(range, atStart) {
+        var markerId = "selectionBoundary_" + (+new Date()) + "_" + ("" + Math.random()).slice(2);
+        var markerEl;
+        var doc = dom.getDocument(range.startContainer);
+
+        // Clone the Range and collapse to the appropriate boundary point
+        var boundaryRange = range.cloneRange();
+        boundaryRange.collapse(atStart);
+
+        // Create the marker element containing a single invisible character using DOM methods and insert it
+        markerEl = doc.createElement("span");
+        markerEl.id = markerId;
+        markerEl.style.lineHeight = "0";
+        markerEl.style.display = "none";
+        markerEl.className = "rangySelectionBoundary";
+        markerEl.appendChild(doc.createTextNode(markerTextChar));
+
+        boundaryRange.insertNode(markerEl);
+        return markerEl;
+    }
+
+    function setRangeBoundary(doc, range, markerId, atStart) {
+        var markerEl = gEBI(markerId, doc);
+        if (markerEl) {
+            range[atStart ? "setStartBefore" : "setEndBefore"](markerEl);
+            removeNode(markerEl);
+        } else {
+            module.warn("Marker element has been removed. Cannot restore selection.");
+        }
+    }
+
+    function compareRanges(r1, r2) {
+        return r2.compareBoundaryPoints(r1.START_TO_START, r1);
+    }
+
+    function saveRange(range, direction) {
+        var startEl, endEl, doc = api.DomRange.getRangeDocument(range), text = range.toString();
+        var backward = isDirectionBackward(direction);
+
+        if (range.collapsed) {
+            endEl = insertRangeBoundaryMarker(range, false);
+            return {
+                document: doc,
+                markerId: endEl.id,
+                collapsed: true
+            };
+        } else {
+            endEl = insertRangeBoundaryMarker(range, false);
+            startEl = insertRangeBoundaryMarker(range, true);
+
+            return {
+                document: doc,
+                startMarkerId: startEl.id,
+                endMarkerId: endEl.id,
+                collapsed: false,
+                backward: backward,
+                toString: function() {
+                    return "original text: '" + text + "', new text: '" + range.toString() + "'";
+                }
+            };
+        }
+    }
+
+    function restoreRange(rangeInfo, normalize) {
+        var doc = rangeInfo.document;
+        if (typeof normalize == "undefined") {
+            normalize = true;
+        }
+        var range = api.createRange(doc);
+        if (rangeInfo.collapsed) {
+            var markerEl = gEBI(rangeInfo.markerId, doc);
+            if (markerEl) {
+                markerEl.style.display = "inline";
+                var previousNode = markerEl.previousSibling;
+
+                // Workaround for issue 17
+                if (previousNode && previousNode.nodeType == 3) {
+                    removeNode(markerEl);
+                    range.collapseToPoint(previousNode, previousNode.length);
+                } else {
+                    range.collapseBefore(markerEl);
+                    removeNode(markerEl);
+                }
+            } else {
+                module.warn("Marker element has been removed. Cannot restore selection.");
+            }
+        } else {
+            setRangeBoundary(doc, range, rangeInfo.startMarkerId, true);
+            setRangeBoundary(doc, range, rangeInfo.endMarkerId, false);
+        }
+
+        if (normalize) {
+            range.normalizeBoundaries();
+        }
+
+        return range;
+    }
+
+    function saveRanges(ranges, direction) {
+        var rangeInfos = [], range, doc;
+        var backward = isDirectionBackward(direction);
+
+        // Order the ranges by position within the DOM, latest first, cloning the array to leave the original untouched
+        ranges = ranges.slice(0);
+        ranges.sort(compareRanges);
+
+        for (var i = 0, len = ranges.length; i < len; ++i) {
+            rangeInfos[i] = saveRange(ranges[i], backward);
+        }
+
+        // Now that all the markers are in place and DOM manipulation over, adjust each range's boundaries to lie
+        // between its markers
+        for (i = len - 1; i >= 0; --i) {
+            range = ranges[i];
+            doc = api.DomRange.getRangeDocument(range);
+            if (range.collapsed) {
+                range.collapseAfter(gEBI(rangeInfos[i].markerId, doc));
+            } else {
+                range.setEndBefore(gEBI(rangeInfos[i].endMarkerId, doc));
+                range.setStartAfter(gEBI(rangeInfos[i].startMarkerId, doc));
+            }
+        }
+
+        return rangeInfos;
+    }
+
+    function saveSelection(win) {
+        if (!api.isSelectionValid(win)) {
+            module.warn("Cannot save selection. This usually happens when the selection is collapsed and the selection document has lost focus.");
+            return null;
+        }
+        var sel = api.getSelection(win);
+        var ranges = sel.getAllRanges();
+        var backward = (ranges.length == 1 && sel.isBackward());
+
+        var rangeInfos = saveRanges(ranges, backward);
+
+        // Ensure current selection is unaffected
+        if (backward) {
+            sel.setSingleRange(ranges[0], backward);
+        } else {
+            sel.setRanges(ranges);
+        }
+
+        return {
+            win: win,
+            rangeInfos: rangeInfos,
+            restored: false
+        };
+    }
+
+    function restoreRanges(rangeInfos) {
+        var ranges = [];
+
+        // Ranges are in reverse order of appearance in the DOM. We want to restore earliest first to avoid
+        // normalization affecting previously restored ranges.
+        var rangeCount = rangeInfos.length;
+
+        for (var i = rangeCount - 1; i >= 0; i--) {
+            ranges[i] = restoreRange(rangeInfos[i], true);
+        }
+
+        return ranges;
+    }
+
+    function restoreSelection(savedSelection, preserveDirection) {
+        if (!savedSelection.restored) {
+            var rangeInfos = savedSelection.rangeInfos;
+            var sel = api.getSelection(savedSelection.win);
+            var ranges = restoreRanges(rangeInfos), rangeCount = rangeInfos.length;
+
+            if (rangeCount == 1 && preserveDirection && api.features.selectionHasExtend && rangeInfos[0].backward) {
+                sel.removeAllRanges();
+                sel.addRange(ranges[0], true);
+            } else {
+                sel.setRanges(ranges);
+            }
+
+            savedSelection.restored = true;
+        }
+    }
+
+    function removeMarkerElement(doc, markerId) {
+        var markerEl = gEBI(markerId, doc);
+        if (markerEl) {
+            removeNode(markerEl);
+        }
+    }
+
+    function removeMarkers(savedSelection) {
+        var rangeInfos = savedSelection.rangeInfos;
+        for (var i = 0, len = rangeInfos.length, rangeInfo; i < len; ++i) {
+            rangeInfo = rangeInfos[i];
+            if (rangeInfo.collapsed) {
+                removeMarkerElement(savedSelection.doc, rangeInfo.markerId);
+            } else {
+                removeMarkerElement(savedSelection.doc, rangeInfo.startMarkerId);
+                removeMarkerElement(savedSelection.doc, rangeInfo.endMarkerId);
+            }
+        }
+    }
+
+    api.util.extend(api, {
+        saveRange: saveRange,
+        restoreRange: restoreRange,
+        saveRanges: saveRanges,
+        restoreRanges: restoreRanges,
+        saveSelection: saveSelection,
+        restoreSelection: restoreSelection,
+        removeMarkerElement: removeMarkerElement,
+        removeMarkers: removeMarkers
+    });
+});
+
+/**
  * Text range module for Rangy.
  * Text-based manipulation and searching of ranges and selections.
  *
@@ -4429,8 +4792,8 @@ wysihtml.polyfills(window, document);
  *
  * Copyright 2015, Tim Down
  * Licensed under the MIT license.
- * Version: 1.3.0
- * Build date: 10 May 2015
+ * Version: 1.3.1-dev
+ * Build date: 20 May 2015
  */
 
 /**
@@ -4465,2261 +4828,1861 @@ wysihtml.polyfills(window, document);
  *
  * Problem is whether Rangy should ever acknowledge the space and if so, when. Another problem is whether this can be
  * feature-tested
- */
-(function(factory, root) {
-    if (typeof define == "function" && define.amd) {
-        // AMD. Register as an anonymous module with a dependency on Rangy.
-        define(["./rangy-core"], factory);
-    } else if (typeof module != "undefined" && typeof exports == "object") {
-        // Node/CommonJS style
-        module.exports = factory( require("rangy") );
-    } else {
-        // No AMD or CommonJS support so we use the rangy property of root (probably the global variable)
-        factory(root.rangy);
+ *
+ * NOTE: UMD wrapper removed manually for bundling (Oliver Pulges)
+*/
+rangy.createModule("TextRange", ["WrappedSelection"], function(api, module) {
+    var UNDEF = "undefined";
+    var CHARACTER = "character", WORD = "word";
+    var dom = api.dom, util = api.util;
+    var extend = util.extend;
+    var createOptions = util.createOptions;
+    var getBody = dom.getBody;
+
+
+    var spacesRegex = /^[ \t\f\r\n]+$/;
+    var spacesMinusLineBreaksRegex = /^[ \t\f\r]+$/;
+    var allWhiteSpaceRegex = /^[\t-\r \u0085\u00A0\u1680\u180E\u2000-\u200B\u2028\u2029\u202F\u205F\u3000]+$/;
+    var nonLineBreakWhiteSpaceRegex = /^[\t \u00A0\u1680\u180E\u2000-\u200B\u202F\u205F\u3000]+$/;
+    var lineBreakRegex = /^[\n-\r\u0085\u2028\u2029]$/;
+
+    var defaultLanguage = "en";
+
+    var isDirectionBackward = api.Selection.isDirectionBackward;
+
+    // Properties representing whether trailing spaces inside blocks are completely collapsed (as they are in WebKit,
+    // but not other browsers). Also test whether trailing spaces before <br> elements are collapsed.
+    var trailingSpaceInBlockCollapses = false;
+    var trailingSpaceBeforeBrCollapses = false;
+    var trailingSpaceBeforeBlockCollapses = false;
+    var trailingSpaceBeforeLineBreakInPreLineCollapses = true;
+
+    (function() {
+        var el = dom.createTestElement(document, "<p>1 </p><p></p>", true);
+        var p = el.firstChild;
+        var sel = api.getSelection();
+        sel.collapse(p.lastChild, 2);
+        sel.setStart(p.firstChild, 0);
+        trailingSpaceInBlockCollapses = ("" + sel).length == 1;
+
+        el.innerHTML = "1 <br />";
+        sel.collapse(el, 2);
+        sel.setStart(el.firstChild, 0);
+        trailingSpaceBeforeBrCollapses = ("" + sel).length == 1;
+
+        el.innerHTML = "1 <p>1</p>";
+        sel.collapse(el, 2);
+        sel.setStart(el.firstChild, 0);
+        trailingSpaceBeforeBlockCollapses = ("" + sel).length == 1;
+
+        dom.removeNode(el);
+        sel.removeAllRanges();
+    })();
+
+    /*----------------------------------------------------------------------------------------------------------------*/
+
+    // This function must create word and non-word tokens for the whole of the text supplied to it
+    function defaultTokenizer(chars, wordOptions) {
+        var word = chars.join(""), result, tokenRanges = [];
+
+        function createTokenRange(start, end, isWord) {
+            tokenRanges.push( { start: start, end: end, isWord: isWord } );
+        }
+
+        // Match words and mark characters
+        var lastWordEnd = 0, wordStart, wordEnd;
+        while ( (result = wordOptions.wordRegex.exec(word)) ) {
+            wordStart = result.index;
+            wordEnd = wordStart + result[0].length;
+
+            // Create token for non-word characters preceding this word
+            if (wordStart > lastWordEnd) {
+                createTokenRange(lastWordEnd, wordStart, false);
+            }
+
+            // Get trailing space characters for word
+            if (wordOptions.includeTrailingSpace) {
+                while ( nonLineBreakWhiteSpaceRegex.test(chars[wordEnd]) ) {
+                    ++wordEnd;
+                }
+            }
+            createTokenRange(wordStart, wordEnd, true);
+            lastWordEnd = wordEnd;
+        }
+
+        // Create token for trailing non-word characters, if any exist
+        if (lastWordEnd < chars.length) {
+            createTokenRange(lastWordEnd, chars.length, false);
+        }
+
+        return tokenRanges;
     }
-})(function(rangy) {
-    rangy.createModule("TextRange", ["WrappedSelection"], function(api, module) {
-        var UNDEF = "undefined";
-        var CHARACTER = "character", WORD = "word";
-        var dom = api.dom, util = api.util;
-        var extend = util.extend;
-        var createOptions = util.createOptions;
-        var getBody = dom.getBody;
 
-
-        var spacesRegex = /^[ \t\f\r\n]+$/;
-        var spacesMinusLineBreaksRegex = /^[ \t\f\r]+$/;
-        var allWhiteSpaceRegex = /^[\t-\r \u0085\u00A0\u1680\u180E\u2000-\u200B\u2028\u2029\u202F\u205F\u3000]+$/;
-        var nonLineBreakWhiteSpaceRegex = /^[\t \u00A0\u1680\u180E\u2000-\u200B\u202F\u205F\u3000]+$/;
-        var lineBreakRegex = /^[\n-\r\u0085\u2028\u2029]$/;
-
-        var defaultLanguage = "en";
-
-        var isDirectionBackward = api.Selection.isDirectionBackward;
-
-        // Properties representing whether trailing spaces inside blocks are completely collapsed (as they are in WebKit,
-        // but not other browsers). Also test whether trailing spaces before <br> elements are collapsed.
-        var trailingSpaceInBlockCollapses = false;
-        var trailingSpaceBeforeBrCollapses = false;
-        var trailingSpaceBeforeBlockCollapses = false;
-        var trailingSpaceBeforeLineBreakInPreLineCollapses = true;
-
-        (function() {
-            var el = dom.createTestElement(document, "<p>1 </p><p></p>", true);
-            var p = el.firstChild;
-            var sel = api.getSelection();
-            sel.collapse(p.lastChild, 2);
-            sel.setStart(p.firstChild, 0);
-            trailingSpaceInBlockCollapses = ("" + sel).length == 1;
-
-            el.innerHTML = "1 <br />";
-            sel.collapse(el, 2);
-            sel.setStart(el.firstChild, 0);
-            trailingSpaceBeforeBrCollapses = ("" + sel).length == 1;
-
-            el.innerHTML = "1 <p>1</p>";
-            sel.collapse(el, 2);
-            sel.setStart(el.firstChild, 0);
-            trailingSpaceBeforeBlockCollapses = ("" + sel).length == 1;
-
-            dom.removeNode(el);
-            sel.removeAllRanges();
-        })();
-
-        /*----------------------------------------------------------------------------------------------------------------*/
-
-        // This function must create word and non-word tokens for the whole of the text supplied to it
-        function defaultTokenizer(chars, wordOptions) {
-            var word = chars.join(""), result, tokenRanges = [];
-
-            function createTokenRange(start, end, isWord) {
-                tokenRanges.push( { start: start, end: end, isWord: isWord } );
+    function convertCharRangeToToken(chars, tokenRange) {
+        var tokenChars = chars.slice(tokenRange.start, tokenRange.end);
+        var token = {
+            isWord: tokenRange.isWord,
+            chars: tokenChars,
+            toString: function() {
+                return tokenChars.join("");
             }
+        };
+        for (var i = 0, len = tokenChars.length; i < len; ++i) {
+            tokenChars[i].token = token;
+        }
+        return token;
+    }
 
-            // Match words and mark characters
-            var lastWordEnd = 0, wordStart, wordEnd;
-            while ( (result = wordOptions.wordRegex.exec(word)) ) {
-                wordStart = result.index;
-                wordEnd = wordStart + result[0].length;
+    function tokenize(chars, wordOptions, tokenizer) {
+        var tokenRanges = tokenizer(chars, wordOptions);
+        var tokens = [];
+        for (var i = 0, tokenRange; tokenRange = tokenRanges[i++]; ) {
+            tokens.push( convertCharRangeToToken(chars, tokenRange) );
+        }
+        return tokens;
+    }
 
-                // Create token for non-word characters preceding this word
-                if (wordStart > lastWordEnd) {
-                    createTokenRange(lastWordEnd, wordStart, false);
-                }
+    var defaultCharacterOptions = {
+        includeBlockContentTrailingSpace: true,
+        includeSpaceBeforeBr: true,
+        includeSpaceBeforeBlock: true,
+        includePreLineTrailingSpace: true,
+        ignoreCharacters: ""
+    };
 
-                // Get trailing space characters for word
-                if (wordOptions.includeTrailingSpace) {
-                    while ( nonLineBreakWhiteSpaceRegex.test(chars[wordEnd]) ) {
-                        ++wordEnd;
-                    }
-                }
-                createTokenRange(wordStart, wordEnd, true);
-                lastWordEnd = wordEnd;
+    function normalizeIgnoredCharacters(ignoredCharacters) {
+        // Check if character is ignored
+        var ignoredChars = ignoredCharacters || "";
+
+        // Normalize ignored characters into a string consisting of characters in ascending order of character code
+        var ignoredCharsArray = (typeof ignoredChars == "string") ? ignoredChars.split("") : ignoredChars;
+        ignoredCharsArray.sort(function(char1, char2) {
+            return char1.charCodeAt(0) - char2.charCodeAt(0);
+        });
+
+        /// Convert back to a string and remove duplicates
+        return ignoredCharsArray.join("").replace(/(.)\1+/g, "$1");
+    }
+
+    var defaultCaretCharacterOptions = {
+        includeBlockContentTrailingSpace: !trailingSpaceBeforeLineBreakInPreLineCollapses,
+        includeSpaceBeforeBr: !trailingSpaceBeforeBrCollapses,
+        includeSpaceBeforeBlock: !trailingSpaceBeforeBlockCollapses,
+        includePreLineTrailingSpace: true
+    };
+
+    var defaultWordOptions = {
+        "en": {
+            wordRegex: /[a-z0-9]+('[a-z0-9]+)*/gi,
+            includeTrailingSpace: false,
+            tokenizer: defaultTokenizer
+        }
+    };
+
+    var defaultFindOptions = {
+        caseSensitive: false,
+        withinRange: null,
+        wholeWordsOnly: false,
+        wrap: false,
+        direction: "forward",
+        wordOptions: null,
+        characterOptions: null
+    };
+
+    var defaultMoveOptions = {
+        wordOptions: null,
+        characterOptions: null
+    };
+
+    var defaultExpandOptions = {
+        wordOptions: null,
+        characterOptions: null,
+        trim: false,
+        trimStart: true,
+        trimEnd: true
+    };
+
+    var defaultWordIteratorOptions = {
+        wordOptions: null,
+        characterOptions: null,
+        direction: "forward"
+    };
+
+    function createWordOptions(options) {
+        var lang, defaults;
+        if (!options) {
+            return defaultWordOptions[defaultLanguage];
+        } else {
+            lang = options.language || defaultLanguage;
+            defaults = {};
+            extend(defaults, defaultWordOptions[lang] || defaultWordOptions[defaultLanguage]);
+            extend(defaults, options);
+            return defaults;
+        }
+    }
+
+    function createNestedOptions(optionsParam, defaults) {
+        var options = createOptions(optionsParam, defaults);
+        if (defaults.hasOwnProperty("wordOptions")) {
+            options.wordOptions = createWordOptions(options.wordOptions);
+        }
+        if (defaults.hasOwnProperty("characterOptions")) {
+            options.characterOptions = createOptions(options.characterOptions, defaultCharacterOptions);
+        }
+        return options;
+    }
+
+    /*----------------------------------------------------------------------------------------------------------------*/
+
+    /* DOM utility functions */
+    var getComputedStyleProperty = dom.getComputedStyleProperty;
+
+    // Create cachable versions of DOM functions
+
+    // Test for old IE's incorrect display properties
+    var tableCssDisplayBlock;
+    (function() {
+        var table = document.createElement("table");
+        var body = getBody(document);
+        body.appendChild(table);
+        tableCssDisplayBlock = (getComputedStyleProperty(table, "display") == "block");
+        body.removeChild(table);
+    })();
+
+    var defaultDisplayValueForTag = {
+        table: "table",
+        caption: "table-caption",
+        colgroup: "table-column-group",
+        col: "table-column",
+        thead: "table-header-group",
+        tbody: "table-row-group",
+        tfoot: "table-footer-group",
+        tr: "table-row",
+        td: "table-cell",
+        th: "table-cell"
+    };
+
+    // Corrects IE's "block" value for table-related elements
+    function getComputedDisplay(el, win) {
+        var display = getComputedStyleProperty(el, "display", win);
+        var tagName = el.tagName.toLowerCase();
+        return (display == "block" &&
+                tableCssDisplayBlock &&
+                defaultDisplayValueForTag.hasOwnProperty(tagName)) ?
+            defaultDisplayValueForTag[tagName] : display;
+    }
+
+    function isHidden(node) {
+        var ancestors = getAncestorsAndSelf(node);
+        for (var i = 0, len = ancestors.length; i < len; ++i) {
+            if (ancestors[i].nodeType == 1 && getComputedDisplay(ancestors[i]) == "none") {
+                return true;
             }
-
-            // Create token for trailing non-word characters, if any exist
-            if (lastWordEnd < chars.length) {
-                createTokenRange(lastWordEnd, chars.length, false);
-            }
-
-            return tokenRanges;
         }
 
-        function convertCharRangeToToken(chars, tokenRange) {
-            var tokenChars = chars.slice(tokenRange.start, tokenRange.end);
-            var token = {
-                isWord: tokenRange.isWord,
-                chars: tokenChars,
-                toString: function() {
-                    return tokenChars.join("");
-                }
-            };
-            for (var i = 0, len = tokenChars.length; i < len; ++i) {
-                tokenChars[i].token = token;
+        return false;
+    }
+
+    function isVisibilityHiddenTextNode(textNode) {
+        var el;
+        return textNode.nodeType == 3 &&
+            (el = textNode.parentNode) &&
+            getComputedStyleProperty(el, "visibility") == "hidden";
+    }
+
+    /*----------------------------------------------------------------------------------------------------------------*/
+
+
+    // "A block node is either an Element whose "display" property does not have
+    // resolved value "inline" or "inline-block" or "inline-table" or "none", or a
+    // Document, or a DocumentFragment."
+    function isBlockNode(node) {
+        return node &&
+            ((node.nodeType == 1 && !/^(inline(-block|-table)?|none)$/.test(getComputedDisplay(node))) ||
+            node.nodeType == 9 || node.nodeType == 11);
+    }
+
+    function getLastDescendantOrSelf(node) {
+        var lastChild = node.lastChild;
+        return lastChild ? getLastDescendantOrSelf(lastChild) : node;
+    }
+
+    function containsPositions(node) {
+        return dom.isCharacterDataNode(node) ||
+            !/^(area|base|basefont|br|col|frame|hr|img|input|isindex|link|meta|param)$/i.test(node.nodeName);
+    }
+
+    function getAncestors(node) {
+        var ancestors = [];
+        while (node.parentNode) {
+            ancestors.unshift(node.parentNode);
+            node = node.parentNode;
+        }
+        return ancestors;
+    }
+
+    function getAncestorsAndSelf(node) {
+        return getAncestors(node).concat([node]);
+    }
+
+    function nextNodeDescendants(node) {
+        while (node && !node.nextSibling) {
+            node = node.parentNode;
+        }
+        if (!node) {
+            return null;
+        }
+        return node.nextSibling;
+    }
+
+    function nextNode(node, excludeChildren) {
+        if (!excludeChildren && node.hasChildNodes()) {
+            return node.firstChild;
+        }
+        return nextNodeDescendants(node);
+    }
+
+    function previousNode(node) {
+        var previous = node.previousSibling;
+        if (previous) {
+            node = previous;
+            while (node.hasChildNodes()) {
+                node = node.lastChild;
             }
-            return token;
+            return node;
+        }
+        var parent = node.parentNode;
+        if (parent && parent.nodeType == 1) {
+            return parent;
+        }
+        return null;
+    }
+
+    // Adpated from Aryeh's code.
+    // "A whitespace node is either a Text node whose data is the empty string; or
+    // a Text node whose data consists only of one or more tabs (0x0009), line
+    // feeds (0x000A), carriage returns (0x000D), and/or spaces (0x0020), and whose
+    // parent is an Element whose resolved value for "white-space" is "normal" or
+    // "nowrap"; or a Text node whose data consists only of one or more tabs
+    // (0x0009), carriage returns (0x000D), and/or spaces (0x0020), and whose
+    // parent is an Element whose resolved value for "white-space" is "pre-line"."
+    function isWhitespaceNode(node) {
+        if (!node || node.nodeType != 3) {
+            return false;
+        }
+        var text = node.data;
+        if (text === "") {
+            return true;
+        }
+        var parent = node.parentNode;
+        if (!parent || parent.nodeType != 1) {
+            return false;
+        }
+        var computedWhiteSpace = getComputedStyleProperty(node.parentNode, "whiteSpace");
+
+        return (/^[\t\n\r ]+$/.test(text) && /^(normal|nowrap)$/.test(computedWhiteSpace)) ||
+            (/^[\t\r ]+$/.test(text) && computedWhiteSpace == "pre-line");
+    }
+
+    // Adpated from Aryeh's code.
+    // "node is a collapsed whitespace node if the following algorithm returns
+    // true:"
+    function isCollapsedWhitespaceNode(node) {
+        // "If node's data is the empty string, return true."
+        if (node.data === "") {
+            return true;
         }
 
-        function tokenize(chars, wordOptions, tokenizer) {
-            var tokenRanges = tokenizer(chars, wordOptions);
-            var tokens = [];
-            for (var i = 0, tokenRange; tokenRange = tokenRanges[i++]; ) {
-                tokens.push( convertCharRangeToToken(chars, tokenRange) );
-            }
-            return tokens;
+        // "If node is not a whitespace node, return false."
+        if (!isWhitespaceNode(node)) {
+            return false;
         }
 
-        var defaultCharacterOptions = {
-            includeBlockContentTrailingSpace: true,
-            includeSpaceBeforeBr: true,
-            includeSpaceBeforeBlock: true,
-            includePreLineTrailingSpace: true,
-            ignoreCharacters: ""
-        };
+        // "Let ancestor be node's parent."
+        var ancestor = node.parentNode;
 
-        function normalizeIgnoredCharacters(ignoredCharacters) {
-            // Check if character is ignored
-            var ignoredChars = ignoredCharacters || "";
-
-            // Normalize ignored characters into a string consisting of characters in ascending order of character code
-            var ignoredCharsArray = (typeof ignoredChars == "string") ? ignoredChars.split("") : ignoredChars;
-            ignoredCharsArray.sort(function(char1, char2) {
-                return char1.charCodeAt(0) - char2.charCodeAt(0);
-            });
-
-            /// Convert back to a string and remove duplicates
-            return ignoredCharsArray.join("").replace(/(.)\1+/g, "$1");
+        // "If ancestor is null, return true."
+        if (!ancestor) {
+            return true;
         }
 
-        var defaultCaretCharacterOptions = {
-            includeBlockContentTrailingSpace: !trailingSpaceBeforeLineBreakInPreLineCollapses,
-            includeSpaceBeforeBr: !trailingSpaceBeforeBrCollapses,
-            includeSpaceBeforeBlock: !trailingSpaceBeforeBlockCollapses,
-            includePreLineTrailingSpace: true
-        };
+        // "If the "display" property of some ancestor of node has resolved value "none", return true."
+        if (isHidden(node)) {
+            return true;
+        }
 
-        var defaultWordOptions = {
-            "en": {
-                wordRegex: /[a-z0-9]+('[a-z0-9]+)*/gi,
-                includeTrailingSpace: false,
-                tokenizer: defaultTokenizer
-            }
-        };
+        return false;
+    }
 
-        var defaultFindOptions = {
-            caseSensitive: false,
-            withinRange: null,
-            wholeWordsOnly: false,
-            wrap: false,
-            direction: "forward",
-            wordOptions: null,
-            characterOptions: null
-        };
+    function isCollapsedNode(node) {
+        var type = node.nodeType;
+        return type == 7 /* PROCESSING_INSTRUCTION */ ||
+            type == 8 /* COMMENT */ ||
+            isHidden(node) ||
+            /^(script|style)$/i.test(node.nodeName) ||
+            isVisibilityHiddenTextNode(node) ||
+            isCollapsedWhitespaceNode(node);
+    }
 
-        var defaultMoveOptions = {
-            wordOptions: null,
-            characterOptions: null
-        };
+    function isIgnoredNode(node, win) {
+        var type = node.nodeType;
+        return type == 7 /* PROCESSING_INSTRUCTION */ ||
+            type == 8 /* COMMENT */ ||
+            (type == 1 && getComputedDisplay(node, win) == "none");
+    }
 
-        var defaultExpandOptions = {
-            wordOptions: null,
-            characterOptions: null,
-            trim: false,
-            trimStart: true,
-            trimEnd: true
-        };
+    /*----------------------------------------------------------------------------------------------------------------*/
 
-        var defaultWordIteratorOptions = {
-            wordOptions: null,
-            characterOptions: null,
-            direction: "forward"
-        };
+    // Possibly overengineered caching system to prevent repeated DOM calls slowing everything down
 
-        function createWordOptions(options) {
-            var lang, defaults;
-            if (!options) {
-                return defaultWordOptions[defaultLanguage];
+    function Cache() {
+        this.store = {};
+    }
+
+    Cache.prototype = {
+        get: function(key) {
+            return this.store.hasOwnProperty(key) ? this.store[key] : null;
+        },
+
+        set: function(key, value) {
+            return this.store[key] = value;
+        }
+    };
+
+    var cachedCount = 0, uncachedCount = 0;
+
+    function createCachingGetter(methodName, func, objProperty) {
+        return function(args) {
+            var cache = this.cache;
+            if (cache.hasOwnProperty(methodName)) {
+                cachedCount++;
+                return cache[methodName];
             } else {
-                lang = options.language || defaultLanguage;
-                defaults = {};
-                extend(defaults, defaultWordOptions[lang] || defaultWordOptions[defaultLanguage]);
-                extend(defaults, options);
-                return defaults;
+                uncachedCount++;
+                var value = func.call(this, objProperty ? this[objProperty] : this, args);
+                cache[methodName] = value;
+                return value;
             }
-        }
-
-        function createNestedOptions(optionsParam, defaults) {
-            var options = createOptions(optionsParam, defaults);
-            if (defaults.hasOwnProperty("wordOptions")) {
-                options.wordOptions = createWordOptions(options.wordOptions);
-            }
-            if (defaults.hasOwnProperty("characterOptions")) {
-                options.characterOptions = createOptions(options.characterOptions, defaultCharacterOptions);
-            }
-            return options;
-        }
-
-        /*----------------------------------------------------------------------------------------------------------------*/
-
-        /* DOM utility functions */
-        var getComputedStyleProperty = dom.getComputedStyleProperty;
-
-        // Create cachable versions of DOM functions
-
-        // Test for old IE's incorrect display properties
-        var tableCssDisplayBlock;
-        (function() {
-            var table = document.createElement("table");
-            var body = getBody(document);
-            body.appendChild(table);
-            tableCssDisplayBlock = (getComputedStyleProperty(table, "display") == "block");
-            body.removeChild(table);
-        })();
-
-        var defaultDisplayValueForTag = {
-            table: "table",
-            caption: "table-caption",
-            colgroup: "table-column-group",
-            col: "table-column",
-            thead: "table-header-group",
-            tbody: "table-row-group",
-            tfoot: "table-footer-group",
-            tr: "table-row",
-            td: "table-cell",
-            th: "table-cell"
         };
+    }
 
-        // Corrects IE's "block" value for table-related elements
-        function getComputedDisplay(el, win) {
-            var display = getComputedStyleProperty(el, "display", win);
-            var tagName = el.tagName.toLowerCase();
-            return (display == "block" &&
-                    tableCssDisplayBlock &&
-                    defaultDisplayValueForTag.hasOwnProperty(tagName)) ?
-                defaultDisplayValueForTag[tagName] : display;
+    /*----------------------------------------------------------------------------------------------------------------*/
+
+    function NodeWrapper(node, session) {
+        this.node = node;
+        this.session = session;
+        this.cache = new Cache();
+        this.positions = new Cache();
+    }
+
+    var nodeProto = {
+        getPosition: function(offset) {
+            var positions = this.positions;
+            return positions.get(offset) || positions.set(offset, new Position(this, offset));
+        },
+
+        toString: function() {
+            return "[NodeWrapper(" + dom.inspectNode(this.node) + ")]";
         }
+    };
 
-        function isHidden(node) {
-            var ancestors = getAncestorsAndSelf(node);
-            for (var i = 0, len = ancestors.length; i < len; ++i) {
-                if (ancestors[i].nodeType == 1 && getComputedDisplay(ancestors[i]) == "none") {
+    NodeWrapper.prototype = nodeProto;
+
+    var EMPTY = "EMPTY",
+        NON_SPACE = "NON_SPACE",
+        UNCOLLAPSIBLE_SPACE = "UNCOLLAPSIBLE_SPACE",
+        COLLAPSIBLE_SPACE = "COLLAPSIBLE_SPACE",
+        TRAILING_SPACE_BEFORE_BLOCK = "TRAILING_SPACE_BEFORE_BLOCK",
+        TRAILING_SPACE_IN_BLOCK = "TRAILING_SPACE_IN_BLOCK",
+        TRAILING_SPACE_BEFORE_BR = "TRAILING_SPACE_BEFORE_BR",
+        PRE_LINE_TRAILING_SPACE_BEFORE_LINE_BREAK = "PRE_LINE_TRAILING_SPACE_BEFORE_LINE_BREAK",
+        TRAILING_LINE_BREAK_AFTER_BR = "TRAILING_LINE_BREAK_AFTER_BR",
+        INCLUDED_TRAILING_LINE_BREAK_AFTER_BR = "INCLUDED_TRAILING_LINE_BREAK_AFTER_BR";
+
+    extend(nodeProto, {
+        isCharacterDataNode: createCachingGetter("isCharacterDataNode", dom.isCharacterDataNode, "node"),
+        getNodeIndex: createCachingGetter("nodeIndex", dom.getNodeIndex, "node"),
+        getLength: createCachingGetter("nodeLength", dom.getNodeLength, "node"),
+        containsPositions: createCachingGetter("containsPositions", containsPositions, "node"),
+        isWhitespace: createCachingGetter("isWhitespace", isWhitespaceNode, "node"),
+        isCollapsedWhitespace: createCachingGetter("isCollapsedWhitespace", isCollapsedWhitespaceNode, "node"),
+        getComputedDisplay: createCachingGetter("computedDisplay", getComputedDisplay, "node"),
+        isCollapsed: createCachingGetter("collapsed", isCollapsedNode, "node"),
+        isIgnored: createCachingGetter("ignored", isIgnoredNode, "node"),
+        next: createCachingGetter("nextPos", nextNode, "node"),
+        previous: createCachingGetter("previous", previousNode, "node"),
+
+        getTextNodeInfo: createCachingGetter("textNodeInfo", function(textNode) {
+            var spaceRegex = null, collapseSpaces = false;
+            var cssWhitespace = getComputedStyleProperty(textNode.parentNode, "whiteSpace");
+            var preLine = (cssWhitespace == "pre-line");
+            if (preLine) {
+                spaceRegex = spacesMinusLineBreaksRegex;
+                collapseSpaces = true;
+            } else if (cssWhitespace == "normal" || cssWhitespace == "nowrap") {
+                spaceRegex = spacesRegex;
+                collapseSpaces = true;
+            }
+
+            return {
+                node: textNode,
+                text: textNode.data,
+                spaceRegex: spaceRegex,
+                collapseSpaces: collapseSpaces,
+                preLine: preLine
+            };
+        }, "node"),
+
+        hasInnerText: createCachingGetter("hasInnerText", function(el, backward) {
+            var session = this.session;
+            var posAfterEl = session.getPosition(el.parentNode, this.getNodeIndex() + 1);
+            var firstPosInEl = session.getPosition(el, 0);
+
+            var pos = backward ? posAfterEl : firstPosInEl;
+            var endPos = backward ? firstPosInEl : posAfterEl;
+
+            /*
+             <body><p>X  </p><p>Y</p></body>
+
+             Positions:
+
+             body:0:""
+             p:0:""
+             text:0:""
+             text:1:"X"
+             text:2:TRAILING_SPACE_IN_BLOCK
+             text:3:COLLAPSED_SPACE
+             p:1:""
+             body:1:"\n"
+             p:0:""
+             text:0:""
+             text:1:"Y"
+
+             A character is a TRAILING_SPACE_IN_BLOCK iff:
+
+             - There is no uncollapsed character after it within the visible containing block element
+
+             A character is a TRAILING_SPACE_BEFORE_BR iff:
+
+             - There is no uncollapsed character after it preceding a <br> element
+
+             An element has inner text iff
+
+             - It is not hidden
+             - It contains an uncollapsed character
+
+             All trailing spaces (pre-line, before <br>, end of block) require definite non-empty characters to render.
+             */
+
+            while (pos !== endPos) {
+                pos.prepopulateChar();
+                if (pos.isDefinitelyNonEmpty()) {
+                    return true;
+                }
+                pos = backward ? pos.previousVisible() : pos.nextVisible();
+            }
+
+            return false;
+        }, "node"),
+
+        isRenderedBlock: createCachingGetter("isRenderedBlock", function(el) {
+            // Ensure that a block element containing a <br> is considered to have inner text
+            var brs = el.getElementsByTagName("br");
+            for (var i = 0, len = brs.length; i < len; ++i) {
+                if (!isCollapsedNode(brs[i])) {
                     return true;
                 }
             }
+            return this.hasInnerText();
+        }, "node"),
 
-            return false;
-        }
-
-        function isVisibilityHiddenTextNode(textNode) {
-            var el;
-            return textNode.nodeType == 3 &&
-                (el = textNode.parentNode) &&
-                getComputedStyleProperty(el, "visibility") == "hidden";
-        }
-
-        /*----------------------------------------------------------------------------------------------------------------*/
-
-    
-        // "A block node is either an Element whose "display" property does not have
-        // resolved value "inline" or "inline-block" or "inline-table" or "none", or a
-        // Document, or a DocumentFragment."
-        function isBlockNode(node) {
-            return node &&
-                ((node.nodeType == 1 && !/^(inline(-block|-table)?|none)$/.test(getComputedDisplay(node))) ||
-                node.nodeType == 9 || node.nodeType == 11);
-        }
-
-        function getLastDescendantOrSelf(node) {
-            var lastChild = node.lastChild;
-            return lastChild ? getLastDescendantOrSelf(lastChild) : node;
-        }
-
-        function containsPositions(node) {
-            return dom.isCharacterDataNode(node) ||
-                !/^(area|base|basefont|br|col|frame|hr|img|input|isindex|link|meta|param)$/i.test(node.nodeName);
-        }
-
-        function getAncestors(node) {
-            var ancestors = [];
-            while (node.parentNode) {
-                ancestors.unshift(node.parentNode);
-                node = node.parentNode;
-            }
-            return ancestors;
-        }
-
-        function getAncestorsAndSelf(node) {
-            return getAncestors(node).concat([node]);
-        }
-
-        function nextNodeDescendants(node) {
-            while (node && !node.nextSibling) {
-                node = node.parentNode;
-            }
-            if (!node) {
-                return null;
-            }
-            return node.nextSibling;
-        }
-
-        function nextNode(node, excludeChildren) {
-            if (!excludeChildren && node.hasChildNodes()) {
-                return node.firstChild;
-            }
-            return nextNodeDescendants(node);
-        }
-
-        function previousNode(node) {
-            var previous = node.previousSibling;
-            if (previous) {
-                node = previous;
-                while (node.hasChildNodes()) {
-                    node = node.lastChild;
-                }
-                return node;
-            }
-            var parent = node.parentNode;
-            if (parent && parent.nodeType == 1) {
-                return parent;
-            }
-            return null;
-        }
-
-        // Adpated from Aryeh's code.
-        // "A whitespace node is either a Text node whose data is the empty string; or
-        // a Text node whose data consists only of one or more tabs (0x0009), line
-        // feeds (0x000A), carriage returns (0x000D), and/or spaces (0x0020), and whose
-        // parent is an Element whose resolved value for "white-space" is "normal" or
-        // "nowrap"; or a Text node whose data consists only of one or more tabs
-        // (0x0009), carriage returns (0x000D), and/or spaces (0x0020), and whose
-        // parent is an Element whose resolved value for "white-space" is "pre-line"."
-        function isWhitespaceNode(node) {
-            if (!node || node.nodeType != 3) {
-                return false;
-            }
-            var text = node.data;
-            if (text === "") {
-                return true;
-            }
-            var parent = node.parentNode;
-            if (!parent || parent.nodeType != 1) {
-                return false;
-            }
-            var computedWhiteSpace = getComputedStyleProperty(node.parentNode, "whiteSpace");
-
-            return (/^[\t\n\r ]+$/.test(text) && /^(normal|nowrap)$/.test(computedWhiteSpace)) ||
-                (/^[\t\r ]+$/.test(text) && computedWhiteSpace == "pre-line");
-        }
-
-        // Adpated from Aryeh's code.
-        // "node is a collapsed whitespace node if the following algorithm returns
-        // true:"
-        function isCollapsedWhitespaceNode(node) {
-            // "If node's data is the empty string, return true."
-            if (node.data === "") {
-                return true;
-            }
-
-            // "If node is not a whitespace node, return false."
-            if (!isWhitespaceNode(node)) {
-                return false;
-            }
-
-            // "Let ancestor be node's parent."
-            var ancestor = node.parentNode;
-
-            // "If ancestor is null, return true."
-            if (!ancestor) {
-                return true;
-            }
-
-            // "If the "display" property of some ancestor of node has resolved value "none", return true."
-            if (isHidden(node)) {
-                return true;
-            }
-
-            return false;
-        }
-
-        function isCollapsedNode(node) {
-            var type = node.nodeType;
-            return type == 7 /* PROCESSING_INSTRUCTION */ ||
-                type == 8 /* COMMENT */ ||
-                isHidden(node) ||
-                /^(script|style)$/i.test(node.nodeName) ||
-                isVisibilityHiddenTextNode(node) ||
-                isCollapsedWhitespaceNode(node);
-        }
-
-        function isIgnoredNode(node, win) {
-            var type = node.nodeType;
-            return type == 7 /* PROCESSING_INSTRUCTION */ ||
-                type == 8 /* COMMENT */ ||
-                (type == 1 && getComputedDisplay(node, win) == "none");
-        }
-
-        /*----------------------------------------------------------------------------------------------------------------*/
-
-        // Possibly overengineered caching system to prevent repeated DOM calls slowing everything down
-
-        function Cache() {
-            this.store = {};
-        }
-
-        Cache.prototype = {
-            get: function(key) {
-                return this.store.hasOwnProperty(key) ? this.store[key] : null;
-            },
-
-            set: function(key, value) {
-                return this.store[key] = value;
-            }
-        };
-
-        var cachedCount = 0, uncachedCount = 0;
-
-        function createCachingGetter(methodName, func, objProperty) {
-            return function(args) {
-                var cache = this.cache;
-                if (cache.hasOwnProperty(methodName)) {
-                    cachedCount++;
-                    return cache[methodName];
-                } else {
-                    uncachedCount++;
-                    var value = func.call(this, objProperty ? this[objProperty] : this, args);
-                    cache[methodName] = value;
-                    return value;
-                }
-            };
-        }
-
-        /*----------------------------------------------------------------------------------------------------------------*/
-
-        function NodeWrapper(node, session) {
-            this.node = node;
-            this.session = session;
-            this.cache = new Cache();
-            this.positions = new Cache();
-        }
-
-        var nodeProto = {
-            getPosition: function(offset) {
-                var positions = this.positions;
-                return positions.get(offset) || positions.set(offset, new Position(this, offset));
-            },
-
-            toString: function() {
-                return "[NodeWrapper(" + dom.inspectNode(this.node) + ")]";
-            }
-        };
-
-        NodeWrapper.prototype = nodeProto;
-
-        var EMPTY = "EMPTY",
-            NON_SPACE = "NON_SPACE",
-            UNCOLLAPSIBLE_SPACE = "UNCOLLAPSIBLE_SPACE",
-            COLLAPSIBLE_SPACE = "COLLAPSIBLE_SPACE",
-            TRAILING_SPACE_BEFORE_BLOCK = "TRAILING_SPACE_BEFORE_BLOCK",
-            TRAILING_SPACE_IN_BLOCK = "TRAILING_SPACE_IN_BLOCK",
-            TRAILING_SPACE_BEFORE_BR = "TRAILING_SPACE_BEFORE_BR",
-            PRE_LINE_TRAILING_SPACE_BEFORE_LINE_BREAK = "PRE_LINE_TRAILING_SPACE_BEFORE_LINE_BREAK",
-            TRAILING_LINE_BREAK_AFTER_BR = "TRAILING_LINE_BREAK_AFTER_BR",
-            INCLUDED_TRAILING_LINE_BREAK_AFTER_BR = "INCLUDED_TRAILING_LINE_BREAK_AFTER_BR";
-
-        extend(nodeProto, {
-            isCharacterDataNode: createCachingGetter("isCharacterDataNode", dom.isCharacterDataNode, "node"),
-            getNodeIndex: createCachingGetter("nodeIndex", dom.getNodeIndex, "node"),
-            getLength: createCachingGetter("nodeLength", dom.getNodeLength, "node"),
-            containsPositions: createCachingGetter("containsPositions", containsPositions, "node"),
-            isWhitespace: createCachingGetter("isWhitespace", isWhitespaceNode, "node"),
-            isCollapsedWhitespace: createCachingGetter("isCollapsedWhitespace", isCollapsedWhitespaceNode, "node"),
-            getComputedDisplay: createCachingGetter("computedDisplay", getComputedDisplay, "node"),
-            isCollapsed: createCachingGetter("collapsed", isCollapsedNode, "node"),
-            isIgnored: createCachingGetter("ignored", isIgnoredNode, "node"),
-            next: createCachingGetter("nextPos", nextNode, "node"),
-            previous: createCachingGetter("previous", previousNode, "node"),
-
-            getTextNodeInfo: createCachingGetter("textNodeInfo", function(textNode) {
-                var spaceRegex = null, collapseSpaces = false;
-                var cssWhitespace = getComputedStyleProperty(textNode.parentNode, "whiteSpace");
-                var preLine = (cssWhitespace == "pre-line");
-                if (preLine) {
-                    spaceRegex = spacesMinusLineBreaksRegex;
-                    collapseSpaces = true;
-                } else if (cssWhitespace == "normal" || cssWhitespace == "nowrap") {
-                    spaceRegex = spacesRegex;
-                    collapseSpaces = true;
-                }
-
-                return {
-                    node: textNode,
-                    text: textNode.data,
-                    spaceRegex: spaceRegex,
-                    collapseSpaces: collapseSpaces,
-                    preLine: preLine
-                };
-            }, "node"),
-
-            hasInnerText: createCachingGetter("hasInnerText", function(el, backward) {
-                var session = this.session;
-                var posAfterEl = session.getPosition(el.parentNode, this.getNodeIndex() + 1);
-                var firstPosInEl = session.getPosition(el, 0);
-
-                var pos = backward ? posAfterEl : firstPosInEl;
-                var endPos = backward ? firstPosInEl : posAfterEl;
-
-                /*
-                 <body><p>X  </p><p>Y</p></body>
-
-                 Positions:
-
-                 body:0:""
-                 p:0:""
-                 text:0:""
-                 text:1:"X"
-                 text:2:TRAILING_SPACE_IN_BLOCK
-                 text:3:COLLAPSED_SPACE
-                 p:1:""
-                 body:1:"\n"
-                 p:0:""
-                 text:0:""
-                 text:1:"Y"
-
-                 A character is a TRAILING_SPACE_IN_BLOCK iff:
-
-                 - There is no uncollapsed character after it within the visible containing block element
-
-                 A character is a TRAILING_SPACE_BEFORE_BR iff:
-
-                 - There is no uncollapsed character after it preceding a <br> element
-
-                 An element has inner text iff
-
-                 - It is not hidden
-                 - It contains an uncollapsed character
-
-                 All trailing spaces (pre-line, before <br>, end of block) require definite non-empty characters to render.
-                 */
-
-                while (pos !== endPos) {
-                    pos.prepopulateChar();
-                    if (pos.isDefinitelyNonEmpty()) {
-                        return true;
-                    }
-                    pos = backward ? pos.previousVisible() : pos.nextVisible();
-                }
-
-                return false;
-            }, "node"),
-
-            isRenderedBlock: createCachingGetter("isRenderedBlock", function(el) {
-                // Ensure that a block element containing a <br> is considered to have inner text
-                var brs = el.getElementsByTagName("br");
-                for (var i = 0, len = brs.length; i < len; ++i) {
-                    if (!isCollapsedNode(brs[i])) {
-                        return true;
-                    }
-                }
-                return this.hasInnerText();
-            }, "node"),
-
-            getTrailingSpace: createCachingGetter("trailingSpace", function(el) {
-                if (el.tagName.toLowerCase() == "br") {
-                    return "";
-                } else {
-                    switch (this.getComputedDisplay()) {
-                        case "inline":
-                            var child = el.lastChild;
-                            while (child) {
-                                if (!isIgnoredNode(child)) {
-                                    return (child.nodeType == 1) ? this.session.getNodeWrapper(child).getTrailingSpace() : "";
-                                }
-                                child = child.previousSibling;
-                            }
-                            break;
-                        case "inline-block":
-                        case "inline-table":
-                        case "none":
-                        case "table-column":
-                        case "table-column-group":
-                            break;
-                        case "table-cell":
-                            return "\t";
-                        default:
-                            return this.isRenderedBlock(true) ? "\n" : "";
-                    }
-                }
+        getTrailingSpace: createCachingGetter("trailingSpace", function(el) {
+            if (el.tagName.toLowerCase() == "br") {
                 return "";
-            }, "node"),
-
-            getLeadingSpace: createCachingGetter("leadingSpace", function(el) {
+            } else {
                 switch (this.getComputedDisplay()) {
                     case "inline":
+                        var child = el.lastChild;
+                        while (child) {
+                            if (!isIgnoredNode(child)) {
+                                return (child.nodeType == 1) ? this.session.getNodeWrapper(child).getTrailingSpace() : "";
+                            }
+                            child = child.previousSibling;
+                        }
+                        break;
                     case "inline-block":
                     case "inline-table":
                     case "none":
                     case "table-column":
                     case "table-column-group":
-                    case "table-cell":
                         break;
+                    case "table-cell":
+                        return "\t";
                     default:
-                        return this.isRenderedBlock(false) ? "\n" : "";
+                        return this.isRenderedBlock(true) ? "\n" : "";
                 }
-                return "";
-            }, "node")
-        });
+            }
+            return "";
+        }, "node"),
 
-        /*----------------------------------------------------------------------------------------------------------------*/
+        getLeadingSpace: createCachingGetter("leadingSpace", function(el) {
+            switch (this.getComputedDisplay()) {
+                case "inline":
+                case "inline-block":
+                case "inline-table":
+                case "none":
+                case "table-column":
+                case "table-column-group":
+                case "table-cell":
+                    break;
+                default:
+                    return this.isRenderedBlock(false) ? "\n" : "";
+            }
+            return "";
+        }, "node")
+    });
 
-        function Position(nodeWrapper, offset) {
-            this.offset = offset;
-            this.nodeWrapper = nodeWrapper;
-            this.node = nodeWrapper.node;
-            this.session = nodeWrapper.session;
-            this.cache = new Cache();
-        }
+    /*----------------------------------------------------------------------------------------------------------------*/
 
-        function inspectPosition() {
-            return "[Position(" + dom.inspectNode(this.node) + ":" + this.offset + ")]";
-        }
+    function Position(nodeWrapper, offset) {
+        this.offset = offset;
+        this.nodeWrapper = nodeWrapper;
+        this.node = nodeWrapper.node;
+        this.session = nodeWrapper.session;
+        this.cache = new Cache();
+    }
 
-        var positionProto = {
-            character: "",
-            characterType: EMPTY,
-            isBr: false,
+    function inspectPosition() {
+        return "[Position(" + dom.inspectNode(this.node) + ":" + this.offset + ")]";
+    }
 
-            /*
-            This method:
-            - Fully populates positions that have characters that can be determined independently of any other characters.
-            - Populates most types of space positions with a provisional character. The character is finalized later.
-             */
-            prepopulateChar: function() {
-                var pos = this;
-                if (!pos.prepopulatedChar) {
-                    var node = pos.node, offset = pos.offset;
-                    var visibleChar = "", charType = EMPTY;
-                    var finalizedChar = false;
-                    if (offset > 0) {
-                        if (node.nodeType == 3) {
-                            var text = node.data;
-                            var textChar = text.charAt(offset - 1);
+    var positionProto = {
+        character: "",
+        characterType: EMPTY,
+        isBr: false,
 
-                            var nodeInfo = pos.nodeWrapper.getTextNodeInfo();
-                            var spaceRegex = nodeInfo.spaceRegex;
-                            if (nodeInfo.collapseSpaces) {
-                                if (spaceRegex.test(textChar)) {
-                                    // "If the character at position is from set, append a single space (U+0020) to newdata and advance
-                                    // position until the character at position is not from set."
+        /*
+        This method:
+        - Fully populates positions that have characters that can be determined independently of any other characters.
+        - Populates most types of space positions with a provisional character. The character is finalized later.
+         */
+        prepopulateChar: function() {
+            var pos = this;
+            if (!pos.prepopulatedChar) {
+                var node = pos.node, offset = pos.offset;
+                var visibleChar = "", charType = EMPTY;
+                var finalizedChar = false;
+                if (offset > 0) {
+                    if (node.nodeType == 3) {
+                        var text = node.data;
+                        var textChar = text.charAt(offset - 1);
 
-                                    // We also need to check for the case where we're in a pre-line and we have a space preceding a
-                                    // line break, because such spaces are collapsed in some browsers
-                                    if (offset > 1 && spaceRegex.test(text.charAt(offset - 2))) {
-                                    } else if (nodeInfo.preLine && text.charAt(offset) === "\n") {
-                                        visibleChar = " ";
-                                        charType = PRE_LINE_TRAILING_SPACE_BEFORE_LINE_BREAK;
-                                    } else {
-                                        visibleChar = " ";
-                                        //pos.checkForFollowingLineBreak = true;
-                                        charType = COLLAPSIBLE_SPACE;
-                                    }
+                        var nodeInfo = pos.nodeWrapper.getTextNodeInfo();
+                        var spaceRegex = nodeInfo.spaceRegex;
+                        if (nodeInfo.collapseSpaces) {
+                            if (spaceRegex.test(textChar)) {
+                                // "If the character at position is from set, append a single space (U+0020) to newdata and advance
+                                // position until the character at position is not from set."
+
+                                // We also need to check for the case where we're in a pre-line and we have a space preceding a
+                                // line break, because such spaces are collapsed in some browsers
+                                if (offset > 1 && spaceRegex.test(text.charAt(offset - 2))) {
+                                } else if (nodeInfo.preLine && text.charAt(offset) === "\n") {
+                                    visibleChar = " ";
+                                    charType = PRE_LINE_TRAILING_SPACE_BEFORE_LINE_BREAK;
                                 } else {
-                                    visibleChar = textChar;
-                                    charType = NON_SPACE;
-                                    finalizedChar = true;
+                                    visibleChar = " ";
+                                    //pos.checkForFollowingLineBreak = true;
+                                    charType = COLLAPSIBLE_SPACE;
                                 }
                             } else {
                                 visibleChar = textChar;
-                                charType = UNCOLLAPSIBLE_SPACE;
+                                charType = NON_SPACE;
                                 finalizedChar = true;
                             }
                         } else {
-                            var nodePassed = node.childNodes[offset - 1];
-                            if (nodePassed && nodePassed.nodeType == 1 && !isCollapsedNode(nodePassed)) {
-                                if (nodePassed.tagName.toLowerCase() == "br") {
-                                    visibleChar = "\n";
-                                    pos.isBr = true;
-                                    charType = COLLAPSIBLE_SPACE;
-                                    finalizedChar = false;
-                                } else {
-                                    pos.checkForTrailingSpace = true;
-                                }
-                            }
-
-                            // Check the leading space of the next node for the case when a block element follows an inline
-                            // element or text node. In that case, there is an implied line break between the two nodes.
-                            if (!visibleChar) {
-                                var nextNode = node.childNodes[offset];
-                                if (nextNode && nextNode.nodeType == 1 && !isCollapsedNode(nextNode)) {
-                                    pos.checkForLeadingSpace = true;
-                                }
-                            }
-                        }
-                    }
-
-                    pos.prepopulatedChar = true;
-                    pos.character = visibleChar;
-                    pos.characterType = charType;
-                    pos.isCharInvariant = finalizedChar;
-                }
-            },
-
-            isDefinitelyNonEmpty: function() {
-                var charType = this.characterType;
-                return charType == NON_SPACE || charType == UNCOLLAPSIBLE_SPACE;
-            },
-
-            // Resolve leading and trailing spaces, which may involve prepopulating other positions
-            resolveLeadingAndTrailingSpaces: function() {
-                if (!this.prepopulatedChar) {
-                    this.prepopulateChar();
-                }
-                if (this.checkForTrailingSpace) {
-                    var trailingSpace = this.session.getNodeWrapper(this.node.childNodes[this.offset - 1]).getTrailingSpace();
-                    if (trailingSpace) {
-                        this.isTrailingSpace = true;
-                        this.character = trailingSpace;
-                        this.characterType = COLLAPSIBLE_SPACE;
-                    }
-                    this.checkForTrailingSpace = false;
-                }
-                if (this.checkForLeadingSpace) {
-                    var leadingSpace = this.session.getNodeWrapper(this.node.childNodes[this.offset]).getLeadingSpace();
-                    if (leadingSpace) {
-                        this.isLeadingSpace = true;
-                        this.character = leadingSpace;
-                        this.characterType = COLLAPSIBLE_SPACE;
-                    }
-                    this.checkForLeadingSpace = false;
-                }
-            },
-
-            getPrecedingUncollapsedPosition: function(characterOptions) {
-                var pos = this, character;
-                while ( (pos = pos.previousVisible()) ) {
-                    character = pos.getCharacter(characterOptions);
-                    if (character !== "") {
-                        return pos;
-                    }
-                }
-
-                return null;
-            },
-
-            getCharacter: function(characterOptions) {
-                this.resolveLeadingAndTrailingSpaces();
-
-                var thisChar = this.character, returnChar;
-
-                // Check if character is ignored
-                var ignoredChars = normalizeIgnoredCharacters(characterOptions.ignoreCharacters);
-                var isIgnoredCharacter = (thisChar !== "" && ignoredChars.indexOf(thisChar) > -1);
-
-                // Check if this position's  character is invariant (i.e. not dependent on character options) and return it
-                // if so
-                if (this.isCharInvariant) {
-                    returnChar = isIgnoredCharacter ? "" : thisChar;
-                    return returnChar;
-                }
-
-                var cacheKey = ["character", characterOptions.includeSpaceBeforeBr, characterOptions.includeBlockContentTrailingSpace, characterOptions.includePreLineTrailingSpace, ignoredChars].join("_");
-                var cachedChar = this.cache.get(cacheKey);
-                if (cachedChar !== null) {
-                    return cachedChar;
-                }
-
-                // We need to actually get the character now
-                var character = "";
-                var collapsible = (this.characterType == COLLAPSIBLE_SPACE);
-
-                var nextPos, previousPos;
-                var gotPreviousPos = false;
-                var pos = this;
-
-                function getPreviousPos() {
-                    if (!gotPreviousPos) {
-                        previousPos = pos.getPrecedingUncollapsedPosition(characterOptions);
-                        gotPreviousPos = true;
-                    }
-                    return previousPos;
-                }
-
-                // Disallow a collapsible space that is followed by a line break or is the last character
-                if (collapsible) {
-                    // Allow a trailing space that we've previously determined should be included
-                    if (this.type == INCLUDED_TRAILING_LINE_BREAK_AFTER_BR) {
-                        character = "\n";
-                    }
-                    // Disallow a collapsible space that follows a trailing space or line break, or is the first character,
-                    // or follows a collapsible included space
-                    else if (thisChar == " " &&
-                            (!getPreviousPos() || previousPos.isTrailingSpace || previousPos.character == "\n" || (previousPos.character == " " && previousPos.characterType == COLLAPSIBLE_SPACE))) {
-                    }
-                    // Allow a leading line break unless it follows a line break
-                    else if (thisChar == "\n" && this.isLeadingSpace) {
-                        if (getPreviousPos() && previousPos.character != "\n") {
-                            character = "\n";
-                        } else {
+                            visibleChar = textChar;
+                            charType = UNCOLLAPSIBLE_SPACE;
+                            finalizedChar = true;
                         }
                     } else {
-                        nextPos = this.nextUncollapsed();
-                        if (nextPos) {
-                            if (nextPos.isBr) {
-                                this.type = TRAILING_SPACE_BEFORE_BR;
-                            } else if (nextPos.isTrailingSpace && nextPos.character == "\n") {
-                                this.type = TRAILING_SPACE_IN_BLOCK;
-                            } else if (nextPos.isLeadingSpace && nextPos.character == "\n") {
-                                this.type = TRAILING_SPACE_BEFORE_BLOCK;
-                            }
-
-                            if (nextPos.character == "\n") {
-                                if (this.type == TRAILING_SPACE_BEFORE_BR && !characterOptions.includeSpaceBeforeBr) {
-                                } else if (this.type == TRAILING_SPACE_BEFORE_BLOCK && !characterOptions.includeSpaceBeforeBlock) {
-                                } else if (this.type == TRAILING_SPACE_IN_BLOCK && nextPos.isTrailingSpace && !characterOptions.includeBlockContentTrailingSpace) {
-                                } else if (this.type == PRE_LINE_TRAILING_SPACE_BEFORE_LINE_BREAK && nextPos.type == NON_SPACE && !characterOptions.includePreLineTrailingSpace) {
-                                } else if (thisChar == "\n") {
-                                    if (nextPos.isTrailingSpace) {
-                                        if (this.isTrailingSpace) {
-                                        } else if (this.isBr) {
-                                            nextPos.type = TRAILING_LINE_BREAK_AFTER_BR;
-
-                                            if (getPreviousPos() && previousPos.isLeadingSpace && !previousPos.isTrailingSpace && previousPos.character == "\n") {
-                                                nextPos.character = "";
-                                            } else {
-                                                nextPos.type = INCLUDED_TRAILING_LINE_BREAK_AFTER_BR;
-                                            }
-                                        }
-                                    } else {
-                                        character = "\n";
-                                    }
-                                } else if (thisChar == " ") {
-                                    character = " ";
-                                } else {
-                                }
+                        var nodePassed = node.childNodes[offset - 1];
+                        if (nodePassed && nodePassed.nodeType == 1 && !isCollapsedNode(nodePassed)) {
+                            if (nodePassed.tagName.toLowerCase() == "br") {
+                                visibleChar = "\n";
+                                pos.isBr = true;
+                                charType = COLLAPSIBLE_SPACE;
+                                finalizedChar = false;
                             } else {
-                                character = thisChar;
+                                pos.checkForTrailingSpace = true;
                             }
-                        } else {
+                        }
+
+                        // Check the leading space of the next node for the case when a block element follows an inline
+                        // element or text node. In that case, there is an implied line break between the two nodes.
+                        if (!visibleChar) {
+                            var nextNode = node.childNodes[offset];
+                            if (nextNode && nextNode.nodeType == 1 && !isCollapsedNode(nextNode)) {
+                                pos.checkForLeadingSpace = true;
+                            }
                         }
                     }
                 }
 
-                if (ignoredChars.indexOf(character) > -1) {
-                    character = "";
-                }
-
-
-                this.cache.set(cacheKey, character);
-
-                return character;
-            },
-
-            equals: function(pos) {
-                return !!pos && this.node === pos.node && this.offset === pos.offset;
-            },
-
-            inspect: inspectPosition,
-
-            toString: function() {
-                return this.character;
+                pos.prepopulatedChar = true;
+                pos.character = visibleChar;
+                pos.characterType = charType;
+                pos.isCharInvariant = finalizedChar;
             }
-        };
+        },
 
-        Position.prototype = positionProto;
+        isDefinitelyNonEmpty: function() {
+            var charType = this.characterType;
+            return charType == NON_SPACE || charType == UNCOLLAPSIBLE_SPACE;
+        },
 
-        extend(positionProto, {
-            next: createCachingGetter("nextPos", function(pos) {
-                var nodeWrapper = pos.nodeWrapper, node = pos.node, offset = pos.offset, session = nodeWrapper.session;
-                if (!node) {
-                    return null;
+        // Resolve leading and trailing spaces, which may involve prepopulating other positions
+        resolveLeadingAndTrailingSpaces: function() {
+            if (!this.prepopulatedChar) {
+                this.prepopulateChar();
+            }
+            if (this.checkForTrailingSpace) {
+                var trailingSpace = this.session.getNodeWrapper(this.node.childNodes[this.offset - 1]).getTrailingSpace();
+                if (trailingSpace) {
+                    this.isTrailingSpace = true;
+                    this.character = trailingSpace;
+                    this.characterType = COLLAPSIBLE_SPACE;
                 }
-                var nextNode, nextOffset, child;
-                if (offset == nodeWrapper.getLength()) {
-                    // Move onto the next node
-                    nextNode = node.parentNode;
-                    nextOffset = nextNode ? nodeWrapper.getNodeIndex() + 1 : 0;
+                this.checkForTrailingSpace = false;
+            }
+            if (this.checkForLeadingSpace) {
+                var leadingSpace = this.session.getNodeWrapper(this.node.childNodes[this.offset]).getLeadingSpace();
+                if (leadingSpace) {
+                    this.isLeadingSpace = true;
+                    this.character = leadingSpace;
+                    this.characterType = COLLAPSIBLE_SPACE;
+                }
+                this.checkForLeadingSpace = false;
+            }
+        },
+
+        getPrecedingUncollapsedPosition: function(characterOptions) {
+            var pos = this, character;
+            while ( (pos = pos.previousVisible()) ) {
+                character = pos.getCharacter(characterOptions);
+                if (character !== "") {
+                    return pos;
+                }
+            }
+
+            return null;
+        },
+
+        getCharacter: function(characterOptions) {
+            this.resolveLeadingAndTrailingSpaces();
+
+            var thisChar = this.character, returnChar;
+
+            // Check if character is ignored
+            var ignoredChars = normalizeIgnoredCharacters(characterOptions.ignoreCharacters);
+            var isIgnoredCharacter = (thisChar !== "" && ignoredChars.indexOf(thisChar) > -1);
+
+            // Check if this position's  character is invariant (i.e. not dependent on character options) and return it
+            // if so
+            if (this.isCharInvariant) {
+                returnChar = isIgnoredCharacter ? "" : thisChar;
+                return returnChar;
+            }
+
+            var cacheKey = ["character", characterOptions.includeSpaceBeforeBr, characterOptions.includeBlockContentTrailingSpace, characterOptions.includePreLineTrailingSpace, ignoredChars].join("_");
+            var cachedChar = this.cache.get(cacheKey);
+            if (cachedChar !== null) {
+                return cachedChar;
+            }
+
+            // We need to actually get the character now
+            var character = "";
+            var collapsible = (this.characterType == COLLAPSIBLE_SPACE);
+
+            var nextPos, previousPos;
+            var gotPreviousPos = false;
+            var pos = this;
+
+            function getPreviousPos() {
+                if (!gotPreviousPos) {
+                    previousPos = pos.getPrecedingUncollapsedPosition(characterOptions);
+                    gotPreviousPos = true;
+                }
+                return previousPos;
+            }
+
+            // Disallow a collapsible space that is followed by a line break or is the last character
+            if (collapsible) {
+                // Allow a trailing space that we've previously determined should be included
+                if (this.type == INCLUDED_TRAILING_LINE_BREAK_AFTER_BR) {
+                    character = "\n";
+                }
+                // Disallow a collapsible space that follows a trailing space or line break, or is the first character,
+                // or follows a collapsible included space
+                else if (thisChar == " " &&
+                        (!getPreviousPos() || previousPos.isTrailingSpace || previousPos.character == "\n" || (previousPos.character == " " && previousPos.characterType == COLLAPSIBLE_SPACE))) {
+                }
+                // Allow a leading line break unless it follows a line break
+                else if (thisChar == "\n" && this.isLeadingSpace) {
+                    if (getPreviousPos() && previousPos.character != "\n") {
+                        character = "\n";
+                    } else {
+                    }
                 } else {
-                    if (nodeWrapper.isCharacterDataNode()) {
+                    nextPos = this.nextUncollapsed();
+                    if (nextPos) {
+                        if (nextPos.isBr) {
+                            this.type = TRAILING_SPACE_BEFORE_BR;
+                        } else if (nextPos.isTrailingSpace && nextPos.character == "\n") {
+                            this.type = TRAILING_SPACE_IN_BLOCK;
+                        } else if (nextPos.isLeadingSpace && nextPos.character == "\n") {
+                            this.type = TRAILING_SPACE_BEFORE_BLOCK;
+                        }
+
+                        if (nextPos.character == "\n") {
+                            if (this.type == TRAILING_SPACE_BEFORE_BR && !characterOptions.includeSpaceBeforeBr) {
+                            } else if (this.type == TRAILING_SPACE_BEFORE_BLOCK && !characterOptions.includeSpaceBeforeBlock) {
+                            } else if (this.type == TRAILING_SPACE_IN_BLOCK && nextPos.isTrailingSpace && !characterOptions.includeBlockContentTrailingSpace) {
+                            } else if (this.type == PRE_LINE_TRAILING_SPACE_BEFORE_LINE_BREAK && nextPos.type == NON_SPACE && !characterOptions.includePreLineTrailingSpace) {
+                            } else if (thisChar == "\n") {
+                                if (nextPos.isTrailingSpace) {
+                                    if (this.isTrailingSpace) {
+                                    } else if (this.isBr) {
+                                        nextPos.type = TRAILING_LINE_BREAK_AFTER_BR;
+
+                                        if (getPreviousPos() && previousPos.isLeadingSpace && !previousPos.isTrailingSpace && previousPos.character == "\n") {
+                                            nextPos.character = "";
+                                        } else {
+                                            nextPos.type = INCLUDED_TRAILING_LINE_BREAK_AFTER_BR;
+                                        }
+                                    }
+                                } else {
+                                    character = "\n";
+                                }
+                            } else if (thisChar == " ") {
+                                character = " ";
+                            } else {
+                            }
+                        } else {
+                            character = thisChar;
+                        }
+                    } else {
+                    }
+                }
+            }
+
+            if (ignoredChars.indexOf(character) > -1) {
+                character = "";
+            }
+
+
+            this.cache.set(cacheKey, character);
+
+            return character;
+        },
+
+        equals: function(pos) {
+            return !!pos && this.node === pos.node && this.offset === pos.offset;
+        },
+
+        inspect: inspectPosition,
+
+        toString: function() {
+            return this.character;
+        }
+    };
+
+    Position.prototype = positionProto;
+
+    extend(positionProto, {
+        next: createCachingGetter("nextPos", function(pos) {
+            var nodeWrapper = pos.nodeWrapper, node = pos.node, offset = pos.offset, session = nodeWrapper.session;
+            if (!node) {
+                return null;
+            }
+            var nextNode, nextOffset, child;
+            if (offset == nodeWrapper.getLength()) {
+                // Move onto the next node
+                nextNode = node.parentNode;
+                nextOffset = nextNode ? nodeWrapper.getNodeIndex() + 1 : 0;
+            } else {
+                if (nodeWrapper.isCharacterDataNode()) {
+                    nextNode = node;
+                    nextOffset = offset + 1;
+                } else {
+                    child = node.childNodes[offset];
+                    // Go into the children next, if children there are
+                    if (session.getNodeWrapper(child).containsPositions()) {
+                        nextNode = child;
+                        nextOffset = 0;
+                    } else {
                         nextNode = node;
                         nextOffset = offset + 1;
-                    } else {
-                        child = node.childNodes[offset];
-                        // Go into the children next, if children there are
-                        if (session.getNodeWrapper(child).containsPositions()) {
-                            nextNode = child;
-                            nextOffset = 0;
-                        } else {
-                            nextNode = node;
-                            nextOffset = offset + 1;
-                        }
                     }
                 }
+            }
 
-                return nextNode ? session.getPosition(nextNode, nextOffset) : null;
-            }),
+            return nextNode ? session.getPosition(nextNode, nextOffset) : null;
+        }),
 
-            previous: createCachingGetter("previous", function(pos) {
-                var nodeWrapper = pos.nodeWrapper, node = pos.node, offset = pos.offset, session = nodeWrapper.session;
-                var previousNode, previousOffset, child;
-                if (offset == 0) {
-                    previousNode = node.parentNode;
-                    previousOffset = previousNode ? nodeWrapper.getNodeIndex() : 0;
+        previous: createCachingGetter("previous", function(pos) {
+            var nodeWrapper = pos.nodeWrapper, node = pos.node, offset = pos.offset, session = nodeWrapper.session;
+            var previousNode, previousOffset, child;
+            if (offset == 0) {
+                previousNode = node.parentNode;
+                previousOffset = previousNode ? nodeWrapper.getNodeIndex() : 0;
+            } else {
+                if (nodeWrapper.isCharacterDataNode()) {
+                    previousNode = node;
+                    previousOffset = offset - 1;
                 } else {
-                    if (nodeWrapper.isCharacterDataNode()) {
+                    child = node.childNodes[offset - 1];
+                    // Go into the children next, if children there are
+                    if (session.getNodeWrapper(child).containsPositions()) {
+                        previousNode = child;
+                        previousOffset = dom.getNodeLength(child);
+                    } else {
                         previousNode = node;
                         previousOffset = offset - 1;
-                    } else {
-                        child = node.childNodes[offset - 1];
-                        // Go into the children next, if children there are
-                        if (session.getNodeWrapper(child).containsPositions()) {
-                            previousNode = child;
-                            previousOffset = dom.getNodeLength(child);
-                        } else {
-                            previousNode = node;
-                            previousOffset = offset - 1;
-                        }
                     }
                 }
-                return previousNode ? session.getPosition(previousNode, previousOffset) : null;
-            }),
+            }
+            return previousNode ? session.getPosition(previousNode, previousOffset) : null;
+        }),
 
-            /*
-             Next and previous position moving functions that filter out
+        /*
+         Next and previous position moving functions that filter out
 
-             - Hidden (CSS visibility/display) elements
-             - Script and style elements
-             */
-            nextVisible: createCachingGetter("nextVisible", function(pos) {
-                var next = pos.next();
-                if (!next) {
-                    return null;
-                }
-                var nodeWrapper = next.nodeWrapper, node = next.node;
-                var newPos = next;
-                if (nodeWrapper.isCollapsed()) {
-                    // We're skipping this node and all its descendants
-                    newPos = nodeWrapper.session.getPosition(node.parentNode, nodeWrapper.getNodeIndex() + 1);
-                }
-                return newPos;
-            }),
-
-            nextUncollapsed: createCachingGetter("nextUncollapsed", function(pos) {
-                var nextPos = pos;
-                while ( (nextPos = nextPos.nextVisible()) ) {
-                    nextPos.resolveLeadingAndTrailingSpaces();
-                    if (nextPos.character !== "") {
-                        return nextPos;
-                    }
-                }
+         - Hidden (CSS visibility/display) elements
+         - Script and style elements
+         */
+        nextVisible: createCachingGetter("nextVisible", function(pos) {
+            var next = pos.next();
+            if (!next) {
                 return null;
-            }),
+            }
+            var nodeWrapper = next.nodeWrapper, node = next.node;
+            var newPos = next;
+            if (nodeWrapper.isCollapsed()) {
+                // We're skipping this node and all its descendants
+                newPos = nodeWrapper.session.getPosition(node.parentNode, nodeWrapper.getNodeIndex() + 1);
+            }
+            return newPos;
+        }),
 
-            previousVisible: createCachingGetter("previousVisible", function(pos) {
-                var previous = pos.previous();
-                if (!previous) {
+        nextUncollapsed: createCachingGetter("nextUncollapsed", function(pos) {
+            var nextPos = pos;
+            while ( (nextPos = nextPos.nextVisible()) ) {
+                nextPos.resolveLeadingAndTrailingSpaces();
+                if (nextPos.character !== "") {
+                    return nextPos;
+                }
+            }
+            return null;
+        }),
+
+        previousVisible: createCachingGetter("previousVisible", function(pos) {
+            var previous = pos.previous();
+            if (!previous) {
+                return null;
+            }
+            var nodeWrapper = previous.nodeWrapper, node = previous.node;
+            var newPos = previous;
+            if (nodeWrapper.isCollapsed()) {
+                // We're skipping this node and all its descendants
+                newPos = nodeWrapper.session.getPosition(node.parentNode, nodeWrapper.getNodeIndex());
+            }
+            return newPos;
+        })
+    });
+
+    /*----------------------------------------------------------------------------------------------------------------*/
+
+    var currentSession = null;
+
+    var Session = (function() {
+        function createWrapperCache(nodeProperty) {
+            var cache = new Cache();
+
+            return {
+                get: function(node) {
+                    var wrappersByProperty = cache.get(node[nodeProperty]);
+                    if (wrappersByProperty) {
+                        for (var i = 0, wrapper; wrapper = wrappersByProperty[i++]; ) {
+                            if (wrapper.node === node) {
+                                return wrapper;
+                            }
+                        }
+                    }
                     return null;
-                }
-                var nodeWrapper = previous.nodeWrapper, node = previous.node;
-                var newPos = previous;
-                if (nodeWrapper.isCollapsed()) {
-                    // We're skipping this node and all its descendants
-                    newPos = nodeWrapper.session.getPosition(node.parentNode, nodeWrapper.getNodeIndex());
-                }
-                return newPos;
-            })
-        });
-
-        /*----------------------------------------------------------------------------------------------------------------*/
-
-        var currentSession = null;
-
-        var Session = (function() {
-            function createWrapperCache(nodeProperty) {
-                var cache = new Cache();
-
-                return {
-                    get: function(node) {
-                        var wrappersByProperty = cache.get(node[nodeProperty]);
-                        if (wrappersByProperty) {
-                            for (var i = 0, wrapper; wrapper = wrappersByProperty[i++]; ) {
-                                if (wrapper.node === node) {
-                                    return wrapper;
-                                }
-                            }
-                        }
-                        return null;
-                    },
-
-                    set: function(nodeWrapper) {
-                        var property = nodeWrapper.node[nodeProperty];
-                        var wrappersByProperty = cache.get(property) || cache.set(property, []);
-                        wrappersByProperty.push(nodeWrapper);
-                    }
-                };
-            }
-
-            var uniqueIDSupported = util.isHostProperty(document.documentElement, "uniqueID");
-
-            function Session() {
-                this.initCaches();
-            }
-
-            Session.prototype = {
-                initCaches: function() {
-                    this.elementCache = uniqueIDSupported ? (function() {
-                        var elementsCache = new Cache();
-
-                        return {
-                            get: function(el) {
-                                return elementsCache.get(el.uniqueID);
-                            },
-
-                            set: function(elWrapper) {
-                                elementsCache.set(elWrapper.node.uniqueID, elWrapper);
-                            }
-                        };
-                    })() : createWrapperCache("tagName");
-
-                    // Store text nodes keyed by data, although we may need to truncate this
-                    this.textNodeCache = createWrapperCache("data");
-                    this.otherNodeCache = createWrapperCache("nodeName");
                 },
 
-                getNodeWrapper: function(node) {
-                    var wrapperCache;
-                    switch (node.nodeType) {
-                        case 1:
-                            wrapperCache = this.elementCache;
-                            break;
-                        case 3:
-                            wrapperCache = this.textNodeCache;
-                            break;
-                        default:
-                            wrapperCache = this.otherNodeCache;
-                            break;
-                    }
-
-                    var wrapper = wrapperCache.get(node);
-                    if (!wrapper) {
-                        wrapper = new NodeWrapper(node, this);
-                        wrapperCache.set(wrapper);
-                    }
-                    return wrapper;
-                },
-
-                getPosition: function(node, offset) {
-                    return this.getNodeWrapper(node).getPosition(offset);
-                },
-
-                getRangeBoundaryPosition: function(range, isStart) {
-                    var prefix = isStart ? "start" : "end";
-                    return this.getPosition(range[prefix + "Container"], range[prefix + "Offset"]);
-                },
-
-                detach: function() {
-                    this.elementCache = this.textNodeCache = this.otherNodeCache = null;
-                }
-            };
-
-            return Session;
-        })();
-
-        /*----------------------------------------------------------------------------------------------------------------*/
-
-        function startSession() {
-            endSession();
-            return (currentSession = new Session());
-        }
-
-        function getSession() {
-            return currentSession || startSession();
-        }
-
-        function endSession() {
-            if (currentSession) {
-                currentSession.detach();
-            }
-            currentSession = null;
-        }
-
-        /*----------------------------------------------------------------------------------------------------------------*/
-
-        // Extensions to the rangy.dom utility object
-
-        extend(dom, {
-            nextNode: nextNode,
-            previousNode: previousNode
-        });
-
-        /*----------------------------------------------------------------------------------------------------------------*/
-
-        function createCharacterIterator(startPos, backward, endPos, characterOptions) {
-
-            // Adjust the end position to ensure that it is actually reached
-            if (endPos) {
-                if (backward) {
-                    if (isCollapsedNode(endPos.node)) {
-                        endPos = startPos.previousVisible();
-                    }
-                } else {
-                    if (isCollapsedNode(endPos.node)) {
-                        endPos = endPos.nextVisible();
-                    }
-                }
-            }
-
-            var pos = startPos, finished = false;
-
-            function next() {
-                var charPos = null;
-                if (backward) {
-                    charPos = pos;
-                    if (!finished) {
-                        pos = pos.previousVisible();
-                        finished = !pos || (endPos && pos.equals(endPos));
-                    }
-                } else {
-                    if (!finished) {
-                        charPos = pos = pos.nextVisible();
-                        finished = !pos || (endPos && pos.equals(endPos));
-                    }
-                }
-                if (finished) {
-                    pos = null;
-                }
-                return charPos;
-            }
-
-            var previousTextPos, returnPreviousTextPos = false;
-
-            return {
-                next: function() {
-                    if (returnPreviousTextPos) {
-                        returnPreviousTextPos = false;
-                        return previousTextPos;
-                    } else {
-                        var pos, character;
-                        while ( (pos = next()) ) {
-                            character = pos.getCharacter(characterOptions);
-                            if (character) {
-                                previousTextPos = pos;
-                                return pos;
-                            }
-                        }
-                        return null;
-                    }
-                },
-
-                rewind: function() {
-                    if (previousTextPos) {
-                        returnPreviousTextPos = true;
-                    } else {
-                        throw module.createError("createCharacterIterator: cannot rewind. Only one position can be rewound.");
-                    }
-                },
-
-                dispose: function() {
-                    startPos = endPos = null;
+                set: function(nodeWrapper) {
+                    var property = nodeWrapper.node[nodeProperty];
+                    var wrappersByProperty = cache.get(property) || cache.set(property, []);
+                    wrappersByProperty.push(nodeWrapper);
                 }
             };
         }
 
-        var arrayIndexOf = Array.prototype.indexOf ?
-            function(arr, val) {
-                return arr.indexOf(val);
-            } :
-            function(arr, val) {
-                for (var i = 0, len = arr.length; i < len; ++i) {
-                    if (arr[i] === val) {
-                        return i;
-                    }
-                }
-                return -1;
-            };
+        var uniqueIDSupported = util.isHostProperty(document.documentElement, "uniqueID");
 
-        // Provides a pair of iterators over text positions, tokenized. Transparently requests more text when next()
-        // is called and there is no more tokenized text
-        function createTokenizedTextProvider(pos, characterOptions, wordOptions) {
-            var forwardIterator = createCharacterIterator(pos, false, null, characterOptions);
-            var backwardIterator = createCharacterIterator(pos, true, null, characterOptions);
-            var tokenizer = wordOptions.tokenizer;
-
-            // Consumes a word and the whitespace beyond it
-            function consumeWord(forward) {
-                var pos, textChar;
-                var newChars = [], it = forward ? forwardIterator : backwardIterator;
-
-                var passedWordBoundary = false, insideWord = false;
-
-                while ( (pos = it.next()) ) {
-                    textChar = pos.character;
-
-
-                    if (allWhiteSpaceRegex.test(textChar)) {
-                        if (insideWord) {
-                            insideWord = false;
-                            passedWordBoundary = true;
-                        }
-                    } else {
-                        if (passedWordBoundary) {
-                            it.rewind();
-                            break;
-                        } else {
-                            insideWord = true;
-                        }
-                    }
-                    newChars.push(pos);
-                }
-
-
-                return newChars;
-            }
-
-            // Get initial word surrounding initial position and tokenize it
-            var forwardChars = consumeWord(true);
-            var backwardChars = consumeWord(false).reverse();
-            var tokens = tokenize(backwardChars.concat(forwardChars), wordOptions, tokenizer);
-
-            // Create initial token buffers
-            var forwardTokensBuffer = forwardChars.length ?
-                tokens.slice(arrayIndexOf(tokens, forwardChars[0].token)) : [];
-
-            var backwardTokensBuffer = backwardChars.length ?
-                tokens.slice(0, arrayIndexOf(tokens, backwardChars.pop().token) + 1) : [];
-
-            function inspectBuffer(buffer) {
-                var textPositions = ["[" + buffer.length + "]"];
-                for (var i = 0; i < buffer.length; ++i) {
-                    textPositions.push("(word: " + buffer[i] + ", is word: " + buffer[i].isWord + ")");
-                }
-                return textPositions;
-            }
-
-
-            return {
-                nextEndToken: function() {
-                    var lastToken, forwardChars;
-
-                    // If we're down to the last token, consume character chunks until we have a word or run out of
-                    // characters to consume
-                    while ( forwardTokensBuffer.length == 1 &&
-                        !(lastToken = forwardTokensBuffer[0]).isWord &&
-                        (forwardChars = consumeWord(true)).length > 0) {
-
-                        // Merge trailing non-word into next word and tokenize
-                        forwardTokensBuffer = tokenize(lastToken.chars.concat(forwardChars), wordOptions, tokenizer);
-                    }
-
-                    return forwardTokensBuffer.shift();
-                },
-
-                previousStartToken: function() {
-                    var lastToken, backwardChars;
-
-                    // If we're down to the last token, consume character chunks until we have a word or run out of
-                    // characters to consume
-                    while ( backwardTokensBuffer.length == 1 &&
-                        !(lastToken = backwardTokensBuffer[0]).isWord &&
-                        (backwardChars = consumeWord(false)).length > 0) {
-
-                        // Merge leading non-word into next word and tokenize
-                        backwardTokensBuffer = tokenize(backwardChars.reverse().concat(lastToken.chars), wordOptions, tokenizer);
-                    }
-
-                    return backwardTokensBuffer.pop();
-                },
-
-                dispose: function() {
-                    forwardIterator.dispose();
-                    backwardIterator.dispose();
-                    forwardTokensBuffer = backwardTokensBuffer = null;
-                }
-            };
+        function Session() {
+            this.initCaches();
         }
 
-        function movePositionBy(pos, unit, count, characterOptions, wordOptions) {
-            var unitsMoved = 0, currentPos, newPos = pos, charIterator, nextPos, absCount = Math.abs(count), token;
-            if (count !== 0) {
-                var backward = (count < 0);
-
-                switch (unit) {
-                    case CHARACTER:
-                        charIterator = createCharacterIterator(pos, backward, null, characterOptions);
-                        while ( (currentPos = charIterator.next()) && unitsMoved < absCount ) {
-                            ++unitsMoved;
-                            newPos = currentPos;
-                        }
-                        nextPos = currentPos;
-                        charIterator.dispose();
-                        break;
-                    case WORD:
-                        var tokenizedTextProvider = createTokenizedTextProvider(pos, characterOptions, wordOptions);
-                        var next = backward ? tokenizedTextProvider.previousStartToken : tokenizedTextProvider.nextEndToken;
-
-                        while ( (token = next()) && unitsMoved < absCount ) {
-                            if (token.isWord) {
-                                ++unitsMoved;
-                                newPos = backward ? token.chars[0] : token.chars[token.chars.length - 1];
-                            }
-                        }
-                        break;
-                    default:
-                        throw new Error("movePositionBy: unit '" + unit + "' not implemented");
-                }
-
-                // Perform any necessary position tweaks
-                if (backward) {
-                    newPos = newPos.previousVisible();
-                    unitsMoved = -unitsMoved;
-                } else if (newPos && newPos.isLeadingSpace && !newPos.isTrailingSpace) {
-                    // Tweak the position for the case of a leading space. The problem is that an uncollapsed leading space
-                    // before a block element (for example, the line break between "1" and "2" in the following HTML:
-                    // "1<p>2</p>") is considered to be attached to the position immediately before the block element, which
-                    // corresponds with a different selection position in most browsers from the one we want (i.e. at the
-                    // start of the contents of the block element). We get round this by advancing the position returned to
-                    // the last possible equivalent visible position.
-                    if (unit == WORD) {
-                        charIterator = createCharacterIterator(pos, false, null, characterOptions);
-                        nextPos = charIterator.next();
-                        charIterator.dispose();
-                    }
-                    if (nextPos) {
-                        newPos = nextPos.previousVisible();
-                    }
-                }
-            }
-
-
-            return {
-                position: newPos,
-                unitsMoved: unitsMoved
-            };
-        }
-
-        function createRangeCharacterIterator(session, range, characterOptions, backward) {
-            var rangeStart = session.getRangeBoundaryPosition(range, true);
-            var rangeEnd = session.getRangeBoundaryPosition(range, false);
-            var itStart = backward ? rangeEnd : rangeStart;
-            var itEnd = backward ? rangeStart : rangeEnd;
-
-            return createCharacterIterator(itStart, !!backward, itEnd, characterOptions);
-        }
-
-        function getRangeCharacters(session, range, characterOptions) {
-
-            var chars = [], it = createRangeCharacterIterator(session, range, characterOptions), pos;
-            while ( (pos = it.next()) ) {
-                chars.push(pos);
-            }
-
-            it.dispose();
-            return chars;
-        }
-
-        function isWholeWord(startPos, endPos, wordOptions) {
-            var range = api.createRange(startPos.node);
-            range.setStartAndEnd(startPos.node, startPos.offset, endPos.node, endPos.offset);
-            return !range.expand("word", { wordOptions: wordOptions });
-        }
-
-        function findTextFromPosition(initialPos, searchTerm, isRegex, searchScopeRange, findOptions) {
-            var backward = isDirectionBackward(findOptions.direction);
-            var it = createCharacterIterator(
-                initialPos,
-                backward,
-                initialPos.session.getRangeBoundaryPosition(searchScopeRange, backward),
-                findOptions.characterOptions
-            );
-            var text = "", chars = [], pos, currentChar, matchStartIndex, matchEndIndex;
-            var result, insideRegexMatch;
-            var returnValue = null;
-
-            function handleMatch(startIndex, endIndex) {
-                var startPos = chars[startIndex].previousVisible();
-                var endPos = chars[endIndex - 1];
-                var valid = (!findOptions.wholeWordsOnly || isWholeWord(startPos, endPos, findOptions.wordOptions));
-
-                return {
-                    startPos: startPos,
-                    endPos: endPos,
-                    valid: valid
-                };
-            }
-
-            while ( (pos = it.next()) ) {
-                currentChar = pos.character;
-                if (!isRegex && !findOptions.caseSensitive) {
-                    currentChar = currentChar.toLowerCase();
-                }
-
-                if (backward) {
-                    chars.unshift(pos);
-                    text = currentChar + text;
-                } else {
-                    chars.push(pos);
-                    text += currentChar;
-                }
-
-                if (isRegex) {
-                    result = searchTerm.exec(text);
-                    if (result) {
-                        matchStartIndex = result.index;
-                        matchEndIndex = matchStartIndex + result[0].length;
-                        if (insideRegexMatch) {
-                            // Check whether the match is now over
-                            if ((!backward && matchEndIndex < text.length) || (backward && matchStartIndex > 0)) {
-                                returnValue = handleMatch(matchStartIndex, matchEndIndex);
-                                break;
-                            }
-                        } else {
-                            insideRegexMatch = true;
-                        }
-                    }
-                } else if ( (matchStartIndex = text.indexOf(searchTerm)) != -1 ) {
-                    returnValue = handleMatch(matchStartIndex, matchStartIndex + searchTerm.length);
-                    break;
-                }
-            }
-
-            // Check whether regex match extends to the end of the range
-            if (insideRegexMatch) {
-                returnValue = handleMatch(matchStartIndex, matchEndIndex);
-            }
-            it.dispose();
-
-            return returnValue;
-        }
-
-        function createEntryPointFunction(func) {
-            return function() {
-                var sessionRunning = !!currentSession;
-                var session = getSession();
-                var args = [session].concat( util.toArray(arguments) );
-                var returnValue = func.apply(this, args);
-                if (!sessionRunning) {
-                    endSession();
-                }
-                return returnValue;
-            };
-        }
-
-        /*----------------------------------------------------------------------------------------------------------------*/
-
-        // Extensions to the Rangy Range object
-
-        function createRangeBoundaryMover(isStart, collapse) {
-            /*
-             Unit can be "character" or "word"
-             Options:
-
-             - includeTrailingSpace
-             - wordRegex
-             - tokenizer
-             - collapseSpaceBeforeLineBreak
-             */
-            return createEntryPointFunction(
-                function(session, unit, count, moveOptions) {
-                    if (typeof count == UNDEF) {
-                        count = unit;
-                        unit = CHARACTER;
-                    }
-                    moveOptions = createNestedOptions(moveOptions, defaultMoveOptions);
-
-                    var boundaryIsStart = isStart;
-                    if (collapse) {
-                        boundaryIsStart = (count >= 0);
-                        this.collapse(!boundaryIsStart);
-                    }
-                    var moveResult = movePositionBy(session.getRangeBoundaryPosition(this, boundaryIsStart), unit, count, moveOptions.characterOptions, moveOptions.wordOptions);
-                    var newPos = moveResult.position;
-                    this[boundaryIsStart ? "setStart" : "setEnd"](newPos.node, newPos.offset);
-                    return moveResult.unitsMoved;
-                }
-            );
-        }
-
-        function createRangeTrimmer(isStart) {
-            return createEntryPointFunction(
-                function(session, characterOptions) {
-                    characterOptions = createOptions(characterOptions, defaultCharacterOptions);
-                    var pos;
-                    var it = createRangeCharacterIterator(session, this, characterOptions, !isStart);
-                    var trimCharCount = 0;
-                    while ( (pos = it.next()) && allWhiteSpaceRegex.test(pos.character) ) {
-                        ++trimCharCount;
-                    }
-                    it.dispose();
-                    var trimmed = (trimCharCount > 0);
-                    if (trimmed) {
-                        this[isStart ? "moveStart" : "moveEnd"](
-                            "character",
-                            isStart ? trimCharCount : -trimCharCount,
-                            { characterOptions: characterOptions }
-                        );
-                    }
-                    return trimmed;
-                }
-            );
-        }
-
-        extend(api.rangePrototype, {
-            moveStart: createRangeBoundaryMover(true, false),
-
-            moveEnd: createRangeBoundaryMover(false, false),
-
-            move: createRangeBoundaryMover(true, true),
-
-            trimStart: createRangeTrimmer(true),
-
-            trimEnd: createRangeTrimmer(false),
-
-            trim: createEntryPointFunction(
-                function(session, characterOptions) {
-                    var startTrimmed = this.trimStart(characterOptions), endTrimmed = this.trimEnd(characterOptions);
-                    return startTrimmed || endTrimmed;
-                }
-            ),
-
-            expand: createEntryPointFunction(
-                function(session, unit, expandOptions) {
-                    var moved = false;
-                    expandOptions = createNestedOptions(expandOptions, defaultExpandOptions);
-                    var characterOptions = expandOptions.characterOptions;
-                    if (!unit) {
-                        unit = CHARACTER;
-                    }
-                    if (unit == WORD) {
-                        var wordOptions = expandOptions.wordOptions;
-                        var startPos = session.getRangeBoundaryPosition(this, true);
-                        var endPos = session.getRangeBoundaryPosition(this, false);
-
-                        var startTokenizedTextProvider = createTokenizedTextProvider(startPos, characterOptions, wordOptions);
-                        var startToken = startTokenizedTextProvider.nextEndToken();
-                        var newStartPos = startToken.chars[0].previousVisible();
-                        var endToken, newEndPos;
-
-                        if (this.collapsed) {
-                            endToken = startToken;
-                        } else {
-                            var endTokenizedTextProvider = createTokenizedTextProvider(endPos, characterOptions, wordOptions);
-                            endToken = endTokenizedTextProvider.previousStartToken();
-                        }
-                        newEndPos = endToken.chars[endToken.chars.length - 1];
-
-                        if (!newStartPos.equals(startPos)) {
-                            this.setStart(newStartPos.node, newStartPos.offset);
-                            moved = true;
-                        }
-                        if (newEndPos && !newEndPos.equals(endPos)) {
-                            this.setEnd(newEndPos.node, newEndPos.offset);
-                            moved = true;
-                        }
-
-                        if (expandOptions.trim) {
-                            if (expandOptions.trimStart) {
-                                moved = this.trimStart(characterOptions) || moved;
-                            }
-                            if (expandOptions.trimEnd) {
-                                moved = this.trimEnd(characterOptions) || moved;
-                            }
-                        }
-
-                        return moved;
-                    } else {
-                        return this.moveEnd(CHARACTER, 1, expandOptions);
-                    }
-                }
-            ),
-
-            text: createEntryPointFunction(
-                function(session, characterOptions) {
-                    return this.collapsed ?
-                        "" : getRangeCharacters(session, this, createOptions(characterOptions, defaultCharacterOptions)).join("");
-                }
-            ),
-
-            selectCharacters: createEntryPointFunction(
-                function(session, containerNode, startIndex, endIndex, characterOptions) {
-                    var moveOptions = { characterOptions: characterOptions };
-                    if (!containerNode) {
-                        containerNode = getBody( this.getDocument() );
-                    }
-                    this.selectNodeContents(containerNode);
-                    this.collapse(true);
-                    this.moveStart("character", startIndex, moveOptions);
-                    this.collapse(true);
-                    this.moveEnd("character", endIndex - startIndex, moveOptions);
-                }
-            ),
-
-            // Character indexes are relative to the start of node
-            toCharacterRange: createEntryPointFunction(
-                function(session, containerNode, characterOptions) {
-                    if (!containerNode) {
-                        containerNode = getBody( this.getDocument() );
-                    }
-                    var parent = containerNode.parentNode, nodeIndex = dom.getNodeIndex(containerNode);
-                    var rangeStartsBeforeNode = (dom.comparePoints(this.startContainer, this.endContainer, parent, nodeIndex) == -1);
-                    var rangeBetween = this.cloneRange();
-                    var startIndex, endIndex;
-                    if (rangeStartsBeforeNode) {
-                        rangeBetween.setStartAndEnd(this.startContainer, this.startOffset, parent, nodeIndex);
-                        startIndex = -rangeBetween.text(characterOptions).length;
-                    } else {
-                        rangeBetween.setStartAndEnd(parent, nodeIndex, this.startContainer, this.startOffset);
-                        startIndex = rangeBetween.text(characterOptions).length;
-                    }
-                    endIndex = startIndex + this.text(characterOptions).length;
+        Session.prototype = {
+            initCaches: function() {
+                this.elementCache = uniqueIDSupported ? (function() {
+                    var elementsCache = new Cache();
 
                     return {
-                        start: startIndex,
-                        end: endIndex
+                        get: function(el) {
+                            return elementsCache.get(el.uniqueID);
+                        },
+
+                        set: function(elWrapper) {
+                            elementsCache.set(elWrapper.node.uniqueID, elWrapper);
+                        }
+                    };
+                })() : createWrapperCache("tagName");
+
+                // Store text nodes keyed by data, although we may need to truncate this
+                this.textNodeCache = createWrapperCache("data");
+                this.otherNodeCache = createWrapperCache("nodeName");
+            },
+
+            getNodeWrapper: function(node) {
+                var wrapperCache;
+                switch (node.nodeType) {
+                    case 1:
+                        wrapperCache = this.elementCache;
+                        break;
+                    case 3:
+                        wrapperCache = this.textNodeCache;
+                        break;
+                    default:
+                        wrapperCache = this.otherNodeCache;
+                        break;
+                }
+
+                var wrapper = wrapperCache.get(node);
+                if (!wrapper) {
+                    wrapper = new NodeWrapper(node, this);
+                    wrapperCache.set(wrapper);
+                }
+                return wrapper;
+            },
+
+            getPosition: function(node, offset) {
+                return this.getNodeWrapper(node).getPosition(offset);
+            },
+
+            getRangeBoundaryPosition: function(range, isStart) {
+                var prefix = isStart ? "start" : "end";
+                return this.getPosition(range[prefix + "Container"], range[prefix + "Offset"]);
+            },
+
+            detach: function() {
+                this.elementCache = this.textNodeCache = this.otherNodeCache = null;
+            }
+        };
+
+        return Session;
+    })();
+
+    /*----------------------------------------------------------------------------------------------------------------*/
+
+    function startSession() {
+        endSession();
+        return (currentSession = new Session());
+    }
+
+    function getSession() {
+        return currentSession || startSession();
+    }
+
+    function endSession() {
+        if (currentSession) {
+            currentSession.detach();
+        }
+        currentSession = null;
+    }
+
+    /*----------------------------------------------------------------------------------------------------------------*/
+
+    // Extensions to the rangy.dom utility object
+
+    extend(dom, {
+        nextNode: nextNode,
+        previousNode: previousNode
+    });
+
+    /*----------------------------------------------------------------------------------------------------------------*/
+
+    function createCharacterIterator(startPos, backward, endPos, characterOptions) {
+
+        // Adjust the end position to ensure that it is actually reached
+        if (endPos) {
+            if (backward) {
+                if (isCollapsedNode(endPos.node)) {
+                    endPos = startPos.previousVisible();
+                }
+            } else {
+                if (isCollapsedNode(endPos.node)) {
+                    endPos = endPos.nextVisible();
+                }
+            }
+        }
+
+        var pos = startPos, finished = false;
+
+        function next() {
+            var charPos = null;
+            if (backward) {
+                charPos = pos;
+                if (!finished) {
+                    pos = pos.previousVisible();
+                    finished = !pos || (endPos && pos.equals(endPos));
+                }
+            } else {
+                if (!finished) {
+                    charPos = pos = pos.nextVisible();
+                    finished = !pos || (endPos && pos.equals(endPos));
+                }
+            }
+            if (finished) {
+                pos = null;
+            }
+            return charPos;
+        }
+
+        var previousTextPos, returnPreviousTextPos = false;
+
+        return {
+            next: function() {
+                if (returnPreviousTextPos) {
+                    returnPreviousTextPos = false;
+                    return previousTextPos;
+                } else {
+                    var pos, character;
+                    while ( (pos = next()) ) {
+                        character = pos.getCharacter(characterOptions);
+                        if (character) {
+                            previousTextPos = pos;
+                            return pos;
+                        }
+                    }
+                    return null;
+                }
+            },
+
+            rewind: function() {
+                if (previousTextPos) {
+                    returnPreviousTextPos = true;
+                } else {
+                    throw module.createError("createCharacterIterator: cannot rewind. Only one position can be rewound.");
+                }
+            },
+
+            dispose: function() {
+                startPos = endPos = null;
+            }
+        };
+    }
+
+    var arrayIndexOf = Array.prototype.indexOf ?
+        function(arr, val) {
+            return arr.indexOf(val);
+        } :
+        function(arr, val) {
+            for (var i = 0, len = arr.length; i < len; ++i) {
+                if (arr[i] === val) {
+                    return i;
+                }
+            }
+            return -1;
+        };
+
+    // Provides a pair of iterators over text positions, tokenized. Transparently requests more text when next()
+    // is called and there is no more tokenized text
+    function createTokenizedTextProvider(pos, characterOptions, wordOptions) {
+        var forwardIterator = createCharacterIterator(pos, false, null, characterOptions);
+        var backwardIterator = createCharacterIterator(pos, true, null, characterOptions);
+        var tokenizer = wordOptions.tokenizer;
+
+        // Consumes a word and the whitespace beyond it
+        function consumeWord(forward) {
+            var pos, textChar;
+            var newChars = [], it = forward ? forwardIterator : backwardIterator;
+
+            var passedWordBoundary = false, insideWord = false;
+
+            while ( (pos = it.next()) ) {
+                textChar = pos.character;
+
+
+                if (allWhiteSpaceRegex.test(textChar)) {
+                    if (insideWord) {
+                        insideWord = false;
+                        passedWordBoundary = true;
+                    }
+                } else {
+                    if (passedWordBoundary) {
+                        it.rewind();
+                        break;
+                    } else {
+                        insideWord = true;
+                    }
+                }
+                newChars.push(pos);
+            }
+
+
+            return newChars;
+        }
+
+        // Get initial word surrounding initial position and tokenize it
+        var forwardChars = consumeWord(true);
+        var backwardChars = consumeWord(false).reverse();
+        var tokens = tokenize(backwardChars.concat(forwardChars), wordOptions, tokenizer);
+
+        // Create initial token buffers
+        var forwardTokensBuffer = forwardChars.length ?
+            tokens.slice(arrayIndexOf(tokens, forwardChars[0].token)) : [];
+
+        var backwardTokensBuffer = backwardChars.length ?
+            tokens.slice(0, arrayIndexOf(tokens, backwardChars.pop().token) + 1) : [];
+
+        function inspectBuffer(buffer) {
+            var textPositions = ["[" + buffer.length + "]"];
+            for (var i = 0; i < buffer.length; ++i) {
+                textPositions.push("(word: " + buffer[i] + ", is word: " + buffer[i].isWord + ")");
+            }
+            return textPositions;
+        }
+
+
+        return {
+            nextEndToken: function() {
+                var lastToken, forwardChars;
+
+                // If we're down to the last token, consume character chunks until we have a word or run out of
+                // characters to consume
+                while ( forwardTokensBuffer.length == 1 &&
+                    !(lastToken = forwardTokensBuffer[0]).isWord &&
+                    (forwardChars = consumeWord(true)).length > 0) {
+
+                    // Merge trailing non-word into next word and tokenize
+                    forwardTokensBuffer = tokenize(lastToken.chars.concat(forwardChars), wordOptions, tokenizer);
+                }
+
+                return forwardTokensBuffer.shift();
+            },
+
+            previousStartToken: function() {
+                var lastToken, backwardChars;
+
+                // If we're down to the last token, consume character chunks until we have a word or run out of
+                // characters to consume
+                while ( backwardTokensBuffer.length == 1 &&
+                    !(lastToken = backwardTokensBuffer[0]).isWord &&
+                    (backwardChars = consumeWord(false)).length > 0) {
+
+                    // Merge leading non-word into next word and tokenize
+                    backwardTokensBuffer = tokenize(backwardChars.reverse().concat(lastToken.chars), wordOptions, tokenizer);
+                }
+
+                return backwardTokensBuffer.pop();
+            },
+
+            dispose: function() {
+                forwardIterator.dispose();
+                backwardIterator.dispose();
+                forwardTokensBuffer = backwardTokensBuffer = null;
+            }
+        };
+    }
+
+    function movePositionBy(pos, unit, count, characterOptions, wordOptions) {
+        var unitsMoved = 0, currentPos, newPos = pos, charIterator, nextPos, absCount = Math.abs(count), token;
+        if (count !== 0) {
+            var backward = (count < 0);
+
+            switch (unit) {
+                case CHARACTER:
+                    charIterator = createCharacterIterator(pos, backward, null, characterOptions);
+                    while ( (currentPos = charIterator.next()) && unitsMoved < absCount ) {
+                        ++unitsMoved;
+                        newPos = currentPos;
+                    }
+                    nextPos = currentPos;
+                    charIterator.dispose();
+                    break;
+                case WORD:
+                    var tokenizedTextProvider = createTokenizedTextProvider(pos, characterOptions, wordOptions);
+                    var next = backward ? tokenizedTextProvider.previousStartToken : tokenizedTextProvider.nextEndToken;
+
+                    while ( (token = next()) && unitsMoved < absCount ) {
+                        if (token.isWord) {
+                            ++unitsMoved;
+                            newPos = backward ? token.chars[0] : token.chars[token.chars.length - 1];
+                        }
+                    }
+                    break;
+                default:
+                    throw new Error("movePositionBy: unit '" + unit + "' not implemented");
+            }
+
+            // Perform any necessary position tweaks
+            if (backward) {
+                newPos = newPos.previousVisible();
+                unitsMoved = -unitsMoved;
+            } else if (newPos && newPos.isLeadingSpace && !newPos.isTrailingSpace) {
+                // Tweak the position for the case of a leading space. The problem is that an uncollapsed leading space
+                // before a block element (for example, the line break between "1" and "2" in the following HTML:
+                // "1<p>2</p>") is considered to be attached to the position immediately before the block element, which
+                // corresponds with a different selection position in most browsers from the one we want (i.e. at the
+                // start of the contents of the block element). We get round this by advancing the position returned to
+                // the last possible equivalent visible position.
+                if (unit == WORD) {
+                    charIterator = createCharacterIterator(pos, false, null, characterOptions);
+                    nextPos = charIterator.next();
+                    charIterator.dispose();
+                }
+                if (nextPos) {
+                    newPos = nextPos.previousVisible();
+                }
+            }
+        }
+
+
+        return {
+            position: newPos,
+            unitsMoved: unitsMoved
+        };
+    }
+
+    function createRangeCharacterIterator(session, range, characterOptions, backward) {
+        var rangeStart = session.getRangeBoundaryPosition(range, true);
+        var rangeEnd = session.getRangeBoundaryPosition(range, false);
+        var itStart = backward ? rangeEnd : rangeStart;
+        var itEnd = backward ? rangeStart : rangeEnd;
+
+        return createCharacterIterator(itStart, !!backward, itEnd, characterOptions);
+    }
+
+    function getRangeCharacters(session, range, characterOptions) {
+
+        var chars = [], it = createRangeCharacterIterator(session, range, characterOptions), pos;
+        while ( (pos = it.next()) ) {
+            chars.push(pos);
+        }
+
+        it.dispose();
+        return chars;
+    }
+
+    function isWholeWord(startPos, endPos, wordOptions) {
+        var range = api.createRange(startPos.node);
+        range.setStartAndEnd(startPos.node, startPos.offset, endPos.node, endPos.offset);
+        return !range.expand("word", { wordOptions: wordOptions });
+    }
+
+    function findTextFromPosition(initialPos, searchTerm, isRegex, searchScopeRange, findOptions) {
+        var backward = isDirectionBackward(findOptions.direction);
+        var it = createCharacterIterator(
+            initialPos,
+            backward,
+            initialPos.session.getRangeBoundaryPosition(searchScopeRange, backward),
+            findOptions.characterOptions
+        );
+        var text = "", chars = [], pos, currentChar, matchStartIndex, matchEndIndex;
+        var result, insideRegexMatch;
+        var returnValue = null;
+
+        function handleMatch(startIndex, endIndex) {
+            var startPos = chars[startIndex].previousVisible();
+            var endPos = chars[endIndex - 1];
+            var valid = (!findOptions.wholeWordsOnly || isWholeWord(startPos, endPos, findOptions.wordOptions));
+
+            return {
+                startPos: startPos,
+                endPos: endPos,
+                valid: valid
+            };
+        }
+
+        while ( (pos = it.next()) ) {
+            currentChar = pos.character;
+            if (!isRegex && !findOptions.caseSensitive) {
+                currentChar = currentChar.toLowerCase();
+            }
+
+            if (backward) {
+                chars.unshift(pos);
+                text = currentChar + text;
+            } else {
+                chars.push(pos);
+                text += currentChar;
+            }
+
+            if (isRegex) {
+                result = searchTerm.exec(text);
+                if (result) {
+                    matchStartIndex = result.index;
+                    matchEndIndex = matchStartIndex + result[0].length;
+                    if (insideRegexMatch) {
+                        // Check whether the match is now over
+                        if ((!backward && matchEndIndex < text.length) || (backward && matchStartIndex > 0)) {
+                            returnValue = handleMatch(matchStartIndex, matchEndIndex);
+                            break;
+                        }
+                    } else {
+                        insideRegexMatch = true;
+                    }
+                }
+            } else if ( (matchStartIndex = text.indexOf(searchTerm)) != -1 ) {
+                returnValue = handleMatch(matchStartIndex, matchStartIndex + searchTerm.length);
+                break;
+            }
+        }
+
+        // Check whether regex match extends to the end of the range
+        if (insideRegexMatch) {
+            returnValue = handleMatch(matchStartIndex, matchEndIndex);
+        }
+        it.dispose();
+
+        return returnValue;
+    }
+
+    function createEntryPointFunction(func) {
+        return function() {
+            var sessionRunning = !!currentSession;
+            var session = getSession();
+            var args = [session].concat( util.toArray(arguments) );
+            var returnValue = func.apply(this, args);
+            if (!sessionRunning) {
+                endSession();
+            }
+            return returnValue;
+        };
+    }
+
+    /*----------------------------------------------------------------------------------------------------------------*/
+
+    // Extensions to the Rangy Range object
+
+    function createRangeBoundaryMover(isStart, collapse) {
+        /*
+         Unit can be "character" or "word"
+         Options:
+
+         - includeTrailingSpace
+         - wordRegex
+         - tokenizer
+         - collapseSpaceBeforeLineBreak
+         */
+        return createEntryPointFunction(
+            function(session, unit, count, moveOptions) {
+                if (typeof count == UNDEF) {
+                    count = unit;
+                    unit = CHARACTER;
+                }
+                moveOptions = createNestedOptions(moveOptions, defaultMoveOptions);
+
+                var boundaryIsStart = isStart;
+                if (collapse) {
+                    boundaryIsStart = (count >= 0);
+                    this.collapse(!boundaryIsStart);
+                }
+                var moveResult = movePositionBy(session.getRangeBoundaryPosition(this, boundaryIsStart), unit, count, moveOptions.characterOptions, moveOptions.wordOptions);
+                var newPos = moveResult.position;
+                this[boundaryIsStart ? "setStart" : "setEnd"](newPos.node, newPos.offset);
+                return moveResult.unitsMoved;
+            }
+        );
+    }
+
+    function createRangeTrimmer(isStart) {
+        return createEntryPointFunction(
+            function(session, characterOptions) {
+                characterOptions = createOptions(characterOptions, defaultCharacterOptions);
+                var pos;
+                var it = createRangeCharacterIterator(session, this, characterOptions, !isStart);
+                var trimCharCount = 0;
+                while ( (pos = it.next()) && allWhiteSpaceRegex.test(pos.character) ) {
+                    ++trimCharCount;
+                }
+                it.dispose();
+                var trimmed = (trimCharCount > 0);
+                if (trimmed) {
+                    this[isStart ? "moveStart" : "moveEnd"](
+                        "character",
+                        isStart ? trimCharCount : -trimCharCount,
+                        { characterOptions: characterOptions }
+                    );
+                }
+                return trimmed;
+            }
+        );
+    }
+
+    extend(api.rangePrototype, {
+        moveStart: createRangeBoundaryMover(true, false),
+
+        moveEnd: createRangeBoundaryMover(false, false),
+
+        move: createRangeBoundaryMover(true, true),
+
+        trimStart: createRangeTrimmer(true),
+
+        trimEnd: createRangeTrimmer(false),
+
+        trim: createEntryPointFunction(
+            function(session, characterOptions) {
+                var startTrimmed = this.trimStart(characterOptions), endTrimmed = this.trimEnd(characterOptions);
+                return startTrimmed || endTrimmed;
+            }
+        ),
+
+        expand: createEntryPointFunction(
+            function(session, unit, expandOptions) {
+                var moved = false;
+                expandOptions = createNestedOptions(expandOptions, defaultExpandOptions);
+                var characterOptions = expandOptions.characterOptions;
+                if (!unit) {
+                    unit = CHARACTER;
+                }
+                if (unit == WORD) {
+                    var wordOptions = expandOptions.wordOptions;
+                    var startPos = session.getRangeBoundaryPosition(this, true);
+                    var endPos = session.getRangeBoundaryPosition(this, false);
+
+                    var startTokenizedTextProvider = createTokenizedTextProvider(startPos, characterOptions, wordOptions);
+                    var startToken = startTokenizedTextProvider.nextEndToken();
+                    var newStartPos = startToken.chars[0].previousVisible();
+                    var endToken, newEndPos;
+
+                    if (this.collapsed) {
+                        endToken = startToken;
+                    } else {
+                        var endTokenizedTextProvider = createTokenizedTextProvider(endPos, characterOptions, wordOptions);
+                        endToken = endTokenizedTextProvider.previousStartToken();
+                    }
+                    newEndPos = endToken.chars[endToken.chars.length - 1];
+
+                    if (!newStartPos.equals(startPos)) {
+                        this.setStart(newStartPos.node, newStartPos.offset);
+                        moved = true;
+                    }
+                    if (newEndPos && !newEndPos.equals(endPos)) {
+                        this.setEnd(newEndPos.node, newEndPos.offset);
+                        moved = true;
+                    }
+
+                    if (expandOptions.trim) {
+                        if (expandOptions.trimStart) {
+                            moved = this.trimStart(characterOptions) || moved;
+                        }
+                        if (expandOptions.trimEnd) {
+                            moved = this.trimEnd(characterOptions) || moved;
+                        }
+                    }
+
+                    return moved;
+                } else {
+                    return this.moveEnd(CHARACTER, 1, expandOptions);
+                }
+            }
+        ),
+
+        text: createEntryPointFunction(
+            function(session, characterOptions) {
+                return this.collapsed ?
+                    "" : getRangeCharacters(session, this, createOptions(characterOptions, defaultCharacterOptions)).join("");
+            }
+        ),
+
+        selectCharacters: createEntryPointFunction(
+            function(session, containerNode, startIndex, endIndex, characterOptions) {
+                var moveOptions = { characterOptions: characterOptions };
+                if (!containerNode) {
+                    containerNode = getBody( this.getDocument() );
+                }
+                this.selectNodeContents(containerNode);
+                this.collapse(true);
+                this.moveStart("character", startIndex, moveOptions);
+                this.collapse(true);
+                this.moveEnd("character", endIndex - startIndex, moveOptions);
+            }
+        ),
+
+        // Character indexes are relative to the start of node
+        toCharacterRange: createEntryPointFunction(
+            function(session, containerNode, characterOptions) {
+                if (!containerNode) {
+                    containerNode = getBody( this.getDocument() );
+                }
+                var parent = containerNode.parentNode, nodeIndex = dom.getNodeIndex(containerNode);
+                var rangeStartsBeforeNode = (dom.comparePoints(this.startContainer, this.endContainer, parent, nodeIndex) == -1);
+                var rangeBetween = this.cloneRange();
+                var startIndex, endIndex;
+                if (rangeStartsBeforeNode) {
+                    rangeBetween.setStartAndEnd(this.startContainer, this.startOffset, parent, nodeIndex);
+                    startIndex = -rangeBetween.text(characterOptions).length;
+                } else {
+                    rangeBetween.setStartAndEnd(parent, nodeIndex, this.startContainer, this.startOffset);
+                    startIndex = rangeBetween.text(characterOptions).length;
+                }
+                endIndex = startIndex + this.text(characterOptions).length;
+
+                return {
+                    start: startIndex,
+                    end: endIndex
+                };
+            }
+        ),
+
+        findText: createEntryPointFunction(
+            function(session, searchTermParam, findOptions) {
+                // Set up options
+                findOptions = createNestedOptions(findOptions, defaultFindOptions);
+
+                // Create word options if we're matching whole words only
+                if (findOptions.wholeWordsOnly) {
+                    // We don't ever want trailing spaces for search results
+                    findOptions.wordOptions.includeTrailingSpace = false;
+                }
+
+                var backward = isDirectionBackward(findOptions.direction);
+
+                // Create a range representing the search scope if none was provided
+                var searchScopeRange = findOptions.withinRange;
+                if (!searchScopeRange) {
+                    searchScopeRange = api.createRange();
+                    searchScopeRange.selectNodeContents(this.getDocument());
+                }
+
+                // Examine and prepare the search term
+                var searchTerm = searchTermParam, isRegex = false;
+                if (typeof searchTerm == "string") {
+                    if (!findOptions.caseSensitive) {
+                        searchTerm = searchTerm.toLowerCase();
+                    }
+                } else {
+                    isRegex = true;
+                }
+
+                var initialPos = session.getRangeBoundaryPosition(this, !backward);
+
+                // Adjust initial position if it lies outside the search scope
+                var comparison = searchScopeRange.comparePoint(initialPos.node, initialPos.offset);
+
+                if (comparison === -1) {
+                    initialPos = session.getRangeBoundaryPosition(searchScopeRange, true);
+                } else if (comparison === 1) {
+                    initialPos = session.getRangeBoundaryPosition(searchScopeRange, false);
+                }
+
+                var pos = initialPos;
+                var wrappedAround = false;
+
+                // Try to find a match and ignore invalid ones
+                var findResult;
+                while (true) {
+                    findResult = findTextFromPosition(pos, searchTerm, isRegex, searchScopeRange, findOptions);
+
+                    if (findResult) {
+                        if (findResult.valid) {
+                            this.setStartAndEnd(findResult.startPos.node, findResult.startPos.offset, findResult.endPos.node, findResult.endPos.offset);
+                            return true;
+                        } else {
+                            // We've found a match that is not a whole word, so we carry on searching from the point immediately
+                            // after the match
+                            pos = backward ? findResult.startPos : findResult.endPos;
+                        }
+                    } else if (findOptions.wrap && !wrappedAround) {
+                        // No result found but we're wrapping around and limiting the scope to the unsearched part of the range
+                        searchScopeRange = searchScopeRange.cloneRange();
+                        pos = session.getRangeBoundaryPosition(searchScopeRange, !backward);
+                        searchScopeRange.setBoundary(initialPos.node, initialPos.offset, backward);
+                        wrappedAround = true;
+                    } else {
+                        // Nothing found and we can't wrap around, so we're done
+                        return false;
+                    }
+                }
+            }
+        ),
+
+        pasteHtml: function(html) {
+            this.deleteContents();
+            if (html) {
+                var frag = this.createContextualFragment(html);
+                var lastChild = frag.lastChild;
+                this.insertNode(frag);
+                this.collapseAfter(lastChild);
+            }
+        }
+    });
+
+    /*----------------------------------------------------------------------------------------------------------------*/
+
+    // Extensions to the Rangy Selection object
+
+    function createSelectionTrimmer(methodName) {
+        return createEntryPointFunction(
+            function(session, characterOptions) {
+                var trimmed = false;
+                this.changeEachRange(function(range) {
+                    trimmed = range[methodName](characterOptions) || trimmed;
+                });
+                return trimmed;
+            }
+        );
+    }
+
+    extend(api.selectionPrototype, {
+        expand: createEntryPointFunction(
+            function(session, unit, expandOptions) {
+                this.changeEachRange(function(range) {
+                    range.expand(unit, expandOptions);
+                });
+            }
+        ),
+
+        move: createEntryPointFunction(
+            function(session, unit, count, options) {
+                var unitsMoved = 0;
+                if (this.focusNode) {
+                    this.collapse(this.focusNode, this.focusOffset);
+                    var range = this.getRangeAt(0);
+                    if (!options) {
+                        options = {};
+                    }
+                    options.characterOptions = createOptions(options.characterOptions, defaultCaretCharacterOptions);
+                    unitsMoved = range.move(unit, count, options);
+                    this.setSingleRange(range);
+                }
+                return unitsMoved;
+            }
+        ),
+
+        trimStart: createSelectionTrimmer("trimStart"),
+        trimEnd: createSelectionTrimmer("trimEnd"),
+        trim: createSelectionTrimmer("trim"),
+
+        selectCharacters: createEntryPointFunction(
+            function(session, containerNode, startIndex, endIndex, direction, characterOptions) {
+                var range = api.createRange(containerNode);
+                range.selectCharacters(containerNode, startIndex, endIndex, characterOptions);
+                this.setSingleRange(range, direction);
+            }
+        ),
+
+        saveCharacterRanges: createEntryPointFunction(
+            function(session, containerNode, characterOptions) {
+                var ranges = this.getAllRanges(), rangeCount = ranges.length;
+                var rangeInfos = [];
+
+                var backward = rangeCount == 1 && this.isBackward();
+
+                for (var i = 0, len = ranges.length; i < len; ++i) {
+                    rangeInfos[i] = {
+                        characterRange: ranges[i].toCharacterRange(containerNode, characterOptions),
+                        backward: backward,
+                        characterOptions: characterOptions
                     };
                 }
-            ),
 
-            findText: createEntryPointFunction(
-                function(session, searchTermParam, findOptions) {
-                    // Set up options
-                    findOptions = createNestedOptions(findOptions, defaultFindOptions);
+                return rangeInfos;
+            }
+        ),
 
-                    // Create word options if we're matching whole words only
-                    if (findOptions.wholeWordsOnly) {
-                        // We don't ever want trailing spaces for search results
-                        findOptions.wordOptions.includeTrailingSpace = false;
-                    }
-
-                    var backward = isDirectionBackward(findOptions.direction);
-
-                    // Create a range representing the search scope if none was provided
-                    var searchScopeRange = findOptions.withinRange;
-                    if (!searchScopeRange) {
-                        searchScopeRange = api.createRange();
-                        searchScopeRange.selectNodeContents(this.getDocument());
-                    }
-
-                    // Examine and prepare the search term
-                    var searchTerm = searchTermParam, isRegex = false;
-                    if (typeof searchTerm == "string") {
-                        if (!findOptions.caseSensitive) {
-                            searchTerm = searchTerm.toLowerCase();
-                        }
-                    } else {
-                        isRegex = true;
-                    }
-
-                    var initialPos = session.getRangeBoundaryPosition(this, !backward);
-
-                    // Adjust initial position if it lies outside the search scope
-                    var comparison = searchScopeRange.comparePoint(initialPos.node, initialPos.offset);
-
-                    if (comparison === -1) {
-                        initialPos = session.getRangeBoundaryPosition(searchScopeRange, true);
-                    } else if (comparison === 1) {
-                        initialPos = session.getRangeBoundaryPosition(searchScopeRange, false);
-                    }
-
-                    var pos = initialPos;
-                    var wrappedAround = false;
-
-                    // Try to find a match and ignore invalid ones
-                    var findResult;
-                    while (true) {
-                        findResult = findTextFromPosition(pos, searchTerm, isRegex, searchScopeRange, findOptions);
-
-                        if (findResult) {
-                            if (findResult.valid) {
-                                this.setStartAndEnd(findResult.startPos.node, findResult.startPos.offset, findResult.endPos.node, findResult.endPos.offset);
-                                return true;
-                            } else {
-                                // We've found a match that is not a whole word, so we carry on searching from the point immediately
-                                // after the match
-                                pos = backward ? findResult.startPos : findResult.endPos;
-                            }
-                        } else if (findOptions.wrap && !wrappedAround) {
-                            // No result found but we're wrapping around and limiting the scope to the unsearched part of the range
-                            searchScopeRange = searchScopeRange.cloneRange();
-                            pos = session.getRangeBoundaryPosition(searchScopeRange, !backward);
-                            searchScopeRange.setBoundary(initialPos.node, initialPos.offset, backward);
-                            wrappedAround = true;
-                        } else {
-                            // Nothing found and we can't wrap around, so we're done
-                            return false;
-                        }
-                    }
-                }
-            ),
-
-            pasteHtml: function(html) {
-                this.deleteContents();
-                if (html) {
-                    var frag = this.createContextualFragment(html);
-                    var lastChild = frag.lastChild;
-                    this.insertNode(frag);
-                    this.collapseAfter(lastChild);
+        restoreCharacterRanges: createEntryPointFunction(
+            function(session, containerNode, saved) {
+                this.removeAllRanges();
+                for (var i = 0, len = saved.length, range, rangeInfo, characterRange; i < len; ++i) {
+                    rangeInfo = saved[i];
+                    characterRange = rangeInfo.characterRange;
+                    range = api.createRange(containerNode);
+                    range.selectCharacters(containerNode, characterRange.start, characterRange.end, rangeInfo.characterOptions);
+                    this.addRange(range, rangeInfo.backward);
                 }
             }
-        });
+        ),
 
-        /*----------------------------------------------------------------------------------------------------------------*/
-
-        // Extensions to the Rangy Selection object
-
-        function createSelectionTrimmer(methodName) {
-            return createEntryPointFunction(
-                function(session, characterOptions) {
-                    var trimmed = false;
-                    this.changeEachRange(function(range) {
-                        trimmed = range[methodName](characterOptions) || trimmed;
-                    });
-                    return trimmed;
+        text: createEntryPointFunction(
+            function(session, characterOptions) {
+                var rangeTexts = [];
+                for (var i = 0, len = this.rangeCount; i < len; ++i) {
+                    rangeTexts[i] = this.getRangeAt(i).text(characterOptions);
                 }
-            );
-        }
-
-        extend(api.selectionPrototype, {
-            expand: createEntryPointFunction(
-                function(session, unit, expandOptions) {
-                    this.changeEachRange(function(range) {
-                        range.expand(unit, expandOptions);
-                    });
-                }
-            ),
-
-            move: createEntryPointFunction(
-                function(session, unit, count, options) {
-                    var unitsMoved = 0;
-                    if (this.focusNode) {
-                        this.collapse(this.focusNode, this.focusOffset);
-                        var range = this.getRangeAt(0);
-                        if (!options) {
-                            options = {};
-                        }
-                        options.characterOptions = createOptions(options.characterOptions, defaultCaretCharacterOptions);
-                        unitsMoved = range.move(unit, count, options);
-                        this.setSingleRange(range);
-                    }
-                    return unitsMoved;
-                }
-            ),
-
-            trimStart: createSelectionTrimmer("trimStart"),
-            trimEnd: createSelectionTrimmer("trimEnd"),
-            trim: createSelectionTrimmer("trim"),
-
-            selectCharacters: createEntryPointFunction(
-                function(session, containerNode, startIndex, endIndex, direction, characterOptions) {
-                    var range = api.createRange(containerNode);
-                    range.selectCharacters(containerNode, startIndex, endIndex, characterOptions);
-                    this.setSingleRange(range, direction);
-                }
-            ),
-
-            saveCharacterRanges: createEntryPointFunction(
-                function(session, containerNode, characterOptions) {
-                    var ranges = this.getAllRanges(), rangeCount = ranges.length;
-                    var rangeInfos = [];
-
-                    var backward = rangeCount == 1 && this.isBackward();
-
-                    for (var i = 0, len = ranges.length; i < len; ++i) {
-                        rangeInfos[i] = {
-                            characterRange: ranges[i].toCharacterRange(containerNode, characterOptions),
-                            backward: backward,
-                            characterOptions: characterOptions
-                        };
-                    }
-
-                    return rangeInfos;
-                }
-            ),
-
-            restoreCharacterRanges: createEntryPointFunction(
-                function(session, containerNode, saved) {
-                    this.removeAllRanges();
-                    for (var i = 0, len = saved.length, range, rangeInfo, characterRange; i < len; ++i) {
-                        rangeInfo = saved[i];
-                        characterRange = rangeInfo.characterRange;
-                        range = api.createRange(containerNode);
-                        range.selectCharacters(containerNode, characterRange.start, characterRange.end, rangeInfo.characterOptions);
-                        this.addRange(range, rangeInfo.backward);
-                    }
-                }
-            ),
-
-            text: createEntryPointFunction(
-                function(session, characterOptions) {
-                    var rangeTexts = [];
-                    for (var i = 0, len = this.rangeCount; i < len; ++i) {
-                        rangeTexts[i] = this.getRangeAt(i).text(characterOptions);
-                    }
-                    return rangeTexts.join("");
-                }
-            )
-        });
-
-        /*----------------------------------------------------------------------------------------------------------------*/
-
-        // Extensions to the core rangy object
-
-        api.innerText = function(el, characterOptions) {
-            var range = api.createRange(el);
-            range.selectNodeContents(el);
-            var text = range.text(characterOptions);
-            return text;
-        };
-
-        api.createWordIterator = function(startNode, startOffset, iteratorOptions) {
-            var session = getSession();
-            iteratorOptions = createNestedOptions(iteratorOptions, defaultWordIteratorOptions);
-            var startPos = session.getPosition(startNode, startOffset);
-            var tokenizedTextProvider = createTokenizedTextProvider(startPos, iteratorOptions.characterOptions, iteratorOptions.wordOptions);
-            var backward = isDirectionBackward(iteratorOptions.direction);
-
-            return {
-                next: function() {
-                    return backward ? tokenizedTextProvider.previousStartToken() : tokenizedTextProvider.nextEndToken();
-                },
-
-                dispose: function() {
-                    tokenizedTextProvider.dispose();
-                    this.next = function() {};
-                }
-            };
-        };
-
-        /*----------------------------------------------------------------------------------------------------------------*/
-
-        api.noMutation = function(func) {
-            var session = getSession();
-            func(session);
-            endSession();
-        };
-
-        api.noMutation.createEntryPointFunction = createEntryPointFunction;
-
-        api.textRange = {
-            isBlockNode: isBlockNode,
-            isCollapsedWhitespaceNode: isCollapsedWhitespaceNode,
-
-            createPosition: createEntryPointFunction(
-                function(session, node, offset) {
-                    return session.getPosition(node, offset);
-                }
-            )
-        };
+                return rangeTexts.join("");
+            }
+        )
     });
-    
-    return rangy;
-}, this);;/**
- * Selection save and restore module for Rangy.
- * Saves and restores user selections using marker invisible elements in the DOM.
- *
- * Part of Rangy, a cross-browser JavaScript range and selection library
- * https://github.com/timdown/rangy
- *
- * Depends on Rangy core.
- *
- * Copyright 2015, Tim Down
- * Licensed under the MIT license.
- * Version: 1.3.0
- * Build date: 10 May 2015
- */
-(function(factory, root) {
-    if (typeof define == "function" && define.amd) {
-        // AMD. Register as an anonymous module with a dependency on Rangy.
-        define(["./rangy-core"], factory);
-    } else if (typeof module != "undefined" && typeof exports == "object") {
-        // Node/CommonJS style
-        module.exports = factory( require("rangy") );
-    } else {
-        // No AMD or CommonJS support so we use the rangy property of root (probably the global variable)
-        factory(root.rangy);
-    }
-})(function(rangy) {
-    rangy.createModule("SaveRestore", ["WrappedRange"], function(api, module) {
-        var dom = api.dom;
-        var removeNode = dom.removeNode;
-        var isDirectionBackward = api.Selection.isDirectionBackward;
-        var markerTextChar = "\ufeff";
 
-        function gEBI(id, doc) {
-            return (doc || document).getElementById(id);
-        }
+    /*----------------------------------------------------------------------------------------------------------------*/
 
-        function insertRangeBoundaryMarker(range, atStart) {
-            var markerId = "selectionBoundary_" + (+new Date()) + "_" + ("" + Math.random()).slice(2);
-            var markerEl;
-            var doc = dom.getDocument(range.startContainer);
+    // Extensions to the core rangy object
 
-            // Clone the Range and collapse to the appropriate boundary point
-            var boundaryRange = range.cloneRange();
-            boundaryRange.collapse(atStart);
+    api.innerText = function(el, characterOptions) {
+        var range = api.createRange(el);
+        range.selectNodeContents(el);
+        var text = range.text(characterOptions);
+        return text;
+    };
 
-            // Create the marker element containing a single invisible character using DOM methods and insert it
-            markerEl = doc.createElement("span");
-            markerEl.id = markerId;
-            markerEl.style.lineHeight = "0";
-            markerEl.style.display = "none";
-            markerEl.className = "rangySelectionBoundary";
-            markerEl.appendChild(doc.createTextNode(markerTextChar));
+    api.createWordIterator = function(startNode, startOffset, iteratorOptions) {
+        var session = getSession();
+        iteratorOptions = createNestedOptions(iteratorOptions, defaultWordIteratorOptions);
+        var startPos = session.getPosition(startNode, startOffset);
+        var tokenizedTextProvider = createTokenizedTextProvider(startPos, iteratorOptions.characterOptions, iteratorOptions.wordOptions);
+        var backward = isDirectionBackward(iteratorOptions.direction);
 
-            boundaryRange.insertNode(markerEl);
-            return markerEl;
-        }
+        return {
+            next: function() {
+                return backward ? tokenizedTextProvider.previousStartToken() : tokenizedTextProvider.nextEndToken();
+            },
 
-        function setRangeBoundary(doc, range, markerId, atStart) {
-            var markerEl = gEBI(markerId, doc);
-            if (markerEl) {
-                range[atStart ? "setStartBefore" : "setEndBefore"](markerEl);
-                removeNode(markerEl);
-            } else {
-                module.warn("Marker element has been removed. Cannot restore selection.");
+            dispose: function() {
+                tokenizedTextProvider.dispose();
+                this.next = function() {};
             }
-        }
+        };
+    };
 
-        function compareRanges(r1, r2) {
-            return r2.compareBoundaryPoints(r1.START_TO_START, r1);
-        }
+    /*----------------------------------------------------------------------------------------------------------------*/
 
-        function saveRange(range, direction) {
-            var startEl, endEl, doc = api.DomRange.getRangeDocument(range), text = range.toString();
-            var backward = isDirectionBackward(direction);
+    api.noMutation = function(func) {
+        var session = getSession();
+        func(session);
+        endSession();
+    };
 
-            if (range.collapsed) {
-                endEl = insertRangeBoundaryMarker(range, false);
-                return {
-                    document: doc,
-                    markerId: endEl.id,
-                    collapsed: true
-                };
-            } else {
-                endEl = insertRangeBoundaryMarker(range, false);
-                startEl = insertRangeBoundaryMarker(range, true);
+    api.noMutation.createEntryPointFunction = createEntryPointFunction;
 
-                return {
-                    document: doc,
-                    startMarkerId: startEl.id,
-                    endMarkerId: endEl.id,
-                    collapsed: false,
-                    backward: backward,
-                    toString: function() {
-                        return "original text: '" + text + "', new text: '" + range.toString() + "'";
-                    }
-                };
+    api.textRange = {
+        isBlockNode: isBlockNode,
+        isCollapsedWhitespaceNode: isCollapsedWhitespaceNode,
+
+        createPosition: createEntryPointFunction(
+            function(session, node, offset) {
+                return session.getPosition(node, offset);
             }
-        }
+        )
+    };
+});
 
-        function restoreRange(rangeInfo, normalize) {
-            var doc = rangeInfo.document;
-            if (typeof normalize == "undefined") {
-                normalize = true;
-            }
-            var range = api.createRange(doc);
-            if (rangeInfo.collapsed) {
-                var markerEl = gEBI(rangeInfo.markerId, doc);
-                if (markerEl) {
-                    markerEl.style.display = "inline";
-                    var previousNode = markerEl.previousSibling;
-
-                    // Workaround for issue 17
-                    if (previousNode && previousNode.nodeType == 3) {
-                        removeNode(markerEl);
-                        range.collapseToPoint(previousNode, previousNode.length);
-                    } else {
-                        range.collapseBefore(markerEl);
-                        removeNode(markerEl);
-                    }
-                } else {
-                    module.warn("Marker element has been removed. Cannot restore selection.");
-                }
-            } else {
-                setRangeBoundary(doc, range, rangeInfo.startMarkerId, true);
-                setRangeBoundary(doc, range, rangeInfo.endMarkerId, false);
-            }
-
-            if (normalize) {
-                range.normalizeBoundaries();
-            }
-
-            return range;
-        }
-
-        function saveRanges(ranges, direction) {
-            var rangeInfos = [], range, doc;
-            var backward = isDirectionBackward(direction);
-
-            // Order the ranges by position within the DOM, latest first, cloning the array to leave the original untouched
-            ranges = ranges.slice(0);
-            ranges.sort(compareRanges);
-
-            for (var i = 0, len = ranges.length; i < len; ++i) {
-                rangeInfos[i] = saveRange(ranges[i], backward);
-            }
-
-            // Now that all the markers are in place and DOM manipulation over, adjust each range's boundaries to lie
-            // between its markers
-            for (i = len - 1; i >= 0; --i) {
-                range = ranges[i];
-                doc = api.DomRange.getRangeDocument(range);
-                if (range.collapsed) {
-                    range.collapseAfter(gEBI(rangeInfos[i].markerId, doc));
-                } else {
-                    range.setEndBefore(gEBI(rangeInfos[i].endMarkerId, doc));
-                    range.setStartAfter(gEBI(rangeInfos[i].startMarkerId, doc));
-                }
-            }
-
-            return rangeInfos;
-        }
-
-        function saveSelection(win) {
-            if (!api.isSelectionValid(win)) {
-                module.warn("Cannot save selection. This usually happens when the selection is collapsed and the selection document has lost focus.");
-                return null;
-            }
-            var sel = api.getSelection(win);
-            var ranges = sel.getAllRanges();
-            var backward = (ranges.length == 1 && sel.isBackward());
-
-            var rangeInfos = saveRanges(ranges, backward);
-
-            // Ensure current selection is unaffected
-            if (backward) {
-                sel.setSingleRange(ranges[0], backward);
-            } else {
-                sel.setRanges(ranges);
-            }
-
-            return {
-                win: win,
-                rangeInfos: rangeInfos,
-                restored: false
-            };
-        }
-
-        function restoreRanges(rangeInfos) {
-            var ranges = [];
-
-            // Ranges are in reverse order of appearance in the DOM. We want to restore earliest first to avoid
-            // normalization affecting previously restored ranges.
-            var rangeCount = rangeInfos.length;
-
-            for (var i = rangeCount - 1; i >= 0; i--) {
-                ranges[i] = restoreRange(rangeInfos[i], true);
-            }
-
-            return ranges;
-        }
-
-        function restoreSelection(savedSelection, preserveDirection) {
-            if (!savedSelection.restored) {
-                var rangeInfos = savedSelection.rangeInfos;
-                var sel = api.getSelection(savedSelection.win);
-                var ranges = restoreRanges(rangeInfos), rangeCount = rangeInfos.length;
-
-                if (rangeCount == 1 && preserveDirection && api.features.selectionHasExtend && rangeInfos[0].backward) {
-                    sel.removeAllRanges();
-                    sel.addRange(ranges[0], true);
-                } else {
-                    sel.setRanges(ranges);
-                }
-
-                savedSelection.restored = true;
-            }
-        }
-
-        function removeMarkerElement(doc, markerId) {
-            var markerEl = gEBI(markerId, doc);
-            if (markerEl) {
-                removeNode(markerEl);
-            }
-        }
-
-        function removeMarkers(savedSelection) {
-            var rangeInfos = savedSelection.rangeInfos;
-            for (var i = 0, len = rangeInfos.length, rangeInfo; i < len; ++i) {
-                rangeInfo = rangeInfos[i];
-                if (rangeInfo.collapsed) {
-                    removeMarkerElement(savedSelection.doc, rangeInfo.markerId);
-                } else {
-                    removeMarkerElement(savedSelection.doc, rangeInfo.startMarkerId);
-                    removeMarkerElement(savedSelection.doc, rangeInfo.endMarkerId);
-                }
-            }
-        }
-
-        api.util.extend(api, {
-            saveRange: saveRange,
-            restoreRange: restoreRange,
-            saveRanges: saveRanges,
-            restoreRanges: restoreRanges,
-            saveSelection: saveSelection,
-            restoreSelection: restoreSelection,
-            removeMarkerElement: removeMarkerElement,
-            removeMarkers: removeMarkers
-        });
-    });
-    
-    return rangy;
-}, this);;/*
-	Base.js, version 1.1a
-	Copyright 2006-2010, Dean Edwards
-	License: http://www.opensource.org/licenses/mit-license.php
-*/
-
-var Base = function() {
-	// dummy
-};
-
-Base.extend = function(_instance, _static) { // subclass
-	var extend = Base.prototype.extend;
-	
-	// build the prototype
-	Base._prototyping = true;
-	var proto = new this;
-	extend.call(proto, _instance);
-  proto.base = function() {
-    // call this method from any other method to invoke that method's ancestor
-  };
-	delete Base._prototyping;
-	
-	// create the wrapper for the constructor function
-	//var constructor = proto.constructor.valueOf(); //-dean
-	var constructor = proto.constructor;
-	var klass = proto.constructor = function() {
-		if (!Base._prototyping) {
-			if (this._constructing || this.constructor == klass) { // instantiation
-				this._constructing = true;
-				constructor.apply(this, arguments);
-				delete this._constructing;
-			} else if (arguments[0] != null) { // casting
-				return (arguments[0].extend || extend).call(arguments[0], proto);
-			}
-		}
-	};
-	
-	// build the class interface
-	klass.ancestor = this;
-	klass.extend = this.extend;
-	klass.forEach = this.forEach;
-	klass.implement = this.implement;
-	klass.prototype = proto;
-	klass.toString = this.toString;
-	klass.valueOf = function(type) {
-		//return (type == "object") ? klass : constructor; //-dean
-		return (type == "object") ? klass : constructor.valueOf();
-	};
-	extend.call(klass, _static);
-	// class initialisation
-	if (typeof klass.init == "function") klass.init();
-	return klass;
-};
-
-Base.prototype = {	
-	extend: function(source, value) {
-		if (arguments.length > 1) { // extending with a name/value pair
-			var ancestor = this[source];
-			if (ancestor && (typeof value == "function") && // overriding a method?
-				// the valueOf() comparison is to avoid circular references
-				(!ancestor.valueOf || ancestor.valueOf() != value.valueOf()) &&
-				/\bbase\b/.test(value)) {
-				// get the underlying method
-				var method = value.valueOf();
-				// override
-				value = function() {
-					var previous = this.base || Base.prototype.base;
-					this.base = ancestor;
-					var returnValue = method.apply(this, arguments);
-					this.base = previous;
-					return returnValue;
-				};
-				// point to the underlying method
-				value.valueOf = function(type) {
-					return (type == "object") ? value : method;
-				};
-				value.toString = Base.toString;
-			}
-			this[source] = value;
-		} else if (source) { // extending with an object literal
-			var extend = Base.prototype.extend;
-			// if this object has a customised extend method then use it
-			if (!Base._prototyping && typeof this != "function") {
-				extend = this.extend || extend;
-			}
-			var proto = {toSource: null};
-			// do the "toString" and other methods manually
-			var hidden = ["constructor", "toString", "valueOf"];
-			// if we are prototyping then include the constructor
-			var i = Base._prototyping ? 0 : 1;
-			while (key = hidden[i++]) {
-				if (source[key] != proto[key]) {
-					extend.call(this, key, source[key]);
-
-				}
-			}
-			// copy each of the source object's properties to this object
-			for (var key in source) {
-				if (!proto[key]) extend.call(this, key, source[key]);
-			}
-		}
-		return this;
-	}
-};
-
-// initialise
-Base = Base.extend({
-	constructor: function() {
-		this.extend(arguments[0]);
-	}
-}, {
-	ancestor: Object,
-	version: "1.1",
-	
-	forEach: function(object, block, context) {
-		for (var key in object) {
-			if (this.prototype[key] === undefined) {
-				block.call(context, object[key], key, object);
-			}
-		}
-	},
-		
-	implement: function() {
-		for (var i = 0; i < arguments.length; i++) {
-			if (typeof arguments[i] == "function") {
-				// if it's a function, call it
-				arguments[i](this.prototype);
-			} else {
-				// add the interface using the extend method
-				this.prototype.extend(arguments[i]);
-			}
-		}
-		return this;
-	},
-	
-	toString: function() {
-		return String(this.valueOf());
-	}
-});;/**
+/**
  * Detect browser support for specific features
  */
 wysihtml.browser = (function() {
@@ -7136,7 +7099,8 @@ wysihtml.browser = (function() {
     }
   };
 })();
-;wysihtml.lang.array = function(arr) {
+
+wysihtml.lang.array = function(arr) {
   return {
     /**
      * Check whether a given object exists in an array
@@ -7262,7 +7226,8 @@ wysihtml.browser = (function() {
 
   };
 };
-;wysihtml.lang.Dispatcher = Base.extend(
+
+wysihtml.lang.Dispatcher = Base.extend(
   /** @scope wysihtml.lang.Dialog.prototype */ {
   on: function(eventName, handler) {
     this.events = this.events || {};
@@ -7312,7 +7277,8 @@ wysihtml.browser = (function() {
     return this.off.apply(this, arguments);
   }
 });
-;wysihtml.lang.object = function(obj) {
+
+wysihtml.lang.object = function(obj) {
   return {
     /**
      * @example
@@ -7425,7 +7391,8 @@ wysihtml.browser = (function() {
     }
   };
 };
-;(function() {
+
+(function() {
   var WHITE_SPACE_START = /^\s+/,
       WHITE_SPACE_END   = /\s+$/,
       ENTITY_REG_EXP    = /[&<>\t"]/g,
@@ -7491,7 +7458,8 @@ wysihtml.browser = (function() {
     };
   };
 })();
-;/**
+
+/**
  * Find urls in descendant text nodes of an element and auto-links them
  * Inspired by http://james.padolsey.com/javascript/find-and-replace-text-with-javascript/
  *
@@ -7640,7 +7608,8 @@ wysihtml.browser = (function() {
   // Reveal url reg exp to the outside
   wysihtml.dom.autoLink.URL_REG_EXP = URL_REG_EXP;
 })(wysihtml);
-;(function(wysihtml) {
+
+(function(wysihtml) {
   var api = wysihtml.dom;
 
   api.addClass = function(element, className) {
@@ -7673,7 +7642,73 @@ wysihtml.browser = (function() {
     return (elementClassName.length > 0 && (elementClassName == className || new RegExp("(^|\\s)" + className + "(\\s|$)").test(elementClassName)));
   };
 })(wysihtml);
-;wysihtml.dom.contains = (function() {
+
+wysihtml.dom.compareDocumentPosition = (function() {
+  var documentElement = document.documentElement;
+  if (documentElement.compareDocumentPosition) {
+    return function(container, element) {
+      return container.compareDocumentPosition(element);
+    };
+  } else {
+    return function( container, element ) {
+      // implementation borrowed from https://github.com/tmpvar/jsdom/blob/681a8524b663281a0f58348c6129c8c184efc62c/lib/jsdom/level3/core.js // MIT license
+      var thisOwner, otherOwner;
+
+      if( container.nodeType === 9) // Node.DOCUMENT_NODE
+        thisOwner = container;
+      else
+        thisOwner = container.ownerDocument;
+
+      if( element.nodeType === 9) // Node.DOCUMENT_NODE
+        otherOwner = element;
+      else
+        otherOwner = element.ownerDocument;
+
+      if( container === element ) return 0;
+      if( container === element.ownerDocument ) return 4 + 16; //Node.DOCUMENT_POSITION_FOLLOWING + Node.DOCUMENT_POSITION_CONTAINED_BY;
+      if( container.ownerDocument === element ) return 2 + 8;  //Node.DOCUMENT_POSITION_PRECEDING + Node.DOCUMENT_POSITION_CONTAINS;
+      if( thisOwner !== otherOwner ) return 1; // Node.DOCUMENT_POSITION_DISCONNECTED;
+
+      // Text nodes for attributes does not have a _parentNode. So we need to find them as attribute child.
+      if( container.nodeType === 2 /*Node.ATTRIBUTE_NODE*/ && container.childNodes && wysihtml.lang.array(container.childNodes).indexOf( element ) !== -1)
+        return 4 + 16; //Node.DOCUMENT_POSITION_FOLLOWING + Node.DOCUMENT_POSITION_CONTAINED_BY;
+
+      if( element.nodeType === 2 /*Node.ATTRIBUTE_NODE*/ && element.childNodes && wysihtml.lang.array(element.childNodes).indexOf( container ) !== -1)
+        return 2 + 8; //Node.DOCUMENT_POSITION_PRECEDING + Node.DOCUMENT_POSITION_CONTAINS;
+
+      var point = container;
+      var parents = [ ];
+      var previous = null;
+      while( point ) {
+        if( point == element ) return 2 + 8; //Node.DOCUMENT_POSITION_PRECEDING + Node.DOCUMENT_POSITION_CONTAINS;
+        parents.push( point );
+        point = point.parentNode;
+      }
+      point = element;
+      previous = null;
+      while( point ) {
+        if( point == container ) return 4 + 16; //Node.DOCUMENT_POSITION_FOLLOWING + Node.DOCUMENT_POSITION_CONTAINED_BY;
+        var location_index = wysihtml.lang.array(parents).indexOf( point );
+        if( location_index !== -1) {
+         var smallest_common_ancestor = parents[ location_index ];
+         var this_index = wysihtml.lang.array(smallest_common_ancestor.childNodes).indexOf( parents[location_index - 1]);//smallest_common_ancestor.childNodes.toArray().indexOf( parents[location_index - 1] );
+         var other_index = wysihtml.lang.array(smallest_common_ancestor.childNodes).indexOf( previous ); //smallest_common_ancestor.childNodes.toArray().indexOf( previous );
+         if( this_index > other_index ) {
+               return 2; //Node.DOCUMENT_POSITION_PRECEDING;
+         }
+         else {
+           return 4; //Node.DOCUMENT_POSITION_FOLLOWING;
+         }
+        }
+        previous = point;
+        point = point.parentNode;
+      }
+      return 1; //Node.DOCUMENT_POSITION_DISCONNECTED;
+    };
+  }
+})();
+
+wysihtml.dom.contains = (function() {
   var documentElement = document.documentElement;
   if (documentElement.contains) {
     return function(container, element) {
@@ -7692,7 +7727,75 @@ wysihtml.browser = (function() {
     };
   }
 })();
-;/**
+
+(function(wysihtml) {
+  var doc = document;
+  wysihtml.dom.ContentEditableArea = Base.extend({
+      getContentEditable: function() {
+        return this.element;
+      },
+
+      getWindow: function() {
+        return this.element.ownerDocument.defaultView || this.element.ownerDocument.parentWindow;
+      },
+
+      getDocument: function() {
+        return this.element.ownerDocument;
+      },
+
+      constructor: function(readyCallback, config, contentEditable) {
+        this.callback = readyCallback || wysihtml.EMPTY_FUNCTION;
+        this.config   = wysihtml.lang.object({}).merge(config).get();
+        if (!this.config.className) {
+          this.config.className = "wysihtml5-sandbox";
+        }
+        if (contentEditable) {
+            this.element = this._bindElement(contentEditable);
+        } else {
+            this.element = this._createElement();
+        }
+      },
+
+      destroy: function() {
+
+      },
+
+      // creates a new contenteditable and initiates it
+      _createElement: function() {
+        var element = doc.createElement("div");
+        element.className = this.config.className;
+        this._loadElement(element);
+        return element;
+      },
+
+      // initiates an allready existent contenteditable
+      _bindElement: function(contentEditable) {
+        contentEditable.className = contentEditable.className ? contentEditable.className + " wysihtml5-sandbox" : "wysihtml5-sandbox";
+        this._loadElement(contentEditable, true);
+        return contentEditable;
+      },
+
+      _loadElement: function(element, contentExists) {
+        var that = this;
+
+        if (!contentExists) {
+            var innerHtml = this._getHtml();
+            element.innerHTML = innerHtml;
+        }
+
+        this.loaded = true;
+        // Trigger the callback
+        setTimeout(function() { that.callback(that); }, 0);
+      },
+
+      _getHtml: function(templateVars) {
+        return '';
+      }
+
+  });
+})(wysihtml);
+
+/**
  * Converts an HTML fragment/element into a unordered/ordered list
  *
  * @param {Element} element The element which should be turned into a list
@@ -7798,7 +7901,8 @@ wysihtml.dom.convertToList = (function() {
 
   return convertToList;
 })();
-;/**
+
+/**
  * Copy a set of attributes from one element to another
  *
  * @param {Array} attributesToCopy List of attributes which should be copied
@@ -7833,7 +7937,8 @@ wysihtml.dom.copyAttributes = function(attributesToCopy) {
     }
   };
 };
-;/**
+
+/**
  * Copy a set of styles from one element to another
  * Please note that this only works properly across browsers when the element from which to copy the styles
  * is in the dom
@@ -7906,7 +8011,8 @@ wysihtml.dom.copyAttributes = function(attributesToCopy) {
     };
   };
 })(wysihtml.dom);
-;/**
+
+/**
  * Event Delegation
  *
  * @example
@@ -7936,7 +8042,8 @@ wysihtml.dom.copyAttributes = function(attributesToCopy) {
     };
   };
 })(wysihtml);
-;// TODO: Refactor dom tree traversing here
+
+// TODO: Refactor dom tree traversing here
 (function(wysihtml) {
 
   // Finds parents of a node, returning the outermost node first in Array
@@ -8302,7 +8409,8 @@ wysihtml.dom.copyAttributes = function(attributesToCopy) {
     };
   };
 })(wysihtml);
-;/**
+
+/**
  * Returns the given html wrapped in a div element
  *
  * Fixing IE's inability to treat unknown elements (HTML5 section, article, ...) correctly
@@ -8366,7 +8474,74 @@ wysihtml.dom.getAsDom = (function() {
     return tempElement;
   };
 })();
-;/**
+
+/**
+ * Get a set of attribute from one element
+ *
+ * IE gives wrong results for hasAttribute/getAttribute, for example:
+ *    var td = document.createElement("td");
+ *    td.getAttribute("rowspan"); // => "1" in IE
+ *
+ * Therefore we have to check the element's outerHTML for the attribute
+*/
+
+wysihtml.dom.getAttribute = function(node, attributeName) {
+  var HAS_GET_ATTRIBUTE_BUG = !wysihtml.browser.supportsGetAttributeCorrectly();
+  attributeName = attributeName.toLowerCase();
+  var nodeName = node.nodeName;
+  if (nodeName == "IMG" && attributeName == "src" && wysihtml.dom.isLoadedImage(node) === true) {
+    // Get 'src' attribute value via object property since this will always contain the
+    // full absolute url (http://...)
+    // this fixes a very annoying bug in firefox (ver 3.6 & 4) and IE 8 where images copied from the same host
+    // will have relative paths, which the sanitizer strips out (see attributeCheckMethods.url)
+    return node.src;
+  } else if (HAS_GET_ATTRIBUTE_BUG && "outerHTML" in node) {
+    // Don't trust getAttribute/hasAttribute in IE 6-8, instead check the element's outerHTML
+    var outerHTML      = node.outerHTML.toLowerCase(),
+        // TODO: This might not work for attributes without value: <input disabled>
+        hasAttribute   = outerHTML.indexOf(" " + attributeName +  "=") != -1;
+
+    return hasAttribute ? node.getAttribute(attributeName) : null;
+  } else{
+    return node.getAttribute(attributeName);
+  }
+};
+
+/**
+ * Get all attributes of an element
+ *
+ * IE gives wrong results for hasAttribute/getAttribute, for example:
+ *    var td = document.createElement("td");
+ *    td.getAttribute("rowspan"); // => "1" in IE
+ *
+ * Therefore we have to check the element's outerHTML for the attribute
+*/
+
+wysihtml.dom.getAttributes = function(node) {
+  var HAS_GET_ATTRIBUTE_BUG = !wysihtml.browser.supportsGetAttributeCorrectly(),
+      nodeName = node.nodeName,
+      attributes = [],
+      attr;
+
+  for (attr in node.attributes) {
+    if ((node.attributes.hasOwnProperty && node.attributes.hasOwnProperty(attr)) || (!node.attributes.hasOwnProperty && Object.prototype.hasOwnProperty.call(node.attributes, attr)))  {
+      if (node.attributes[attr].specified) {
+        if (nodeName == "IMG" && node.attributes[attr].name.toLowerCase() == "src" && wysihtml.dom.isLoadedImage(node) === true) {
+          attributes['src'] = node.src;
+        } else if (wysihtml.lang.array(['rowspan', 'colspan']).contains(node.attributes[attr].name.toLowerCase()) && HAS_GET_ATTRIBUTE_BUG) {
+          if (node.attributes[attr].value !== 1) {
+            attributes[node.attributes[attr].name] = node.attributes[attr].value;
+          }
+        } else {
+          attributes[node.attributes[attr].name] = node.attributes[attr].value;
+        }
+      }
+    }
+  }
+  return attributes;
+};
+
+/**
  * Walks the dom tree from the given node up until it finds a match
  *
  * @param {Element} node The from which to check the parent nodes
@@ -8397,7 +8572,60 @@ wysihtml.dom.getParentElement = (function() {
   };
 
 })();
-;/**
+
+/* 
+ * Methods for fetching pasted html before it gets inserted into content
+**/
+
+/* Modern event.clipboardData driven approach.
+ * Advantage is that it does not have to loose selection or modify dom to catch the data. 
+ * IE does not support though.
+**/
+wysihtml.dom.getPastedHtml = function(event) {
+  var html;
+  if (wysihtml.browser.supportsModernPaste() && event.clipboardData) {
+    if (wysihtml.lang.array(event.clipboardData.types).contains('text/html')) {
+      html = event.clipboardData.getData('text/html');
+    } else if (wysihtml.lang.array(event.clipboardData.types).contains('text/plain')) {
+      html = wysihtml.lang.string(event.clipboardData.getData('text/plain')).escapeHTML(true, true);
+    }
+  }
+  return html;
+};
+
+/* Older temprorary contenteditable as paste source catcher method for fallbacks */
+wysihtml.dom.getPastedHtmlWithDiv = function (composer, f) {
+  var selBookmark = composer.selection.getBookmark(),
+      doc = composer.element.ownerDocument,
+      cleanerDiv = doc.createElement('DIV'),
+      scrollPos = composer.getScrollPos();
+  
+  doc.body.appendChild(cleanerDiv);
+
+  cleanerDiv.style.width = "1px";
+  cleanerDiv.style.height = "1px";
+  cleanerDiv.style.overflow = "hidden";
+  cleanerDiv.style.position = "absolute";
+  cleanerDiv.style.top = scrollPos.y + "px";
+  cleanerDiv.style.left = scrollPos.x + "px";
+
+  cleanerDiv.setAttribute('contenteditable', 'true');
+  cleanerDiv.focus();
+
+  setTimeout(function () {
+    var html;
+
+    composer.selection.setBookmark(selBookmark);
+    html = cleanerDiv.innerHTML;
+    if (html && (/^<br\/?>$/i).test(html.trim())) {
+      html = false;
+    }
+    f(html);
+    cleanerDiv.parentNode.removeChild(cleanerDiv);
+  }, 0);
+};
+
+/**
  * Get element's style for a specific css property
  *
  * @param {Element} element The element on which to retrieve the style
@@ -8470,7 +8698,8 @@ wysihtml.dom.getStyle = (function() {
     };
   };
 })();
-;wysihtml.dom.getTextNodes = function(node, ingoreEmpty){
+
+wysihtml.dom.getTextNodes = function(node, ingoreEmpty){
   var all = [];
   for (node=node.firstChild;node;node=node.nextSibling){
     if (node.nodeType == 3) {
@@ -8483,35 +8712,8 @@ wysihtml.dom.getStyle = (function() {
   }
   return all;
 };
-;/**
- * High performant way to check whether an element with a specific tag name is in the given document
- * Optimized for being heavily executed
- * Unleashes the power of live node lists
- *
- * @param {Object} doc The document object of the context where to check
- * @param {String} tagName Upper cased tag name
- * @example
- *    wysihtml.dom.hasElementWithTagName(document, "IMG");
- */
-wysihtml.dom.hasElementWithTagName = (function() {
-  var LIVE_CACHE          = {},
-      DOCUMENT_IDENTIFIER = 1;
 
-  function _getDocumentIdentifier(doc) {
-    return doc._wysihtml5_identifier || (doc._wysihtml5_identifier = DOCUMENT_IDENTIFIER++);
-  }
-
-  return function(doc, tagName) {
-    var key         = _getDocumentIdentifier(doc) + ":" + tagName,
-        cacheEntry  = LIVE_CACHE[key];
-    if (!cacheEntry) {
-      cacheEntry = LIVE_CACHE[key] = doc.getElementsByTagName(tagName);
-    }
-
-    return cacheEntry.length > 0;
-  };
-})();
-;/**
+/**
  * High performant way to check whether an element with a specific class name is in the given document
  * Optimized for being heavily executed
  * Unleashes the power of live node lists
@@ -8545,7 +8747,37 @@ wysihtml.dom.hasElementWithTagName = (function() {
     return cacheEntry.length > 0;
   };
 })(wysihtml);
-;wysihtml.dom.insert = function(elementToInsert) {
+
+/**
+ * High performant way to check whether an element with a specific tag name is in the given document
+ * Optimized for being heavily executed
+ * Unleashes the power of live node lists
+ *
+ * @param {Object} doc The document object of the context where to check
+ * @param {String} tagName Upper cased tag name
+ * @example
+ *    wysihtml.dom.hasElementWithTagName(document, "IMG");
+ */
+wysihtml.dom.hasElementWithTagName = (function() {
+  var LIVE_CACHE          = {},
+      DOCUMENT_IDENTIFIER = 1;
+
+  function _getDocumentIdentifier(doc) {
+    return doc._wysihtml5_identifier || (doc._wysihtml5_identifier = DOCUMENT_IDENTIFIER++);
+  }
+
+  return function(doc, tagName) {
+    var key         = _getDocumentIdentifier(doc) + ":" + tagName,
+        cacheEntry  = LIVE_CACHE[key];
+    if (!cacheEntry) {
+      cacheEntry = LIVE_CACHE[key] = doc.getElementsByTagName(tagName);
+    }
+
+    return cacheEntry.length > 0;
+  };
+})();
+
+wysihtml.dom.insert = function(elementToInsert) {
   return {
     after: function(element) {
       element.parentNode.insertBefore(elementToInsert, element.nextSibling);
@@ -8560,7 +8792,8 @@ wysihtml.dom.hasElementWithTagName = (function() {
     }
   };
 };
-;wysihtml.dom.insertCSS = function(rules) {
+
+wysihtml.dom.insertCSS = function(rules) {
   rules = rules.join("\n");
 
   return {
@@ -8587,7 +8820,23 @@ wysihtml.dom.hasElementWithTagName = (function() {
     }
   };
 };
-;// TODO: Refactor dom tree traversing here
+
+/**
+   * Check whether the given node is a proper loaded image
+   * FIXME: Returns undefined when unknown (Chrome, Safari)
+*/
+
+wysihtml.dom.isLoadedImage = function (node) {
+  try {
+    return node.complete && !node.mozMatchesSelector(":-moz-broken");
+  } catch(e) {
+    if (node.complete && node.readyState === "complete") {
+      return true;
+    }
+  }
+};
+
+// TODO: Refactor dom tree traversing here
 (function(wysihtml) {
   wysihtml.dom.lineBreaks = function(node) {
 
@@ -8648,7 +8897,8 @@ wysihtml.dom.hasElementWithTagName = (function() {
       }
     };
   };
-})(wysihtml);;/**
+})(wysihtml);
+/**
  * Method to set dom events
  *
  * @example
@@ -8699,7 +8949,8 @@ wysihtml.dom.observe = function(element, eventNames, handler) {
     }
   };
 };
-;/**
+
+/**
  * HTML Sanitizer
  * Rewrites the HTML based on given rules
  *
@@ -9567,7 +9818,26 @@ wysihtml.dom.parse = function(elementOrHtml_current, config_current) {
 
   return parse(elementOrHtml_current, config_current);
 };
-;/**
+
+// does a selector query on element or array of elements
+wysihtml.dom.query = function(elements, query) {
+    var ret = [],
+        q;
+
+    if (elements.nodeType) {
+        elements = [elements];
+    }
+
+    for (var e = 0, len = elements.length; e < len; e++) {
+        q = elements[e].querySelectorAll(query);
+        if (q) {
+            for(var i = q.length; i--; ret.unshift(q[i]));
+        }
+    }
+    return ret;
+};
+
+/**
  * Checks for empty text node childs and removes them
  *
  * @param {Element} node The element in which to cleanup
@@ -9587,7 +9857,15 @@ wysihtml.dom.removeEmptyTextNodes = function(node) {
     }
   }
 };
-;/**
+
+wysihtml.dom.removeInvisibleSpaces = function(node) {
+  var textNodes = wysihtml.dom.getTextNodes(node);
+  for (var n = textNodes.length; n--;) {
+    textNodes[n].nodeValue = textNodes[n].nodeValue.replace(wysihtml.INVISIBLE_SPACE_REG_EXP, "");
+  }
+};
+
+/**
  * Renames an element (eg. a <div> to a <p>) and keeps its childs
  *
  * @param {Element} element The list element which should be renamed
@@ -9626,7 +9904,8 @@ wysihtml.dom.renameElement = function(element, newNodeName) {
 
   return newElement;
 };
-;/**
+
+/**
  * Takes an element, removes it and replaces it with it's childs
  *
  * @param {Object} node The node which to replace with it's child nodes
@@ -9649,7 +9928,8 @@ wysihtml.dom.replaceWithChildNodes = function(node) {
   }
   node.parentNode.removeChild(node);
 };
-;/**
+
+/**
  * Unwraps an unordered/ordered list
  *
  * @param {Element} element The list element which should be unwrapped
@@ -9746,7 +10026,8 @@ wysihtml.dom.replaceWithChildNodes = function(node) {
 
   dom.resolveList = resolveList;
 })(wysihtml.dom);
-;/**
+
+/**
  * Sandbox for executing javascript, parsing css styles and doing dom operations in a secure way
  *
  * Browser Compatibility:
@@ -10005,73 +10286,8 @@ wysihtml.dom.replaceWithChildNodes = function(node) {
     }
   });
 })(wysihtml);
-;(function(wysihtml) {
-  var doc = document;
-  wysihtml.dom.ContentEditableArea = Base.extend({
-      getContentEditable: function() {
-        return this.element;
-      },
 
-      getWindow: function() {
-        return this.element.ownerDocument.defaultView || this.element.ownerDocument.parentWindow;
-      },
-
-      getDocument: function() {
-        return this.element.ownerDocument;
-      },
-
-      constructor: function(readyCallback, config, contentEditable) {
-        this.callback = readyCallback || wysihtml.EMPTY_FUNCTION;
-        this.config   = wysihtml.lang.object({}).merge(config).get();
-        if (!this.config.className) {
-          this.config.className = "wysihtml5-sandbox";
-        }
-        if (contentEditable) {
-            this.element = this._bindElement(contentEditable);
-        } else {
-            this.element = this._createElement();
-        }
-      },
-
-      destroy: function() {
-
-      },
-
-      // creates a new contenteditable and initiates it
-      _createElement: function() {
-        var element = doc.createElement("div");
-        element.className = this.config.className;
-        this._loadElement(element);
-        return element;
-      },
-
-      // initiates an allready existent contenteditable
-      _bindElement: function(contentEditable) {
-        contentEditable.className = contentEditable.className ? contentEditable.className + " wysihtml5-sandbox" : "wysihtml5-sandbox";
-        this._loadElement(contentEditable, true);
-        return contentEditable;
-      },
-
-      _loadElement: function(element, contentExists) {
-        var that = this;
-
-        if (!contentExists) {
-            var innerHtml = this._getHtml();
-            element.innerHTML = innerHtml;
-        }
-
-        this.loaded = true;
-        // Trigger the callback
-        setTimeout(function() { that.callback(that); }, 0);
-      },
-
-      _getHtml: function(templateVars) {
-        return '';
-      }
-
-  });
-})(wysihtml);
-;(function() {
+(function() {
   var mapping = {
     "className": "class"
   };
@@ -10085,7 +10301,8 @@ wysihtml.dom.replaceWithChildNodes = function(node) {
     };
   };
 })();
-;wysihtml.dom.setStyles = function(styles) {
+
+wysihtml.dom.setStyles = function(styles) {
   return {
     on: function(element) {
       var style = element.style;
@@ -10104,7 +10321,8 @@ wysihtml.dom.replaceWithChildNodes = function(node) {
     }
   };
 };
-;/**
+
+/**
  * Simulate HTML5 placeholder attribute
  *
  * Needed since
@@ -10156,7 +10374,8 @@ wysihtml.dom.replaceWithChildNodes = function(node) {
     set();
   };
 })(wysihtml.dom);
-;(function(dom) {
+
+(function(dom) {
   var documentElement = document.documentElement;
   if ("textContent" in documentElement) {
     dom.setTextContent = function(element, text) {
@@ -10184,1042 +10403,8 @@ wysihtml.dom.replaceWithChildNodes = function(node) {
     };
   }
 })(wysihtml.dom);
-;/**
- * Get a set of attribute from one element
- *
- * IE gives wrong results for hasAttribute/getAttribute, for example:
- *    var td = document.createElement("td");
- *    td.getAttribute("rowspan"); // => "1" in IE
- *
- * Therefore we have to check the element's outerHTML for the attribute
-*/
 
-wysihtml.dom.getAttribute = function(node, attributeName) {
-  var HAS_GET_ATTRIBUTE_BUG = !wysihtml.browser.supportsGetAttributeCorrectly();
-  attributeName = attributeName.toLowerCase();
-  var nodeName = node.nodeName;
-  if (nodeName == "IMG" && attributeName == "src" && wysihtml.dom.isLoadedImage(node) === true) {
-    // Get 'src' attribute value via object property since this will always contain the
-    // full absolute url (http://...)
-    // this fixes a very annoying bug in firefox (ver 3.6 & 4) and IE 8 where images copied from the same host
-    // will have relative paths, which the sanitizer strips out (see attributeCheckMethods.url)
-    return node.src;
-  } else if (HAS_GET_ATTRIBUTE_BUG && "outerHTML" in node) {
-    // Don't trust getAttribute/hasAttribute in IE 6-8, instead check the element's outerHTML
-    var outerHTML      = node.outerHTML.toLowerCase(),
-        // TODO: This might not work for attributes without value: <input disabled>
-        hasAttribute   = outerHTML.indexOf(" " + attributeName +  "=") != -1;
-
-    return hasAttribute ? node.getAttribute(attributeName) : null;
-  } else{
-    return node.getAttribute(attributeName);
-  }
-};
-;/**
- * Get all attributes of an element
- *
- * IE gives wrong results for hasAttribute/getAttribute, for example:
- *    var td = document.createElement("td");
- *    td.getAttribute("rowspan"); // => "1" in IE
- *
- * Therefore we have to check the element's outerHTML for the attribute
-*/
-
-wysihtml.dom.getAttributes = function(node) {
-  var HAS_GET_ATTRIBUTE_BUG = !wysihtml.browser.supportsGetAttributeCorrectly(),
-      nodeName = node.nodeName,
-      attributes = [],
-      attr;
-
-  for (attr in node.attributes) {
-    if ((node.attributes.hasOwnProperty && node.attributes.hasOwnProperty(attr)) || (!node.attributes.hasOwnProperty && Object.prototype.hasOwnProperty.call(node.attributes, attr)))  {
-      if (node.attributes[attr].specified) {
-        if (nodeName == "IMG" && node.attributes[attr].name.toLowerCase() == "src" && wysihtml.dom.isLoadedImage(node) === true) {
-          attributes['src'] = node.src;
-        } else if (wysihtml.lang.array(['rowspan', 'colspan']).contains(node.attributes[attr].name.toLowerCase()) && HAS_GET_ATTRIBUTE_BUG) {
-          if (node.attributes[attr].value !== 1) {
-            attributes[node.attributes[attr].name] = node.attributes[attr].value;
-          }
-        } else {
-          attributes[node.attributes[attr].name] = node.attributes[attr].value;
-        }
-      }
-    }
-  }
-  return attributes;
-};
-;/**
-   * Check whether the given node is a proper loaded image
-   * FIXME: Returns undefined when unknown (Chrome, Safari)
-*/
-
-wysihtml.dom.isLoadedImage = function (node) {
-  try {
-    return node.complete && !node.mozMatchesSelector(":-moz-broken");
-  } catch(e) {
-    if (node.complete && node.readyState === "complete") {
-      return true;
-    }
-  }
-};
-;(function(wysihtml) {
-
-  var api = wysihtml.dom;
-
-  var MapCell = function(cell) {
-    this.el = cell;
-    this.isColspan= false;
-    this.isRowspan= false;
-    this.firstCol= true;
-    this.lastCol= true;
-    this.firstRow= true;
-    this.lastRow= true;
-    this.isReal= true;
-    this.spanCollection= [];
-    this.modified = false;
-  };
-
-  var TableModifyerByCell = function (cell, table) {
-    if (cell) {
-      this.cell = cell;
-      this.table = api.getParentElement(cell, { query: "table" });
-    } else if (table) {
-      this.table = table;
-      this.cell = this.table.querySelectorAll('th, td')[0];
-    }
-  };
-
-  function queryInList(list, query) {
-    var ret = [],
-      q;
-    for (var e = 0, len = list.length; e < len; e++) {
-      q = list[e].querySelectorAll(query);
-      if (q) {
-        for(var i = q.length; i--; ret.unshift(q[i]));
-      }
-    }
-    return ret;
-  }
-
-  function removeElement(el) {
-    el.parentNode.removeChild(el);
-  }
-
-  function insertAfter(referenceNode, newNode) {
-    referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
-  }
-
-  function nextNode(node, tag) {
-    var element = node.nextSibling;
-    while (element.nodeType !=1) {
-      element = element.nextSibling;
-      if (!tag || tag == element.tagName.toLowerCase()) {
-        return element;
-      }
-    }
-    return null;
-  }
-
-  TableModifyerByCell.prototype = {
-
-    addSpannedCellToMap: function(cell, map, r, c, cspan, rspan) {
-      var spanCollect = [],
-        rmax = r + ((rspan) ? parseInt(rspan, 10) - 1 : 0),
-        cmax = c + ((cspan) ? parseInt(cspan, 10) - 1 : 0);
-
-      for (var rr = r; rr <= rmax; rr++) {
-        if (typeof map[rr] == "undefined") { map[rr] = []; }
-        for (var cc = c; cc <= cmax; cc++) {
-          map[rr][cc] = new MapCell(cell);
-          map[rr][cc].isColspan = (cspan && parseInt(cspan, 10) > 1);
-          map[rr][cc].isRowspan = (rspan && parseInt(rspan, 10) > 1);
-          map[rr][cc].firstCol = cc == c;
-          map[rr][cc].lastCol = cc == cmax;
-          map[rr][cc].firstRow = rr == r;
-          map[rr][cc].lastRow = rr == rmax;
-          map[rr][cc].isReal = cc == c && rr == r;
-          map[rr][cc].spanCollection = spanCollect;
-
-          spanCollect.push(map[rr][cc]);
-        }
-      }
-    },
-
-    setCellAsModified: function(cell) {
-      cell.modified = true;
-      if (cell.spanCollection.length > 0) {
-        for (var s = 0, smax = cell.spanCollection.length; s < smax; s++) {
-        cell.spanCollection[s].modified = true;
-        }
-      }
-    },
-
-    setTableMap: function() {
-      var map = [];
-      var tableRows = this.getTableRows(),
-        ridx, row, cells, cidx, cell,
-        c,
-        cspan, rspan;
-
-      for (ridx = 0; ridx < tableRows.length; ridx++) {
-        row = tableRows[ridx];
-        cells = this.getRowCells(row);
-        c = 0;
-        if (typeof map[ridx] == "undefined") { map[ridx] = []; }
-        for (cidx = 0; cidx < cells.length; cidx++) {
-          cell = cells[cidx];
-
-          // If cell allready set means it is set by col or rowspan,
-          // so increase cols index until free col is found
-          while (typeof map[ridx][c] != "undefined") { c++; }
-
-          cspan = api.getAttribute(cell, 'colspan');
-          rspan = api.getAttribute(cell, 'rowspan');
-
-          if (cspan || rspan) {
-            this.addSpannedCellToMap(cell, map, ridx, c, cspan, rspan);
-            c = c + ((cspan) ? parseInt(cspan, 10) : 1);
-          } else {
-            map[ridx][c] = new MapCell(cell);
-            c++;
-          }
-        }
-      }
-      this.map = map;
-      return map;
-    },
-
-    getRowCells: function(row) {
-      var inlineTables = this.table.querySelectorAll('table'),
-        inlineCells = (inlineTables) ? queryInList(inlineTables, 'th, td') : [],
-        allCells = row.querySelectorAll('th, td'),
-        tableCells = (inlineCells.length > 0) ? wysihtml.lang.array(allCells).without(inlineCells) : allCells;
-
-      return tableCells;
-    },
-
-    getTableRows: function() {
-      var inlineTables = this.table.querySelectorAll('table'),
-        inlineRows = (inlineTables) ? queryInList(inlineTables, 'tr') : [],
-        allRows = this.table.querySelectorAll('tr'),
-        tableRows = (inlineRows.length > 0) ? wysihtml.lang.array(allRows).without(inlineRows) : allRows;
-
-      return tableRows;
-    },
-
-    getMapIndex: function(cell) {
-      var r_length = this.map.length,
-        c_length = (this.map && this.map[0]) ? this.map[0].length : 0;
-
-      for (var r_idx = 0;r_idx < r_length; r_idx++) {
-        for (var c_idx = 0;c_idx < c_length; c_idx++) {
-          if (this.map[r_idx][c_idx].el === cell) {
-            return {'row': r_idx, 'col': c_idx};
-          }
-        }
-      }
-      return false;
-    },
-
-    getElementAtIndex: function(idx) {
-      this.setTableMap();
-      if (this.map[idx.row] && this.map[idx.row][idx.col] && this.map[idx.row][idx.col].el) {
-        return this.map[idx.row][idx.col].el;
-      }
-      return null;
-    },
-
-    getMapElsTo: function(to_cell) {
-      var els = [];
-      this.setTableMap();
-      this.idx_start = this.getMapIndex(this.cell);
-      this.idx_end = this.getMapIndex(to_cell);
-
-      // switch indexes if start is bigger than end
-      if (this.idx_start.row > this.idx_end.row || (this.idx_start.row == this.idx_end.row && this.idx_start.col > this.idx_end.col)) {
-        var temp_idx = this.idx_start;
-        this.idx_start = this.idx_end;
-        this.idx_end = temp_idx;
-      }
-      if (this.idx_start.col > this.idx_end.col) {
-        var temp_cidx = this.idx_start.col;
-        this.idx_start.col = this.idx_end.col;
-        this.idx_end.col = temp_cidx;
-      }
-
-      if (this.idx_start != null && this.idx_end != null) {
-        for (var row = this.idx_start.row, maxr = this.idx_end.row; row <= maxr; row++) {
-          for (var col = this.idx_start.col, maxc = this.idx_end.col; col <= maxc; col++) {
-            els.push(this.map[row][col].el);
-          }
-        }
-      }
-      return els;
-    },
-
-    orderSelectionEnds: function(secondcell) {
-      this.setTableMap();
-      this.idx_start = this.getMapIndex(this.cell);
-      this.idx_end = this.getMapIndex(secondcell);
-
-      // switch indexes if start is bigger than end
-      if (this.idx_start.row > this.idx_end.row || (this.idx_start.row == this.idx_end.row && this.idx_start.col > this.idx_end.col)) {
-        var temp_idx = this.idx_start;
-        this.idx_start = this.idx_end;
-        this.idx_end = temp_idx;
-      }
-      if (this.idx_start.col > this.idx_end.col) {
-        var temp_cidx = this.idx_start.col;
-        this.idx_start.col = this.idx_end.col;
-        this.idx_end.col = temp_cidx;
-      }
-
-      return {
-        "start": this.map[this.idx_start.row][this.idx_start.col].el,
-        "end": this.map[this.idx_end.row][this.idx_end.col].el
-      };
-    },
-
-    createCells: function(tag, nr, attrs) {
-      var doc = this.table.ownerDocument,
-        frag = doc.createDocumentFragment(),
-        cell;
-      for (var i = 0; i < nr; i++) {
-        cell = doc.createElement(tag);
-
-        if (attrs) {
-          for (var attr in attrs) {
-            if (attrs.hasOwnProperty(attr)) {
-              cell.setAttribute(attr, attrs[attr]);
-            }
-          }
-        }
-
-        // add non breaking space
-        cell.appendChild(document.createTextNode("\u00a0"));
-        frag.appendChild(cell);
-      }
-      return frag;
-    },
-
-    // Returns next real cell (not part of spanned cell unless first) on row if selected index is not real. I no real cells -1 will be returned
-    correctColIndexForUnreals: function(col, row) {
-      var r = this.map[row],
-        corrIdx = -1;
-      for (var i = 0, max = col; i < col; i++) {
-        if (r[i].isReal){
-          corrIdx++;
-        }
-      }
-      return corrIdx;
-    },
-
-    getLastNewCellOnRow: function(row, rowLimit) {
-      var cells = this.getRowCells(row),
-        cell, idx;
-
-      for (var cidx = 0, cmax = cells.length; cidx < cmax; cidx++) {
-        cell = cells[cidx];
-        idx = this.getMapIndex(cell);
-        if (idx === false || (typeof rowLimit != "undefined" && idx.row != rowLimit)) {
-          return cell;
-        }
-      }
-      return null;
-    },
-
-    removeEmptyTable: function() {
-      var cells = this.table.querySelectorAll('td, th');
-      if (!cells || cells.length == 0) {
-        removeElement(this.table);
-        return true;
-      } else {
-        return false;
-      }
-    },
-
-    // Splits merged cell on row to unique cells
-    splitRowToCells: function(cell) {
-      if (cell.isColspan) {
-        var colspan = parseInt(api.getAttribute(cell.el, 'colspan') || 1, 10),
-          cType = cell.el.tagName.toLowerCase();
-        if (colspan > 1) {
-          var newCells = this.createCells(cType, colspan -1);
-          insertAfter(cell.el, newCells);
-        }
-        cell.el.removeAttribute('colspan');
-      }
-    },
-
-    getRealRowEl: function(force, idx) {
-      var r = null,
-        c = null;
-
-      idx = idx || this.idx;
-
-      for (var cidx = 0, cmax = this.map[idx.row].length; cidx < cmax; cidx++) {
-        c = this.map[idx.row][cidx];
-        if (c.isReal) {
-          r = api.getParentElement(c.el, { query: "tr" });
-          if (r) {
-            return r;
-          }
-        }
-      }
-
-      if (r === null && force) {
-        r = api.getParentElement(this.map[idx.row][idx.col].el, { query: "tr" }) || null;
-      }
-
-      return r;
-    },
-
-    injectRowAt: function(row, col, colspan, cType, c) {
-      var r = this.getRealRowEl(false, {'row': row, 'col': col}),
-        new_cells = this.createCells(cType, colspan);
-
-      if (r) {
-        var n_cidx = this.correctColIndexForUnreals(col, row);
-        if (n_cidx >= 0) {
-          insertAfter(this.getRowCells(r)[n_cidx], new_cells);
-        } else {
-          r.insertBefore(new_cells, r.firstChild);
-        }
-      } else {
-        var rr = this.table.ownerDocument.createElement('tr');
-        rr.appendChild(new_cells);
-        insertAfter(api.getParentElement(c.el, { query: "tr" }), rr);
-      }
-    },
-
-    canMerge: function(to) {
-      this.to = to;
-      this.setTableMap();
-      this.idx_start = this.getMapIndex(this.cell);
-      this.idx_end = this.getMapIndex(this.to);
-
-      // switch indexes if start is bigger than end
-      if (this.idx_start.row > this.idx_end.row || (this.idx_start.row == this.idx_end.row && this.idx_start.col > this.idx_end.col)) {
-        var temp_idx = this.idx_start;
-        this.idx_start = this.idx_end;
-        this.idx_end = temp_idx;
-      }
-      if (this.idx_start.col > this.idx_end.col) {
-        var temp_cidx = this.idx_start.col;
-        this.idx_start.col = this.idx_end.col;
-        this.idx_end.col = temp_cidx;
-      }
-
-      for (var row = this.idx_start.row, maxr = this.idx_end.row; row <= maxr; row++) {
-        for (var col = this.idx_start.col, maxc = this.idx_end.col; col <= maxc; col++) {
-          if (this.map[row][col].isColspan || this.map[row][col].isRowspan) {
-            return false;
-          }
-        }
-      }
-      return true;
-    },
-
-    decreaseCellSpan: function(cell, span) {
-      var nr = parseInt(api.getAttribute(cell.el, span), 10) - 1;
-      if (nr >= 1) {
-        cell.el.setAttribute(span, nr);
-      } else {
-        cell.el.removeAttribute(span);
-        if (span == 'colspan') {
-          cell.isColspan = false;
-        }
-        if (span == 'rowspan') {
-          cell.isRowspan = false;
-        }
-        cell.firstCol = true;
-        cell.lastCol = true;
-        cell.firstRow = true;
-        cell.lastRow = true;
-        cell.isReal = true;
-      }
-    },
-
-    removeSurplusLines: function() {
-      var row, cell, ridx, rmax, cidx, cmax, allRowspan;
-
-      this.setTableMap();
-      if (this.map) {
-        ridx = 0;
-        rmax = this.map.length;
-        for (;ridx < rmax; ridx++) {
-          row = this.map[ridx];
-          allRowspan = true;
-          cidx = 0;
-          cmax = row.length;
-          for (; cidx < cmax; cidx++) {
-            cell = row[cidx];
-            if (!(api.getAttribute(cell.el, "rowspan") && parseInt(api.getAttribute(cell.el, "rowspan"), 10) > 1 && cell.firstRow !== true)) {
-              allRowspan = false;
-              break;
-            }
-          }
-          if (allRowspan) {
-            cidx = 0;
-            for (; cidx < cmax; cidx++) {
-              this.decreaseCellSpan(row[cidx], 'rowspan');
-            }
-          }
-        }
-
-        // remove rows without cells
-        var tableRows = this.getTableRows();
-        ridx = 0;
-        rmax = tableRows.length;
-        for (;ridx < rmax; ridx++) {
-          row = tableRows[ridx];
-          if (row.childNodes.length == 0 && (/^\s*$/.test(row.textContent || row.innerText))) {
-            removeElement(row);
-          }
-        }
-      }
-    },
-
-    fillMissingCells: function() {
-      var r_max = 0,
-        c_max = 0,
-        prevcell = null;
-
-      this.setTableMap();
-      if (this.map) {
-
-        // find maximal dimensions of broken table
-        r_max = this.map.length;
-        for (var ridx = 0; ridx < r_max; ridx++) {
-          if (this.map[ridx].length > c_max) { c_max = this.map[ridx].length; }
-        }
-
-        for (var row = 0; row < r_max; row++) {
-          for (var col = 0; col < c_max; col++) {
-            if (this.map[row] && !this.map[row][col]) {
-              if (col > 0) {
-                this.map[row][col] = new MapCell(this.createCells('td', 1));
-                prevcell = this.map[row][col-1];
-                if (prevcell && prevcell.el && prevcell.el.parent) { // if parent does not exist element is removed from dom
-                  insertAfter(this.map[row][col-1].el, this.map[row][col].el);
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-
-    rectify: function() {
-      if (!this.removeEmptyTable()) {
-        this.removeSurplusLines();
-        this.fillMissingCells();
-        return true;
-      } else {
-        return false;
-      }
-    },
-
-    unmerge: function() {
-      if (this.rectify()) {
-        this.setTableMap();
-        this.idx = this.getMapIndex(this.cell);
-
-        if (this.idx) {
-          var thisCell = this.map[this.idx.row][this.idx.col],
-            colspan = (api.getAttribute(thisCell.el, "colspan")) ? parseInt(api.getAttribute(thisCell.el, "colspan"), 10) : 1,
-            cType = thisCell.el.tagName.toLowerCase();
-
-          if (thisCell.isRowspan) {
-            var rowspan = parseInt(api.getAttribute(thisCell.el, "rowspan"), 10);
-            if (rowspan > 1) {
-              for (var nr = 1, maxr = rowspan - 1; nr <= maxr; nr++){
-                this.injectRowAt(this.idx.row + nr, this.idx.col, colspan, cType, thisCell);
-              }
-            }
-            thisCell.el.removeAttribute('rowspan');
-          }
-          this.splitRowToCells(thisCell);
-        }
-      }
-    },
-
-    // merges cells from start cell (defined in creating obj) to "to" cell
-    merge: function(to) {
-      if (this.rectify()) {
-        if (this.canMerge(to)) {
-          var rowspan = this.idx_end.row - this.idx_start.row + 1,
-            colspan = this.idx_end.col - this.idx_start.col + 1;
-
-          for (var row = this.idx_start.row, maxr = this.idx_end.row; row <= maxr; row++) {
-            for (var col = this.idx_start.col, maxc = this.idx_end.col; col <= maxc; col++) {
-
-              if (row == this.idx_start.row && col == this.idx_start.col) {
-                if (rowspan > 1) {
-                  this.map[row][col].el.setAttribute('rowspan', rowspan);
-                }
-                if (colspan > 1) {
-                  this.map[row][col].el.setAttribute('colspan', colspan);
-                }
-              } else {
-                // transfer content
-                if (!(/^\s*<br\/?>\s*$/.test(this.map[row][col].el.innerHTML.toLowerCase()))) {
-                  this.map[this.idx_start.row][this.idx_start.col].el.innerHTML += ' ' + this.map[row][col].el.innerHTML;
-                }
-                removeElement(this.map[row][col].el);
-              }
-
-            }
-          }
-          this.rectify();
-        } else {
-          if (window.console) {
-            console.log('Do not know how to merge allready merged cells.');
-          }
-        }
-      }
-    },
-
-    // Decreases rowspan of a cell if it is done on first cell of rowspan row (real cell)
-    // Cell is moved to next row (if it is real)
-    collapseCellToNextRow: function(cell) {
-      var cellIdx = this.getMapIndex(cell.el),
-        newRowIdx = cellIdx.row + 1,
-        newIdx = {'row': newRowIdx, 'col': cellIdx.col};
-
-      if (newRowIdx < this.map.length) {
-
-        var row = this.getRealRowEl(false, newIdx);
-        if (row !== null) {
-          var n_cidx = this.correctColIndexForUnreals(newIdx.col, newIdx.row);
-          if (n_cidx >= 0) {
-            insertAfter(this.getRowCells(row)[n_cidx], cell.el);
-          } else {
-            var lastCell = this.getLastNewCellOnRow(row, newRowIdx);
-            if (lastCell !== null) {
-              insertAfter(lastCell, cell.el);
-            } else {
-              row.insertBefore(cell.el, row.firstChild);
-            }
-          }
-          if (parseInt(api.getAttribute(cell.el, 'rowspan'), 10) > 2) {
-            cell.el.setAttribute('rowspan', parseInt(api.getAttribute(cell.el, 'rowspan'), 10) - 1);
-          } else {
-            cell.el.removeAttribute('rowspan');
-          }
-        }
-      }
-    },
-
-    // Removes a cell when removing a row
-    // If is rowspan cell then decreases the rowspan
-    // and moves cell to next row if needed (is first cell of rowspan)
-    removeRowCell: function(cell) {
-      if (cell.isReal) {
-        if (cell.isRowspan) {
-          this.collapseCellToNextRow(cell);
-        } else {
-          removeElement(cell.el);
-        }
-      } else {
-        if (parseInt(api.getAttribute(cell.el, 'rowspan'), 10) > 2) {
-          cell.el.setAttribute('rowspan', parseInt(api.getAttribute(cell.el, 'rowspan'), 10) - 1);
-        } else {
-          cell.el.removeAttribute('rowspan');
-        }
-      }
-    },
-
-    getRowElementsByCell: function() {
-      var cells = [];
-      this.setTableMap();
-      this.idx = this.getMapIndex(this.cell);
-      if (this.idx !== false) {
-        var modRow = this.map[this.idx.row];
-        for (var cidx = 0, cmax = modRow.length; cidx < cmax; cidx++) {
-          if (modRow[cidx].isReal) {
-            cells.push(modRow[cidx].el);
-          }
-        }
-      }
-      return cells;
-    },
-
-    getColumnElementsByCell: function() {
-      var cells = [];
-      this.setTableMap();
-      this.idx = this.getMapIndex(this.cell);
-      if (this.idx !== false) {
-        for (var ridx = 0, rmax = this.map.length; ridx < rmax; ridx++) {
-          if (this.map[ridx][this.idx.col] && this.map[ridx][this.idx.col].isReal) {
-            cells.push(this.map[ridx][this.idx.col].el);
-          }
-        }
-      }
-      return cells;
-    },
-
-    // Removes the row of selected cell
-    removeRow: function() {
-      var oldRow = api.getParentElement(this.cell, { query: "tr" });
-      if (oldRow) {
-        this.setTableMap();
-        this.idx = this.getMapIndex(this.cell);
-        if (this.idx !== false) {
-          var modRow = this.map[this.idx.row];
-          for (var cidx = 0, cmax = modRow.length; cidx < cmax; cidx++) {
-            if (!modRow[cidx].modified) {
-              this.setCellAsModified(modRow[cidx]);
-              this.removeRowCell(modRow[cidx]);
-            }
-          }
-        }
-        removeElement(oldRow);
-      }
-    },
-
-    removeColCell: function(cell) {
-      if (cell.isColspan) {
-        if (parseInt(api.getAttribute(cell.el, 'colspan'), 10) > 2) {
-          cell.el.setAttribute('colspan', parseInt(api.getAttribute(cell.el, 'colspan'), 10) - 1);
-        } else {
-          cell.el.removeAttribute('colspan');
-        }
-      } else if (cell.isReal) {
-        removeElement(cell.el);
-      }
-    },
-
-    removeColumn: function() {
-      this.setTableMap();
-      this.idx = this.getMapIndex(this.cell);
-      if (this.idx !== false) {
-        for (var ridx = 0, rmax = this.map.length; ridx < rmax; ridx++) {
-          if (!this.map[ridx][this.idx.col].modified) {
-            this.setCellAsModified(this.map[ridx][this.idx.col]);
-            this.removeColCell(this.map[ridx][this.idx.col]);
-          }
-        }
-      }
-    },
-
-    // removes row or column by selected cell element
-    remove: function(what) {
-      if (this.rectify()) {
-        switch (what) {
-          case 'row':
-            this.removeRow();
-          break;
-          case 'column':
-            this.removeColumn();
-          break;
-        }
-        this.rectify();
-      }
-    },
-
-    addRow: function(where) {
-      var doc = this.table.ownerDocument;
-
-      this.setTableMap();
-      this.idx = this.getMapIndex(this.cell);
-      if (where == "below" && api.getAttribute(this.cell, 'rowspan')) {
-        this.idx.row = this.idx.row + parseInt(api.getAttribute(this.cell, 'rowspan'), 10) - 1;
-      }
-
-      if (this.idx !== false) {
-        var modRow = this.map[this.idx.row],
-          newRow = doc.createElement('tr');
-
-        for (var ridx = 0, rmax = modRow.length; ridx < rmax; ridx++) {
-          if (!modRow[ridx].modified) {
-            this.setCellAsModified(modRow[ridx]);
-            this.addRowCell(modRow[ridx], newRow, where);
-          }
-        }
-
-        switch (where) {
-          case 'below':
-            insertAfter(this.getRealRowEl(true), newRow);
-          break;
-          case 'above':
-            var cr = api.getParentElement(this.map[this.idx.row][this.idx.col].el, { query: "tr" });
-            if (cr) {
-              cr.parentNode.insertBefore(newRow, cr);
-            }
-          break;
-        }
-      }
-    },
-
-    addRowCell: function(cell, row, where) {
-      var colSpanAttr = (cell.isColspan) ? {"colspan" : api.getAttribute(cell.el, 'colspan')} : null;
-      if (cell.isReal) {
-        if (where != 'above' && cell.isRowspan) {
-          cell.el.setAttribute('rowspan', parseInt(api.getAttribute(cell.el,'rowspan'), 10) + 1);
-        } else {
-          row.appendChild(this.createCells('td', 1, colSpanAttr));
-        }
-      } else {
-        if (where != 'above' && cell.isRowspan && cell.lastRow) {
-          row.appendChild(this.createCells('td', 1, colSpanAttr));
-        } else if (c.isRowspan) {
-          cell.el.attr('rowspan', parseInt(api.getAttribute(cell.el, 'rowspan'), 10) + 1);
-        }
-      }
-    },
-
-    add: function(where) {
-      if (this.rectify()) {
-        if (where == 'below' || where == 'above') {
-          this.addRow(where);
-        }
-        if (where == 'before' || where == 'after') {
-          this.addColumn(where);
-        }
-      }
-    },
-
-    addColCell: function (cell, ridx, where) {
-      var doAdd,
-        cType = cell.el.tagName.toLowerCase();
-
-      // defines add cell vs expand cell conditions
-      // true means add
-      switch (where) {
-        case "before":
-          doAdd = (!cell.isColspan || cell.firstCol);
-        break;
-        case "after":
-          doAdd = (!cell.isColspan || cell.lastCol || (cell.isColspan && cell.el == this.cell));
-        break;
-      }
-
-      if (doAdd){
-        // adds a cell before or after current cell element
-        switch (where) {
-          case "before":
-            cell.el.parentNode.insertBefore(this.createCells(cType, 1), cell.el);
-          break;
-          case "after":
-            insertAfter(cell.el, this.createCells(cType, 1));
-          break;
-        }
-
-        // handles if cell has rowspan
-        if (cell.isRowspan) {
-          this.handleCellAddWithRowspan(cell, ridx+1, where);
-        }
-
-      } else {
-        // expands cell
-        cell.el.setAttribute('colspan',  parseInt(api.getAttribute(cell.el, 'colspan'), 10) + 1);
-      }
-    },
-
-    addColumn: function(where) {
-      var row, modCell;
-
-      this.setTableMap();
-      this.idx = this.getMapIndex(this.cell);
-      if (where == "after" && api.getAttribute(this.cell, 'colspan')) {
-        this.idx.col = this.idx.col + parseInt(api.getAttribute(this.cell, 'colspan'), 10) - 1;
-      }
-
-      if (this.idx !== false) {
-        for (var ridx = 0, rmax = this.map.length; ridx < rmax; ridx++ ) {
-          row = this.map[ridx];
-          if (row[this.idx.col]) {
-            modCell = row[this.idx.col];
-            if (!modCell.modified) {
-              this.setCellAsModified(modCell);
-              this.addColCell(modCell, ridx , where);
-            }
-          }
-        }
-      }
-    },
-
-    handleCellAddWithRowspan: function (cell, ridx, where) {
-      var addRowsNr = parseInt(api.getAttribute(this.cell, 'rowspan'), 10) - 1,
-        crow = api.getParentElement(cell.el, { query: "tr" }),
-        cType = cell.el.tagName.toLowerCase(),
-        cidx, temp_r_cells,
-        doc = this.table.ownerDocument,
-        nrow;
-
-      for (var i = 0; i < addRowsNr; i++) {
-        cidx = this.correctColIndexForUnreals(this.idx.col, (ridx + i));
-        crow = nextNode(crow, 'tr');
-        if (crow) {
-          if (cidx > 0) {
-            switch (where) {
-              case "before":
-                temp_r_cells = this.getRowCells(crow);
-                if (cidx > 0 && this.map[ridx + i][this.idx.col].el != temp_r_cells[cidx] && cidx == temp_r_cells.length - 1) {
-                   insertAfter(temp_r_cells[cidx], this.createCells(cType, 1));
-                } else {
-                  temp_r_cells[cidx].parentNode.insertBefore(this.createCells(cType, 1), temp_r_cells[cidx]);
-                }
-
-              break;
-              case "after":
-                insertAfter(this.getRowCells(crow)[cidx], this.createCells(cType, 1));
-              break;
-            }
-          } else {
-            crow.insertBefore(this.createCells(cType, 1), crow.firstChild);
-          }
-        } else {
-          nrow = doc.createElement('tr');
-          nrow.appendChild(this.createCells(cType, 1));
-          this.table.appendChild(nrow);
-        }
-      }
-    }
-  };
-
-  api.table = {
-    getCellsBetween: function(cell1, cell2) {
-      var c1 = new TableModifyerByCell(cell1);
-      return c1.getMapElsTo(cell2);
-    },
-
-    addCells: function(cell, where) {
-      var c = new TableModifyerByCell(cell);
-      c.add(where);
-    },
-
-    removeCells: function(cell, what) {
-      var c = new TableModifyerByCell(cell);
-      c.remove(what);
-    },
-
-    mergeCellsBetween: function(cell1, cell2) {
-      var c1 = new TableModifyerByCell(cell1);
-      c1.merge(cell2);
-    },
-
-    unmergeCell: function(cell) {
-      var c = new TableModifyerByCell(cell);
-      c.unmerge();
-    },
-
-    orderSelectionEnds: function(cell, cell2) {
-      var c = new TableModifyerByCell(cell);
-      return c.orderSelectionEnds(cell2);
-    },
-
-    indexOf: function(cell) {
-      var c = new TableModifyerByCell(cell);
-      c.setTableMap();
-      return c.getMapIndex(cell);
-    },
-
-    findCell: function(table, idx) {
-      var c = new TableModifyerByCell(null, table);
-      return c.getElementAtIndex(idx);
-    },
-
-    findRowByCell: function(cell) {
-      var c = new TableModifyerByCell(cell);
-      return c.getRowElementsByCell();
-    },
-
-    findColumnByCell: function(cell) {
-      var c = new TableModifyerByCell(cell);
-      return c.getColumnElementsByCell();
-    },
-
-    canMerge: function(cell1, cell2) {
-      var c = new TableModifyerByCell(cell1);
-      return c.canMerge(cell2);
-    }
-  };
-
-})(wysihtml);
-;// does a selector query on element or array of elements
-wysihtml.dom.query = function(elements, query) {
-    var ret = [],
-        q;
-
-    if (elements.nodeType) {
-        elements = [elements];
-    }
-
-    for (var e = 0, len = elements.length; e < len; e++) {
-        q = elements[e].querySelectorAll(query);
-        if (q) {
-            for(var i = q.length; i--; ret.unshift(q[i]));
-        }
-    }
-    return ret;
-};
-;wysihtml.dom.compareDocumentPosition = (function() {
-  var documentElement = document.documentElement;
-  if (documentElement.compareDocumentPosition) {
-    return function(container, element) {
-      return container.compareDocumentPosition(element);
-    };
-  } else {
-    return function( container, element ) {
-      // implementation borrowed from https://github.com/tmpvar/jsdom/blob/681a8524b663281a0f58348c6129c8c184efc62c/lib/jsdom/level3/core.js // MIT license
-      var thisOwner, otherOwner;
-
-      if( container.nodeType === 9) // Node.DOCUMENT_NODE
-        thisOwner = container;
-      else
-        thisOwner = container.ownerDocument;
-
-      if( element.nodeType === 9) // Node.DOCUMENT_NODE
-        otherOwner = element;
-      else
-        otherOwner = element.ownerDocument;
-
-      if( container === element ) return 0;
-      if( container === element.ownerDocument ) return 4 + 16; //Node.DOCUMENT_POSITION_FOLLOWING + Node.DOCUMENT_POSITION_CONTAINED_BY;
-      if( container.ownerDocument === element ) return 2 + 8;  //Node.DOCUMENT_POSITION_PRECEDING + Node.DOCUMENT_POSITION_CONTAINS;
-      if( thisOwner !== otherOwner ) return 1; // Node.DOCUMENT_POSITION_DISCONNECTED;
-
-      // Text nodes for attributes does not have a _parentNode. So we need to find them as attribute child.
-      if( container.nodeType === 2 /*Node.ATTRIBUTE_NODE*/ && container.childNodes && wysihtml.lang.array(container.childNodes).indexOf( element ) !== -1)
-        return 4 + 16; //Node.DOCUMENT_POSITION_FOLLOWING + Node.DOCUMENT_POSITION_CONTAINED_BY;
-
-      if( element.nodeType === 2 /*Node.ATTRIBUTE_NODE*/ && element.childNodes && wysihtml.lang.array(element.childNodes).indexOf( container ) !== -1)
-        return 2 + 8; //Node.DOCUMENT_POSITION_PRECEDING + Node.DOCUMENT_POSITION_CONTAINS;
-
-      var point = container;
-      var parents = [ ];
-      var previous = null;
-      while( point ) {
-        if( point == element ) return 2 + 8; //Node.DOCUMENT_POSITION_PRECEDING + Node.DOCUMENT_POSITION_CONTAINS;
-        parents.push( point );
-        point = point.parentNode;
-      }
-      point = element;
-      previous = null;
-      while( point ) {
-        if( point == container ) return 4 + 16; //Node.DOCUMENT_POSITION_FOLLOWING + Node.DOCUMENT_POSITION_CONTAINED_BY;
-        var location_index = wysihtml.lang.array(parents).indexOf( point );
-        if( location_index !== -1) {
-         var smallest_common_ancestor = parents[ location_index ];
-         var this_index = wysihtml.lang.array(smallest_common_ancestor.childNodes).indexOf( parents[location_index - 1]);//smallest_common_ancestor.childNodes.toArray().indexOf( parents[location_index - 1] );
-         var other_index = wysihtml.lang.array(smallest_common_ancestor.childNodes).indexOf( previous ); //smallest_common_ancestor.childNodes.toArray().indexOf( previous );
-         if( this_index > other_index ) {
-               return 2; //Node.DOCUMENT_POSITION_PRECEDING;
-         }
-         else {
-           return 4; //Node.DOCUMENT_POSITION_FOLLOWING;
-         }
-        }
-        previous = point;
-        point = point.parentNode;
-      }
-      return 1; //Node.DOCUMENT_POSITION_DISCONNECTED;
-    };
-  }
-})();
-;/* Unwraps element and returns list of childNodes that the node contained.
+/* Unwraps element and returns list of childNodes that the node contained.
  *
  * Example:
  *    var childnodes = wysihtml.dom.unwrap(document.querySelector('.unwrap-me'));
@@ -11236,64 +10421,8 @@ wysihtml.dom.unwrap = function(node) {
   }
   return children;
 };
-;/* 
- * Methods for fetching pasted html before it gets inserted into content
-**/
 
-/* Modern event.clipboardData driven approach.
- * Advantage is that it does not have to loose selection or modify dom to catch the data. 
- * IE does not support though.
-**/
-wysihtml.dom.getPastedHtml = function(event) {
-  var html;
-  if (wysihtml.browser.supportsModernPaste() && event.clipboardData) {
-    if (wysihtml.lang.array(event.clipboardData.types).contains('text/html')) {
-      html = event.clipboardData.getData('text/html');
-    } else if (wysihtml.lang.array(event.clipboardData.types).contains('text/plain')) {
-      html = wysihtml.lang.string(event.clipboardData.getData('text/plain')).escapeHTML(true, true);
-    }
-  }
-  return html;
-};
-
-/* Older temprorary contenteditable as paste source catcher method for fallbacks */
-wysihtml.dom.getPastedHtmlWithDiv = function (composer, f) {
-  var selBookmark = composer.selection.getBookmark(),
-      doc = composer.element.ownerDocument,
-      cleanerDiv = doc.createElement('DIV'),
-      scrollPos = composer.getScrollPos();
-  
-  doc.body.appendChild(cleanerDiv);
-
-  cleanerDiv.style.width = "1px";
-  cleanerDiv.style.height = "1px";
-  cleanerDiv.style.overflow = "hidden";
-  cleanerDiv.style.position = "absolute";
-  cleanerDiv.style.top = scrollPos.y + "px";
-  cleanerDiv.style.left = scrollPos.x + "px";
-
-  cleanerDiv.setAttribute('contenteditable', 'true');
-  cleanerDiv.focus();
-
-  setTimeout(function () {
-    var html;
-
-    composer.selection.setBookmark(selBookmark);
-    html = cleanerDiv.innerHTML;
-    if (html && (/^<br\/?>$/i).test(html.trim())) {
-      html = false;
-    }
-    f(html);
-    cleanerDiv.parentNode.removeChild(cleanerDiv);
-  }, 0);
-};
-;wysihtml.dom.removeInvisibleSpaces = function(node) {
-  var textNodes = wysihtml.dom.getTextNodes(node);
-  for (var n = textNodes.length; n--;) {
-    textNodes[n].nodeValue = textNodes[n].nodeValue.replace(wysihtml.INVISIBLE_SPACE_REG_EXP, "");
-  }
-};
-;/**
+/**
  * Fix most common html formatting misbehaviors of browsers implementation when inserting
  * content via copy & paste contentEditable
  *
@@ -11370,7 +10499,8 @@ wysihtml.quirks.cleanPastedHTML = (function() {
   };
 
 })();
-;/**
+
+/**
  * IE and Opera leave an empty paragraph in the contentEditable element after clearing it
  *
  * @param {Object} contentEditableElement The contentEditable element to observe for clearing events
@@ -11393,7 +10523,8 @@ wysihtml.quirks.ensureProperClearing = (function() {
     wysihtml.dom.observe(composer.element, ["cut", "keydown"], clearIfNecessary);
   };
 })();
-;// See https://bugzilla.mozilla.org/show_bug.cgi?id=664398
+
+// See https://bugzilla.mozilla.org/show_bug.cgi?id=664398
 //
 // In Firefox this:
 //      var d = document.createElement("div");
@@ -11423,7 +10554,8 @@ wysihtml.quirks.ensureProperClearing = (function() {
     return innerHTML;
   };
 })(wysihtml);
-;/**
+
+/**
  * Force rerendering of a given element
  * Needed to fix display misbehaviors of IE
  *
@@ -11446,124 +10578,8 @@ wysihtml.quirks.ensureProperClearing = (function() {
     } catch(e) {}
   };
 })(wysihtml);
-;wysihtml.quirks.tableCellsSelection = function(editable, editor) {
 
-  var dom = wysihtml.dom,
-    select = {
-      table: null,
-      start: null,
-      end: null,
-      cells: null,
-      select: selectCells
-    },
-    selection_class = "wysiwyg-tmp-selected-cell";
-
-  function init () {
-    editable.addEventListener("mousedown", handleMouseDown);
-    return select;
-  }
-
-  var handleMouseDown = function(event) {
-    var target = wysihtml.dom.getParentElement(event.target, { query: "td, th" }, false, editable);
-    if (target) {
-      handleSelectionMousedown(target);
-    }
-  };
-
-  function handleSelectionMousedown (target) {
-    select.start = target;
-    select.end = target;
-    select.cells = [target];
-    select.table = dom.getParentElement(select.start, { query: "table" }, false, editable);
-
-    if (select.table) {
-      removeCellSelections();
-      dom.addClass(target, selection_class);
-      editable.addEventListener("mousemove", handleMouseMove);
-      editable.addEventListener("mouseup", handleMouseUp);
-      editor.fire("tableselectstart").fire("tableselectstart:composer");
-    }
-  }
-
-  // remove all selection classes
-  function removeCellSelections () {
-    if (editable) {
-      var selectedCells = editable.querySelectorAll('.' + selection_class);
-      if (selectedCells.length > 0) {
-        for (var i = 0; i < selectedCells.length; i++) {
-          dom.removeClass(selectedCells[i], selection_class);
-        }
-      }
-    }
-  }
-
-  function addSelections (cells) {
-    for (var i = 0; i < cells.length; i++) {
-      dom.addClass(cells[i], selection_class);
-    }
-  }
-
-  function handleMouseMove (event) {
-    var curTable = null,
-      cell = dom.getParentElement(event.target, { query: "td, th" }, false, editable),
-      oldEnd;
-
-    if (cell && select.table && select.start) {
-      curTable =  dom.getParentElement(cell, { query: "table" }, false, editable);
-      if (curTable && curTable === select.table) {
-        removeCellSelections();
-        oldEnd = select.end;
-        select.end = cell;
-        select.cells = dom.table.getCellsBetween(select.start, cell);
-        if (select.cells.length > 1) {
-          editor.composer.selection.deselect();
-        }
-        addSelections(select.cells);
-        if (select.end !== oldEnd) {
-          editor.fire("tableselectchange").fire("tableselectchange:composer");
-        }
-      }
-    }
-  }
-
-  function handleMouseUp (event) {
-    editable.removeEventListener("mousemove", handleMouseMove);
-    editable.removeEventListener("mouseup", handleMouseUp);
-    editor.fire("tableselect").fire("tableselect:composer");
-    setTimeout(function() {
-      bindSideclick();
-    },0);
-  }
-
-  var sideClickHandler = function(event) {
-    editable.ownerDocument.removeEventListener("click", sideClickHandler);
-    if (dom.getParentElement(event.target, { query: "table" }, false, editable) != select.table) {
-      removeCellSelections();
-      select.table = null;
-      select.start = null;
-      select.end = null;
-      editor.fire("tableunselect").fire("tableunselect:composer");
-    }
-  };
-
-  function bindSideclick () {
-    editable.ownerDocument.addEventListener("click", sideClickHandler);
-  }
-
-  function selectCells (start, end) {
-    select.start = start;
-    select.end = end;
-    select.table = dom.getParentElement(select.start, { query: "table" }, false, editable);
-    selectedCells = dom.table.getCellsBetween(select.start, select.end);
-    addSelections(selectedCells);
-    bindSideclick();
-    editor.fire("tableselect").fire("tableselect:composer");
-  }
-
-  return init();
-
-};
-;(function(wysihtml) {
+(function(wysihtml) {
   
   // List of supported color format parsing methods
   // If radix is not defined 10 is expected as default
@@ -11718,7 +10734,8 @@ wysihtml.quirks.ensureProperClearing = (function() {
   };
 
 })(wysihtml);
-;/**
+
+/**
  * Selection API
  *
  * @example
@@ -13149,7 +12166,8 @@ wysihtml.quirks.ensureProperClearing = (function() {
   });
 
 })(wysihtml);
-;/**
+
+/**
  * Rich Text Query/Formatting Commands
  *
  * @example
@@ -13261,7 +12279,8 @@ wysihtml.Commands = Base.extend(
     }
   }
 });
-;(function(wysihtml) {
+
+(function(wysihtml) {
 
   var nodeOptions = {
     nodeName: "A",
@@ -13291,24 +12310,8 @@ wysihtml.Commands = Base.extend(
   };
 
 })(wysihtml);
-;(function(wysihtml) {
 
-  var nodeOptions = {
-    nodeName: "A"
-  };
-
-  wysihtml.commands.removeLink = {
-    exec: function(composer, command) {
-      wysihtml.commands.formatInline.remove(composer, command, nodeOptions);
-    },
-
-    state: function(composer, command) {
-      return wysihtml.commands.formatInline.state(composer, command, nodeOptions);
-    }
-  };
-
-})(wysihtml);
-;/* Formatblock
+/* Formatblock
  * Is used to insert block level elements 
  * It tries to solve the case that some block elements should not contain other block level elements (h1-6, p, ...)
  * 
@@ -14125,7 +13128,8 @@ wysihtml.Commands = Base.extend(
 
   };
 })(wysihtml);
-;/**
+
+/**
  * Unifies all inline tags additions and removals
  * See https://github.com/Voog/wysihtml/pull/169 for specification of action
  */
@@ -14778,7 +13782,52 @@ wysihtml.Commands = Base.extend(
   };
 
 })(wysihtml);
-;(function(wysihtml){
+
+(function(wysihtml){
+  wysihtml.commands.indentList = {
+    exec: function(composer, command, value) {
+      var listEls = composer.selection.getSelectionParentsByTag('LI');
+      if (listEls) {
+        return this.tryToPushLiLevel(listEls, composer.selection);
+      }
+      return false;
+    },
+
+    state: function(composer, command) {
+        return false;
+    },
+
+    tryToPushLiLevel: function(liNodes, selection) {
+      var listTag, list, prevLi, liNode, prevLiList,
+          found = false;
+
+      selection.executeAndRestoreRangy(function() {
+
+        for (var i = liNodes.length; i--;) {
+          liNode = liNodes[i];
+          listTag = (liNode.parentNode.nodeName === 'OL') ? 'OL' : 'UL';
+          list = liNode.ownerDocument.createElement(listTag);
+          prevLi = wysihtml.dom.domNode(liNode).prev({nodeTypes: [wysihtml.ELEMENT_NODE]});
+          prevLiList = (prevLi) ? prevLi.querySelector('ul, ol') : null;
+
+          if (prevLi) {
+            if (prevLiList) {
+              prevLiList.appendChild(liNode);
+            } else {
+              list.appendChild(liNode);
+              prevLi.appendChild(list);
+            }
+            found = true;
+          }
+        }
+
+      });
+      return found;
+    }
+  };
+}(wysihtml));
+
+(function(wysihtml){
   wysihtml.commands.insertHTML = {
     exec: function(composer, command, html) {
         composer.selection.insertHTML(html);
@@ -14789,7 +13838,8 @@ wysihtml.Commands = Base.extend(
     }
   };
 }(wysihtml));
-;(function(wysihtml) {
+
+(function(wysihtml) {
   var LINE_BREAK = "<br>" + (wysihtml.browser.needsSpaceAfterLineBreak() ? " " : "");
 
   wysihtml.commands.insertLineBreak = {
@@ -14802,7 +13852,8 @@ wysihtml.Commands = Base.extend(
     }
   };
 })(wysihtml);
-;wysihtml.commands.insertList = (function(wysihtml) {
+
+wysihtml.commands.insertList = (function(wysihtml) {
 
   var isNode = function(node, name) {
     if (node && node.nodeName) {
@@ -14995,198 +14046,8 @@ wysihtml.Commands = Base.extend(
   };
 
 })(wysihtml);
-;(function(wysihtml){
-  wysihtml.commands.redo = {
-    exec: function(composer) {
-      return composer.undoManager.redo();
-    },
 
-    state: function(composer) {
-      return false;
-    }
-  };
-}(wysihtml));
-;(function(wysihtml){
-  wysihtml.commands.undo = {
-    exec: function(composer) {
-      return composer.undoManager.undo();
-    },
-
-    state: function(composer) {
-      return false;
-    }
-  };
-}(wysihtml));
-;(function(wysihtml){
-  wysihtml.commands.createTable = {
-    exec: function(composer, command, value) {
-      var col, row, html;
-      if (value && value.cols && value.rows && parseInt(value.cols, 10) > 0 && parseInt(value.rows, 10) > 0) {
-        if (value.tableStyle) {
-          html = "<table style=\"" + value.tableStyle + "\">";
-        } else {
-          html = "<table>";
-        }
-        html += "<tbody>";
-        for (row = 0; row < value.rows; row ++) {
-          html += '<tr>';
-          for (col = 0; col < value.cols; col ++) {
-            html += "<td><br></td>";
-          }
-          html += '</tr>';
-        }
-        html += "</tbody></table>";
-        composer.commands.exec("insertHTML", html);
-        //composer.selection.insertHTML(html);
-      }
-    },
-
-    state: function(composer, command) {
-      return false;
-    }
-  };
-
-}(wysihtml));
-;(function(wysihtml){
-  wysihtml.commands.mergeTableCells = {
-    exec: function(composer, command) {
-      if (composer.tableSelection && composer.tableSelection.start && composer.tableSelection.end) {
-        if (this.state(composer, command)) {
-          wysihtml.dom.table.unmergeCell(composer.tableSelection.start);
-        } else {
-          wysihtml.dom.table.mergeCellsBetween(composer.tableSelection.start, composer.tableSelection.end);
-        }
-      }
-    },
-
-    state: function(composer, command) {
-      if (composer.tableSelection) {
-        var start = composer.tableSelection.start,
-          end = composer.tableSelection.end;
-        if (start && end && start == end &&
-          ((
-            wysihtml.dom.getAttribute(start, "colspan") &&
-            parseInt(wysihtml.dom.getAttribute(start, "colspan"), 10) > 1
-          ) || (
-            wysihtml.dom.getAttribute(start, "rowspan") &&
-            parseInt(wysihtml.dom.getAttribute(start, "rowspan"), 10) > 1
-          ))
-        ) {
-          return [start];
-        }
-      }
-      return false;
-    }
-  };
-}(wysihtml));
-;(function(wysihtml){
-  wysihtml.commands.addTableCells = {
-    exec: function(composer, command, value) {
-      if (composer.tableSelection && composer.tableSelection.start && composer.tableSelection.end) {
-
-        // switches start and end if start is bigger than end (reverse selection)
-        var tableSelect = wysihtml.dom.table.orderSelectionEnds(composer.tableSelection.start, composer.tableSelection.end);
-        if (value == "before" || value == "above") {
-          wysihtml.dom.table.addCells(tableSelect.start, value);
-        } else if (value == "after" || value == "below") {
-          wysihtml.dom.table.addCells(tableSelect.end, value);
-        }
-        setTimeout(function() {
-          composer.tableSelection.select(tableSelect.start, tableSelect.end);
-        },0);
-      }
-    },
-
-    state: function(composer, command) {
-      return false;
-    }
-  };
-}(wysihtml));
-;(function(wysihtml){
-  wysihtml.commands.deleteTableCells = {
-  exec: function(composer, command, value) {
-    if (composer.tableSelection && composer.tableSelection.start && composer.tableSelection.end) {
-      var tableSelect = wysihtml.dom.table.orderSelectionEnds(composer.tableSelection.start, composer.tableSelection.end),
-        idx = wysihtml.dom.table.indexOf(tableSelect.start),
-        selCell,
-        table = composer.tableSelection.table;
-
-      wysihtml.dom.table.removeCells(tableSelect.start, value);
-      setTimeout(function() {
-        // move selection to next or previous if not present
-        selCell = wysihtml.dom.table.findCell(table, idx);
-
-        if (!selCell){
-          if (value == "row") {
-            selCell = wysihtml.dom.table.findCell(table, {
-              "row": idx.row - 1,
-              "col": idx.col
-            });
-          }
-
-          if (value == "column") {
-            selCell = wysihtml.dom.table.findCell(table, {
-              "row": idx.row,
-              "col": idx.col - 1
-            });
-          }
-        }
-        if (selCell) {
-          composer.tableSelection.select(selCell, selCell);
-        }
-      }, 0);
-    }
-  },
-
-  state: function(composer, command) {
-    return false;
-  }
-  };
-}(wysihtml));
-;(function(wysihtml){
-  wysihtml.commands.indentList = {
-    exec: function(composer, command, value) {
-      var listEls = composer.selection.getSelectionParentsByTag('LI');
-      if (listEls) {
-        return this.tryToPushLiLevel(listEls, composer.selection);
-      }
-      return false;
-    },
-
-    state: function(composer, command) {
-        return false;
-    },
-
-    tryToPushLiLevel: function(liNodes, selection) {
-      var listTag, list, prevLi, liNode, prevLiList,
-          found = false;
-
-      selection.executeAndRestoreRangy(function() {
-
-        for (var i = liNodes.length; i--;) {
-          liNode = liNodes[i];
-          listTag = (liNode.parentNode.nodeName === 'OL') ? 'OL' : 'UL';
-          list = liNode.ownerDocument.createElement(listTag);
-          prevLi = wysihtml.dom.domNode(liNode).prev({nodeTypes: [wysihtml.ELEMENT_NODE]});
-          prevLiList = (prevLi) ? prevLi.querySelector('ul, ol') : null;
-
-          if (prevLi) {
-            if (prevLiList) {
-              prevLiList.appendChild(liNode);
-            } else {
-              list.appendChild(liNode);
-              prevLi.appendChild(list);
-            }
-            found = true;
-          }
-        }
-
-      });
-      return found;
-    }
-  };
-}(wysihtml));
-;(function(wysihtml){
+(function(wysihtml){
 
   wysihtml.commands.outdentList = {
     exec: function(composer, command, value) {
@@ -15267,7 +14128,50 @@ wysihtml.Commands = Base.extend(
 
   };
 }(wysihtml));
-;/**
+
+(function(wysihtml){
+  wysihtml.commands.redo = {
+    exec: function(composer) {
+      return composer.undoManager.redo();
+    },
+
+    state: function(composer) {
+      return false;
+    }
+  };
+}(wysihtml));
+
+(function(wysihtml) {
+
+  var nodeOptions = {
+    nodeName: "A"
+  };
+
+  wysihtml.commands.removeLink = {
+    exec: function(composer, command) {
+      wysihtml.commands.formatInline.remove(composer, command, nodeOptions);
+    },
+
+    state: function(composer, command) {
+      return wysihtml.commands.formatInline.state(composer, command, nodeOptions);
+    }
+  };
+
+})(wysihtml);
+
+(function(wysihtml){
+  wysihtml.commands.undo = {
+    exec: function(composer) {
+      return composer.undoManager.undo();
+    },
+
+    state: function(composer) {
+      return false;
+    }
+  };
+}(wysihtml));
+
+/**
  * Undo Manager for wysihtml5
  * slightly inspired by http://rniwa.com/editing/undomanager.html#the-undomanager-interface
  */
@@ -15482,7 +14386,8 @@ wysihtml.Commands = Base.extend(
     }
   });
 })(wysihtml);
-;/**
+
+/**
  * TODO: the following methods still need unit test coverage
  */
 wysihtml.views.View = Base.extend(
@@ -15536,7 +14441,8 @@ wysihtml.views.View = Base.extend(
     this.element.removeAttribute("disabled");
   }
 });
-;(function(wysihtml) {
+
+(function(wysihtml) {
   var dom       = wysihtml.dom,
       browser   = wysihtml.browser;
 
@@ -16022,7 +14928,8 @@ wysihtml.views.View = Base.extend(
     }
   });
 })(wysihtml);
-;(function(wysihtml) {
+
+(function(wysihtml) {
   var dom             = wysihtml.dom,
       doc             = document,
       win             = window,
@@ -16223,7 +15130,8 @@ wysihtml.views.View = Base.extend(
     return this;
   };
 })(wysihtml);
-;/**
+
+/**
  * Taking care of events
  *  - Simulating 'change' event on contentEditable element
  *  - Handling drag & drop logic
@@ -16399,32 +15307,6 @@ wysihtml.views.View = Base.extend(
         return true;
       }
       return false;
-    },
-
-    // Table management
-    // If present enableObjectResizing and enableInlineTableEditing command should be called with false to prevent native table handlers
-    initTableHandling: function() {
-      var hideHandlers = function() {
-            window.removeEventListener('load', hideHandlers);
-            this.doc.execCommand("enableObjectResizing", false, "false");
-            this.doc.execCommand("enableInlineTableEditing", false, "false");
-          }.bind(this),
-          iframeInitiator = (function() {
-            hideHandlers.call(this);
-            actions.removeListeners(this.sandbox.getIframe(), ["focus", "mouseup", "mouseover"], iframeInitiator);
-          }).bind(this);
-
-      if( this.doc.execCommand &&
-          wysihtml.browser.supportsCommand(this.doc, "enableObjectResizing") &&
-          wysihtml.browser.supportsCommand(this.doc, "enableInlineTableEditing"))
-      {
-        if (this.sandbox.getIframe) {
-          actions.addListeners(this.sandbox.getIframe(), ["focus", "mouseup", "mouseover"], iframeInitiator);
-        } else {
-          window.addEventListener('load', hideHandlers);
-        }
-      }
-      this.tableSelection = wysihtml.quirks.tableCellsSelection(this.element, this.parent);
     },
 
     // Fixes some misbehaviours of enters in linebreaks mode (natively a bit unsupported feature)
@@ -16779,12 +15661,6 @@ wysihtml.views.View = Base.extend(
       }, 250);
     }
 
-    // --------- User interactions --
-    if (this.config.handleTables) {
-      // If handleTables option is true, table handling functions are bound
-      actions.initTableHandling.call(this);
-    }
-
     actions.addListeners(focusBlurElement, ["drop", "paste", "mouseup", "focus", "keyup"], handleUserInteraction.bind(this));
     focusBlurElement.addEventListener("focus", handleFocus.bind(this), false);
     focusBlurElement.addEventListener("blur",  handleBlur.bind(this), false);
@@ -16808,7 +15684,8 @@ wysihtml.views.View = Base.extend(
 
   };
 })(wysihtml);
-;/**
+
+/**
  * Class that takes care that the value of the composer and the textarea is always in sync
  */
 (function(wysihtml) {
@@ -16905,7 +15782,8 @@ wysihtml.views.View = Base.extend(
     }
   });
 })(wysihtml);
-;(function(wysihtml) {
+
+(function(wysihtml) {
 
   wysihtml.views.SourceView = Base.extend(
     /** @scope wysihtml.views.SourceView.prototype */ {
@@ -16960,7 +15838,8 @@ wysihtml.views.View = Base.extend(
   });
 
 })(wysihtml);
-;wysihtml.views.Textarea = wysihtml.views.View.extend(
+
+wysihtml.views.Textarea = wysihtml.views.View.extend(
   /** @scope wysihtml.views.Textarea.prototype */ {
   name: "textarea",
 
@@ -17031,11 +15910,12 @@ wysihtml.views.View = Base.extend(
     });
   }
 });
-;/**
+
+/**
  * WYSIHTML5 Editor
  *
  * @param {Element} editableElement Reference to the textarea which should be turned into a rich text interface
- * @param {Object} [config] See defaultConfig object below for explanation of each individual config option
+ * @param {Object} [config] See defaults object below for explanation of each individual config option
  *
  * @events
  *    load
@@ -17065,70 +15945,68 @@ wysihtml.views.View = Base.extend(
 (function(wysihtml) {
   var undef;
 
-  var defaultConfig = {
-    // Give the editor a name, the name will also be set as class name on the iframe and on the iframe's body
-    name:                 undef,
-    // Whether the editor should look like the textarea (by adopting styles)
-    style:                true,
-    // Id of the toolbar element, pass falsey value if you don't want any toolbar logic
-    toolbar:              undef,
-    // Whether toolbar is displayed after init by script automatically.
-    // Can be set to false if toolobar is set to display only on editable area focus
-    showToolbarAfterInit: true,
-    // With default toolbar it shows dialogs in toolbar when their related text format state becomes active (click on link in text opens link dialogue)
-    showToolbarDialogsOnSelection: true,
-    // Whether urls, entered by the user should automatically become clickable-links
-    autoLink:             true,
-    // Includes table editing events and cell selection tracking
-    handleTables:         true,
-    // Tab key inserts tab into text as default behaviour. It can be disabled to regain keyboard navigation
-    handleTabKey:         true,
-    // Object which includes parser rules to apply when html gets cleaned
-    // See parser_rules/*.js for examples
-    parserRules:          { tags: { br: {}, span: {}, div: {}, p: {}, b: {}, i: {}, u: {} }, classes: {} },
-    // Object which includes parser when the user inserts content via copy & paste. If null parserRules will be used instead
-    pasteParserRulesets: null,
-    // Parser method to use when the user inserts content
-    parser:               wysihtml.dom.parse,
-    // By default wysihtml5 will insert a <br> for line breaks, set this to false to use <p>
-    useLineBreaks:        true,
-    // Double enter (enter on blank line) exits block element in useLineBreaks mode.
-    // It enables a way of escaping out of block elements and splitting block elements
-    doubleLineBreakEscapesBlock: true,
-    // Array (or single string) of stylesheet urls to be loaded in the editor's iframe
-    stylesheets:          [],
-    // Placeholder text to use, defaults to the placeholder attribute on the textarea element
-    placeholderText:      undef,
-    // Whether the rich text editor should be rendered on touch devices (wysihtml5 >= 0.3.0 comes with basic support for iOS 5)
-    supportTouchDevices:  true,
-    // Whether senseless <span> elements (empty or without attributes) should be removed/replaced with their content
-    cleanUp:              true,
-    // Whether to use div instead of secure iframe
-    contentEditableMode: false,
-    classNames: {
-      // Class name which should be set on the contentEditable element in the created sandbox iframe, can be styled via the 'stylesheets' option
-      composer: "wysihtml5-editor",
-      // Class name to add to the body when the wysihtml5 editor is supported
-      body: "wysihtml5-supported",
-      // classname added to editable area element (iframe/div) on creation
-      sandbox: "wysihtml5-sandbox",
-      // class on editable area with placeholder
-      placeholder: "wysihtml5-placeholder",
-      // Classname of container that editor should not touch and pass through
-      uneditableContainer: "wysihtml5-uneditable-container"
+  wysihtml.Editor = wysihtml.lang.Dispatcher.extend({
+    /** @scope wysihtml.Editor.prototype */
+    defaults: {
+      // Give the editor a name, the name will also be set as class name on the iframe and on the iframe's body
+      name:                 undef,
+      // Whether the editor should look like the textarea (by adopting styles)
+      style:                true,
+      // Id of the toolbar element, pass falsey value if you don't want any toolbar logic
+      toolbar:              undef,
+      // Whether toolbar is displayed after init by script automatically.
+      // Can be set to false if toolobar is set to display only on editable area focus
+      showToolbarAfterInit: true,
+      // With default toolbar it shows dialogs in toolbar when their related text format state becomes active (click on link in text opens link dialogue)
+      showToolbarDialogsOnSelection: true,
+      // Whether urls, entered by the user should automatically become clickable-links
+      autoLink:             true,
+      // Tab key inserts tab into text as default behaviour. It can be disabled to regain keyboard navigation
+      handleTabKey:         true,
+      // Object which includes parser rules to apply when html gets cleaned
+      // See parser_rules/*.js for examples
+      parserRules:          { tags: { br: {}, span: {}, div: {}, p: {}, b: {}, i: {}, u: {} }, classes: {} },
+      // Object which includes parser when the user inserts content via copy & paste. If null parserRules will be used instead
+      pasteParserRulesets: null,
+      // Parser method to use when the user inserts content
+      parser:               wysihtml.dom.parse,
+      // By default wysihtml5 will insert a <br> for line breaks, set this to false to use <p>
+      useLineBreaks:        true,
+      // Double enter (enter on blank line) exits block element in useLineBreaks mode.
+      // It enables a way of escaping out of block elements and splitting block elements
+      doubleLineBreakEscapesBlock: true,
+      // Array (or single string) of stylesheet urls to be loaded in the editor's iframe
+      stylesheets:          [],
+      // Placeholder text to use, defaults to the placeholder attribute on the textarea element
+      placeholderText:      undef,
+      // Whether the rich text editor should be rendered on touch devices (wysihtml5 >= 0.3.0 comes with basic support for iOS 5)
+      supportTouchDevices:  true,
+      // Whether senseless <span> elements (empty or without attributes) should be removed/replaced with their content
+      cleanUp:              true,
+      // Whether to use div instead of secure iframe
+      contentEditableMode: false,
+      classNames: {
+        // Class name which should be set on the contentEditable element in the created sandbox iframe, can be styled via the 'stylesheets' option
+        composer: "wysihtml5-editor",
+        // Class name to add to the body when the wysihtml5 editor is supported
+        body: "wysihtml5-supported",
+        // classname added to editable area element (iframe/div) on creation
+        sandbox: "wysihtml5-sandbox",
+        // class on editable area with placeholder
+        placeholder: "wysihtml5-placeholder",
+        // Classname of container that editor should not touch and pass through
+        uneditableContainer: "wysihtml5-uneditable-container"
+      },
+      // Browsers that support copied source handling will get a marking of the origin of the copied source (for determinig code cleanup rules on paste)
+      // Also copied source is based directly on selection - 
+      // (very useful for webkit based browsers where copy will otherwise contain a lot of code and styles based on whatever and not actually in selection).
+      // If falsy value is passed source override is also disabled
+      copyedFromMarking: '<meta name="copied-from" content="wysihtml5">'
     },
-    // Browsers that support copied source handling will get a marking of the origin of the copied source (for determinig code cleanup rules on paste)
-    // Also copied source is based directly on selection - 
-    // (very useful for webkit based browsers where copy will otherwise contain a lot of code and styles based on whatever and not actually in selection).
-    // If falsy value is passed source override is also disabled
-    copyedFromMarking: '<meta name="copied-from" content="wysihtml5">'
-  };
-
-  wysihtml.Editor = wysihtml.lang.Dispatcher.extend(
-    /** @scope wysihtml.Editor.prototype */ {
+    
     constructor: function(editableElement, config) {
       this.editableElement  = typeof(editableElement) === "string" ? document.getElementById(editableElement) : editableElement;
-      this.config           = wysihtml.lang.object({}).merge(defaultConfig).merge(config).get();
+      this.config           = wysihtml.lang.object({}).merge(this.defaults).merge(config).get();
       this._isCompatible    = wysihtml.browser.supported();
 
       // merge classNames
@@ -17304,5 +16182,3 @@ wysihtml.views.View = Base.extend(
     }
   });
 })(wysihtml);
-
-});

@@ -176,32 +176,6 @@
       return false;
     },
 
-    // Table management
-    // If present enableObjectResizing and enableInlineTableEditing command should be called with false to prevent native table handlers
-    initTableHandling: function() {
-      var hideHandlers = function() {
-            window.removeEventListener('load', hideHandlers);
-            this.doc.execCommand("enableObjectResizing", false, "false");
-            this.doc.execCommand("enableInlineTableEditing", false, "false");
-          }.bind(this),
-          iframeInitiator = (function() {
-            hideHandlers.call(this);
-            actions.removeListeners(this.sandbox.getIframe(), ["focus", "mouseup", "mouseover"], iframeInitiator);
-          }).bind(this);
-
-      if( this.doc.execCommand &&
-          wysihtml.browser.supportsCommand(this.doc, "enableObjectResizing") &&
-          wysihtml.browser.supportsCommand(this.doc, "enableInlineTableEditing"))
-      {
-        if (this.sandbox.getIframe) {
-          actions.addListeners(this.sandbox.getIframe(), ["focus", "mouseup", "mouseover"], iframeInitiator);
-        } else {
-          window.addEventListener('load', hideHandlers);
-        }
-      }
-      this.tableSelection = wysihtml.quirks.tableCellsSelection(this.element, this.parent);
-    },
-
     // Fixes some misbehaviours of enters in linebreaks mode (natively a bit unsupported feature)
     // Returns true if some corrections is applied so events know when to prevent default
     doLineBreaksModeEnterWithCaret: function(composer) {
@@ -552,12 +526,6 @@
           handleDomNodeRemoved.call(this);
         }
       }, 250);
-    }
-
-    // --------- User interactions --
-    if (this.config.handleTables) {
-      // If handleTables option is true, table handling functions are bound
-      actions.initTableHandling.call(this);
     }
 
     actions.addListeners(focusBlurElement, ["drop", "paste", "mouseup", "focus", "keyup"], handleUserInteraction.bind(this));

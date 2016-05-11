@@ -1,4 +1,4 @@
-(function(wysihtml) {
+(function() {
 
   var api = wysihtml.dom;
 
@@ -873,4 +873,4 @@
     }
   };
 
-})(wysihtml);
+})();

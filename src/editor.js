@@ -48,8 +48,6 @@
       showToolbarDialogsOnSelection: true,
       // Whether urls, entered by the user should automatically become clickable-links
       autoLink:             true,
-      // Includes table editing events and cell selection tracking
-      handleTables:         true,
       // Tab key inserts tab into text as default behaviour. It can be disabled to regain keyboard navigation
       handleTabKey:         true,
       // Object which includes parser rules to apply when html gets cleaned
