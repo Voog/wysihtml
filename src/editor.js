@@ -29,7 +29,7 @@
  *    disable:composer
  *    change_view
  */
-(function(wysihtml5) {
+(function(wysihtml) {
   var undef;
 
   var defaultConfig = {
@@ -56,7 +56,7 @@
     // Object which includes parser when the user inserts content via copy & paste. If null parserRules will be used instead
     pasteParserRulesets: null,
     // Parser method to use when the user inserts content
-    parser:               wysihtml5.dom.parse,
+    parser:               wysihtml.dom.parse,
     // By default wysihtml5 will insert a <br> for line breaks, set this to false to use <p>
     useLineBreaks:        true,
     // Double enter (enter on blank line) exits block element in useLineBreaks mode.
@@ -91,16 +91,16 @@
     copyedFromMarking: '<meta name="copied-from" content="wysihtml5">'
   };
 
-  wysihtml5.Editor = wysihtml5.lang.Dispatcher.extend(
-    /** @scope wysihtml5.Editor.prototype */ {
+  wysihtml.Editor = wysihtml.lang.Dispatcher.extend(
+    /** @scope wysihtml.Editor.prototype */ {
     constructor: function(editableElement, config) {
       this.editableElement  = typeof(editableElement) === "string" ? document.getElementById(editableElement) : editableElement;
-      this.config           = wysihtml5.lang.object({}).merge(defaultConfig).merge(config).get();
-      this._isCompatible    = wysihtml5.browser.supported();
+      this.config           = wysihtml.lang.object({}).merge(defaultConfig).merge(config).get();
+      this._isCompatible    = wysihtml.browser.supported();
 
       // merge classNames
       if (config && config.classNames) {
-        wysihtml5.lang.object(this.config.classNames).merge(config.classNames);
+        wysihtml.lang.object(this.config.classNames).merge(config.classNames);
       }
 
       if (this.editableElement.nodeName.toLowerCase() != "textarea") {
@@ -108,21 +108,21 @@
           this.config.noTextarea = true;
       }
       if (!this.config.noTextarea) {
-          this.textarea         = new wysihtml5.views.Textarea(this, this.editableElement, this.config);
+          this.textarea         = new wysihtml.views.Textarea(this, this.editableElement, this.config);
           this.currentView      = this.textarea;
       }
 
       // Sort out unsupported/unwanted browsers here
-      if (!this._isCompatible || (!this.config.supportTouchDevices && wysihtml5.browser.isTouchDevice())) {
+      if (!this._isCompatible || (!this.config.supportTouchDevices && wysihtml.browser.isTouchDevice())) {
         var that = this;
         setTimeout(function() { that.fire("beforeload").fire("load"); }, 0);
         return;
       }
 
       // Add class name to body, to indicate that the editor is supported
-      wysihtml5.dom.addClass(document.body, this.config.classNames.body);
+      wysihtml.dom.addClass(document.body, this.config.classNames.body);
 
-      this.composer = new wysihtml5.views.Composer(this, this.editableElement, this.config);
+      this.composer = new wysihtml.views.Composer(this, this.editableElement, this.config);
       this.currentView = this.composer;
 
       if (typeof(this.config.parser) === "function") {
@@ -134,15 +134,15 @@
 
     handleBeforeLoad: function() {
         if (!this.config.noTextarea) {
-          this.synchronizer = new wysihtml5.views.Synchronizer(this, this.textarea, this.composer);
+          this.synchronizer = new wysihtml.views.Synchronizer(this, this.textarea, this.composer);
         } else {
-          this.sourceView = new wysihtml5.views.SourceView(this, this.composer);
+          this.sourceView = new wysihtml.views.SourceView(this, this.composer);
         }
         if (this.config.toolbar) {
-          if (typeof wysihtml5.toolbar === "undefined") {
+          if (typeof wysihtml.toolbar === "undefined") {
             throw Error("Toolbar not found. Make sure you're loading wysihtml-toolbar.js or wysihtml-toolbar.min.js");
           }
-          this.toolbar = new wysihtml5.toolbar.Toolbar(this, this.config.toolbar, this.config.showToolbarAfterInit);
+          this.toolbar = new wysihtml.toolbar.Toolbar(this, this.config.toolbar, this.config.showToolbarAfterInit);
         }
     },
 
@@ -223,7 +223,7 @@
         "clearInternals" : clearInternals
       });
       if (typeof(htmlOrElement) === "object") {
-        wysihtml5.quirks.redraw(htmlOrElement);
+        wysihtml.quirks.redraw(htmlOrElement);
       }
       return returnValue;
     },
@@ -235,10 +235,10 @@
     _initParser: function() {
       var oldHtml;
 
-      if (wysihtml5.browser.supportsModernPaste()) {
+      if (wysihtml.browser.supportsModernPaste()) {
         this.on("paste:composer", function(event) {
           event.preventDefault();
-          oldHtml = wysihtml5.dom.getPastedHtml(event);
+          oldHtml = wysihtml.dom.getPastedHtml(event);
           if (oldHtml) {
             this._cleanAndPaste(oldHtml);
           }
@@ -249,7 +249,7 @@
           event.preventDefault();
           var scrollPos = this.composer.getScrollPos();
 
-          wysihtml5.dom.getPastedHtmlWithDiv(this.composer, function(pastedHTML) {
+          wysihtml.dom.getPastedHtmlWithDiv(this.composer, function(pastedHTML) {
             if (pastedHTML) {
               this._cleanAndPaste(pastedHTML);
             }
@@ -261,7 +261,7 @@
     },
 
     _cleanAndPaste: function (oldHtml) {
-      var cleanHtml = wysihtml5.quirks.cleanPastedHTML(oldHtml, {
+      var cleanHtml = wysihtml.quirks.cleanPastedHTML(oldHtml, {
         "referenceNode": this.composer.element,
         "rules": this.config.pasteParserRulesets || [{"set": this.config.parserRules}],
         "uneditableClass": this.config.classNames.uneditableContainer
@@ -270,4 +270,4 @@
       this.composer.selection.insertHTML(cleanHtml);
     }
   });
-})(wysihtml5);
+})(wysihtml);

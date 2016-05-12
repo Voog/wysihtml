@@ -8,8 +8,8 @@
  * Therefore we have to check the element's outerHTML for the attribute
 */
 
-wysihtml5.dom.getAttributes = function(node) {
-  var HAS_GET_ATTRIBUTE_BUG = !wysihtml5.browser.supportsGetAttributeCorrectly(),
+wysihtml.dom.getAttributes = function(node) {
+  var HAS_GET_ATTRIBUTE_BUG = !wysihtml.browser.supportsGetAttributeCorrectly(),
       nodeName = node.nodeName,
       attributes = [],
       attr;
@@ -17,9 +17,9 @@ wysihtml5.dom.getAttributes = function(node) {
   for (attr in node.attributes) {
     if ((node.attributes.hasOwnProperty && node.attributes.hasOwnProperty(attr)) || (!node.attributes.hasOwnProperty && Object.prototype.hasOwnProperty.call(node.attributes, attr)))  {
       if (node.attributes[attr].specified) {
-        if (nodeName == "IMG" && node.attributes[attr].name.toLowerCase() == "src" && wysihtml5.dom.isLoadedImage(node) === true) {
+        if (nodeName == "IMG" && node.attributes[attr].name.toLowerCase() == "src" && wysihtml.dom.isLoadedImage(node) === true) {
           attributes['src'] = node.src;
-        } else if (wysihtml5.lang.array(['rowspan', 'colspan']).contains(node.attributes[attr].name.toLowerCase()) && HAS_GET_ATTRIBUTE_BUG) {
+        } else if (wysihtml.lang.array(['rowspan', 'colspan']).contains(node.attributes[attr].name.toLowerCase()) && HAS_GET_ATTRIBUTE_BUG) {
           if (node.attributes[attr].value !== 1) {
             attributes[node.attributes[attr].name] = node.attributes[attr].value;
           }

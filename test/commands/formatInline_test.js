@@ -1,5 +1,5 @@
-if (wysihtml5.browser.supported()) {
-  module("wysihtml5.Editor.commands.formatInline", {
+if (wysihtml.browser.supported()) {
+  module("wysihtml.Editor.commands.formatInline", {
 
     setup: function() {
         
@@ -61,7 +61,7 @@ if (wysihtml5.browser.supported()) {
             strong: 1
           }
         },
-        editor = new wysihtml5.Editor(this.editableArea1, {
+        editor = new wysihtml.Editor(this.editableArea1, {
           parserRules: parserRules
         });
 
@@ -192,7 +192,7 @@ if (wysihtml5.browser.supported()) {
             b: true
           }
         },
-        editor = new wysihtml5.Editor(this.editableArea1, {
+        editor = new wysihtml.Editor(this.editableArea1, {
           parserRules: parserRules
         });
 
@@ -276,7 +276,7 @@ if (wysihtml5.browser.supported()) {
             }
           }
         },
-        editor = new wysihtml5.Editor(this.editableArea1, {
+        editor = new wysihtml.Editor(this.editableArea1, {
           parserRules: parserRules
         });
 

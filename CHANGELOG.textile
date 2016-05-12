@@ -222,7 +222,7 @@
 * Fixed Safari context menu issue (#27)
 * Fixed weird issue in Chrome happening when the editor was initialized when the textarea has been inserted dynamically (#15)
 * Fixed issue happening with the polish keyboard layout (#16)
-* Make sure that the editor iframe uses same IE document mode as it's parent
+* Make sure that the editor iframe uses same IE document mode as its parent
 
 *wysihtml5 0.3.0 RC 1* (February 5, 2012)
 

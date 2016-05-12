@@ -1,8 +1,8 @@
-(function(wysihtml5) {
+(function(wysihtml) {
   var SELECTOR_FIELDS         = "[data-wysihtml5-dialog-field]",
       ATTRIBUTE_FIELDS        = "data-wysihtml5-dialog-field";
 
-  wysihtml5.toolbar.Dialog_foreColorStyle = wysihtml5.toolbar.Dialog.extend({
+  wysihtml.toolbar.Dialog_foreColorStyle = wysihtml.toolbar.Dialog.extend({
     multiselect: true,
 
     _serialize: function() {
@@ -19,12 +19,12 @@
 
     _interpolate: function(avoidHiddenFields) {
       var field, colourMode,
-          styleParser = wysihtml5.quirks.styleParser,
+          styleParser = wysihtml.quirks.styleParser,
           focusedElement = document.querySelector(":focus"),
           fields         = this.container.querySelectorAll(SELECTOR_FIELDS),
           length         = fields.length,
           i              = 0,
-          firstElement   = (this.elementToChange) ? ((wysihtml5.lang.object(this.elementToChange).isArray()) ? this.elementToChange[0] : this.elementToChange) : null,
+          firstElement   = (this.elementToChange) ? ((wysihtml.lang.object(this.elementToChange).isArray()) ? this.elementToChange[0] : this.elementToChange) : null,
           colourStr       = (firstElement) ? firstElement.getAttribute("style") : null,
           colour          = (colourStr) ? styleParser.parseColor(colourStr, "color") : null;
 
@@ -52,4 +52,4 @@
     }
 
   });
-})(wysihtml5);
+})(wysihtml);

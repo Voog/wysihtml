@@ -1,8 +1,8 @@
-if (wysihtml5.browser.supported()) {
+if (wysihtml.browser.supported()) {
 
-  module("wysihtml5.dom.parse", {
+  module("wysihtml.dom.parse", {
     sanitize: function(html, rules, context, cleanUp, uneditableClass) {
-      return wysihtml5.dom.parse(html, {
+      return wysihtml.dom.parse(html, {
         "rules": rules,
         "cleanUp": cleanUp,
         "context": context,
@@ -33,7 +33,7 @@ if (wysihtml5.browser.supported()) {
     this.equal(
       this.sanitize("<p>foo</p>", rules),
       "<div>foo</div>",
-      "Known tag gets renamed to it's corresponding conversion"
+      "Known tag gets renamed to its corresponding conversion"
     );
 
     this.equal(

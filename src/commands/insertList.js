@@ -1,4 +1,4 @@
-wysihtml5.commands.insertList = (function(wysihtml5) {
+wysihtml.commands.insertList = (function(wysihtml) {
 
   var isNode = function(node, name) {
     if (node && node.nodeName) {
@@ -21,7 +21,7 @@ wysihtml5.commands.insertList = (function(wysihtml5) {
         };
 
     if (node) {
-      var parentLi = wysihtml5.dom.getParentElement(node, { query: "li" }, false, composer.element),
+      var parentLi = wysihtml.dom.getParentElement(node, { query: "li" }, false, composer.element),
           otherNodeName = (nodeName === "UL") ? "OL" : "UL";
 
       if (isNode(node, nodeName)) {
@@ -63,15 +63,15 @@ wysihtml5.commands.insertList = (function(wysihtml5) {
       otherLists = getListsInSelection(otherNodeName, composer);
       if (otherLists.length) {
         for (var l = otherLists.length; l--;) {
-          wysihtml5.dom.renameElement(otherLists[l], nodeName.toLowerCase());
+          wysihtml.dom.renameElement(otherLists[l], nodeName.toLowerCase());
         }
       } else {
         innerLists = getListsInSelection(['OL', 'UL'], composer);
         for (var i = innerLists.length; i--;) {
-          wysihtml5.dom.resolveList(innerLists[i], composer.config.useLineBreaks);
+          wysihtml.dom.resolveList(innerLists[i], composer.config.useLineBreaks);
         }
         if (innerLists.length === 0) {
-          wysihtml5.dom.resolveList(el, composer.config.useLineBreaks);
+          wysihtml.dom.resolveList(el, composer.config.useLineBreaks);
         }
       }
     });
@@ -89,7 +89,7 @@ wysihtml5.commands.insertList = (function(wysihtml5) {
 
       // All selection inner lists get renamed too
       for (var l = renameLists.length; l--;) {
-        wysihtml5.dom.renameElement(renameLists[l], nodeName.toLowerCase());
+        wysihtml.dom.renameElement(renameLists[l], nodeName.toLowerCase());
       }
     });
   };
@@ -123,10 +123,10 @@ wysihtml5.commands.insertList = (function(wysihtml5) {
 
     // This space causes new lists to never break on enter
     var INVISIBLE_SPACE_REG_EXP = /\uFEFF/g;
-    tempElement.innerHTML = tempElement.innerHTML.replace(wysihtml5.INVISIBLE_SPACE_REG_EXP, "");
+    tempElement.innerHTML = tempElement.innerHTML.replace(wysihtml.INVISIBLE_SPACE_REG_EXP, "");
     if (tempElement) {
       isEmpty = (/^(\s|(<br>))+$/i).test(tempElement.innerHTML);
-      list = wysihtml5.dom.convertToList(tempElement, nodeName.toLowerCase(), composer.parent.config.classNames.uneditableContainer);
+      list = wysihtml.dom.convertToList(tempElement, nodeName.toLowerCase(), composer.parent.config.classNames.uneditableContainer);
       if (sel) {
         rangy.restoreSelection(sel);
       }
@@ -150,18 +150,18 @@ wysihtml5.commands.insertList = (function(wysihtml5) {
         anode = [fnode, fnode = anode][0];
       }
 
-      if (wysihtml5.dom.domNode(fnode).is.emptyTextNode(true) && fnode) {
-        fnode = wysihtml5.dom.domNode(fnode).prev({nodeTypes: [1,3], ignoreBlankTexts: true});
+      if (wysihtml.dom.domNode(fnode).is.emptyTextNode(true) && fnode) {
+        fnode = wysihtml.dom.domNode(fnode).prev({nodeTypes: [1,3], ignoreBlankTexts: true});
       }
-      if (wysihtml5.dom.domNode(anode).is.emptyTextNode(true) && anode) {
-        anode = wysihtml5.dom.domNode(anode).next({nodeTypes: [1,3], ignoreBlankTexts: true});
+      if (wysihtml.dom.domNode(anode).is.emptyTextNode(true) && anode) {
+        anode = wysihtml.dom.domNode(anode).next({nodeTypes: [1,3], ignoreBlankTexts: true});
       }
 
       if (anode && fnode) {
         if (anode === fnode) {
           selectedNode = anode;
         } else {
-          selectedNode = wysihtml5.dom.domNode(anode).commonAncestor(fnode, composer.element);
+          selectedNode = wysihtml.dom.domNode(anode).commonAncestor(fnode, composer.element);
         }
       } else {
         selectedNode  = composer.selection.getSelectedNode();
@@ -190,4 +190,4 @@ wysihtml5.commands.insertList = (function(wysihtml5) {
     }
   };
 
-})(wysihtml5);
+})(wysihtml);

@@ -1,4 +1,4 @@
-wysihtml5.polyfills = function(win, doc) {
+wysihtml.polyfills = function(win, doc) {
 
   // TODO: in future try to replace most inline compability checks with polyfills for code readability 
 
@@ -512,4 +512,4 @@ wysihtml5.polyfills = function(win, doc) {
   })();
 };
 
-wysihtml5.polyfills(window, document);
+wysihtml.polyfills(window, document);

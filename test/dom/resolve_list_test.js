@@ -1,12 +1,12 @@
-module("wysihtml5.dom.resolveList", {
+module("wysihtml.dom.resolveList", {
   equal: function(actual, expected, message) {
     return QUnit.assert.htmlEqual(actual, expected, message);
   },
   
   resolveList: function(html, useLineBreaks) {
-    var container = wysihtml5.dom.getAsDom(html);
+    var container = wysihtml.dom.getAsDom(html);
     document.body.appendChild(container);
-    wysihtml5.dom.resolveList(container.firstChild, useLineBreaks);
+    wysihtml.dom.resolveList(container.firstChild, useLineBreaks);
     var innerHTML = container.innerHTML;
     container.parentNode.removeChild(container);
     return innerHTML;

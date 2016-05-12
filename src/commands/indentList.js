@@ -1,5 +1,5 @@
-(function(wysihtml5){
-  wysihtml5.commands.indentList = {
+(function(wysihtml){
+  wysihtml.commands.indentList = {
     exec: function(composer, command, value) {
       var listEls = composer.selection.getSelectionParentsByTag('LI');
       if (listEls) {
@@ -22,7 +22,7 @@
           liNode = liNodes[i];
           listTag = (liNode.parentNode.nodeName === 'OL') ? 'OL' : 'UL';
           list = liNode.ownerDocument.createElement(listTag);
-          prevLi = wysihtml5.dom.domNode(liNode).prev({nodeTypes: [wysihtml5.ELEMENT_NODE]});
+          prevLi = wysihtml.dom.domNode(liNode).prev({nodeTypes: [wysihtml.ELEMENT_NODE]});
           prevLiList = (prevLi) ? prevLi.querySelector('ul, ol') : null;
 
           if (prevLi) {
@@ -40,4 +40,4 @@
       return found;
     }
   };
-}(wysihtml5));
+}(wysihtml));

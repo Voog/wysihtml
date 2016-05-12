@@ -1,5 +1,5 @@
-(function(wysihtml5) {
-  var dom             = wysihtml5.dom,
+(function(wysihtml) {
+  var dom             = wysihtml.dom,
       doc             = document,
       win             = window,
       HOST_TEMPLATE   = doc.createElement("div"),
@@ -43,7 +43,7 @@
         "body                 { height: 100%; padding: 1px 0 0 0; margin: -1px 0 0 0; }",
         "body > p:first-child { margin-top: 0; }",
         "._wysihtml5-temp     { display: none; }",
-        wysihtml5.browser.isGecko ?
+        wysihtml.browser.isGecko ?
           "body.placeholder { color: graytext !important; }" :
           "body.placeholder { color: #a9a9a9 !important; }",
         // Ensure that user see's broken images and can delete them
@@ -56,7 +56,7 @@
    *
    * Other browsers need a more hacky way: (pssst don't tell my mama)
    * In order to prevent the element being scrolled into view when focusing it, we simply
-   * move it out of the scrollable area, focus it, and reset it's position
+   * move it out of the scrollable area, focus it, and reset its position
    */
   var focusWithoutScrolling = function(element) {
     if (element.setActive) {
@@ -96,7 +96,7 @@
   };
 
 
-  wysihtml5.views.Composer.prototype.style = function() {
+  wysihtml.views.Composer.prototype.style = function() {
     var that                  = this,
         originalActiveElement = doc.querySelector(":focus"),
         textareaElement       = this.textarea.element,
@@ -161,7 +161,7 @@
     // Make sure that we don't change the display style of the iframe when copying styles oblur/onfocus
     // this is needed for when the change_view event is fired where the iframe is hidden and then
     // the blur event fires and re-displays it
-    var boxFormattingStyles = wysihtml5.lang.array(BOX_FORMATTING).without(["display"]);
+    var boxFormattingStyles = wysihtml.lang.array(BOX_FORMATTING).without(["display"]);
 
     // --------- restore focus ---------
     if (originalActiveElement) {
@@ -198,4 +198,4 @@
 
     return this;
   };
-})(wysihtml5);
+})(wysihtml);

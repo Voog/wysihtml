@@ -1,6 +1,6 @@
-wysihtml5.quirks.tableCellsSelection = function(editable, editor) {
+wysihtml.quirks.tableCellsSelection = function(editable, editor) {
 
-  var dom = wysihtml5.dom,
+  var dom = wysihtml.dom,
     select = {
       table: null,
       start: null,
@@ -16,7 +16,7 @@ wysihtml5.quirks.tableCellsSelection = function(editable, editor) {
   }
 
   var handleMouseDown = function(event) {
-    var target = wysihtml5.dom.getParentElement(event.target, { query: "td, th" }, false, editable);
+    var target = wysihtml.dom.getParentElement(event.target, { query: "td, th" }, false, editable);
     if (target) {
       handleSelectionMousedown(target);
     }

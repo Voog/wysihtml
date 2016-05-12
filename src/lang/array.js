@@ -1,10 +1,10 @@
-wysihtml5.lang.array = function(arr) {
+wysihtml.lang.array = function(arr) {
   return {
     /**
      * Check whether a given object exists in an array
      *
      * @example
-     *    wysihtml5.lang.array([1, 2]).contains(1);
+     *    wysihtml.lang.array([1, 2]).contains(1);
      *    // => true
      *
      * Can be used to match array with array. If intersection is found true is returned
@@ -12,13 +12,13 @@ wysihtml5.lang.array = function(arr) {
     contains: function(needle) {
       if (Array.isArray(needle)) {
         for (var i = needle.length; i--;) {
-          if (wysihtml5.lang.array(arr).indexOf(needle[i]) !== -1) {
+          if (wysihtml.lang.array(arr).indexOf(needle[i]) !== -1) {
             return true;
           }
         }
         return false;
       } else {
-        return wysihtml5.lang.array(arr).indexOf(needle) !== -1;
+        return wysihtml.lang.array(arr).indexOf(needle) !== -1;
       }
     },
 
@@ -27,7 +27,7 @@ wysihtml5.lang.array = function(arr) {
      * If no elelemt found returns -1
      *
      * @example
-     *    wysihtml5.lang.array([1, 2]).indexOf(2);
+     *    wysihtml.lang.array([1, 2]).indexOf(2);
      *    // => 1
      */
     indexOf: function(needle) {
@@ -45,11 +45,11 @@ wysihtml5.lang.array = function(arr) {
      * Substract one array from another
      *
      * @example
-     *    wysihtml5.lang.array([1, 2, 3, 4]).without([3, 4]);
+     *    wysihtml.lang.array([1, 2, 3, 4]).without([3, 4]);
      *    // => [1, 2]
      */
     without: function(arrayToSubstract) {
-      arrayToSubstract = wysihtml5.lang.array(arrayToSubstract);
+      arrayToSubstract = wysihtml.lang.array(arrayToSubstract);
       var newArr  = [],
           i       = 0,
           length  = arr.length;
@@ -66,7 +66,7 @@ wysihtml5.lang.array = function(arr) {
      *
      * Following will convert a Live NodeList to a proper Array
      * @example
-     *    var childNodes = wysihtml5.lang.array(document.body.childNodes).get();
+     *    var childNodes = wysihtml.lang.array(document.body.childNodes).get();
      */
     get: function() {
       var i        = 0,
@@ -83,7 +83,7 @@ wysihtml5.lang.array = function(arr) {
      * optionally this can be provided as second argument
      *
      * @example
-     *    var childNodes = wysihtml5.lang.array([1,2,3,4]).map(function (value, index, array) {
+     *    var childNodes = wysihtml.lang.array([1,2,3,4]).map(function (value, index, array) {
             return value * 2;
      *    });
      *    // => [2,4,6,8]
@@ -105,7 +105,7 @@ wysihtml5.lang.array = function(arr) {
     /* ReturnS new array without duplicate entries
      *
      * @example
-     *    var uniq = wysihtml5.lang.array([1,2,3,2,1,4]).unique();
+     *    var uniq = wysihtml.lang.array([1,2,3,2,1,4]).unique();
      *    // => [1,2,3,4]
      */
     unique: function() {
@@ -114,7 +114,7 @@ wysihtml5.lang.array = function(arr) {
           idx = 0;
 
       while (idx < max) {
-        if (!wysihtml5.lang.array(vals).contains(arr[idx])) {
+        if (!wysihtml.lang.array(vals).contains(arr[idx])) {
           vals.push(arr[idx]);
         }
         idx++;

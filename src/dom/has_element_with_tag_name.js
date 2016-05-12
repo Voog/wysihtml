@@ -6,9 +6,9 @@
  * @param {Object} doc The document object of the context where to check
  * @param {String} tagName Upper cased tag name
  * @example
- *    wysihtml5.dom.hasElementWithTagName(document, "IMG");
+ *    wysihtml.dom.hasElementWithTagName(document, "IMG");
  */
-wysihtml5.dom.hasElementWithTagName = (function() {
+wysihtml.dom.hasElementWithTagName = (function() {
   var LIVE_CACHE          = {},
       DOCUMENT_IDENTIFIER = 1;
 

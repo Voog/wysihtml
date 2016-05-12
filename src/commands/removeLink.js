@@ -1,17 +1,17 @@
-(function(wysihtml5) {
+(function(wysihtml) {
 
   var nodeOptions = {
     nodeName: "A"
   };
 
-  wysihtml5.commands.removeLink = {
+  wysihtml.commands.removeLink = {
     exec: function(composer, command) {
-      wysihtml5.commands.formatInline.remove(composer, command, nodeOptions);
+      wysihtml.commands.formatInline.remove(composer, command, nodeOptions);
     },
 
     state: function(composer, command) {
-      return wysihtml5.commands.formatInline.state(composer, command, nodeOptions);
+      return wysihtml.commands.formatInline.state(composer, command, nodeOptions);
     }
   };
 
-})(wysihtml5);
+})(wysihtml);

@@ -1,5 +1,5 @@
-(function(wysihtml5){
-  wysihtml5.commands.insertHTML = {
+(function(wysihtml){
+  wysihtml.commands.insertHTML = {
     exec: function(composer, command, html) {
         composer.selection.insertHTML(html);
     },
@@ -8,4 +8,4 @@
       return false;
     }
   };
-}(wysihtml5));
+}(wysihtml));

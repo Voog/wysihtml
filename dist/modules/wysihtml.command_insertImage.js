@@ -1,17 +1,26 @@
-(function(wysihtml5) {
-  var NODE_NAME = "IMG";
+(function (root, factory) {
+  if(typeof define === 'function' && define.amd) {
+    define(['wysihtml'], factory);
+  } else if(typeof module === 'object' && module.exports) {
+    module.exports = factory(require('wysihtml'));
+  } else {
+    factory(root.wysihtml);
+  }
+})(this, function(wysihtml) {
 
-  wysihtml5.commands.insertImage = {
-    /**
-     * Inserts an <img>
-     * If selection is already an image link, it removes it
-     *
-     * @example
-     *    // either ...
-     *    wysihtml5.commands.insertImage.exec(composer, "insertImage", "http://www.google.de/logo.jpg");
-     *    // ... or ...
-     *    wysihtml5.commands.insertImage.exec(composer, "insertImage", { src: "http://www.google.de/logo.jpg", title: "foo" });
-     */
+/**
+ * Inserts an <img>
+ * If selection is already an image link, it removes it
+ *
+ * @example
+ *    // either ...
+ *    wysihtml.commands.insertImage.exec(composer, "insertImage", "http://www.google.de/logo.jpg");
+ *    // ... or ...
+ *    wysihtml.commands.insertImage.exec(composer, "insertImage", { src: "http://www.google.de/logo.jpg", title: "foo" });
+ */
+wysihtml.commands.insertImage = (function() {
+  var NODE_NAME = "IMG";
+  return {
     exec: function(composer, command, value) {
       value = typeof(value) === "object" ? value : { src: value };
 
@@ -26,15 +35,15 @@
         parent = image.parentNode;
         parent.removeChild(image);
 
-        // and it's parent <a> too if it hasn't got any other relevant child nodes
-        wysihtml5.dom.removeEmptyTextNodes(parent);
+        // and its parent <a> too if it hasn't got any other relevant child nodes
+        wysihtml.dom.removeEmptyTextNodes(parent);
         if (parent.nodeName === "A" && !parent.firstChild) {
           composer.selection.setAfter(parent);
           parent.parentNode.removeChild(parent);
         }
 
         // firefox and ie sometimes don't remove the image handles, even though the image got removed
-        wysihtml5.quirks.redraw(composer.element);
+        wysihtml.quirks.redraw(composer.element);
         return;
       }
 
@@ -56,8 +65,8 @@
       }
 
       composer.selection.insertNode(image);
-      if (wysihtml5.browser.hasProblemsSettingCaretAfterImg()) {
-        textNode = doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
+      if (wysihtml.browser.hasProblemsSettingCaretAfterImg()) {
+        textNode = doc.createTextNode(wysihtml.INVISIBLE_SPACE);
         composer.selection.insertNode(textNode);
         composer.selection.setAfter(textNode);
       } else {
@@ -71,7 +80,7 @@
           text,
           imagesInSelection;
 
-      if (!wysihtml5.dom.hasElementWithTagName(doc, NODE_NAME)) {
+      if (!wysihtml.dom.hasElementWithTagName(doc, NODE_NAME)) {
         return false;
       }
 
@@ -85,17 +94,17 @@
         return selectedNode;
       }
 
-      if (selectedNode.nodeType !== wysihtml5.ELEMENT_NODE) {
+      if (selectedNode.nodeType !== wysihtml.ELEMENT_NODE) {
         return false;
       }
 
       text = composer.selection.getText();
-      text = wysihtml5.lang.string(text).trim();
+      text = wysihtml.lang.string(text).trim();
       if (text) {
         return false;
       }
 
-      imagesInSelection = composer.selection.getNodes(wysihtml5.ELEMENT_NODE, function(node) {
+      imagesInSelection = composer.selection.getNodes(wysihtml.ELEMENT_NODE, function(node) {
         return node.nodeName === "IMG";
       });
 
@@ -106,4 +115,6 @@
       return imagesInSelection[0];
     }
   };
-})(wysihtml5);
+})();
+
+});

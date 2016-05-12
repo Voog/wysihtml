@@ -4,17 +4,17 @@
  *
  * @author Christopher Blum
  */
-wysihtml5.quirks.cleanPastedHTML = (function() {
+wysihtml.quirks.cleanPastedHTML = (function() {
 
   var styleToRegex = function (styleStr) {
-    var trimmedStr = wysihtml5.lang.string(styleStr).trim(),
+    var trimmedStr = wysihtml.lang.string(styleStr).trim(),
         escapedStr = trimmedStr.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
 
     return new RegExp("^((?!^" + escapedStr + "$).)*$", "i");
   };
 
   var extendRulesWithStyleExceptions = function (rules, exceptStyles) {
-    var newRules = wysihtml5.lang.object(rules).clone(true),
+    var newRules = wysihtml.lang.object(rules).clone(true),
         tag, style;
 
     for (tag in newRules.tags) {
@@ -56,13 +56,13 @@ wysihtml5.quirks.cleanPastedHTML = (function() {
 
   return function(html, options) {
     var exceptStyles = {
-          'color': wysihtml5.dom.getStyle("color").from(options.referenceNode),
-          'fontSize': wysihtml5.dom.getStyle("font-size").from(options.referenceNode)
+          'color': wysihtml.dom.getStyle("color").from(options.referenceNode),
+          'fontSize': wysihtml.dom.getStyle("font-size").from(options.referenceNode)
         },
         rules = extendRulesWithStyleExceptions(pickRuleset(options.rules, html) || {}, exceptStyles),
         newHtml;
 
-    newHtml = wysihtml5.dom.parse(html, {
+    newHtml = wysihtml.dom.parse(html, {
       "rules": rules,
       "cleanUp": true, // <span> elements, empty or without attributes, should be removed/replaced with their content
       "context": options.referenceNode.ownerDocument,

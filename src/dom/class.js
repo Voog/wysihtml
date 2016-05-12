@@ -1,5 +1,5 @@
-(function(wysihtml5) {
-  var api = wysihtml5.dom;
+(function(wysihtml) {
+  var api = wysihtml.dom;
 
   api.addClass = function(element, className) {
     var classList = element.classList;
@@ -30,4 +30,4 @@
     var elementClassName = element.className;
     return (elementClassName.length > 0 && (elementClassName == className || new RegExp("(^|\\s)" + className + "(\\s|$)").test(elementClassName)));
   };
-})(wysihtml5);
+})(wysihtml);

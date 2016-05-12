@@ -1,11 +1,11 @@
-module("wysihtml5.dom.renameElement", {
+module("wysihtml.dom.renameElement", {
   equal: function(actual, expected, message) {
     return QUnit.assert.htmlEqual(actual, expected, message);
   },
   
   renameElement: function(html, newNodeName) {
-    var container = wysihtml5.dom.getAsDom(html);
-    wysihtml5.dom.renameElement(container.firstChild, newNodeName);
+    var container = wysihtml.dom.getAsDom(html);
+    wysihtml.dom.renameElement(container.firstChild, newNodeName);
     return container.innerHTML;
   }
 });

@@ -1,17 +1,17 @@
-module("wysihtml5.dom.autoLink", {
+module("wysihtml.dom.autoLink", {
   equal: function(actual, expected, message) {
     return QUnit.assert.htmlEqual(actual, expected, message);
   },
   
   autoLink: function(html) {
-    var container = wysihtml5.dom.getAsDom(html);
-    return wysihtml5.dom.autoLink(container).innerHTML;
+    var container = wysihtml.dom.getAsDom(html);
+    return wysihtml.dom.autoLink(container).innerHTML;
   } 
 });
 
 
 test("Basic test", function() {
-  ok(wysihtml5.dom.autoLink.URL_REG_EXP, "URL reg exp is revealed to be access globally");
+  ok(wysihtml.dom.autoLink.URL_REG_EXP, "URL reg exp is revealed to be access globally");
   
   this.equal(
     this.autoLink("hey check out this search engine http://www.google.com"),

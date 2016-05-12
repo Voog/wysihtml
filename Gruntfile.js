@@ -1,10 +1,34 @@
 module.exports = function(grunt) {
 
   "use strict";
+  
+  var moduleAMDHeader = "\
+(function (root, factory) {\n\
+  if(typeof define === 'function' && define.amd) {\n\
+    define(['wysihtml'], factory);\n\
+  } else if(typeof module === 'object' && module.exports) {\n\
+    module.exports = factory(require('wysihtml'));\n\
+  } else {\n\
+    factory(root.wysihtml);\n\
+  }\n\
+})(this, function(wysihtml) {\n\n";
+
+  var AMDHeader = "\
+(function (root, factory) {\n\
+if(typeof define === 'function' && define.amd) {\n\
+  define(factory);\n\
+} else if(typeof module === 'object' && module.exports) {\n\
+  module.exports = factory();\n\
+} else {\n\
+  factory();\n\
+}\n\
+})(this, function() {\n\n";
+
+  var AMDFooter = "\n});\n";
 
   // List required source files that will be built into wysihtml5x.js
   var base = [
-    "src/wysihtml5.js",
+    "src/wysihtml.js",
     "src/polyfills.js",
     "node_modules/rangy/lib/rangy-core.js",
     "node_modules/rangy/lib/rangy-textrange.js",
@@ -60,37 +84,15 @@ module.exports = function(grunt) {
     "src/quirks/table_cells_selection.js",
     "src/quirks/style_parser.js",
     "src/selection/selection.js",
-    "src/selection/html_applier.js",
     "src/commands.js",
-    "src/commands/bold.js",
     "src/commands/createLink.js",
     "src/commands/removeLink.js",
-    "src/commands/fontSize.js",
-    "src/commands/fontSizeStyle.js",
-    "src/commands/foreColor.js",
-    "src/commands/foreColorStyle.js",
-    "src/commands/bgColorStyle.js",
     "src/commands/formatBlock.js",
-    "src/commands/formatCode.js",
     "src/commands/formatInline.js",
-    "src/commands/insertBlockQuote.js",
     "src/commands/insertHTML.js",
-    "src/commands/insertImage.js",
     "src/commands/insertLineBreak.js",
-    "src/commands/insertOrderedList.js",
-    "src/commands/insertUnorderedList.js",
     "src/commands/insertList.js",
-    "src/commands/italic.js",
-    "src/commands/justifyCenter.js",
-    "src/commands/justifyLeft.js",
-    "src/commands/justifyRight.js",
-    "src/commands/justifyFull.js",
-    "src/commands/alignRightStyle.js",
-    "src/commands/alignLeftStyle.js",
-    "src/commands/alignCenterStyle.js",
-    "src/commands/alignJustifyStyle.js",
     "src/commands/redo.js",
-    "src/commands/underline.js",
     "src/commands/undo.js",
     "src/commands/createTable.js",
     "src/commands/mergeTableCells.js",
@@ -98,8 +100,6 @@ module.exports = function(grunt) {
     "src/commands/deleteTableCells.js",
     "src/commands/indentList.js",
     "src/commands/outdentList.js",
-    "src/commands/subscript.js",
-    "src/commands/superscript.js",
     "src/undo_manager.js",
     "src/views/view.js",
     "src/views/composer.js",
@@ -126,6 +126,8 @@ module.exports = function(grunt) {
     pkg: grunt.file.readJSON('package.json'),
     concat: {
       options: {
+        banner: AMDHeader,
+        footer: AMDFooter,
         separator: ';',
         process: function(src, filepath) {
           return src.replace(/@VERSION/g, grunt.config.get('pkg.version'));
@@ -162,7 +164,42 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-open');
+  
+  grunt.registerTask("build-modules", "Builds all extension files", function() {
+    var concat = {},
+        uglify = {};
 
-  grunt.registerTask('default', ['concat', 'uglify']);
+    grunt.file.expand("./src/extensions/*").forEach(function (d) {
+      var dir = d.split('/').pop();
+      
+      if (!grunt.file.isDir(d)) {
+        var fnameArr = dir.split('.');
+        fnameArr.pop();
+        dir = fnameArr.join('.');
+      }
+
+      concat[dir] = {
+        options: {
+          banner: moduleAMDHeader,
+          footer: AMDFooter
+        },
+        src: grunt.file.isDir(d) ? [d + '/*.js'] : [d],
+        dest: 'dist/modules/wysihtml.' + dir + '.js'
+      };
+      
+      uglify[dir] = {
+        files: {
+          ['dist/modules/wysihtml.' + dir + '.min.js']: 'dist/modules/wysihtml.' + dir + '.js'
+        }
+      };
+      
+    });
+    grunt.config.set('concat', concat);
+    grunt.task.run('concat');
+    grunt.config.set('uglify', uglify);
+    grunt.task.run('uglify');
+  });
+
+  grunt.registerTask('default', ['concat', 'uglify', 'build-modules']);
   grunt.registerTask('test', ['open:test']);
 };

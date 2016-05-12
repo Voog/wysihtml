@@ -13,7 +13,7 @@
 
   <script src="../node_modules/qunit-assert-html/dist/qunit-assert-html.js"></script>
 
-  <script src="../src/wysihtml5.js"></script>
+  <script src="../src/wysihtml.js"></script>
   <script src="../src/polyfills.js"></script>
 
   <script src="../node_modules/happen/happen.js"></script>
@@ -72,34 +72,17 @@
   <script src="../src/quirks/table_cells_selection.js"></script>
   <script src="../src/quirks/style_parser.js"></script>
   <script src="../src/selection/selection.js"></script>
-  <script src="../src/selection/html_applier.js"></script>
 
   <script src="../src/commands.js"></script>
-  <script src="../src/commands/bold.js"></script>
+
   <script src="../src/commands/createLink.js"></script>
   <script src="../src/commands/removeLink.js"></script>
-  <script src="../src/commands/fontSize.js"></script>
-  <script src="../src/commands/foreColor.js"></script>
-  <script src="../src/commands/foreColorStyle.js"></script>
   <script src="../src/commands/formatBlock.js"></script>
   <script src="../src/commands/formatInline.js"></script>
-  <script src="../src/commands/formatCode.js"></script>
   <script src="../src/commands/insertHTML.js"></script>
-  <script src="../src/commands/insertImage.js"></script>
   <script src="../src/commands/insertLineBreak.js"></script>
-  <script src="../src/commands/insertOrderedList.js"></script>
-  <script src="../src/commands/insertUnorderedList.js"></script>
   <script src="../src/commands/insertList.js"></script>
-  <script src="../src/commands/italic.js"></script>
-  <script src="../src/commands/justifyCenter.js"></script>
-  <script src="../src/commands/justifyLeft.js"></script>
-  <script src="../src/commands/justifyRight.js"></script>
-  <script src="../src/commands/justifyFull.js"></script>
-  <script src="../src/commands/alignRightStyle.js"></script>
-  <script src="../src/commands/alignLeftStyle.js"></script>
-  <script src="../src/commands/alignCenterStyle.js"></script>
   <script src="../src/commands/redo.js"></script>
-  <script src="../src/commands/underline.js"></script>
   <script src="../src/commands/undo.js"></script>
   <script src="../src/commands/addTableCells.js"></script>
   <script src="../src/commands/createTable.js"></script>
@@ -107,10 +90,6 @@
   <script src="../src/commands/mergeTableCells.js"></script>
   <script src="../src/commands/indentList.js"></script>
   <script src="../src/commands/outdentList.js"></script>
-  <script src="../src/commands/insertBlockQuote.js"></script>
-
-  <script src="../src/commands/subscript.js"></script>
-  <script src="../src/commands/superscript.js"></script>
 
   <script src="../src/undo_manager.js"></script>
 
@@ -133,12 +112,21 @@
   <!-- additions for iflameless  -->
   <script src="../src/dom/contenteditable_area.js"></script>
   <!-- -->
+  
+  
+  <!-- extensions -->
+    <script src="../dist/modules/wysihtml.commands_basic.js"></script>
+    <script src="../dist/modules/wysihtml.commands_format_by_class.js"></script>
+    <script src="../dist/modules/wysihtml.commands_format_by_style.js"></script>
+    <script src="../dist/modules/wysihtml.command_formatCode.js"></script>
+    <script src="../dist/modules/wysihtml.command_insertImage.js"></script>
+  <!-- -->
 
   <script src="browser_test.js"></script>
   <script src="incompatible_test.js"></script>
 
   <script>
-    if (wysihtml5.browser.supported()) {
+    if (wysihtml.browser.supported()) {
       document.write(
         '<script src="polyfills_test.js"><\/script>'                       +
         '<script src="lang/array_test.js"><\/script>'                       +

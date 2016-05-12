@@ -1,11 +1,11 @@
 /**
  * Class that takes care that the value of the composer and the textarea is always in sync
  */
-(function(wysihtml5) {
+(function(wysihtml) {
   var INTERVAL = 400;
 
-  wysihtml5.views.Synchronizer = Base.extend(
-    /** @scope wysihtml5.views.Synchronizer.prototype */ {
+  wysihtml.views.Synchronizer = Base.extend(
+    /** @scope wysihtml.views.Synchronizer.prototype */ {
 
     constructor: function(editor, textarea, composer) {
       this.editor   = editor;
@@ -21,7 +21,7 @@
      * @param {Boolean} shouldParseHtml Whether the html should be sanitized before inserting it into the textarea
      */
     fromComposerToTextarea: function(shouldParseHtml) {
-      this.textarea.setValue(wysihtml5.lang.string(this.composer.getValue(false, false)).trim(), shouldParseHtml);
+      this.textarea.setValue(wysihtml.lang.string(this.composer.getValue(false, false)).trim(), shouldParseHtml);
     },
 
     /**
@@ -73,10 +73,10 @@
       if (form) {
         // If the textarea is in a form make sure that after onreset and onsubmit the composer
         // has the correct state
-        wysihtml5.dom.observe(form, "submit", function() {
+        wysihtml.dom.observe(form, "submit", function() {
           that.sync(true);
         });
-        wysihtml5.dom.observe(form, "reset", function() {
+        wysihtml.dom.observe(form, "reset", function() {
           setTimeout(function() { that.fromTextareaToComposer(); }, 0);
         });
       }
@@ -94,4 +94,4 @@
       this.editor.on("destroy:composer", stopInterval);
     }
   });
-})(wysihtml5);
+})(wysihtml);

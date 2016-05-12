@@ -11,8 +11,8 @@
  * "Accessing Google Speech API Chrome 11"
  * http://mikepultz.com/2011/03/accessing-google-speech-api-chrome-11/
  */
-(function(wysihtml5) {
-  var dom = wysihtml5.dom;
+(function(wysihtml) {
+  var dom = wysihtml.dom;
 
   var linkStyles = {
     position: "relative"
@@ -46,9 +46,9 @@
     "speech":          ""
   };
 
-  wysihtml5.toolbar.Speech = function(parent, link) {
+  wysihtml.toolbar.Speech = function(parent, link) {
     var input = document.createElement("input");
-    if (!wysihtml5.browser.supportsSpeechApiOn(input)) {
+    if (!wysihtml.browser.supportsSpeechApiOn(input)) {
       link.style.display = "none";
       return;
     }
@@ -59,7 +59,7 @@
 
     var wrapper = document.createElement("div");
 
-    wysihtml5.lang.object(wrapperStyles).merge({
+    wysihtml.lang.object(wrapperStyles).merge({
       width:  link.offsetWidth  + "px",
       height: link.offsetHeight + "px"
     });
@@ -87,4 +87,4 @@
       event.stopPropagation();
     });
   };
-})(wysihtml5);
+})(wysihtml);

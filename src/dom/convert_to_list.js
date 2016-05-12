@@ -14,7 +14,7 @@
  *    </span>
  *
  *    <script>
- *      wysihtml5.dom.convertToList(document.getElementById("pseudo-list"), "ul");
+ *      wysihtml.dom.convertToList(document.getElementById("pseudo-list"), "ul");
  *    </script>
  *
  *    <!-- Will result in: -->
@@ -24,7 +24,7 @@
  *      <li>50 Cent</li>
  *    </ul>
  */
-wysihtml5.dom.convertToList = (function() {
+wysihtml.dom.convertToList = (function() {
   function _createListItem(doc, list) {
     var listItem = doc.createElement("li");
     list.appendChild(listItem);
@@ -59,25 +59,25 @@ wysihtml5.dom.convertToList = (function() {
     for (i=0; i<lineBreaksLength; i++) {
       lineBreak = lineBreaks[i];
       while ((parentNode = lineBreak.parentNode) && parentNode !== element && parentNode.lastChild === lineBreak) {
-        if (wysihtml5.dom.getStyle("display").from(parentNode) === "block") {
+        if (wysihtml.dom.getStyle("display").from(parentNode) === "block") {
           parentNode.removeChild(lineBreak);
           break;
         }
-        wysihtml5.dom.insert(lineBreak).after(lineBreak.parentNode);
+        wysihtml.dom.insert(lineBreak).after(lineBreak.parentNode);
       }
     }
 
-    childNodes        = wysihtml5.lang.array(element.childNodes).get();
+    childNodes        = wysihtml.lang.array(element.childNodes).get();
     childNodesLength  = childNodes.length;
 
     for (i=0; i<childNodesLength; i++) {
       currentListItem   = currentListItem || _createListItem(doc, list);
       childNode         = childNodes[i];
-      isBlockElement    = wysihtml5.dom.getStyle("display").from(childNode) === "block";
+      isBlockElement    = wysihtml.dom.getStyle("display").from(childNode) === "block";
       isLineBreak       = childNode.nodeName === "BR";
 
       // consider uneditable as an inline element
-      if (isBlockElement && (!uneditableClass || !wysihtml5.dom.hasClass(childNode, uneditableClass))) {
+      if (isBlockElement && (!uneditableClass || !wysihtml.dom.hasClass(childNode, uneditableClass))) {
         // Append blockElement to current <li> if empty, otherwise create a new one
         currentListItem = currentListItem.firstChild ? _createListItem(doc, list) : currentListItem;
         currentListItem.appendChild(childNode);

@@ -1,6 +1,6 @@
-(function(wysihtml5) {
+(function(wysihtml) {
 
-  var api = wysihtml5.dom;
+  var api = wysihtml.dom;
 
   var MapCell = function(cell) {
     this.el = cell;
@@ -129,7 +129,7 @@
       var inlineTables = this.table.querySelectorAll('table'),
         inlineCells = (inlineTables) ? queryInList(inlineTables, 'th, td') : [],
         allCells = row.querySelectorAll('th, td'),
-        tableCells = (inlineCells.length > 0) ? wysihtml5.lang.array(allCells).without(inlineCells) : allCells;
+        tableCells = (inlineCells.length > 0) ? wysihtml.lang.array(allCells).without(inlineCells) : allCells;
 
       return tableCells;
     },
@@ -138,7 +138,7 @@
       var inlineTables = this.table.querySelectorAll('table'),
         inlineRows = (inlineTables) ? queryInList(inlineTables, 'tr') : [],
         allRows = this.table.querySelectorAll('tr'),
-        tableRows = (inlineRows.length > 0) ? wysihtml5.lang.array(allRows).without(inlineRows) : allRows;
+        tableRows = (inlineRows.length > 0) ? wysihtml.lang.array(allRows).without(inlineRows) : allRows;
 
       return tableRows;
     },
@@ -873,4 +873,4 @@
     }
   };
 
-})(wysihtml5);
+})(wysihtml);

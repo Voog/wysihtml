@@ -1,9 +1,9 @@
-(function(wysihtml5) {
-  var dom       = wysihtml5.dom,
-      browser   = wysihtml5.browser;
+(function(wysihtml) {
+  var dom       = wysihtml.dom,
+      browser   = wysihtml.browser;
 
-  wysihtml5.views.Composer = wysihtml5.views.View.extend(
-    /** @scope wysihtml5.views.Composer.prototype */ {
+  wysihtml.views.Composer = wysihtml.views.View.extend(
+    /** @scope wysihtml.views.Composer.prototype */ {
     name: "composer",
 
     constructor: function(parent, editableElement, config) {
@@ -25,7 +25,7 @@
     },
 
     getValue: function(parse, clearInternals) {
-      var value = this.isEmpty() ? "" : wysihtml5.quirks.getCorrectInnerHTML(this.element);
+      var value = this.isEmpty() ? "" : wysihtml.quirks.getCorrectInnerHTML(this.element);
       if (parse !== false) {
         value = this.parent.parse(value, (clearInternals === false) ? false : true);
       }
@@ -87,7 +87,7 @@
       // IE 8 fires the focus event after .focus()
       // This is needed by our simulate_placeholder.js to work
       // therefore we clear it ourselves this time
-      if (wysihtml5.browser.doesAsyncFocus() && this.hasPlaceholderSet()) {
+      if (wysihtml.browser.doesAsyncFocus() && this.hasPlaceholderSet()) {
         this.clear();
       }
 
@@ -207,10 +207,10 @@
       }
 
       // Make sure our selection handler is ready
-      this.selection = new wysihtml5.Selection(this.parent, this.element, this.config.classNames.uneditableContainer);
+      this.selection = new wysihtml.Selection(this.parent, this.element, this.config.classNames.uneditableContainer);
 
       // Make sure commands dispatcher is ready
-      this.commands  = new wysihtml5.Commands(this.parent);
+      this.commands  = new wysihtml.Commands(this.parent);
 
       if (!this.config.noTextarea) {
           dom.copyAttributes([
@@ -264,7 +264,7 @@
 
       // IE sometimes leaves a single paragraph, which can't be removed by the user
       if (!browser.clearsContentEditableCorrectly()) {
-        wysihtml5.quirks.ensureProperClearing(this);
+        wysihtml.quirks.ensureProperClearing(this);
       }
 
       // Set up a sync that makes sure that textarea and editor have the same content
@@ -302,7 +302,7 @@
                 isInUneditable = false;
 
             for (var i = uneditables.length; i--;) {
-              if (wysihtml5.dom.contains(uneditables[i], nodeWithSelection)) {
+              if (wysihtml.dom.contains(uneditables[i], nodeWithSelection)) {
                 isInUneditable = true;
               }
             }
@@ -325,7 +325,7 @@
           // The autoLink helper method reveals a reg exp to detect correct urls
           urlRegExp       = dom.autoLink.URL_REG_EXP,
           getTextContent  = function(element) {
-            var textContent = wysihtml5.lang.string(dom.getTextContent(element)).trim();
+            var textContent = wysihtml.lang.string(dom.getTextContent(element)).trim();
             if (textContent.substr(0, 4) === "www.") {
               textContent = "http://" + textContent;
             }
@@ -392,13 +392,13 @@
           }
 
           // After resizing IE sometimes forgets to remove the old resize handles
-          wysihtml5.quirks.redraw(element);
+          wysihtml.quirks.redraw(element);
         });
       }
     },
 
     _initUndoManager: function() {
-      this.undoManager = new wysihtml5.UndoManager(this.parent);
+      this.undoManager = new wysihtml.UndoManager(this.parent);
     },
 
     _initLineBreaking: function() {
@@ -448,7 +448,7 @@
           return;
         }
 
-        if (keyCode !== wysihtml5.ENTER_KEY && keyCode !== wysihtml5.BACKSPACE_KEY) {
+        if (keyCode !== wysihtml.ENTER_KEY && keyCode !== wysihtml.BACKSPACE_KEY) {
           return;
         }
         var blockElement = dom.getParentElement(that.selection.getSelectedNode(), { query: USE_NATIVE_LINE_BREAK_INSIDE_TAGS }, 4);
@@ -470,17 +470,17 @@
               }
             }
 
-            if (keyCode === wysihtml5.ENTER_KEY && blockElement.nodeName.match(/^H[1-6]$/)) {
+            if (keyCode === wysihtml.ENTER_KEY && blockElement.nodeName.match(/^H[1-6]$/)) {
               adjust(selectedNode);
             }
           }, 0);
           return;
         }
-        if (that.config.useLineBreaks && keyCode === wysihtml5.ENTER_KEY && !wysihtml5.browser.insertsLineBreaksOnReturn()) {
+        if (that.config.useLineBreaks && keyCode === wysihtml.ENTER_KEY && !wysihtml.browser.insertsLineBreaksOnReturn()) {
           event.preventDefault();
           that.commands.exec("insertLineBreak");
         }
       });
     }
   });
-})(wysihtml5);
+})(wysihtml);

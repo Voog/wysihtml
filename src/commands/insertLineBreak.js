@@ -1,7 +1,7 @@
-(function(wysihtml5) {
-  var LINE_BREAK = "<br>" + (wysihtml5.browser.needsSpaceAfterLineBreak() ? " " : "");
+(function(wysihtml) {
+  var LINE_BREAK = "<br>" + (wysihtml.browser.needsSpaceAfterLineBreak() ? " " : "");
 
-  wysihtml5.commands.insertLineBreak = {
+  wysihtml.commands.insertLineBreak = {
     exec: function(composer, command) {
       composer.selection.insertHTML(LINE_BREAK);
     },
@@ -10,4 +10,4 @@
       return false;
     }
   };
-})(wysihtml5);
+})(wysihtml);

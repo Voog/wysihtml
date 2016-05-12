@@ -1,5 +1,5 @@
-(function(wysihtml5){
-  wysihtml5.commands.undo = {
+(function(wysihtml){
+  wysihtml.commands.undo = {
     exec: function(composer) {
       return composer.undoManager.undo();
     },
@@ -8,4 +8,4 @@
       return false;
     }
   };
-}(wysihtml5));
+}(wysihtml));

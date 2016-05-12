@@ -1,6 +1,6 @@
-(function(wysihtml5) {
+(function(wysihtml) {
   var doc = document;
-  wysihtml5.dom.ContentEditableArea = Base.extend({
+  wysihtml.dom.ContentEditableArea = Base.extend({
       getContentEditable: function() {
         return this.element;
       },
@@ -14,8 +14,8 @@
       },
 
       constructor: function(readyCallback, config, contentEditable) {
-        this.callback = readyCallback || wysihtml5.EMPTY_FUNCTION;
-        this.config   = wysihtml5.lang.object({}).merge(config).get();
+        this.callback = readyCallback || wysihtml.EMPTY_FUNCTION;
+        this.config   = wysihtml.lang.object({}).merge(config).get();
         if (!this.config.className) {
           this.config.className = "wysihtml5-sandbox";
         }
@@ -63,4 +63,4 @@
       }
 
   });
-})(wysihtml5);
+})(wysihtml);
