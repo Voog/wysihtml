@@ -387,4 +387,28 @@
     return state;
   }
 
+  // Extend defaults
+
+  // Id of the toolbar element, pass falsey value if you don't want any toolbar logic
+  wysihtml.Editor.prototype.defaults.toolbar = undefined;
+
+  // Whether toolbar is displayed after init by script automatically.
+  // Can be set to false if toolobar is set to display only on editable area focus
+  wysihtml.Editor.prototype.defaults.showToolbarAfterInit = true;
+
+  // With default toolbar it shows dialogs in toolbar when their related text format state becomes active (click on link in text opens link dialogue)
+  wysihtml.Editor.prototype.defaults.showToolbarDialogsOnSelection= true;
+
+  // Bind toolbar initiation on editor instance creation
+  wysihtml.extendEditor(function(editor) {
+    if (editor.config.toolbar) {
+      editor.toolbar = new wysihtml.toolbar.Toolbar(editor, editor.config.toolbar, editor.config.showToolbarAfterInit);
+      editor.on('destroy:composer', function() {
+        if (editor && editor.toolbar) {
+          editor.toolbar.destroy();
+        }
+      });
+    }
+  });
+
 })(wysihtml);

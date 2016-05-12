@@ -20,6 +20,11 @@ var wysihtml = {
   lang:       {},
   selection:  {},
   views:      {},
+  
+  editorExtenders: [],
+  extendEditor: function(extender) {
+    this.editorExtenders.push(extender);
+  },
 
   INVISIBLE_SPACE: "\uFEFF",
   INVISIBLE_SPACE_REG_EXP: /\uFEFF/g,
@@ -15952,13 +15957,6 @@ wysihtml.views.Textarea = wysihtml.views.View.extend(
       name:                 undef,
       // Whether the editor should look like the textarea (by adopting styles)
       style:                true,
-      // Id of the toolbar element, pass falsey value if you don't want any toolbar logic
-      toolbar:              undef,
-      // Whether toolbar is displayed after init by script automatically.
-      // Can be set to false if toolobar is set to display only on editable area focus
-      showToolbarAfterInit: true,
-      // With default toolbar it shows dialogs in toolbar when their related text format state becomes active (click on link in text opens link dialogue)
-      showToolbarDialogsOnSelection: true,
       // Whether urls, entered by the user should automatically become clickable-links
       autoLink:             true,
       // Tab key inserts tab into text as default behaviour. It can be disabled to regain keyboard navigation
@@ -16049,12 +16047,13 @@ wysihtml.views.Textarea = wysihtml.views.View.extend(
         } else {
           this.sourceView = new wysihtml.views.SourceView(this, this.composer);
         }
-        if (this.config.toolbar) {
-          if (typeof wysihtml.toolbar === "undefined") {
-            throw Error("Toolbar not found. Make sure you're loading wysihtml-toolbar.js or wysihtml-toolbar.min.js");
-          }
-          this.toolbar = new wysihtml.toolbar.Toolbar(this, this.config.toolbar, this.config.showToolbarAfterInit);
-        }
+        this.runEditorExtenders();
+    },
+    
+    runEditorExtenders: function() {
+      wysihtml.editorExtenders.forEach(function(extender) {
+        extender(this);
+      }.bind(this)); 
     },
 
     isCompatible: function() {
@@ -16118,9 +16117,7 @@ wysihtml.views.Textarea = wysihtml.views.View.extend(
       if (this.composer && this.composer.sandbox) {
         this.composer.sandbox.destroy();
       }
-      if (this.toolbar) {
-        this.toolbar.destroy();
-      }
+      this.fire("destroy:composer");
       this.off();
     },
 

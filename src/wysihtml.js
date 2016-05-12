@@ -21,6 +21,11 @@ var wysihtml = {
   selection:  {},
   views:      {},
 
+  editorExtenders: [],
+  extendEditor: function(extender) {
+    this.editorExtenders.push(extender);
+  },
+
   INVISIBLE_SPACE: "\uFEFF",
   INVISIBLE_SPACE_REG_EXP: /\uFEFF/g,
 
