@@ -2,7 +2,7 @@ wysihtml.polyfills = function(win, doc) {
 
   // TODO: in future try to replace most inline compability checks with polyfills for code readability 
 
-  // closest and matches polyfill
+  // closest, matches, and remove polyfill
   // https://github.com/jonathantneal/closest
   (function (ELEMENT) {
     ELEMENT.matches = ELEMENT.matches || ELEMENT.mozMatchesSelector || ELEMENT.msMatchesSelector || ELEMENT.oMatchesSelector || ELEMENT.webkitMatchesSelector || function matches(selector) {
@@ -31,6 +31,13 @@ wysihtml.polyfills = function(win, doc) {
 
       return element;
     };
+
+    ELEMENT.remove = ELEMENT.remove || function remove() {
+      if (this.parentNode) {
+        this.parentNode.removeChild(this);
+      }
+    };
+
   }(win.Element.prototype));
 
   if (!('classList' in doc.documentElement) && win.Object.defineProperty && typeof HTMLElement !== 'undefined') {
