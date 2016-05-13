@@ -10,8 +10,8 @@ This project is supported by [Voog](http://voog.com).
 
 Version 0.6.0 notes for migration.
 
-* Object namespace is now wysihtyml (was previously wysihtml5).
-* The default toolbar is separated to independant module (wysihtml.toolbar.js) and must be added separately if used.
+* Object namespace is now wysihtyml (was previously wysihtml5). This change includes all classnames and event names.
+* The default toolbar is separated to independent module (wysihtml.toolbar.js) and must be added separately if used.
 * Full command set for backwards compatibility is not bundled and separated to wysihtml.all-commands.js module. Most commands there directly map to formatBlock or formatInline commands and are thus optional and can be replaced with these internal commands.
 * Table editing features are now as a separate module
 
@@ -21,7 +21,6 @@ Version 0.6.0 notes for migration.
 * Advanced demo: https://voog.github.com/wysihtml/examples/advanced.html
 * Editable GitHub page: https://voog.github.com/wysihtml
 * Or try it on a working app: https://www.voog.com
-
 
 ## Features
 
