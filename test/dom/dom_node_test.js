@@ -1,4 +1,4 @@
-module("wysihtml5.dom.domNode", {
+module("wysihtml.dom.domNode", {
   setup: function() {
     this.container = document.createElement("div");
   }
@@ -8,71 +8,71 @@ test("Simple .prev() test", function() {
   this.container.innerHTML = "<span></span><div></div>";
   var lastItem = this.container.querySelector("div"),
     firstItem = this.container.querySelector("span");
-  equal(wysihtml5.dom.domNode(lastItem).prev(), firstItem);
+  equal(wysihtml.dom.domNode(lastItem).prev(), firstItem);
 });
 
 test(".prev() test with textnode in between", function() {
   this.container.innerHTML = "<span></span> confusing text node <div></div>";
   var lastItem = this.container.querySelector("div"),
     firstItem = this.container.querySelector("span");
-  equal(wysihtml5.dom.domNode(lastItem).prev({nodeTypes: [1]}), firstItem);
+  equal(wysihtml.dom.domNode(lastItem).prev({nodeTypes: [1]}), firstItem);
 });
 
 test(".prev() test if no prev element exists", function() {
   this.container.innerHTML = "<div></div>";
   var lastItem = this.container.querySelector("div");
-  equal(wysihtml5.dom.domNode(lastItem).prev(), null);
+  equal(wysihtml.dom.domNode(lastItem).prev(), null);
 });
 
 test(".prev() test if no prev element exists with textnode", function() {
   this.container.innerHTML = "confusing text node <div></div>";
   var lastItem = this.container.querySelector("div");
-  equal(wysihtml5.dom.domNode(lastItem).prev({nodeTypes: [1]}), null);
+  equal(wysihtml.dom.domNode(lastItem).prev({nodeTypes: [1]}), null);
 });
 
 test(".prev() test with empty textnode in between and ignoreBlankTexts", function() {
   this.container.innerHTML = "<span></span> <div></div>";
   var lastItem = this.container.querySelector("div"),
     firstItem = this.container.querySelector("span");
-  equal(wysihtml5.dom.domNode(lastItem).prev({ignoreBlankTexts: true}), firstItem);
+  equal(wysihtml.dom.domNode(lastItem).prev({ignoreBlankTexts: true}), firstItem);
 });
 
 test("Simple .next() test", function() {
   this.container.innerHTML = "<div></div><span></span>";
   var firstItem = this.container.querySelector("div"),
     lastItem = this.container.querySelector("span");
-  equal(wysihtml5.dom.domNode(firstItem).next(), lastItem);
+  equal(wysihtml.dom.domNode(firstItem).next(), lastItem);
 });
 
 test(".next() test with textnode in between", function() {
   this.container.innerHTML = "<div></div> confusing text node <span></span>";
   var firstItem = this.container.querySelector("div"),
     lastItem = this.container.querySelector("span");
-  equal(wysihtml5.dom.domNode(firstItem).next({nodeTypes: [1]}), lastItem);
+  equal(wysihtml.dom.domNode(firstItem).next({nodeTypes: [1]}), lastItem);
 });
 
 test(".next() test if no next element exists", function() {
   this.container.innerHTML = "<div></div>";
   var lastItem = this.container.querySelector("div");
-  equal(wysihtml5.dom.domNode(lastItem).next(), null);
+  equal(wysihtml.dom.domNode(lastItem).next(), null);
 });
 
 test(".next() test if no next element exists with textnode", function() {
   this.container.innerHTML = "<div></div> confusing text node ";
   var lastItem = this.container.querySelector("div");
-  equal(wysihtml5.dom.domNode(lastItem).next({nodeTypes: [1]}), null);
+  equal(wysihtml.dom.domNode(lastItem).next({nodeTypes: [1]}), null);
 });
 
 test(".next() test with empty textnode in between and ignoreBlankTexts", function() {
   this.container.innerHTML = "<div></div> <span></span>";
   var firstItem = this.container.querySelector("div"),
     lastItem = this.container.querySelector("span");
-  equal(wysihtml5.dom.domNode(firstItem).next({ignoreBlankTexts: true}), lastItem);
+  equal(wysihtml.dom.domNode(firstItem).next({ignoreBlankTexts: true}), lastItem);
 });
 
 test(".lastLeafNode() test for element that is last leaf itself", function () {
   this.container.innerHTML = "";
-  equal(wysihtml5.dom.domNode(this.container).lastLeafNode(), this.container);
+  equal(wysihtml.dom.domNode(this.container).lastLeafNode(), this.container);
 });
 
 test(".lastLeafNode() test for inner elements traversing", function () {
@@ -83,16 +83,16 @@ test(".lastLeafNode() test for inner elements traversing", function () {
   this.container.innerHTML = "";
 
   this.container.appendChild(txtNode);
-  equal(wysihtml5.dom.domNode(this.container).lastLeafNode(), txtNode, "Found last only child textnode");
+  equal(wysihtml.dom.domNode(this.container).lastLeafNode(), txtNode, "Found last only child textnode");
 
   this.container.appendChild(elementNode);
-  equal(wysihtml5.dom.domNode(this.container).lastLeafNode(), elementNode, "Found last div element");
+  equal(wysihtml.dom.domNode(this.container).lastLeafNode(), elementNode, "Found last div element");
 
   elementNode.appendChild(innerElementNode);
-  equal(wysihtml5.dom.domNode(this.container).lastLeafNode(), innerElementNode, "Found last wrapped div element");
+  equal(wysihtml.dom.domNode(this.container).lastLeafNode(), innerElementNode, "Found last wrapped div element");
 
   this.container.insertBefore(elementNode, txtNode);
-  equal(wysihtml5.dom.domNode(this.container).lastLeafNode(), txtNode, "Found last textnode after reordering elements");
+  equal(wysihtml.dom.domNode(this.container).lastLeafNode(), txtNode, "Found last textnode after reordering elements");
 });
 
 test(".lastLeafNode() test for leafClasses option", function () {
@@ -105,8 +105,8 @@ test(".lastLeafNode() test for leafClasses option", function () {
   elementNode.appendChild(innerElementNode);
   this.container.appendChild(elementNode);
   
-  equal(wysihtml5.dom.domNode(this.container).lastLeafNode(), innerElementNode, "Wihout leafClasses option finds inner element node");
-  equal(wysihtml5.dom.domNode(this.container).lastLeafNode({leafClasses: ['forced-leaf']}), elementNode, "With leafClasses option, stops search and returns the element with leafClass");
+  equal(wysihtml.dom.domNode(this.container).lastLeafNode(), innerElementNode, "Wihout leafClasses option finds inner element node");
+  equal(wysihtml.dom.domNode(this.container).lastLeafNode({leafClasses: ['forced-leaf']}), elementNode, "With leafClasses option, stops search and returns the element with leafClass");
 });
 
 
@@ -128,7 +128,7 @@ test(".escapeParent()", function() {
   bold.appendChild(underline);
   this.container.appendChild(bold);
 
-  wysihtml5.dom.domNode(text2).escapeParent(bold);
+  wysihtml.dom.domNode(text2).escapeParent(bold);
 
   equal(this.container.innerHTML, "<b><u><i>text1</i></u></b><u><i>text2</i></u><b><u><i>text3</i></u></b>", "Parent split and node with parents escaped correctly");
 

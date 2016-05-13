@@ -3,7 +3,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=Edge">
 <meta charset="utf-8">
 
-<title>wysihtml5 - Simple Demo</title>
+<title>wysihtml - Simple Demo</title>
 
 <style>
   body {
@@ -32,7 +32,7 @@
     cursor: pointer;
   }
   
-  #toolbar [data-wysihtml5-action] {
+  #toolbar [data-wysihtml-action] {
     float: right;
     margin-right: 10px;
   }
@@ -59,12 +59,12 @@
     border: 2px solid black;
   }
   
-  .wysihtml5-command-active {
+  .wysihtml-command-active {
     font-weight: bold;
   }
 </style>
 
-<h1>wysihtml5 - Simple Editor Example</h1>
+<h1>wysihtml - Simple Editor Example</h1>
 
 <p>
   Uses a custom rule set that allows the following elements: <em>strong, b, em, i, a, span</em><br>
@@ -73,9 +73,9 @@
 
 <form>
   <div id="toolbar" style="display: none;">
-    <a data-wysihtml5-command="bold" title="CTRL+B">bold</a> |
-    <a data-wysihtml5-command="italic" title="CTRL+I">italic</a>
-    <a data-wysihtml5-action="change_view">switch to html view</a>
+    <a data-wysihtml-command="bold" title="CTRL+B">bold</a> |
+    <a data-wysihtml-command="italic" title="CTRL+I">italic</a>
+    <a data-wysihtml-action="change_view">switch to html view</a>
   </div>
   <textarea id="textarea" placeholder="Enter text ..."></textarea>
   <br><input type="reset" value="Reset form!">
@@ -86,13 +86,16 @@
 
 <small>powered by <a href="https://github.com/voog/wysihtml" target="_blank">wysihtml</a>.</small>
 
-<script src="../dist/wysihtml-toolbar.min.js"></script>
+<script src="../dist/wysihtml.js"></script>
+<script src="../dist/wysihtml.all-commands.js"></script>
+<script src="../dist/wysihtml.toolbar.js"></script>
+
 <script src="../parser_rules/simple.js"></script>
 
 <script>
-  var editor = new wysihtml5.Editor("textarea", {
+  var editor = new wysihtml.Editor("textarea", {
     toolbar:        "toolbar",
-    parserRules:    wysihtml5ParserRules,
+    parserRules:    wysihtmlParserRules,
     useLineBreaks:  false
   });
   

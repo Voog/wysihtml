@@ -8,9 +8,9 @@
  * @param {Obejct} [context] Document object of the context the html belongs to
  *
  * @example
- *    wysihtml5.dom.getAsDom("<article>foo</article>");
+ *    wysihtml.dom.getAsDom("<article>foo</article>");
  */
-wysihtml5.dom.getAsDom = (function() {
+wysihtml.dom.getAsDom = (function() {
 
   var _innerHTMLShiv = function(html, context) {
     var tempElement = context.createElement("div");
@@ -26,13 +26,13 @@ wysihtml5.dom.getAsDom = (function() {
    * Make sure IE supports HTML5 tags, which is accomplished by simply creating one instance of each element
    */
   var _ensureHTML5Compatibility = function(context) {
-    if (context._wysihtml5_supportsHTML5Tags) {
+    if (context._wysihtml_supportsHTML5Tags) {
       return;
     }
     for (var i=0, length=HTML5_ELEMENTS.length; i<length; i++) {
       context.createElement(HTML5_ELEMENTS[i]);
     }
-    context._wysihtml5_supportsHTML5Tags = true;
+    context._wysihtml_supportsHTML5Tags = true;
   };
 
 
@@ -52,7 +52,7 @@ wysihtml5.dom.getAsDom = (function() {
     if (typeof(html) === "object" && html.nodeType) {
       tempElement = context.createElement("div");
       tempElement.appendChild(html);
-    } else if (wysihtml5.browser.supportsHTML5Tags(context)) {
+    } else if (wysihtml.browser.supportsHTML5Tags(context)) {
       tempElement = context.createElement("div");
       tempElement.innerHTML = html;
     } else {

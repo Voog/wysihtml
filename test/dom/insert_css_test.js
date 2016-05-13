@@ -1,9 +1,9 @@
-if (wysihtml5.browser.supported()) {
+if (wysihtml.browser.supported()) {
 
-  module("wysihtml5.dom.insertCSS", {
+  module("wysihtml.dom.insertCSS", {
     teardown: function() {
       var iframe;
-      while (iframe = document.querySelector("iframe.wysihtml5-sandbox")) {
+      while (iframe = document.querySelector("iframe.wysihtml-sandbox")) {
         iframe.parentNode.removeChild(iframe);
       }
     }
@@ -12,21 +12,21 @@ if (wysihtml5.browser.supported()) {
   asyncTest("Basic Tests", function() {
     expect(3);
   
-    new wysihtml5.dom.Sandbox(function(sandbox) {
+    new wysihtml.dom.Sandbox(function(sandbox) {
       var doc     = sandbox.getDocument(),
           body    = doc.body,
           element = doc.createElement("sub");
     
       body.appendChild(element);
     
-      wysihtml5.dom.insertCSS([
+      wysihtml.dom.insertCSS([
         "sub  { display: block; text-align: right; }",
         "body { text-indent: 50px; }"
       ]).into(doc);
     
-      equal(wysihtml5.dom.getStyle("display")    .from(element), "block");
-      equal(wysihtml5.dom.getStyle("text-align") .from(element), "right");
-      equal(wysihtml5.dom.getStyle("text-indent").from(element), "50px");
+      equal(wysihtml.dom.getStyle("display")    .from(element), "block");
+      equal(wysihtml.dom.getStyle("text-align") .from(element), "right");
+      equal(wysihtml.dom.getStyle("text-indent").from(element), "50px");
     
       start();
     }).insertInto(document.body);
@@ -35,10 +35,10 @@ if (wysihtml5.browser.supported()) {
   asyncTest("Check whether CSS is inserted before any loaded stylesheets", function() {
     expect(1);
   
-    new wysihtml5.dom.Sandbox(function(sandbox) {
+    new wysihtml.dom.Sandbox(function(sandbox) {
       var doc = sandbox.getDocument();
       
-      wysihtml5.dom.insertCSS([".foo {}"]).into(doc);
+      wysihtml.dom.insertCSS([".foo {}"]).into(doc);
       
       ok(doc.querySelector("style[type='text/css'] + link[rel=stylesheet]"), "CSS has been inserted before any included stylesheet");
       

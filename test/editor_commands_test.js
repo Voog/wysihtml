@@ -1,10 +1,10 @@
-if (wysihtml5.browser.supported()) {
-  module("wysihtml5.Editor.commands", {
+if (wysihtml.browser.supported()) {
+  module("wysihtml.Editor.commands", {
     setup: function() {
         
       this.editableArea1        = document.createElement("div");
-      this.editableArea1.id     = "wysihtml5-test-editable1";
-      this.editableArea1.className = "wysihtml5-test-class1";
+      this.editableArea1.id     = "wysihtml-test-editable1";
+      this.editableArea1.className = "wysihtml-test-class1";
       this.editableArea1.title  = "Please enter your foo";
       this.editableArea1.innerHTML  = "hey tiff, what's up?";
       
@@ -30,7 +30,7 @@ if (wysihtml5.browser.supported()) {
     teardown: function() {
       var leftover;
       this.editableArea1.parentNode.removeChild(this.editableArea1);
-      while (leftover = document.querySelector("div.wysihtml5-test-class1, iframe.wysihtml5-sandbox, div.wysihtml5-sandbox")) {
+      while (leftover = document.querySelector("div.wysihtml-test-class1, iframe.wysihtml-sandbox, div.wysihtml-sandbox")) {
         leftover.parentNode.removeChild(leftover);
       }
       document.body.className = this.originalBodyClassName;
@@ -54,7 +54,7 @@ if (wysihtml5.browser.supported()) {
             u: true
           }
         },
-        editor = new wysihtml5.Editor(this.editableArea1, {
+        editor = new wysihtml.Editor(this.editableArea1, {
           parserRules: parserRules
         });
         
@@ -106,7 +106,7 @@ if (wysihtml5.browser.supported()) {
   asyncTest("Format code", function() {
        expect(2);
       var that = this,
-          editor = new wysihtml5.Editor(this.editableArea1),
+          editor = new wysihtml.Editor(this.editableArea1),
           text = "once upon a time there was an unformated text.";
         
       editor.on("load", function() {
@@ -129,7 +129,7 @@ if (wysihtml5.browser.supported()) {
      expect(5);
      
     var that = this,
-        editor = new wysihtml5.Editor(this.editableArea1),
+        editor = new wysihtml.Editor(this.editableArea1),
         text = "text";
   
     editor.on("load", function() {
@@ -183,7 +183,7 @@ if (wysihtml5.browser.supported()) {
     asyncTest("Create table", function() {
        expect(1);
       var that = this,
-          editor = new wysihtml5.Editor(this.editableArea1),
+          editor = new wysihtml.Editor(this.editableArea1),
           text = "test";
         
       editor.on("load", function() {
@@ -217,7 +217,7 @@ if (wysihtml5.browser.supported()) {
     asyncTest("Create lists", function() {
       expect(7);
       var that = this,
-          editor = new wysihtml5.Editor(this.editableArea1),
+          editor = new wysihtml.Editor(this.editableArea1),
           text = "";
         
       editor.on("load", function() {
@@ -266,7 +266,7 @@ if (wysihtml5.browser.supported()) {
     asyncTest("Create subscript / superscript", function() {
       expect(2);
       var that = this,
-        editor = new wysihtml5.Editor(this.editableArea1, {
+        editor = new wysihtml.Editor(this.editableArea1, {
           parserRules: {
             tags: {
               sub: true,

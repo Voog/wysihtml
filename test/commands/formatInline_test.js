@@ -1,11 +1,11 @@
-if (wysihtml5.browser.supported()) {
-  module("wysihtml5.Editor.commands.formatInline", {
+if (wysihtml.browser.supported()) {
+  module("wysihtml.Editor.commands.formatInline", {
 
     setup: function() {
         
       this.editableArea1        = document.createElement("div");
-      this.editableArea1.id     = "wysihtml5-test-editable1";
-      this.editableArea1.className = "wysihtml5-test-class1";
+      this.editableArea1.id     = "wysihtml-test-editable1";
+      this.editableArea1.className = "wysihtml-test-class1";
       this.editableArea1.title  = "Please enter your foo";
       this.editableArea1.innerHTML  = "hey tiff, what's up?";
       
@@ -31,7 +31,7 @@ if (wysihtml5.browser.supported()) {
     teardown: function() {
       var leftover;
       this.editableArea1.parentNode.removeChild(this.editableArea1);
-      while (leftover = document.querySelector("div.wysihtml5-test-class1, iframe.wysihtml5-sandbox, div.wysihtml5-sandbox")) {
+      while (leftover = document.querySelector("div.wysihtml-test-class1, iframe.wysihtml-sandbox, div.wysihtml-sandbox")) {
         leftover.parentNode.removeChild(leftover);
       }
       document.body.className = this.originalBodyClassName;
@@ -61,7 +61,7 @@ if (wysihtml5.browser.supported()) {
             strong: 1
           }
         },
-        editor = new wysihtml5.Editor(this.editableArea1, {
+        editor = new wysihtml.Editor(this.editableArea1, {
           parserRules: parserRules
         });
 
@@ -192,7 +192,7 @@ if (wysihtml5.browser.supported()) {
             b: true
           }
         },
-        editor = new wysihtml5.Editor(this.editableArea1, {
+        editor = new wysihtml.Editor(this.editableArea1, {
           parserRules: parserRules
         });
 
@@ -276,7 +276,7 @@ if (wysihtml5.browser.supported()) {
             }
           }
         },
-        editor = new wysihtml5.Editor(this.editableArea1, {
+        editor = new wysihtml.Editor(this.editableArea1, {
           parserRules: parserRules
         });
 

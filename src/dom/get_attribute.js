@@ -8,11 +8,11 @@
  * Therefore we have to check the element's outerHTML for the attribute
 */
 
-wysihtml5.dom.getAttribute = function(node, attributeName) {
-  var HAS_GET_ATTRIBUTE_BUG = !wysihtml5.browser.supportsGetAttributeCorrectly();
+wysihtml.dom.getAttribute = function(node, attributeName) {
+  var HAS_GET_ATTRIBUTE_BUG = !wysihtml.browser.supportsGetAttributeCorrectly();
   attributeName = attributeName.toLowerCase();
   var nodeName = node.nodeName;
-  if (nodeName == "IMG" && attributeName == "src" && wysihtml5.dom.isLoadedImage(node) === true) {
+  if (nodeName == "IMG" && attributeName == "src" && wysihtml.dom.isLoadedImage(node) === true) {
     // Get 'src' attribute value via object property since this will always contain the
     // full absolute url (http://...)
     // this fixes a very annoying bug in firefox (ver 3.6 & 4) and IE 8 where images copied from the same host

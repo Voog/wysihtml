@@ -1,6 +1,6 @@
 {
   "name": "wysihtml",
-  "version": "0.5.5",
+  "version": "0.6.beta",
   "devDependencies": {
     "grunt": "~0.4.4",
     "grunt-cli": "^0.1.13",
@@ -12,9 +12,6 @@
     "happen": "^0.1.3",
     "qunit-assert-html": "^0.3.2",
     "qunitjs": "1.15.0"
-  },
-  "dependencies": {
-    "rangy": "^1.3.0"
   },
   "description": "Open source rich text editor for the modern web.",
   "main": "dist/wysihtml.js",

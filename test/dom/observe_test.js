@@ -1,4 +1,4 @@
-module("wysihtml5.dom.observe", {
+module("wysihtml.dom.observe", {
   setup: function() {
     this.container  = document.createElement("div");
     this.element    = document.createElement("textarea");
@@ -10,7 +10,7 @@ module("wysihtml5.dom.observe", {
     this.container.parentNode.removeChild(this.container);
     
     var iframe;
-    while (iframe = document.querySelector("iframe.wysihtml5-sandbox")) {
+    while (iframe = document.querySelector("iframe.wysihtml-sandbox")) {
       iframe.parentNode.removeChild(iframe);
     }
   }
@@ -22,11 +22,11 @@ test("Basic test", function() {
   
   var element = this.element;
   
-  wysihtml5.dom.observe(element, ["mouseover", "mouseout"], function(event) {
+  wysihtml.dom.observe(element, ["mouseover", "mouseout"], function(event) {
     ok(true, "'" + event.type + "' correctly fired");
   });
   
-  wysihtml5.dom.observe(element, "click", function(event) {
+  wysihtml.dom.observe(element, "click", function(event) {
     equal(event.target, element, "event.target or event.srcElement are set");
     ok(true, "'click' correctly fired");
   });
@@ -41,11 +41,11 @@ test("Test stopPropagation and scope of event handler", function(event) {
   expect(2);
   var element = this.element;
   
-  wysihtml5.dom.observe(this.container, "click", function(event) {
+  wysihtml.dom.observe(this.container, "click", function(event) {
     ok(false, "The event shouldn't have been bubbled!");
   });
   
-  wysihtml5.dom.observe(this.element, "click", function(event) {
+  wysihtml.dom.observe(this.element, "click", function(event) {
     event.stopPropagation();
     equal(this, element, "Event handler bound to correct scope");
     ok(true, "stopPropagation correctly fired");
@@ -56,7 +56,7 @@ test("Test stopPropagation and scope of event handler", function(event) {
 
 test("Test detaching events", function() {
   expect(0);
-  var eventListener = wysihtml5.dom.observe(this.element, "click", function() {
+  var eventListener = wysihtml.dom.observe(this.element, "click", function() {
     ok(false, "This should not be triggered");
   });
   
@@ -67,10 +67,10 @@ test("Test detaching events", function() {
 asyncTest("Advanced test observing within a sandboxed iframe", function() {
   expect(2);
   
-  var sandbox = new wysihtml5.dom.Sandbox(function() {
+  var sandbox = new wysihtml.dom.Sandbox(function() {
     var element = sandbox.getDocument().createElement("div");
     sandbox.getDocument().body.appendChild(element);
-    wysihtml5.dom.observe(element, ["click", "mousedown"], function(event) {
+    wysihtml.dom.observe(element, ["click", "mousedown"], function(event) {
       ok(true, "'" + event.type + "' correctly fired");
     });
     happen.click(element);

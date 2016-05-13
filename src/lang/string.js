@@ -9,12 +9,12 @@
         '"': "&quot;",
         '\t':"&nbsp; "
       };
-  wysihtml5.lang.string = function(str) {
+  wysihtml.lang.string = function(str) {
     str = String(str);
     return {
       /**
        * @example
-       *    wysihtml5.lang.string("   foo   ").trim();
+       *    wysihtml.lang.string("   foo   ").trim();
        *    // => "foo"
        */
       trim: function() {
@@ -23,7 +23,7 @@
 
       /**
        * @example
-       *    wysihtml5.lang.string("Hello #{name}").interpolate({ name: "Christopher" });
+       *    wysihtml.lang.string("Hello #{name}").interpolate({ name: "Christopher" });
        *    // => "Hello Christopher"
        */
       interpolate: function(vars) {
@@ -35,7 +35,7 @@
 
       /**
        * @example
-       *    wysihtml5.lang.string("Hello Tom").replace("Tom").with("Hans");
+       *    wysihtml.lang.string("Hello Tom").replace("Tom").with("Hans");
        *    // => "Hello Hans"
        */
       replace: function(search) {
@@ -48,7 +48,7 @@
 
       /**
        * @example
-       *    wysihtml5.lang.string("hello<br>").escapeHTML();
+       *    wysihtml.lang.string("hello<br>").escapeHTML();
        *    // => "hello&lt;br&gt;"
        */
       escapeHTML: function(linebreaks, convertSpaces) {

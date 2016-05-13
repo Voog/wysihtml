@@ -10,10 +10,10 @@
  *    var textarea    = document.querySelector("textarea"),
  *        div         = document.querySelector("div[contenteditable=true]"),
  *        anotherDiv  = document.querySelector("div.preview");
- *    wysihtml5.dom.copyAttributes(["spellcheck", "value", "placeholder"]).from(textarea).to(div).andTo(anotherDiv);
+ *    wysihtml.dom.copyAttributes(["spellcheck", "value", "placeholder"]).from(textarea).to(div).andTo(anotherDiv);
  *
  */
-wysihtml5.dom.copyAttributes = function(attributesToCopy) {
+wysihtml.dom.copyAttributes = function(attributesToCopy) {
   return {
     from: function(elementToCopyFrom) {
       return {

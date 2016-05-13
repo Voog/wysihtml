@@ -1,7 +1,7 @@
 /**
  * Detect browser support for specific features
  */
-wysihtml5.browser = (function() {
+wysihtml.browser = (function() {
   var userAgent   = navigator.userAgent,
       testElement = document.createElement("div"),
       // Browser sniffing is unfortunately needed since some behaviors are impossible to feature detect
@@ -156,7 +156,7 @@ wysihtml5.browser = (function() {
      * @param {Object} context The document object on which to check HTML5 support
      *
      * @example
-     *    wysihtml5.browser.supportsHTML5Tags(document);
+     *    wysihtml.browser.supportsHTML5Tags(document);
      */
     supportsHTML5Tags: function(context) {
       var element = context.createElement("div"),
@@ -175,7 +175,7 @@ wysihtml5.browser = (function() {
      * @return {Boolean}
      *
      * @example
-     *    wysihtml5.browser.supportsCommand(document, "bold");
+     *    wysihtml.browser.supportsCommand(document, "bold");
      */
     supportsCommand: (function() {
       // Following commands are supported but contain bugs in some browsers
@@ -312,7 +312,7 @@ wysihtml5.browser = (function() {
      *
      * @example
      *    var input = document.createElement("input");
-     *    if (wysihtml5.browser.supportsSpeechApiOn(input)) {
+     *    if (wysihtml.browser.supportsSpeechApiOn(input)) {
      *      // ...
      *    }
      */

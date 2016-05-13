@@ -5,8 +5,8 @@
  *    - div[contentEditable] elements don't support it
  *    - older browsers (such as IE8 and Firefox 3.6) don't support it at all
  *
- * @param {Object} parent Instance of main wysihtml5.Editor class
- * @param {Element} view Instance of wysihtml5.views.* class
+ * @param {Object} parent Instance of main wysihtml.Editor class
+ * @param {Element} view Instance of wysihtml.views.* class
  * @param {String} placeholderText
  *
  * @example
@@ -14,7 +14,7 @@
  */
 (function(dom) {
   dom.simulatePlaceholder = function(editor, view, placeholderText, placeholderClassName) {
-    var CLASS_NAME = placeholderClassName || "wysihtml5-placeholder",
+    var CLASS_NAME = placeholderClassName || "wysihtml-placeholder",
         unset = function() {
           var composerIsVisible   = view.element.offsetWidth > 0 && view.element.offsetHeight > 0;
           if (view.hasPlaceholderSet()) {
@@ -49,4 +49,4 @@
 
     set();
   };
-})(wysihtml5.dom);
+})(wysihtml.dom);

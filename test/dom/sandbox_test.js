@@ -1,7 +1,7 @@
-module("wysihtml5.dom.Sandbox", {
+module("wysihtml.dom.Sandbox", {
   teardown: function() {
     var iframe;
-    while (iframe = document.querySelector("iframe.wysihtml5-sandbox")) {
+    while (iframe = document.querySelector("iframe.wysihtml-sandbox")) {
       iframe.parentNode.removeChild(iframe);
     }
   },
@@ -24,7 +24,7 @@ module("wysihtml5.dom.Sandbox", {
   
   isUnset: function(evalCode, iframeWindow) {
     var value = this.eval(iframeWindow, evalCode);
-    return !value || value == wysihtml5.EMPTY_FUNCTION;
+    return !value || value == wysihtml.EMPTY_FUNCTION;
   }
 });
 
@@ -32,10 +32,10 @@ module("wysihtml5.dom.Sandbox", {
 asyncTest("Basic Test", function() {
   expect(8);
   
-  var sandbox = new wysihtml5.dom.Sandbox(function(param) {
+  var sandbox = new wysihtml.dom.Sandbox(function(param) {
     equal(param, sandbox, "The parameter passed into the readyCallback is the sandbox instance");
     
-    var iframes = document.querySelectorAll("iframe.wysihtml5-sandbox");
+    var iframes = document.querySelectorAll("iframe.wysihtml-sandbox");
     equal(iframes.length, 1, "iFrame sandbox inserted into dom tree");
     
     var iframe = iframes[iframes.length - 1],
@@ -46,12 +46,12 @@ asyncTest("Basic Test", function() {
     ok(isSandboxed, "iFrame is sandboxed");
     
     var isWindowObject = sandbox.getWindow().setInterval && sandbox.getWindow().clearInterval;
-    ok(isWindowObject, "wysihtml5.Sandbox.prototype.getWindow() works properly");
+    ok(isWindowObject, "wysihtml.Sandbox.prototype.getWindow() works properly");
     
     var isDocumentObject = sandbox.getDocument().appendChild && sandbox.getDocument().body;
-    ok(isDocumentObject, "wysihtml5.Sandbox.prototype.getDocument() works properly");
+    ok(isDocumentObject, "wysihtml.Sandbox.prototype.getDocument() works properly");
     
-    equal(sandbox.getIframe(), iframe, "wysihtml5.Sandbox.prototype.getIframe() returns the iframe correctly");
+    equal(sandbox.getIframe(), iframe, "wysihtml.Sandbox.prototype.getIframe() returns the iframe correctly");
     equal(typeof(sandbox.getWindow().onerror), "function", "window.onerror is set");
     
     start();
@@ -66,10 +66,10 @@ asyncTest("Security test #1", function() {
   
   var that = this;
   
-  var sandbox = new wysihtml5.dom.Sandbox(function() {
+  var sandbox = new wysihtml.dom.Sandbox(function() {
     var iframeWindow = sandbox.getWindow();
     
-    var isSafari = wysihtml5.browser.USER_AGENT.indexOf("Safari") !== -1 && wysihtml5.browser.USER_AGENT.indexOf("Chrome") === 1;
+    var isSafari = wysihtml.browser.USER_AGENT.indexOf("Safari") !== -1 && wysihtml.browser.USER_AGENT.indexOf("Chrome") === 1;
     
     if (isSafari) {
       // This test fails in Safari 5, as it's impossible to unset a cookie there
@@ -102,7 +102,7 @@ asyncTest("Security test #1", function() {
 asyncTest("Security test #2", function() {
   expect(2);
   
-  var sandbox = new wysihtml5.dom.Sandbox(function() {
+  var sandbox = new wysihtml.dom.Sandbox(function() {
     var html = '<img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" onerror="#{script}" onload="try { window.parent._hackedCookie=document.cookie; } catch(e){}; try { window.parent._hackedVariable=1; } catch(e) {}">';
     sandbox.getDocument().body.innerHTML = html;
     
@@ -123,7 +123,7 @@ asyncTest("Check charset & doctype", function() {
   
   var that = this;
   
-  var sandbox = new wysihtml5.dom.Sandbox(function() {
+  var sandbox = new wysihtml.dom.Sandbox(function() {
     var iframeDocument = sandbox.getDocument(),
         isQuirksMode   = iframeDocument.compatMode == "BackCompat";
     
@@ -145,7 +145,7 @@ asyncTest("Check charset & doctype", function() {
 asyncTest("Check insertion of single stylesheet", function() {
   expect(1);
   
-  new wysihtml5.dom.Sandbox(function(sandbox) {
+  new wysihtml.dom.Sandbox(function(sandbox) {
     var doc = sandbox.getDocument();
     equal(doc.getElementsByTagName("link").length, 1, "Correct amount of stylesheets inserted into the dom tree");
     start();
@@ -158,7 +158,7 @@ asyncTest("Check insertion of single stylesheet", function() {
 asyncTest("Check insertion of multiple stylesheets", function() {
   expect(1);
   
-  new wysihtml5.dom.Sandbox(function(sandbox) {
+  new wysihtml.dom.Sandbox(function(sandbox) {
     var doc = sandbox.getDocument();
     equal(doc.getElementsByTagName("link").length, 2, "Correct amount of stylesheets inserted into the dom tree");
     start();
@@ -174,7 +174,7 @@ asyncTest("Check insertion of multiple stylesheets", function() {
 asyncTest("Check X-UA-Compatible", function() {
   expect(1);
   
-  new wysihtml5.dom.Sandbox(function(sandbox) {
+  new wysihtml.dom.Sandbox(function(sandbox) {
     var doc                 = sandbox.getDocument(),
         docMode             = doc.documentMode;
     

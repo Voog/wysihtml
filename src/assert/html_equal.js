@@ -1,18 +1,18 @@
-var wysihtml5 = wysihtml5 || {};
-wysihtml5.assert = wysihtml5.assert || {};
+var wysihtml = wysihtml || {};
+wysihtml.assert = wysihtml.assert || {};
 
 /**
  * Compare html strings without stumbling upon browser misbehaviors
  * Uses and takes the same parameters as QUnit's equal method
  *
  * @example
- *    wysihtml5.assert.htmlEqual(
+ *    wysihtml.assert.htmlEqual(
  *      removeAttributes('<p align="center">foo</p>'),
  *      '<p>foo</p>',
  *      'Removed align attribute on <p>'
  *    );
  */
-wysihtml5.assert.htmlEqual = (function() {
+wysihtml.assert.htmlEqual = (function() {
   var htmlHost = document.createElement("div");
 
   /**
@@ -75,15 +75,15 @@ wysihtml5.assert.htmlEqual = (function() {
   var removeWhiteSpace = (function() {
     var REG_EXP = /(>)(\s*?)(<)/gm;
     return function(html) {
-      return wysihtml5.lang.string(html.replace(REG_EXP, "$1$3")).trim();
+      return wysihtml.lang.string(html.replace(REG_EXP, "$1$3")).trim();
     };
   })();
 
   return function(actual, expected, message, config) {
     config = config || {};
     if (NEEDS_TO_BE_PREPARSED) {
-      actual = wysihtml5.dom.getAsDom(actual).innerHTML;
-      expected = wysihtml5.dom.getAsDom(expected).innerHTML;
+      actual = wysihtml.dom.getAsDom(actual).innerHTML;
+      expected = wysihtml.dom.getAsDom(expected).innerHTML;
     }
 
     if (config.normalizeWhiteSpace || DOESNT_PRESERVE_WHITE_SPACE) {

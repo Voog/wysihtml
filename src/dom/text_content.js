@@ -25,4 +25,4 @@
       return element.nodeValue;
     };
   }
-})(wysihtml5.dom);
+})(wysihtml.dom);

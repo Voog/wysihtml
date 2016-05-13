@@ -1,9 +1,19 @@
 # wysihtml
 
-wysihtml is an extended and less strict approach on [xing/wysihtml5](https://github.com/xing/wysihtml5) open source rich text editor based on HTML5 technology.
-The code is completely library agnostic: No jQuery, Prototype or similar is required.
+wysihtml is an extended and less strict approach on [xing/wysihtml5](https://github.com/xing/wysihtml5) open source rich text editor.
+The code is library agnostic and has all dependencies bundled: No jQuery, Prototype or similar is required.
+The currently bundled dependencies are rangy.js (including textrange and selectionsaverestore modules) and base.js.
 
 This project is supported by [Voog](http://voog.com).
+
+# Version 0.6.0 breaking changes
+
+Version 0.6.0 notes for migration.
+
+* Object namespace is now wysihtyml (was previously wysihtml5). This change includes all classnames and event names.
+* The default toolbar is separated to independent module (wysihtml.toolbar.js) and must be added separately if used.
+* Full command set for backwards compatibility is not bundled and separated to wysihtml.all-commands.js module. Most commands there directly map to formatBlock or formatInline commands and are thus optional and can be replaced with these internal commands.
+* Table editing features are now as a separate module
 
 ## Demos
 * Project page with simple demo: http://wysihtml.com
@@ -11,7 +21,6 @@ This project is supported by [Voog](http://voog.com).
 * Advanced demo: https://voog.github.com/wysihtml/examples/advanced.html
 * Editable GitHub page: https://voog.github.com/wysihtml
 * Or try it on a working app: https://www.voog.com
-
 
 ## Features
 
@@ -24,7 +33,6 @@ This project is supported by [Voog](http://voog.com).
 * Source code view for users with HTML skills.
 * Uses sandboxed iframes in order to prevent identity theft through XSS.
 * Editor inherits styles and attributes (`placeholder`, `autofocus`, etc.) from original textarea (you only have to style one element).
-* Speech-input for Chrome.
 
 **Extended features not present in xing/wysihtml5:**
 
@@ -41,7 +49,7 @@ This project is supported by [Voog](http://voog.com).
 
 ## Browser Support
 
-The rich text editing interface is supported in IE9+, FF 29+, Safari 5+, Safari on iOS 5+, Opera 12+ and Chrome.
+The rich text editing interface is supported in IE9+, FF 29+, Safari 6+, Safari on iOS 6+, Opera 12+ and Chrome.
 **Graceful Degradation:** Users with other browsers will see the textarea and are still able to write plain HTML by themselves.
 
 ## Development
@@ -51,7 +59,7 @@ wysihtml can be initialized and built using node package manager:
     npm install
     npm run build
 
-This adds dependencies (first line) and builds both minified and development versions (second line), including one with toolbar support.
+This adds dependencies (first line) and builds both minified and development versions (second line).
 
 ## Contributors
 

@@ -1,9 +1,9 @@
-if (wysihtml5.browser.supported()) {
+if (wysihtml.browser.supported()) {
   
-  module("wysihtml5.view.composer", {
+  module("wysihtml.view.composer", {
     setup: function() {
       this.editableArea        = document.createElement("div");
-      this.editableArea.id     = "wysihtml5-test-editable";
+      this.editableArea.id     = "wysihtml-test-editable";
       this.editableArea.innerHTML  = "";
       this.rules = {
         parserRules: { tags: {
@@ -39,7 +39,7 @@ if (wysihtml5.browser.supported()) {
   asyncTest("fixDeleteInTheBeginningOfBlock", function() {
     expect(3);
     var that = this;
-    var editor = new wysihtml5.Editor(this.editableArea, this.rules);
+    var editor = new wysihtml.Editor(this.editableArea, this.rules);
     editor.on("load", function() {
       var e = that.editableArea,
           composer = editor.composer;

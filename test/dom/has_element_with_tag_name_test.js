@@ -1,7 +1,7 @@
-module("wysihtml5.dom.hasElementWithTagName", {
+module("wysihtml.dom.hasElementWithTagName", {
   teardown: function() {
     var iframe;
-    while (iframe = document.querySelector("iframe.wysihtml5-sandbox")) {
+    while (iframe = document.querySelector("iframe.wysihtml-sandbox")) {
       iframe.parentNode.removeChild(iframe);
     }
   }
@@ -11,14 +11,14 @@ module("wysihtml5.dom.hasElementWithTagName", {
 asyncTest("Basic test", function() {
   expect(3);
   
-  new wysihtml5.dom.Sandbox(function(sandbox) {
+  new wysihtml.dom.Sandbox(function(sandbox) {
     var doc         = sandbox.getDocument(),
         tempElement = doc.createElement("i");
-    ok(!wysihtml5.dom.hasElementWithTagName(doc, "I"));
+    ok(!wysihtml.dom.hasElementWithTagName(doc, "I"));
     doc.body.appendChild(tempElement);
-    ok(wysihtml5.dom.hasElementWithTagName(doc, "I"));
+    ok(wysihtml.dom.hasElementWithTagName(doc, "I"));
     tempElement.parentNode.removeChild(tempElement);
-    ok(!wysihtml5.dom.hasElementWithTagName(doc, "I"));
+    ok(!wysihtml.dom.hasElementWithTagName(doc, "I"));
     
     start();
   }).insertInto(document.body);

@@ -16,11 +16,11 @@
  * @param {Object} [config] Optional parameters
  *
  * @example
- *    new wysihtml5.dom.Sandbox(function(sandbox) {
+ *    new wysihtml.dom.Sandbox(function(sandbox) {
  *      sandbox.getWindow().document.body.innerHTML = '<img src=foo.gif onerror="alert(document.cookie)">';
  *    });
  */
-(function(wysihtml5) {
+(function(wysihtml) {
   var /**
        * Default configuration
        */
@@ -49,14 +49,14 @@
         "write", "open", "close"
       ];
 
-  wysihtml5.dom.Sandbox = Base.extend(
-    /** @scope wysihtml5.dom.Sandbox.prototype */ {
+  wysihtml.dom.Sandbox = Base.extend(
+    /** @scope wysihtml.dom.Sandbox.prototype */ {
 
     constructor: function(readyCallback, config) {
-      this.callback = readyCallback || wysihtml5.EMPTY_FUNCTION;
-      this.config   = wysihtml5.lang.object({}).merge(config).get();
+      this.callback = readyCallback || wysihtml.EMPTY_FUNCTION;
+      this.config   = wysihtml.lang.object({}).merge(config).get();
       if (!this.config.className) {
-        this.config.className = "wysihtml5-sandbox";
+        this.config.className = "wysihtml-sandbox";
       }
       this.editableArea   = this._createIframe();
     },
@@ -87,7 +87,7 @@
     },
 
     _readyError: function() {
-      throw new Error("wysihtml5.Sandbox: Sandbox iframe isn't loaded yet");
+      throw new Error("wysihtml.Sandbox: Sandbox iframe isn't loaded yet");
     },
 
     /**
@@ -113,7 +113,7 @@
       var that   = this,
           iframe = doc.createElement("iframe");
       iframe.className = this.config.className;
-      wysihtml5.dom.setAttributes({
+      wysihtml.dom.setAttributes({
         "security":           "restricted",
         "allowtransparency":  "true",
         "frameborder":        0,
@@ -124,7 +124,7 @@
       }).on(iframe);
 
       // Setting the src like this prevents ssl warnings in IE6
-      if (wysihtml5.browser.throwsMixedContentWarningWhenIframeSrcIsEmpty()) {
+      if (wysihtml.browser.throwsMixedContentWarningWhenIframeSrcIsEmpty()) {
         iframe.src = "javascript:'<html></html>'";
       }
 
@@ -148,7 +148,7 @@
      */
     _onLoadIframe: function(iframe) {
       // don't resume when the iframe got unloaded (eg. by removing it from the dom)
-      if (!wysihtml5.dom.contains(doc.documentElement, iframe)) {
+      if (!wysihtml.dom.contains(doc.documentElement, iframe)) {
         return;
       }
 
@@ -173,10 +173,10 @@
       // addEventListener("error") doesn't work properly in some browsers
       // TODO: apparently this doesn't work in IE9!
       iframeWindow.onerror = function(errorMessage, fileName, lineNumber) {
-        throw new Error("wysihtml5.Sandbox: " + errorMessage, fileName, lineNumber);
+        throw new Error("wysihtml.Sandbox: " + errorMessage, fileName, lineNumber);
       };
 
-      if (!wysihtml5.browser.supportsSandboxedIframes()) {
+      if (!wysihtml.browser.supportsSandboxedIframes()) {
         // Unset a bunch of sensitive variables
         // Please note: This isn't hack safe!
         // It more or less just takes care of basic attacks and prevents accidental theft of sensitive information
@@ -188,7 +188,7 @@
           this._unset(iframeWindow, windowProperties[i]);
         }
         for (i=0, length=windowProperties2.length; i<length; i++) {
-          this._unset(iframeWindow, windowProperties2[i], wysihtml5.EMPTY_FUNCTION);
+          this._unset(iframeWindow, windowProperties2[i], wysihtml.EMPTY_FUNCTION);
         }
         for (i=0, length=documentProperties.length; i<length; i++) {
           this._unset(iframeDocument, documentProperties[i]);
@@ -198,8 +198,8 @@
         this._unset(iframeDocument, "cookie", "", true);
       }
 
-      if (wysihtml5.polyfills) {
-        wysihtml5.polyfills(iframeWindow, iframeDocument);
+      if (wysihtml.polyfills) {
+        wysihtml.polyfills(iframeWindow, iframeDocument);
       }
 
       this.loaded = true;
@@ -222,7 +222,7 @@
       }
       templateVars.stylesheets = html;
 
-      return wysihtml5.lang.string(
+      return wysihtml.lang.string(
         '<!DOCTYPE html><html><head>'
         + '<meta charset="#{charset}">#{stylesheets}</head>'
         + '<body></body></html>'
@@ -243,7 +243,7 @@
         try { object.__defineSetter__(property, function() {}); } catch(e) {}
       }
 
-      if (!wysihtml5.browser.crashesWhenDefineProperty(property)) {
+      if (!wysihtml.browser.crashesWhenDefineProperty(property)) {
         try {
           var config = {
             get: function() { return value; }
@@ -256,4 +256,4 @@
       }
     }
   });
-})(wysihtml5);
+})(wysihtml);

@@ -8,10 +8,10 @@
  *    </div>
  *    <script>
  *      // Remove #foo and replace with it's children
- *      wysihtml5.dom.replaceWithChildNodes(document.getElementById("foo"));
+ *      wysihtml.dom.replaceWithChildNodes(document.getElementById("foo"));
  *    </script>
  */
-wysihtml5.dom.replaceWithChildNodes = function(node) {
+wysihtml.dom.replaceWithChildNodes = function(node) {
   if (!node.parentNode) {
     return;
   }

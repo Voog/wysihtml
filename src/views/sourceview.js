@@ -1,7 +1,7 @@
-(function(wysihtml5) {
+(function(wysihtml) {
 
-  wysihtml5.views.SourceView = Base.extend(
-    /** @scope wysihtml5.views.SourceView.prototype */ {
+  wysihtml.views.SourceView = Base.extend(
+    /** @scope wysihtml.views.SourceView.prototype */ {
 
     constructor: function(editor, composer) {
       this.editor   = editor;
@@ -17,7 +17,7 @@
 
       if (!this.textarea) {
         this.textarea = this.composer.doc.createElement('textarea');
-        this.textarea.className = "wysihtml5-source-view";
+        this.textarea.className = "wysihtml-source-view";
       }
       this.textarea.style.width = width + 'px';
       this.textarea.style.height = height + 'px';
@@ -52,4 +52,4 @@
 
   });
 
-})(wysihtml5);
+})(wysihtml);

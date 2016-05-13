@@ -1,5 +1,5 @@
 // TODO: Refactor dom tree traversing here
-(function(wysihtml5) {
+(function(wysihtml) {
 
   // Finds parents of a node, returning the outermost node first in Array
   // if contain node is given parents search is stopped at the container
@@ -14,15 +14,15 @@
     return nodes;
   }
 
-  wysihtml5.dom.domNode = function(node) {
-    var defaultNodeTypes = [wysihtml5.ELEMENT_NODE, wysihtml5.TEXT_NODE];
+  wysihtml.dom.domNode = function(node) {
+    var defaultNodeTypes = [wysihtml.ELEMENT_NODE, wysihtml.TEXT_NODE];
 
     return {
 
       is: {
         emptyTextNode: function(ignoreWhitespace) {
           var regx = ignoreWhitespace ? (/^\s*$/g) : (/^[\r\n]*$/g);
-          return node && node.nodeType === wysihtml5.TEXT_NODE && (regx).test(node.data);
+          return node && node.nodeType === wysihtml.TEXT_NODE && (regx).test(node.data);
         },
 
         // Returns if node is the rangy selection bookmark element (that must not be taken into account in most situatons and is removed on selection restoring)
@@ -31,7 +31,7 @@
         },
 
         visible: function() {
-          var isVisible = !(/^\s*$/g).test(wysihtml5.dom.getTextContent(node));
+          var isVisible = !(/^\s*$/g).test(wysihtml.dom.getTextContent(node));
 
           if (!isVisible) {
             if (node.nodeType === 1 && node.querySelector('img, br, hr, object, embed, canvas, input, textarea')) {
@@ -50,13 +50,13 @@
         // In most cases browsers should solve the cases for you when you try to insert content into those,
         //    but IE does not and it is not nice to do so anyway.
         voidElement: function() {
-          return wysihtml5.dom.domNode(node).test({
-            query: wysihtml5.VOID_ELEMENTS
+          return wysihtml.dom.domNode(node).test({
+            query: wysihtml.VOID_ELEMENTS
           });
         }
       },
 
-      // var node = wysihtml5.dom.domNode(element).prev({nodeTypes: [1,3], ignoreBlankTexts: true});
+      // var node = wysihtml.dom.domNode(element).prev({nodeTypes: [1,3], ignoreBlankTexts: true});
       prev: function(options) {
         var prevNode = node.previousSibling,
             types = (options && options.nodeTypes) ? options.nodeTypes : defaultNodeTypes;
@@ -66,17 +66,17 @@
         }
 
         if (
-          wysihtml5.dom.domNode(prevNode).is.rangyBookmark() || // is Rangy temporary boomark element (bypass)
-          (!wysihtml5.lang.array(types).contains(prevNode.nodeType)) || // nodeTypes check.
-          (options && options.ignoreBlankTexts && wysihtml5.dom.domNode(prevNode).is.emptyTextNode(true)) // Blank text nodes bypassed if set
+          wysihtml.dom.domNode(prevNode).is.rangyBookmark() || // is Rangy temporary boomark element (bypass)
+          (!wysihtml.lang.array(types).contains(prevNode.nodeType)) || // nodeTypes check.
+          (options && options.ignoreBlankTexts && wysihtml.dom.domNode(prevNode).is.emptyTextNode(true)) // Blank text nodes bypassed if set
         ) {
-          return wysihtml5.dom.domNode(prevNode).prev(options);
+          return wysihtml.dom.domNode(prevNode).prev(options);
         }
         
         return prevNode;
       },
 
-      // var node = wysihtml5.dom.domNode(element).next({nodeTypes: [1,3], ignoreBlankTexts: true});
+      // var node = wysihtml.dom.domNode(element).next({nodeTypes: [1,3], ignoreBlankTexts: true});
       next: function(options) {
         var nextNode = node.nextSibling,
             types = (options && options.nodeTypes) ? options.nodeTypes : defaultNodeTypes;
@@ -86,11 +86,11 @@
         }
 
         if (
-          wysihtml5.dom.domNode(nextNode).is.rangyBookmark() || // is Rangy temporary boomark element (bypass)
-          (!wysihtml5.lang.array(types).contains(nextNode.nodeType)) || // nodeTypes check.
-          (options && options.ignoreBlankTexts && wysihtml5.dom.domNode(nextNode).is.emptyTextNode(true)) // blank text nodes bypassed if set
+          wysihtml.dom.domNode(nextNode).is.rangyBookmark() || // is Rangy temporary boomark element (bypass)
+          (!wysihtml.lang.array(types).contains(nextNode.nodeType)) || // nodeTypes check.
+          (options && options.ignoreBlankTexts && wysihtml.dom.domNode(nextNode).is.emptyTextNode(true)) // blank text nodes bypassed if set
         ) {
-          return wysihtml5.dom.domNode(nextNode).next(options);
+          return wysihtml.dom.domNode(nextNode).next(options);
         }
         
         return nextNode;
@@ -99,7 +99,7 @@
       // Finds the common acnestor container of two nodes
       // If container given stops search at the container
       // If no common ancestor found returns null
-      // var node = wysihtml5.dom.domNode(element).commonAncestor(node2, container);
+      // var node = wysihtml.dom.domNode(element).commonAncestor(node2, container);
       commonAncestor: function(node2, container) {
         var parents1 = parents(node, container),
             parents2 = parents(node2, container);
@@ -140,24 +140,24 @@
         // Returns if element is of of options.leafClasses leaf
         if (options && options.leafClasses) {
           for (var i = options.leafClasses.length; i--;) {
-            if (wysihtml5.dom.hasClass(node, options.leafClasses[i])) {
+            if (wysihtml.dom.hasClass(node, options.leafClasses[i])) {
               return node;
             }
           }
         }
 
-        return wysihtml5.dom.domNode(lastChild).lastLeafNode(options);
+        return wysihtml.dom.domNode(lastChild).lastLeafNode(options);
       },
 
       // Splits element at childnode and extracts the childNode out of the element context
       // Example:
-      //   var node = wysihtml5.dom.domNode(node).escapeParent(parentNode);
+      //   var node = wysihtml.dom.domNode(node).escapeParent(parentNode);
       escapeParent: function(element, newWrapper) {
         var parent, split2, nodeWrap,
             curNode = node;
         
         // Stop if node is not a descendant of element
-        if (!wysihtml5.dom.contains(element, node)) {
+        if (!wysihtml.dom.contains(element, node)) {
           throw new Error("Child is not a descendant of node.");
         }
 
@@ -212,7 +212,7 @@
 
       transferContentTo: function(targetNode, removeOldWrapper) {
         if (node.nodeType === 1) {
-          if (wysihtml5.dom.domNode(targetNode).is.voidElement() || targetNode.nodeType === 3) {
+          if (wysihtml.dom.domNode(targetNode).is.voidElement() || targetNode.nodeType === 3) {
             while (node.lastChild) {
               targetNode.parentNode.insertBefore(node.lastChild, targetNode.nextSibling);
             }
@@ -225,7 +225,7 @@
             node.parentNode.removeChild(node);
           }
         } else if (node.nodeType === 3 || node.nodeType === 8){
-          if (wysihtml5.dom.domNode(targetNode).is.voidElement()) {
+          if (wysihtml.dom.domNode(targetNode).is.voidElement()) {
             targetNode.parentNode.insertBefore(node, targetNode.nextSibling);
           } else {
             targetNode.appendChild(node);
@@ -250,7 +250,7 @@
         }
 
         Example:
-        var node = wysihtml5.dom.domNode(element).test({})
+        var node = wysihtml.dom.domNode(element).test({})
       */
       test: function(properties) {
         var prop;
@@ -293,7 +293,7 @@
               styles = (Array.isArray(properties.styleProperty)) ? properties.styleProperty : [properties.styleProperty];
           for (var j = 0, maxStyleP = styles.length; j < maxStyleP; j++) {
             // Some old IE-s have different property name for cssFloat
-            prop = wysihtml5.browser.fixStyleKey(styles[j]);
+            prop = wysihtml.browser.fixStyleKey(styles[j]);
             if (node.style[prop]) {
               if (properties.styleValue) {
                 // Style value as additional parameter
@@ -328,7 +328,7 @@
         }
 
         if (properties.attribute) {
-          var attr = wysihtml5.dom.getAttributes(node),
+          var attr = wysihtml.dom.getAttributes(node),
               attrList = [],
               hasOneAttribute = false;
 
@@ -363,4 +363,4 @@
 
     };
   };
-})(wysihtml5);
+})(wysihtml);

@@ -6,13 +6,13 @@
  *
  * @example
  *    <div id="text-container">Please click here: www.google.com</div>
- *    <script>wysihtml5.dom.autoLink(document.getElementById("text-container"));</script>
+ *    <script>wysihtml.dom.autoLink(document.getElementById("text-container"));</script>
  */
-(function(wysihtml5) {
+(function(wysihtml) {
   var /**
        * Don't auto-link urls that are contained in the following elements:
        */
-      IGNORE_URLS_IN        = wysihtml5.lang.array(["CODE", "PRE", "A", "SCRIPT", "HEAD", "TITLE", "STYLE"]),
+      IGNORE_URLS_IN        = wysihtml.lang.array(["CODE", "PRE", "A", "SCRIPT", "HEAD", "TITLE", "STYLE"]),
       /**
        * revision 1:
        *    /(\S+\.{1}[^\s\,\.\!]+)/g
@@ -73,9 +73,9 @@
    * for the given document object
    */
   function _getTempElement(context) {
-    var tempElement = context._wysihtml5_tempElement;
+    var tempElement = context._wysihtml_tempElement;
     if (!tempElement) {
-      tempElement = context._wysihtml5_tempElement = context.createElement("div");
+      tempElement = context._wysihtml_tempElement = context.createElement("div");
     }
     return tempElement;
   }
@@ -85,7 +85,7 @@
    */
   function _wrapMatchesInNode(textNode) {
     var parentNode  = textNode.parentNode,
-        nodeValue   = wysihtml5.lang.string(textNode.data).escapeHTML(),
+        nodeValue   = wysihtml.lang.string(textNode.data).escapeHTML(),
         tempElement = _getTempElement(parentNode.ownerDocument);
 
     // We need to insert an empty/temporary <span /> to fix IE quirks
@@ -105,7 +105,7 @@
     while (node.parentNode) {
       node = node.parentNode;
       nodeName = node.nodeName;
-      if (node.className && wysihtml5.lang.array(node.className.split(' ')).contains(ignoreInClasses)) {
+      if (node.className && wysihtml.lang.array(node.className.split(' ')).contains(ignoreInClasses)) {
         return true;
       }
       if (IGNORE_URLS_IN.contains(nodeName)) {
@@ -122,16 +122,16 @@
       return;
     }
 
-    if (element.className && wysihtml5.lang.array(element.className.split(' ')).contains(ignoreInClasses)) {
+    if (element.className && wysihtml.lang.array(element.className.split(' ')).contains(ignoreInClasses)) {
       return;
     }
 
-    if (element.nodeType === wysihtml5.TEXT_NODE && element.data.match(URL_REG_EXP)) {
+    if (element.nodeType === wysihtml.TEXT_NODE && element.data.match(URL_REG_EXP)) {
       _wrapMatchesInNode(element);
       return;
     }
 
-    var childNodes        = wysihtml5.lang.array(element.childNodes).get(),
+    var childNodes        = wysihtml.lang.array(element.childNodes).get(),
         childNodesLength  = childNodes.length,
         i                 = 0;
 
@@ -142,8 +142,8 @@
     return element;
   }
 
-  wysihtml5.dom.autoLink = autoLink;
+  wysihtml.dom.autoLink = autoLink;
 
   // Reveal url reg exp to the outside
-  wysihtml5.dom.autoLink.URL_REG_EXP = URL_REG_EXP;
-})(wysihtml5);
+  wysihtml.dom.autoLink.URL_REG_EXP = URL_REG_EXP;
+})(wysihtml);

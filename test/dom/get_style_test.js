@@ -1,4 +1,4 @@
-module("wysihtml5.dom.getStyle", {
+module("wysihtml.dom.getStyle", {
   setup: function() {
     this.container = document.createElement("div");
     document.body.appendChild(this.container);
@@ -11,7 +11,7 @@ module("wysihtml5.dom.getStyle", {
 
 
 test("Basic test", function() {
-  wysihtml5.dom.insertCSS([
+  wysihtml.dom.insertCSS([
     ".test-element-2 { position: absolute }"
   ]).into(document);
   
@@ -21,22 +21,22 @@ test("Basic test", function() {
   this.container.innerHTML += '<div></div>';
   
   equal(
-    wysihtml5.dom.getStyle("float").from(this.container.getElementsByTagName("span")[0]),
+    wysihtml.dom.getStyle("float").from(this.container.getElementsByTagName("span")[0]),
     "left"
   );
   
   equal(
-    wysihtml5.dom.getStyle("position").from(this.container.getElementsByTagName("span")[1]),
+    wysihtml.dom.getStyle("position").from(this.container.getElementsByTagName("span")[1]),
     "absolute"
   );
   
   equal(
-    wysihtml5.dom.getStyle("display").from(this.container.getElementsByTagName("div")[0]),
+    wysihtml.dom.getStyle("display").from(this.container.getElementsByTagName("div")[0]),
     "block"
   );
   
   equal(
-    wysihtml5.dom.getStyle("display").from(this.container.getElementsByTagName("i")[0]),
+    wysihtml.dom.getStyle("display").from(this.container.getElementsByTagName("i")[0]),
     "inline"
   );
 });
@@ -49,6 +49,6 @@ test("Textarea width/height when value causes overflow", function() {
   textarea.value = Array(500).join("Lorem ipsum dolor foo bar");
   this.container.appendChild(textarea);
   
-  equal(wysihtml5.dom.getStyle("width")  .from(textarea), "500px");
-  equal(wysihtml5.dom.getStyle("height") .from(textarea), "200px");
+  equal(wysihtml.dom.getStyle("width")  .from(textarea), "500px");
+  equal(wysihtml.dom.getStyle("height") .from(textarea), "200px");
 });

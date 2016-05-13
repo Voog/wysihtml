@@ -1,12 +1,12 @@
-module("wysihtml5.dom.convertToList", {
+module("wysihtml.dom.convertToList", {
   equal: function(actual, expected, message) {
     return QUnit.assert.htmlEqual(actual, expected, message);
   },
   
   convertToList: function(html, type) {
-    var container = wysihtml5.dom.getAsDom(html);
+    var container = wysihtml.dom.getAsDom(html);
     document.body.appendChild(container);
-    wysihtml5.dom.convertToList(container.firstChild, type);
+    wysihtml.dom.convertToList(container.firstChild, type);
     var innerHTML = container.innerHTML;
     container.parentNode.removeChild(container);
     return innerHTML;

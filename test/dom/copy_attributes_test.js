@@ -1,4 +1,4 @@
-module("wysihtml5.dom.copyAttributes", {
+module("wysihtml.dom.copyAttributes", {
   setup: function() {
     this.div        = document.createElement("div");
     this.span       = document.createElement("span");
@@ -17,8 +17,8 @@ module("wysihtml5.dom.copyAttributes", {
 
 test("Basic Tests", function() {
   var attributes = { title: "foobar", lang: "en", className: "foo bar" };
-  wysihtml5.dom.setAttributes(attributes).on(this.div);
-  wysihtml5.dom.copyAttributes(["title", "lang", "className"]).from(this.div).to(this.span);
+  wysihtml.dom.setAttributes(attributes).on(this.div);
+  wysihtml.dom.copyAttributes(["title", "lang", "className"]).from(this.div).to(this.span);
   
   equal(this.span.title, attributes.title, "Title correctly copied");
   equal(this.span.lang, attributes.lang, "Lang correctly copied");
@@ -39,7 +39,7 @@ asyncTest("Test copying attributes from one element to another element which is 
     iframeDocument.body.appendChild(iframeElement);
     that.span.title = "heya!";
     
-    wysihtml5.dom
+    wysihtml.dom
       .copyAttributes(["title"])
       .from(that.span)
       .to(iframeElement);

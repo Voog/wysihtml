@@ -4,7 +4,7 @@
  * These rules define which tags and CSS classes are supported and which tags should be specially treated.
  */
 
-var wysihtml5ParserRulesDefaults = {
+var wysihtmlParserRulesDefaults = {
     "blockLevelEl": {
         "keep_styles": {
             "textAlign": /^((left)|(right)|(center)|(justify))$/i,
@@ -37,10 +37,10 @@ var wysihtml5ParserRulesDefaults = {
     }
 };
 
-var wysihtml5ParserRules = {
+var wysihtmlParserRules = {
     /**
      * CSS Class white-list
-     * Following CSS classes won't be removed when parsed by the wysihtml5 HTML parser
+     * Following CSS classes won't be removed when parsed by the wysihtml HTML parser
      * If all classes should pass "any" as classes value. Ex: "classes": "any"
      */
     "classes": "any",
@@ -127,7 +127,7 @@ var wysihtml5ParserRules = {
      * The following options are available:
      *
      *    - add_class:        converts and deletes the given HTML4 attribute (align, clear, ...) via the given method to a css class
-     *                        The following methods are implemented in wysihtml5.dom.parse:
+     *                        The following methods are implemented in wysihtml.dom.parse:
      *                          - align_text:  converts align attribute values (right/left/center/justify) to their corresponding css class "wysiwyg-text-align-*")
      *                            <p align="center">foo</p> ... becomes ... <p> class="wysiwyg-text-align-center">foo</p>
      *                          - clear_br:    converts clear attribute values left/right/all/both to their corresponding css class "wysiwyg-clear-*"
@@ -183,7 +183,7 @@ var wysihtml5ParserRules = {
         "details": {
             "unwrap": 1
         },
-        "h4": wysihtml5ParserRulesDefaults.blockLevelEl,
+        "h4": wysihtmlParserRulesDefaults.blockLevelEl,
         "em": {},
         "title": {
             "remove": 1
@@ -266,7 +266,7 @@ var wysihtml5ParserRules = {
         "rb": {
             "unwrap": 1
         },
-        "footer": wysihtml5ParserRulesDefaults.makeDiv,
+        "footer": wysihtmlParserRulesDefaults.makeDiv,
         "noframes": {
             "remove": 1
         },
@@ -287,11 +287,11 @@ var wysihtml5ParserRules = {
         "nav": {
             "unwrap": 1
         },
-        "h1": wysihtml5ParserRulesDefaults.blockLevelEl,
+        "h1": wysihtmlParserRulesDefaults.blockLevelEl,
         "head": {
             "unwrap": 1
         },
-        "tbody": wysihtml5ParserRulesDefaults.blockLevelEl,
+        "tbody": wysihtmlParserRulesDefaults.blockLevelEl,
         "dd": {
             "unwrap": 1
         },
@@ -384,7 +384,7 @@ var wysihtml5ParserRules = {
         "keygen": {
             "remove": 1
         },
-        "h5": wysihtml5ParserRulesDefaults.blockLevelEl,
+        "h5": wysihtmlParserRulesDefaults.blockLevelEl,
         "meta": {
             "remove": 1
         },
@@ -397,8 +397,8 @@ var wysihtml5ParserRules = {
         "mark": {
             "unwrap": 1
         },
-        "caption": wysihtml5ParserRulesDefaults.blockLevelEl,
-        "tfoot": wysihtml5ParserRulesDefaults.blockLevelEl,
+        "caption": wysihtmlParserRulesDefaults.blockLevelEl,
+        "tfoot": wysihtmlParserRulesDefaults.blockLevelEl,
         "base": {
             "remove": 1
         },
@@ -450,11 +450,11 @@ var wysihtml5ParserRules = {
         "source": {
             "remove": 1
         },
-        "aside": wysihtml5ParserRulesDefaults.makeDiv,
+        "aside": wysihtmlParserRulesDefaults.makeDiv,
         "frame": {
             "remove": 1
         },
-        "section": wysihtml5ParserRulesDefaults.makeDiv,
+        "section": wysihtmlParserRulesDefaults.makeDiv,
         "body": {
             "unwrap": 1
         },
@@ -500,7 +500,7 @@ var wysihtml5ParserRules = {
         "meter": {
             "unwrap": 1
         },
-        "h3": wysihtml5ParserRulesDefaults.blockLevelEl,
+        "h3": wysihtmlParserRulesDefaults.blockLevelEl,
         "textarea": {
             "unwrap": 1
         },
@@ -539,7 +539,7 @@ var wysihtml5ParserRules = {
         "xml": {
             "remove": 1
         },
-        "h6": wysihtml5ParserRulesDefaults.blockLevelEl,
+        "h6": wysihtmlParserRulesDefaults.blockLevelEl,
         "param": {
             "remove": 1
         },
@@ -583,7 +583,7 @@ var wysihtml5ParserRules = {
             "remove": 1
         },
         "pre": {},
-        "center": wysihtml5ParserRulesDefaults.makeDiv,
+        "center": wysihtmlParserRulesDefaults.makeDiv,
         "audio": {
             "remove": 1
         },
@@ -596,7 +596,7 @@ var wysihtml5ParserRules = {
         "col": {
             "remove": 1
         },
-        "article": wysihtml5ParserRulesDefaults.makeDiv,
+        "article": wysihtmlParserRulesDefaults.makeDiv,
         "cite": {},
         "link": {
             "remove": 1
@@ -620,11 +620,11 @@ var wysihtml5ParserRules = {
         "ruby": {
             "unwrap": 1
         },
-        "h2": wysihtml5ParserRulesDefaults.blockLevelEl,
+        "h2": wysihtmlParserRulesDefaults.blockLevelEl,
         "ins": {
             "unwrap": 1
         },
-        "p": wysihtml5ParserRulesDefaults.blockLevelEl,
+        "p": wysihtmlParserRulesDefaults.blockLevelEl,
         "sub": {},
         "comment": {
             "remove": 1
@@ -635,14 +635,14 @@ var wysihtml5ParserRules = {
         "optgroup": {
             "unwrap": 1
         },
-        "header": wysihtml5ParserRulesDefaults.makeDiv
+        "header": wysihtmlParserRulesDefaults.makeDiv
     }
 };
 
 
 (function() {
     // Paste cleanup rules universal for all rules (also applied to content copied from editor)
-    var commonRules = wysihtml5.lang.object(wysihtml5ParserRules).clone(true);
+    var commonRules = wysihtml.lang.object(wysihtmlParserRules).clone(true);
     commonRules.comments    = false;
     commonRules.selectors   = { "a u": "unwrap"};
     commonRules.tags.style  = { "remove": 1 };
@@ -650,7 +650,7 @@ var wysihtml5ParserRules = {
     commonRules.tags.head = { "remove": 1 };
     
     // Paste cleanup for unindentified source
-    var universalRules = wysihtml5.lang.object(commonRules).clone(true);
+    var universalRules = wysihtml.lang.object(commonRules).clone(true);
     universalRules.tags.div.one_of_type.alignment_object = 1;
     universalRules.tags.div.remove_action = "unwrap";
     universalRules.tags.div.check_attributes.style = false;
@@ -662,15 +662,15 @@ var wysihtml5ParserRules = {
 
     // Paste cleanup for MS Office
     // TODO: should be extended to stricter ruleset, as current set will probably not cover all Office bizarreness
-    var msOfficeRules = wysihtml5.lang.object(universalRules).clone(true);
+    var msOfficeRules = wysihtml.lang.object(universalRules).clone(true);
     msOfficeRules.classes = {};
 
-    window.wysihtml5ParserPasteRulesets = [
+    window.wysihtmlParserPasteRulesets = [
         {
             condition: /<font face="Times New Roman"|class="?Mso|style="[^"]*\bmso-|style='[^'']*\bmso-|w:WordDocument|class="OutlineElement|id="?docs\-internal\-guid\-/i,
             set: msOfficeRules
         },{
-            condition: /<meta name="copied-from" content="wysihtml5">/i,
+            condition: /<meta name="copied-from" content="wysihtml">/i,
             set: commonRules
         },{
             set: universalRules
