@@ -1,3 +1,97 @@
+*wysihtml 0.6.0 (May 13 , 2016) (BREAKING CHANGES)
+* Object namespace is now wysihtyml (was previously wysihtml5)
+* Restructures code into separate modules, so users can build their own bundle of needed features (wysihtml-toolbar.js all bundle no longer present)
+* Fixes problems when bundling code by removing conflicting internal bundled UMD wrappers
+* Reduced size by removing some IE8 only targeting code.
+
+*wysihtml5x 0.5.5* (January 6, 2016)
+* Fixes some editing issues with IE proprietary control selection
+
+*wysihtml5x 0.5.4* (December 18, 2015)
+* Fixes some errors of inserting block nodes on blank last line (mostly chrome and safari)
+* Fixes some errors of merging contents of block nodes on delete
+* Fixes IE list toggle issue
+
+*wysihtml5x 0.5.3* (December 9, 2015)
+* Removed automatic forced title attributes on links and images
+* Improved line breaks addition/removal when applying/removing format with formatBlock command
+* Improve (and unify cross-browser) enter and backspace handling in and around lists (espacially IE)
+* Fix IE list inserting problem where only one bullet is inserted on multi-line selection
+* Improve block level elements merge when using backspace key
+* formatBlock on last empty line of a block element now adds new block instead of changing format of the whole block
+* Add double enter escapes block elements in useLineBreaks mode (optional, can be turned off setting parameter `doubleLineBreakEscapesBlock: false`)
+* Fixes un-editable container delete problem in IE
+
+*wysihtml5x 0.5.2* (November 10, 2015)
+* Fixes some formatBlock nesting problems (mainly with lists)
+* Adds formatBlock to .remove() command
+* Improves selection and line breaks adding/removing of formatBlock
+* Fixes formatInline classRegExp not used to replace similar classes
+* IE8 is no longer supported
+
+*wysihtml5x 0.5.1* (October 28, 2015)
+* Fixes parser adding empty class attributes to tags
+
+*wysihtml5x 0.5.0* (October 27, 2015)
+* Fixes Microsoft Edge pasting plaintext problem
+* Fixes Microsoft Edge BR with class null entered with enter keypress
+* .getValue() and .setValue() commands parse content as default (parameter must be set false to bypass cleanup)
+* .cleanUp() function now accepts optional rules parameter
+* Fixes set_class not working correctly in parser rules
+
+*wysihtml5x 0.5.0-beta14* (October 20, 2015)
+* Adds editor.destroy() method
+* Adds alignJustifyStyle command
+* Adds IE Edge support
+* Fixes issue of inserting ā in windows
+* Fixes issue where wysihtml.js script has to be inside body (error if in head)
+* Some stability updates
+
+*wysihtml5x 0.5.0-beta13* (August 18, 2015)
+* Fixes node.normalize polyfill failing to restore cursor in some cases
+
+* wysihtml5x 0.5.0-beta12* (July 31, 2015)
+* Fixes a many toolbar handling errors
+* Fixes formatBlock misbehaviours: in Safari selected content can be lost in some cases, acting on outer div if heading and paragraph elements are contained in div.
+* Fixes behaviour when deleting with caret in beginning of LI outdents list. Shift+tab will to do this instead.
+* Fixed deleting into block element wrapping contents wrong sometimes
+* Fixed ctrl/meta + a not being able to select content in webkit if uneditable block element is first or last in editable area.
+
+*wysihtml5x 0.5.0-beta11* (July 1, 2015)
+* Minor release that fixes some misbehaviours in Safari
+
+*wysihtml5x 0.5.0-beta10* (June 4, 2015)
+* Fixes issue where block level elements can be inserted into inline elements on some cases
+
+*wysihtml5x 0.5.0-beta9* (June 2, 2015)
+* New formatInline logic (and syntax). Fixes most current inline formating issues (bold/italic/colors/etc.)
+
+*wysihtml5x 0.5.0-beta8* (March 16, 2015)
+* Fixes table cell selector escaping editable context
+* Fixes some list toggling issues
+* Fixes object merge for ie8 and its usage on init
+
+*wysihtml5x 0.5.0-beta7* (March 6, 2015)
+* Makes maine element classnames including placeholder configurable and prefixed (NB! .placeholder class is now .wysihtml5-placeholder)
+* Changes API by grouping class names under classNames option
+* Functions passed to check_attribute methods have now second argument node name
+* Functions passed to check_attribute methods can now decide if empty argument value will delete the arrtibute or keep enpty value ("" vs null)
+* Fixes an incorrect array iteration that could cause errors if Array prototype is extended
+
+*wysihtml5x 0.5.0-beta6* (March 3, 2015)
+* Makes html editing view available for div (iframeless) mode
+* Parser rules check_attributes accepts now functions for more flexible custmizaton
+* Fixes last line break deletion in table cell
+* Created tables do not fill cells with non-breakable spaces anymore
+
+*wysihtml5x 0.5.0-beta5* (February 17, 2015)
+* Fixes IE and webkit erroneous handling
+* Corrects bower.json usage
+
+*wysihtml5x 0.5.0-beta4* (January 29, 2015)
+* Adds sub- and superscript commands
+* Fixes errors mainly with IE8 and 9
+
 *wysihtml5x 0.5.0-beta3* (December 17, 2014)
 * Fixes IE9 error if classList polyfill present allready
 * Fix #78 Preserve cursor position on editor.cleanUp()
