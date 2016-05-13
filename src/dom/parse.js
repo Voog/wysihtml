@@ -220,7 +220,7 @@ wysihtml.dom.parse = function(elementOrHtml_current, config_current) {
     if (cleanUp &&
         newNode.nodeName.toLowerCase() === DEFAULT_NODE_NAME &&
         (!newNode.childNodes.length ||
-         ((/^\s*$/gi).test(newNode.innerHTML) && (clearInternals || (oldNode.className !== "_wysihtml5-temp-placeholder" && oldNode.className !== "rangySelectionBoundary"))) ||
+         ((/^\s*$/gi).test(newNode.innerHTML) && (clearInternals || (oldNode.className !== "_wysihtml-temp-placeholder" && oldNode.className !== "rangySelectionBoundary"))) ||
          !newNode.attributes.length)
         ) {
       fragment = newNode.ownerDocument.createDocumentFragment();
@@ -269,12 +269,12 @@ wysihtml.dom.parse = function(elementOrHtml_current, config_current) {
      * We already parsed that element
      * ignore it! (yes, this sometimes happens in IE8 when the html is invalid)
      */
-    if (oldNode._wysihtml5) {
+    if (oldNode._wysihtml) {
       return null;
     }
-    oldNode._wysihtml5 = 1;
+    oldNode._wysihtml = 1;
 
-    if (oldNode.className === "wysihtml5-temp") {
+    if (oldNode.className === "wysihtml-temp") {
       return null;
     }
 
@@ -344,7 +344,7 @@ wysihtml.dom.parse = function(elementOrHtml_current, config_current) {
     var definition, type;
 
     // do not interfere with placeholder span or pasting caret position is not maintained
-    if (oldNode.nodeName === "SPAN" && !clearInternals && (oldNode.className === "_wysihtml5-temp-placeholder" || oldNode.className === "rangySelectionBoundary")) {
+    if (oldNode.nodeName === "SPAN" && !clearInternals && (oldNode.className === "_wysihtml-temp-placeholder" || oldNode.className === "rangySelectionBoundary")) {
       return true;
     }
 
@@ -595,9 +595,9 @@ wysihtml.dom.parse = function(elementOrHtml_current, config_current) {
         }
       }
     } else {
-      // make sure that wysihtml5 temp class doesn't get stripped out
+      // make sure that wysihtml temp class doesn't get stripped out
       if (!clearInternals) {
-        allowedClasses["_wysihtml5-temp-placeholder"] = 1;
+        allowedClasses["_wysihtml-temp-placeholder"] = 1;
         allowedClasses["_rangySelectionBoundary"] = 1;
         allowedClasses["wysiwyg-tmp-selected-cell"] = 1;
       }

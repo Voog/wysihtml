@@ -6,22 +6,22 @@
  *
  * @example
  *    <!-- Toolbar link -->
- *    <a data-wysihtml5-command="insertImage">insert an image</a>
+ *    <a data-wysihtml-command="insertImage">insert an image</a>
  *
  *    <!-- Dialog -->
- *    <div data-wysihtml5-dialog="insertImage" style="display: none;">
+ *    <div data-wysihtml-dialog="insertImage" style="display: none;">
  *      <label>
- *        URL: <input data-wysihtml5-dialog-field="src" value="http://">
+ *        URL: <input data-wysihtml-dialog-field="src" value="http://">
  *      </label>
  *      <label>
- *        Alternative text: <input data-wysihtml5-dialog-field="alt" value="">
+ *        Alternative text: <input data-wysihtml-dialog-field="alt" value="">
  *      </label>
  *    </div>
  *
  *    <script>
  *      var dialog = new wysihtml.toolbar.Dialog(
- *        document.querySelector("[data-wysihtml5-command='insertImage']"),
- *        document.querySelector("[data-wysihtml5-dialog='insertImage']")
+ *        document.querySelector("[data-wysihtml-command='insertImage']"),
+ *        document.querySelector("[data-wysihtml-dialog='insertImage']")
  *      );
  *      dialog.observe("save", function(attributes) {
  *        // do something
@@ -30,10 +30,10 @@
  */
 (function(wysihtml) {
   var dom                     = wysihtml.dom,
-      CLASS_NAME_OPENED       = "wysihtml5-command-dialog-opened",
+      CLASS_NAME_OPENED       = "wysihtml-command-dialog-opened",
       SELECTOR_FORM_ELEMENTS  = "input, select, textarea",
-      SELECTOR_FIELDS         = "[data-wysihtml5-dialog-field]",
-      ATTRIBUTE_FIELDS        = "data-wysihtml5-dialog-field";
+      SELECTOR_FIELDS         = "[data-wysihtml-dialog-field]",
+      ATTRIBUTE_FIELDS        = "data-wysihtml-dialog-field";
 
 
   wysihtml.toolbar.Dialog = wysihtml.lang.Dispatcher.extend(
@@ -73,9 +73,9 @@
         }
       });
 
-      dom.delegate(this.container, "[data-wysihtml5-dialog-action=save]", "click", callbackWrapper);
+      dom.delegate(this.container, "[data-wysihtml-dialog-action=save]", "click", callbackWrapper);
 
-      dom.delegate(this.container, "[data-wysihtml5-dialog-action=cancel]", "click", function(event) {
+      dom.delegate(this.container, "[data-wysihtml-dialog-action=cancel]", "click", function(event) {
         that.cancel();
         event.preventDefault();
         event.stopPropagation();
@@ -108,12 +108,12 @@
      *    <a href="http://www.google.com" target="_blank">foo</a>
      *
      * and we have the following dialog:
-     *    <input type="text" data-wysihtml5-dialog-field="href" value="">
-     *    <input type="text" data-wysihtml5-dialog-field="target" value="">
+     *    <input type="text" data-wysihtml-dialog-field="href" value="">
+     *    <input type="text" data-wysihtml-dialog-field="target" value="">
      *
      * after calling _interpolate() the dialog will look like this
-     *    <input type="text" data-wysihtml5-dialog-field="href" value="http://www.google.com">
-     *    <input type="text" data-wysihtml5-dialog-field="target" value="_blank">
+     *    <input type="text" data-wysihtml-dialog-field="href" value="http://www.google.com">
+     *    <input type="text" data-wysihtml-dialog-field="target" value="_blank">
      *
      * Basically it adopted the attribute values into the corresponding input fields
      *

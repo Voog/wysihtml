@@ -26,13 +26,13 @@ wysihtml.dom.getAsDom = (function() {
    * Make sure IE supports HTML5 tags, which is accomplished by simply creating one instance of each element
    */
   var _ensureHTML5Compatibility = function(context) {
-    if (context._wysihtml5_supportsHTML5Tags) {
+    if (context._wysihtml_supportsHTML5Tags) {
       return;
     }
     for (var i=0, length=HTML5_ELEMENTS.length; i<length; i++) {
       context.createElement(HTML5_ELEMENTS[i]);
     }
-    context._wysihtml5_supportsHTML5Tags = true;
+    context._wysihtml_supportsHTML5Tags = true;
   };
 
 

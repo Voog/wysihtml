@@ -111,7 +111,7 @@ wysihtml.commands.insertList = (function(wysihtml) {
     var sel = rangy.saveSelection(composer.win);
 
     // Fallback for Create list
-    var tempClassName =  "_wysihtml5-temp-" + new Date().getTime(),
+    var tempClassName =  "_wysihtml-temp-" + new Date().getTime(),
         isEmpty, list;
 
     composer.commands.exec("formatBlock", {

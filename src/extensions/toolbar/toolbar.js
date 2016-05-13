@@ -6,8 +6,8 @@
  *
  * @example
  *    <div id="toolbar">
- *      <a data-wysihtml5-command="createLink">insert link</a>
- *      <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h1">insert h1</a>
+ *      <a data-wysihtml-command="createLink">insert link</a>
+ *      <a data-wysihtml-command="formatBlock" data-wysihtml-command-value="h1">insert h1</a>
  *    </div>
  *
  *    <script>
@@ -15,10 +15,10 @@
  *    </script>
  */
 (function(wysihtml) {
-  var CLASS_NAME_COMMAND_DISABLED   = "wysihtml5-command-disabled",
-      CLASS_NAME_COMMANDS_DISABLED  = "wysihtml5-commands-disabled",
-      CLASS_NAME_COMMAND_ACTIVE     = "wysihtml5-command-active",
-      CLASS_NAME_ACTION_ACTIVE      = "wysihtml5-action-active",
+  var CLASS_NAME_COMMAND_DISABLED   = "wysihtml-command-disabled",
+      CLASS_NAME_COMMANDS_DISABLED  = "wysihtml-commands-disabled",
+      CLASS_NAME_COMMAND_ACTIVE     = "wysihtml-command-active",
+      CLASS_NAME_ACTION_ACTIVE      = "wysihtml-action-active",
       dom                           = wysihtml.dom;
 
   wysihtml.toolbar.Toolbar = Base.extend(
@@ -47,7 +47,7 @@
         CLASS_NAME_ACTION_ACTIVE = editor.config.classNameActionActive;
       }
 
-      var speechInputLinks  = this.container.querySelectorAll("[data-wysihtml5-command=insertSpeech]"),
+      var speechInputLinks  = this.container.querySelectorAll("[data-wysihtml-command=insertSpeech]"),
           length            = speechInputLinks.length,
           i                 = 0;
       for (; i<length; i++) {
@@ -56,7 +56,7 @@
     },
 
     _getLinks: function(type) {
-      var links   = this[type + "Links"] = wysihtml.lang.array(this.container.querySelectorAll("[data-wysihtml5-" + type + "]")).get(),
+      var links   = this[type + "Links"] = wysihtml.lang.array(this.container.querySelectorAll("[data-wysihtml-" + type + "]")).get(),
           length  = links.length,
           i       = 0,
           mapping = this[type + "Mapping"] = {},
@@ -69,10 +69,10 @@
 
       for (; i<length; i++) {
         link    = links[i];
-        name    = link.getAttribute("data-wysihtml5-" + type);
-        value   = link.getAttribute("data-wysihtml5-" + type + "-value");
-        tracksBlankValue   = link.getAttribute("data-wysihtml5-" + type + "-blank-value");
-        group   = this.container.querySelector("[data-wysihtml5-" + type + "-group='" + name + "']");
+        name    = link.getAttribute("data-wysihtml-" + type);
+        value   = link.getAttribute("data-wysihtml-" + type + "-value");
+        tracksBlankValue   = link.getAttribute("data-wysihtml-" + type + "-blank-value");
+        group   = this.container.querySelector("[data-wysihtml-" + type + "-group='" + name + "']");
         dialog  = this._getDialog(link, name);
 
         mapping[name + ":" + value] = {
@@ -89,7 +89,7 @@
 
     _getDialog: function(link, command) {
       var that          = this,
-          dialogElement = this.container.querySelector("[data-wysihtml5-dialog='" + command + "']"),
+          dialogElement = this.container.querySelector("[data-wysihtml-dialog='" + command + "']"),
           dialog, caretBookmark;
 
       if (dialogElement) {
@@ -192,13 +192,13 @@
       }
 
       // Needed for opera and chrome
-      dom.delegate(container, "[data-wysihtml5-command], [data-wysihtml5-action]", "mousedown", function(event) { event.preventDefault(); });
+      dom.delegate(container, "[data-wysihtml-command], [data-wysihtml-action]", "mousedown", function(event) { event.preventDefault(); });
 
-      dom.delegate(container, "[data-wysihtml5-command]", "click", function(event) {
+      dom.delegate(container, "[data-wysihtml-command]", "click", function(event) {
         var state,
             link          = this,
-            command       = link.getAttribute("data-wysihtml5-command"),
-            commandValue  = link.getAttribute("data-wysihtml5-command-value"),
+            command       = link.getAttribute("data-wysihtml-command"),
+            commandValue  = link.getAttribute("data-wysihtml-command-value"),
             commandObj = that.commandMapping[command + ":" + commandValue];
 
         if (commandValue || !commandObj.dialog) {
@@ -211,8 +211,8 @@
         event.preventDefault();
       });
 
-      dom.delegate(container, "[data-wysihtml5-action]", "click", function(event) {
-        var action = this.getAttribute("data-wysihtml5-action");
+      dom.delegate(container, "[data-wysihtml-action]", "click", function(event) {
+        var action = this.getAttribute("data-wysihtml-action");
         that.execAction(action);
         event.preventDefault();
       });
@@ -235,10 +235,10 @@
 
       if (this.editor.config.handleTables) {
         editor.on("tableselect:composer", function() {
-            that.container.querySelectorAll('[data-wysihtml5-hiddentools="table"]')[0].style.display = "";
+            that.container.querySelectorAll('[data-wysihtml-hiddentools="table"]')[0].style.display = "";
         });
         editor.on("tableunselect:composer", function() {
-            that.container.querySelectorAll('[data-wysihtml5-hiddentools="table"]')[0].style.display = "none";
+            that.container.querySelectorAll('[data-wysihtml-hiddentools="table"]')[0].style.display = "none";
         });
       }
 

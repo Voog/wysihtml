@@ -3,7 +3,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=Edge">
 <meta charset="utf-8">
 
-<title>wysihtml5 - Advanced Demo</title>
+<title>wysihtml - Advanced Demo</title>
 
 <style>
   body {
@@ -32,7 +32,7 @@
     cursor: pointer;
   }
   
-  #toolbar [data-wysihtml5-action] {
+  #toolbar [data-wysihtml-action] {
     float: right;
   }
   
@@ -58,188 +58,167 @@
     border: 2px solid black;
   }
   
-  .wysihtml5-command-active {
+  .wysihtml-command-active {
     font-weight: bold;
   }
   
-  [data-wysihtml5-dialog] {
+  [data-wysihtml-dialog] {
     margin: 5px 0 0;
     padding: 5px;
     border: 1px solid #666;
   }
   
-  a[data-wysihtml5-command-value="red"] {
+  a[data-wysihtml-command-value="red"] {
     color: red;
   }
   
-  a[data-wysihtml5-command-value="green"] {
+  a[data-wysihtml-command-value="green"] {
     color: green;
   }
   
-  a[data-wysihtml5-command-value="blue"] {
+  a[data-wysihtml-command-value="blue"] {
     color: blue;
+  }
+  
+  div.editable {
+    border: 1px dashed gray;
+    padding: 10px;
   }
 </style>
 
-<h1>wysihtml5 - Advanced Editor Example</h1>
+<h1>wysihtml - Advanced Editor Example</h1>
 
+<h2>Example of editor with iframe wrapper and as textarea replacement</h2>
+<br>
 <form class="ewrapper">
   <div class="toolbar" style="display: none;">
-    <a data-wysihtml5-command="bold" title="CTRL+B">bold</a> |
-    <a data-wysihtml5-command="italic" title="CTRL+I">italic</a> |
-    <a data-wysihtml5-command="superscript" title="sup">superscript</a> |
-    <a data-wysihtml5-command="subscript" title="sub">subscript</a> |
-    <a data-wysihtml5-command="createLink">link</a> |
-    <a data-wysihtml5-command="removeLink"><s>link</s></a> |
-    <a data-wysihtml5-command="insertImage">insert image</a> |
-    <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h1">h1</a> |
-    <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h2">h2</a> |
-    <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-blank-value="true">plaintext</a> |
-    <a data-wysihtml5-command="insertUnorderedList">insertUnorderedList</a> |
-    <a data-wysihtml5-command="insertOrderedList">insertOrderedList</a> |
-    <a data-wysihtml5-command="foreColor" data-wysihtml5-command-value="red">red</a> |
-    <a data-wysihtml5-command="foreColor" data-wysihtml5-command-value="green">green</a> |
-    <a data-wysihtml5-command="foreColor" data-wysihtml5-command-value="blue">blue</a> |
-    <a data-wysihtml5-command="formatCode" data-wysihtml5-command-value="language-html">Code</a> |
-    <a data-wysihtml5-command="undo">undo</a> |
-    <a data-wysihtml5-command="redo">redo</a> |
-    <a data-wysihtml5-command="insertSpeech">speech</a>
-    <a data-wysihtml5-action="change_view">switch to html view</a>
+    <a data-wysihtml-command="bold" title="CTRL+B">bold</a> |
+    <a data-wysihtml-command="italic" title="CTRL+I">italic</a> |
+    <a data-wysihtml-command="superscript" title="sup">superscript</a> |
+    <a data-wysihtml-command="subscript" title="sub">subscript</a> |
+    <a data-wysihtml-command="createLink">link</a> |
+    <a data-wysihtml-command="removeLink"><s>link</s></a> |
+    <a data-wysihtml-command="insertImage">insert image</a> |
+    <a data-wysihtml-command="formatBlock" data-wysihtml-command-value="h1">h1</a> |
+    <a data-wysihtml-command="formatBlock" data-wysihtml-command-value="h2">h2</a> |
+    <a data-wysihtml-command="formatBlock" data-wysihtml-command-blank-value="true">plaintext</a> |
+    <a data-wysihtml-command="insertUnorderedList">insertUnorderedList</a> |
+    <a data-wysihtml-command="insertOrderedList">insertOrderedList</a> |
+    <a data-wysihtml-command="foreColor" data-wysihtml-command-value="red">red</a> |
+    <a data-wysihtml-command="foreColor" data-wysihtml-command-value="green">green</a> |
+    <a data-wysihtml-command="foreColor" data-wysihtml-command-value="blue">blue</a> |
+    <a data-wysihtml-command="formatCode" data-wysihtml-command-value="language-html">Code</a> |
+    <a data-wysihtml-command="undo">undo</a> |
+    <a data-wysihtml-command="redo">redo</a> |
+    <a data-wysihtml-command="insertSpeech">speech</a>
+    <a data-wysihtml-action="change_view">switch to html view</a>
     
-    <div data-wysihtml5-dialog="createLink" style="display: none;">
+    <div data-wysihtml-dialog="createLink" style="display: none;">
       <label>
         Link:
-        <input data-wysihtml5-dialog-field="href" value="http://">
+        <input data-wysihtml-dialog-field="href" value="http://">
       </label>
-      <a data-wysihtml5-dialog-action="save">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel">Cancel</a>
+      <a data-wysihtml-dialog-action="save">OK</a>&nbsp;<a data-wysihtml-dialog-action="cancel">Cancel</a>
     </div>
     
-    <div data-wysihtml5-dialog="insertImage" style="display: none;">
+    <div data-wysihtml-dialog="insertImage" style="display: none;">
       <label>
         Image:
-        <input data-wysihtml5-dialog-field="src" value="http://">
+        <input data-wysihtml-dialog-field="src" value="http://">
       </label>
       <label>
         Align:
-        <select data-wysihtml5-dialog-field="className">
+        <select data-wysihtml-dialog-field="className">
           <option value="">default</option>
           <option value="wysiwyg-float-left">left</option>
           <option value="wysiwyg-float-right">right</option>
         </select>
       </label>
-      <a data-wysihtml5-dialog-action="save">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel">Cancel</a>
+      <a data-wysihtml-dialog-action="save">OK</a>&nbsp;<a data-wysihtml-dialog-action="cancel">Cancel</a>
     </div>
     
   </div>
+  <br>
   <textarea class="editable" placeholder="Enter text ..."></textarea>
   <br><input type="reset" value="Reset form!">
 </form>
 
-<br/><br>asdasdasd:<br/>
+<br/><br><h2>Example of editor without iframe wrapper</h2><br/>
 <form class="ewrapper">
   <div class="toolbar" style="display: none;">
-    <a data-wysihtml5-command="bold" title="CTRL+B">bold</a> |
-    <a data-wysihtml5-command="italic" title="CTRL+I">italic</a> |
-    <a data-wysihtml5-command="createLink">link</a> |
-    <a data-wysihtml5-command="removeLink"><s>link</s></a> |
-    <a data-wysihtml5-command="insertImage">insert image</a> |
-    <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h1">h1</a> |
-    <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h2">h2</a> |
-    <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-blank-value="true">plaintext</a> |
-    <a data-wysihtml5-command="insertUnorderedList">insertUnorderedList</a> |
-    <a data-wysihtml5-command="insertOrderedList">insertOrderedList</a> |
-    <a data-wysihtml5-command="foreColor" data-wysihtml5-command-value="red">red</a> |
-    <a data-wysihtml5-command="foreColor" data-wysihtml5-command-value="green">green</a> |
-    <a data-wysihtml5-command="foreColor" data-wysihtml5-command-value="blue">blue</a> |
-    <a data-wysihtml5-command="undo">undo</a> |
-    <a data-wysihtml5-command="redo">redo</a> |
-    <a data-wysihtml5-command="insertSpeech">speech</a>
-    <a data-wysihtml5-action="change_view">switch to html view</a>
+    <a data-wysihtml-command="bold" title="CTRL+B">bold</a> |
+    <a data-wysihtml-command="italic" title="CTRL+I">italic</a> |
+    <a data-wysihtml-command="createLink">link</a> |
+    <a data-wysihtml-command="removeLink"><s>link</s></a> |
+    <a data-wysihtml-command="insertImage">insert image</a> |
+    <a data-wysihtml-command="formatBlock" data-wysihtml-command-value="h1">h1</a> |
+    <a data-wysihtml-command="formatBlock" data-wysihtml-command-value="h2">h2</a> |
+    <a data-wysihtml-command="formatBlock" data-wysihtml-command-blank-value="true">plaintext</a> |
+    <a data-wysihtml-command="insertUnorderedList">insertUnorderedList</a> |
+    <a data-wysihtml-command="insertOrderedList">insertOrderedList</a> |
+    <a data-wysihtml-command="foreColor" data-wysihtml-command-value="red">red</a> |
+    <a data-wysihtml-command="foreColor" data-wysihtml-command-value="green">green</a> |
+    <a data-wysihtml-command="foreColor" data-wysihtml-command-value="blue">blue</a> |
+    <a data-wysihtml-command="undo">undo</a> |
+    <a data-wysihtml-command="redo">redo</a> |
+    <a data-wysihtml-command="insertSpeech">speech</a>
+    <a data-wysihtml-action="change_view">switch to html view</a>
     
-    <div data-wysihtml5-dialog="createLink" style="display: none;">
+    <div data-wysihtml-dialog="createLink" style="display: none;">
       <label>
         Link:
-        <input data-wysihtml5-dialog-field="href" value="http://">
+        <input data-wysihtml-dialog-field="href" value="http://">
       </label>
-      <a data-wysihtml5-dialog-action="save">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel">Cancel</a>
+      <a data-wysihtml-dialog-action="save">OK</a>&nbsp;<a data-wysihtml-dialog-action="cancel">Cancel</a>
     </div>
     
-    <div data-wysihtml5-dialog="insertImage" style="display: none;">
+    <div data-wysihtml-dialog="insertImage" style="display: none;">
       <label>
         Image:
-        <input data-wysihtml5-dialog-field="src" value="http://">
+        <input data-wysihtml-dialog-field="src" value="http://">
       </label>
       <label>
         Align:
-        <select data-wysihtml5-dialog-field="className">
+        <select data-wysihtml-dialog-field="className">
           <option value="">default</option>
           <option value="wysiwyg-float-left">left</option>
           <option value="wysiwyg-float-right">right</option>
         </select>
       </label>
-      <a data-wysihtml5-dialog-action="save">OK</a>&nbsp;<a data-wysihtml5-dialog-action="cancel">Cancel</a>
+      <a data-wysihtml-dialog-action="save">OK</a>&nbsp;<a data-wysihtml-dialog-action="cancel">Cancel</a>
     </div>
     
   </div>
-  <textarea class="editable" placeholder="Enter text ..."></textarea>
+  <br>
+  <div class="editable" data-placeholder="Enter text ..."></div>
   <br><input type="reset" value="Reset form!">
 </form>
 
 <h2>Events:</h2>
 <div id="log"></div>
 
-<small>powered by <a href="https://github.com/Voog/wysihtml" target="_blank">wysihtml5</a>.</small>
+<small>powered by <a href="https://github.com/Voog/wysihtml" target="_blank">wysihtml</a>.</small>
 
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
 
+<script src="../dist/wysihtml.js"></script>
+<script src="../dist/wysihtml.all-commands.js"></script>
+<script src="../dist/wysihtml.table_editing.js"></script>
+<script src="../dist/wysihtml.toolbar.js"></script>
+
 <script src="../parser_rules/advanced_unwrap.js"></script>
-<script src="../dist/wysihtml-toolbar.min.js"></script>
+
 <script>
 var editors = [];
  
   $('.ewrapper').each(function(idx, wrapper) {
-    var e = new wysihtml5.Editor($(wrapper).find('.editable').get(0), {
+    var e = new wysihtml.Editor($(wrapper).find('.editable').get(0), {
       toolbar:        $(wrapper).find('.toolbar').get(0),
-      parserRules:    wysihtml5ParserRules,
+      parserRules:    wysihtmlParserRules,
       stylesheets:  "css/stylesheet.css"
       //showToolbarAfterInit: false
     });
     editors.push(e);
   });
   
-  
-  /*
-  var editor = new wysihtml5.Editor("textarea", {
-    toolbar:        "toolbar",
-    stylesheets:    "css/stylesheet.css",
-    parserRules:    wysihtml5ParserRules
-  });
-  
-  var log = document.getElementById("log");
-  
-  editor
-    .on("load", function() {
-      log.innerHTML += "<div>load</div>";
-    })
-    .on("focus", function() {
-      log.innerHTML += "<div>focus</div>";
-    })
-    .on("blur", function() {
-      log.innerHTML += "<div>blur</div>";
-    })
-    .on("change", function() {
-      log.innerHTML += "<div>change</div>";
-    })
-    .on("paste", function() {
-      log.innerHTML += "<div>paste</div>";
-    })
-    .on("newword:composer", function() {
-      log.innerHTML += "<div>newword:composer</div>";
-    })
-    .on("undo:composer", function() {
-      log.innerHTML += "<div>undo:composer</div>";
-    })
-    .on("redo:composer", function() {
-      log.innerHTML += "<div>redo:composer</div>";
-    });*/
 </script>

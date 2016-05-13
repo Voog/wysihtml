@@ -10,7 +10,7 @@ if (wysihtml.browser.supportsCommand(document, "insertHTML")) {
 
     teardown: function() {
       var leftover;
-      while (leftover = document.querySelector("iframe.wysihtml5-sandbox, input[name='_wysihtml5_mode']")) {
+      while (leftover = document.querySelector("iframe.wysihtml-sandbox, input[name='_wysihtml_mode']")) {
         leftover.parentNode.removeChild(leftover);
       }
       document.body.removeChild(this.textareaElement);

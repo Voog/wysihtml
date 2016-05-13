@@ -1,4 +1,4 @@
-module("wysihtml5 - Incompatible", {
+module("wysihtml - Incompatible", {
   setup: function() {
     this.originalSupportCheck = wysihtml.browser.supported;
     wysihtml.browser.supported = function() { return false; };
@@ -26,7 +26,7 @@ asyncTest("Basic test", function() {
   var editor = new wysihtml.Editor(this.textareaElement);
   editor.on("load", function() {
     ok(true, "'load' event correctly triggered");
-    ok(!wysihtml.dom.hasClass(document.body, "wysihtml5-supported"), "<body> didn't receive the 'wysihtml5-supported' class");
+    ok(!wysihtml.dom.hasClass(document.body, "wysihtml-supported"), "<body> didn't receive the 'wysihtml-supported' class");
     ok(!editor.isCompatible(), "isCompatible returns false when rich text editing is not correctly supported in the current browser");
     equal(that.textareaElement.style.display, "", "Textarea is visible");
     ok(!editor.composer, "Composer not initialized");

@@ -1,5 +1,5 @@
 /**
- * Undo Manager for wysihtml5
+ * Undo Manager for wysihtml
  * slightly inspired by http://rniwa.com/editing/undomanager.html#the-undomanager-interface
  */
 (function(wysihtml) {
@@ -8,15 +8,15 @@
       BACKSPACE_KEY       = 8,
       DELETE_KEY          = 46,
       MAX_HISTORY_ENTRIES = 25,
-      DATA_ATTR_NODE      = "data-wysihtml5-selection-node",
-      DATA_ATTR_OFFSET    = "data-wysihtml5-selection-offset",
-      UNDO_HTML           = '<span id="_wysihtml5-undo" class="_wysihtml5-temp">' + wysihtml.INVISIBLE_SPACE + '</span>',
-      REDO_HTML           = '<span id="_wysihtml5-redo" class="_wysihtml5-temp">' + wysihtml.INVISIBLE_SPACE + '</span>',
+      DATA_ATTR_NODE      = "data-wysihtml-selection-node",
+      DATA_ATTR_OFFSET    = "data-wysihtml-selection-offset",
+      UNDO_HTML           = '<span id="_wysihtml-undo" class="_wysihtml-temp">' + wysihtml.INVISIBLE_SPACE + '</span>',
+      REDO_HTML           = '<span id="_wysihtml-redo" class="_wysihtml-temp">' + wysihtml.INVISIBLE_SPACE + '</span>',
       dom                 = wysihtml.dom;
 
   function cleanTempElements(doc) {
     var tempElement;
-    while (tempElement = doc.querySelector("._wysihtml5-temp")) {
+    while (tempElement = doc.querySelector("._wysihtml-temp")) {
       tempElement.parentNode.removeChild(tempElement);
     }
   }

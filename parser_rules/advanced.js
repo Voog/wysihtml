@@ -32,10 +32,10 @@
  *    ... becomes ...
  *    <div class="wysiwyg-text-align-center">hello</div>
  */
-var wysihtml5ParserRules = {
+var wysihtmlParserRules = {
     /**
      * CSS Class white-list
-     * Following CSS classes won't be removed when parsed by the wysihtml5 HTML parser
+     * Following CSS classes won't be removed when parsed by the wysihtml HTML parser
      */
     "classes": {
         "wysiwyg-clear-both": 1,
@@ -79,7 +79,7 @@ var wysihtml5ParserRules = {
      * The following options are available:
      *
      *    - add_class:        converts and deletes the given HTML4 attribute (align, clear, ...) via the given method to a css class
-     *                        The following methods are implemented in wysihtml5.dom.parse:
+     *                        The following methods are implemented in wysihtml.dom.parse:
      *                          - align_text:  converts align attribute values (right/left/center/justify) to their corresponding css class "wysiwyg-text-align-*")
      *                            <p align="center">foo</p> ... becomes ... <p class="wysiwyg-text-align-center">foo</p>
      *                          - clear_br:    converts clear attribute values left/right/all/both to their corresponding css class "wysiwyg-clear-*"
@@ -87,7 +87,7 @@ var wysihtml5ParserRules = {
      *                          - align_img:    converts align attribute values (right/left) on <img> to their corresponding css class "wysiwyg-float-*"
      *
      *    - add_style:        converts and deletes the given HTML4 attribute (align) via the given method to a css style
-     *                        The following methods are implemented in wysihtml5.dom.parse:
+     *                        The following methods are implemented in wysihtml.dom.parse:
      *                          - align_text:  converts align attribute values (right/left/center) to their corresponding css style)
      *                            <p align="center">foo</p> ... becomes ... <p style="text-align:center">foo</p>
      *

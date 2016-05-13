@@ -188,7 +188,7 @@
         if (this.textarea.element.form) {
           var hiddenField = document.createElement("input");
           hiddenField.type   = "hidden";
-          hiddenField.name   = "_wysihtml5_mode";
+          hiddenField.name   = "_wysihtml_mode";
           hiddenField.value  = 1;
           dom.insert(hiddenField).after(this.textarea.element);
         }

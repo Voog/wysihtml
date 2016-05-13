@@ -4,7 +4,7 @@ if (wysihtml.browser.supported()) {
       this.refNode = document.createElement("div");
       this.refNode.style.fontSize = "24px";
       this.refNode.style.color = "rgba(0,0,0)";
-      this.uneditableClass = "wysihtml5-uneditable-container";
+      this.uneditableClass = "wysihtml-uneditable-container";
     },
 
     teardown: function() {

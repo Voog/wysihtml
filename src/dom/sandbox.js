@@ -56,7 +56,7 @@
       this.callback = readyCallback || wysihtml.EMPTY_FUNCTION;
       this.config   = wysihtml.lang.object({}).merge(config).get();
       if (!this.config.className) {
-        this.config.className = "wysihtml5-sandbox";
+        this.config.className = "wysihtml-sandbox";
       }
       this.editableArea   = this._createIframe();
     },

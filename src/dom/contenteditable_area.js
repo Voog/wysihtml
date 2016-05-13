@@ -17,7 +17,7 @@
         this.callback = readyCallback || wysihtml.EMPTY_FUNCTION;
         this.config   = wysihtml.lang.object({}).merge(config).get();
         if (!this.config.className) {
-          this.config.className = "wysihtml5-sandbox";
+          this.config.className = "wysihtml-sandbox";
         }
         if (contentEditable) {
             this.element = this._bindElement(contentEditable);
@@ -40,7 +40,7 @@
 
       // initiates an allready existent contenteditable
       _bindElement: function(contentEditable) {
-        contentEditable.className = contentEditable.className ? contentEditable.className + " wysihtml5-sandbox" : "wysihtml5-sandbox";
+        contentEditable.className = contentEditable.className ? contentEditable.className + " wysihtml-sandbox" : "wysihtml-sandbox";
         this._loadElement(contentEditable, true);
         return contentEditable;
       },

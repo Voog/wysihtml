@@ -42,7 +42,7 @@
         "html                 { height: 100%; }",
         "body                 { height: 100%; padding: 1px 0 0 0; margin: -1px 0 0 0; }",
         "body > p:first-child { margin-top: 0; }",
-        "._wysihtml5-temp     { display: none; }",
+        "._wysihtml-temp     { display: none; }",
         wysihtml.browser.isGecko ?
           "body.placeholder { color: graytext !important; }" :
           "body.placeholder { color: #a9a9a9 !important; }",

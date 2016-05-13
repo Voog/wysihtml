@@ -13,7 +13,7 @@
       DOCUMENT_IDENTIFIER = 1;
 
   function _getDocumentIdentifier(doc) {
-    return doc._wysihtml5_identifier || (doc._wysihtml5_identifier = DOCUMENT_IDENTIFIER++);
+    return doc._wysihtml_identifier || (doc._wysihtml_identifier = DOCUMENT_IDENTIFIER++);
   }
 
   wysihtml.dom.hasElementWithClassName = function(doc, className) {

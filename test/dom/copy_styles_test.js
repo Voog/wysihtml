@@ -5,7 +5,7 @@ module("wysihtml.dom.copyStyles", {
     this.anotherDiv = document.createElement("div");
     this.iframe     = document.createElement("iframe");
     
-    this.span.id = "wysihtml5-test-span";
+    this.span.id = "wysihtml-test-span";
     this.iframe.id = "javascript:'<html></html>'";
     
     document.body.appendChild(this.div);
@@ -96,7 +96,7 @@ asyncTest("Test copying styles from one element to another element which is in a
 
 test("Test copying styles that were set via style element", function() {
   wysihtml.dom
-    .insertCSS(["span#wysihtml5-test-span { font-size: 16px; }"])
+    .insertCSS(["span#wysihtml-test-span { font-size: 16px; }"])
     .into(document);
   
   wysihtml.dom

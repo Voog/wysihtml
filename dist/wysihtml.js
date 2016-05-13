@@ -20,7 +20,7 @@ var wysihtml = {
   lang:       {},
   selection:  {},
   views:      {},
-  
+
   editorExtenders: [],
   extendEditor: function(extender) {
     this.editorExtenders.push(extender);
@@ -48,100 +48,7 @@ wysihtml.polyfills = function(win, doc) {
 
   // TODO: in future try to replace most inline compability checks with polyfills for code readability 
 
-  // IE8 SUPPORT BLOCK
-  // You can compile without all this if IE8 is not needed
-
-  // String trim for ie8
-  if (!String.prototype.trim) {
-    (function() {
-      // Make sure we trim BOM and NBSP
-      var rtrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g;
-      String.prototype.trim = function() {
-        return this.replace(rtrim, '');
-      };
-    })();
-  }
-
-  // addEventListener, removeEventListener
-  (function() {
-    var s_add = 'addEventListener',
-        s_rem = 'removeEventListener';
-    if( doc[s_add] ) return;
-    win.Element.prototype[ s_add ] = win[ s_add ] = doc[ s_add ] = function( on, fn, self ) {
-      return (self = this).attachEvent( 'on' + on, function(e){
-        var e = e || win.event;
-        e.target = e.target || e.srcElement;
-        e.preventDefault  = e.preventDefault  || function(){e.returnValue = false};
-        e.stopPropagation = e.stopPropagation || function(){e.cancelBubble = true};
-        e.which = e.button ? ( e.button === 2 ? 3 : e.button === 4 ? 2 : e.button ) : e.keyCode;
-        fn.call(self, e);
-      });
-    };
-    win.Element.prototype[ s_rem ] = win[ s_rem ] = doc[ s_rem ] = function( on, fn ) {
-      return this.detachEvent( 'on' + on, fn );
-    };
-  })();
-
-  // element.textContent polyfill.
-  if (Object.defineProperty && Object.getOwnPropertyDescriptor && Object.getOwnPropertyDescriptor(win.Element.prototype, "textContent") && !Object.getOwnPropertyDescriptor(win.Element.prototype, "textContent").get) {
-    (function() {
-      var innerText = Object.getOwnPropertyDescriptor(win.Element.prototype, "innerText");
-      Object.defineProperty(win.Element.prototype, "textContent",
-        {
-          get: function() {
-            return innerText.get.call(this);
-          },
-          set: function(s) {
-            return innerText.set.call(this, s);
-          }
-        }
-      );
-    })();
-  }
-
-  // isArray polyfill for ie8
-  if(!Array.isArray) {
-    Array.isArray = function(arg) {
-      return Object.prototype.toString.call(arg) === '[object Array]';
-    };
-  }
-
-  // Array indexOf for ie8
-  if (!Array.prototype.indexOf) {
-    Array.prototype.indexOf = function(a,f) {
-      for(var c=this.length,r=-1,d=f>>>0; ~(c-d); r=this[--c]===a?c:r);
-      return r;
-    };
-  }
-
-  // Function.prototype.bind()
-  // TODO: clean the code from variable 'that' as it can be confusing
-  if (!Function.prototype.bind) {
-    Function.prototype.bind = function(oThis) {
-      if (typeof this !== 'function') {
-        // closest thing possible to the ECMAScript 5
-        // internal IsCallable function
-        throw new TypeError('Function.prototype.bind - what is trying to be bound is not callable');
-      }
-
-      var aArgs   = Array.prototype.slice.call(arguments, 1),
-          fToBind = this,
-          fNOP    = function() {},
-          fBound  = function() {
-            return fToBind.apply(this instanceof fNOP && oThis
-                   ? this
-                   : oThis,
-                   aArgs.concat(Array.prototype.slice.call(arguments)));
-          };
-
-      fNOP.prototype = this.prototype;
-      fBound.prototype = new fNOP();
-
-      return fBound;
-    };
-  }
-
-  // closest and matches polyfill
+  // closest, matches, and remove polyfill
   // https://github.com/jonathantneal/closest
   (function (ELEMENT) {
     ELEMENT.matches = ELEMENT.matches || ELEMENT.mozMatchesSelector || ELEMENT.msMatchesSelector || ELEMENT.oMatchesSelector || ELEMENT.webkitMatchesSelector || function matches(selector) {
@@ -170,245 +77,86 @@ wysihtml.polyfills = function(win, doc) {
 
       return element;
     };
-  }(Element.prototype));
 
-  // Element.classList for ie8-9 (toggle all IE)
-  // source http://purl.eligrey.com/github/classList.js/blob/master/classList.js
+    ELEMENT.remove = ELEMENT.remove || function remove() {
+      if (this.parentNode) {
+        this.parentNode.removeChild(this);
+      }
+    };
 
-  if ("document" in win) {
-    // Full polyfill for browsers with no classList support
-    if (!("classList" in doc.createElement("_"))) {
-      (function(view) {
-        "use strict";
-        if (!('Element' in view)) return;
+  }(win.Element.prototype));
 
-        var
-          classListProp = "classList",
-          protoProp = "prototype",
-          elemCtrProto = view.Element[protoProp],
-          objCtr = Object,
-          strTrim = String[protoProp].trim || function() {
-            return this.replace(/^\s+|\s+$/g, "");
-          },
-          arrIndexOf = Array[protoProp].indexOf || function(item) {
-            var
-              i = 0,
-              len = this.length;
-            for (; i < len; i++) {
-              if (i in this && this[i] === item) {
-                return i;
-              }
-            }
-            return -1;
-          }, // Vendors: please allow content code to instantiate DOMExceptions
-          DOMEx = function(type, message) {
-            this.name = type;
-            this.code = DOMException[type];
-            this.message = message;
-          },
-          checkTokenAndGetIndex = function(classList, token) {
-            if (token === "") {
-              throw new DOMEx(
-                "SYNTAX_ERR", "An invalid or illegal string was specified"
-              );
-            }
-            if (/\s/.test(token)) {
-              throw new DOMEx(
-                "INVALID_CHARACTER_ERR", "String contains an invalid character"
-              );
-            }
-            return arrIndexOf.call(classList, token);
-          },
-          ClassList = function(elem) {
-            var
-              trimmedClasses = strTrim.call(elem.getAttribute("class") || ""),
-              classes = trimmedClasses ? trimmedClasses.split(/\s+/) : [],
-              i = 0,
-              len = classes.length;
-            for (; i < len; i++) {
-              this.push(classes[i]);
-            }
-            this._updateClassName = function() {
-              elem.setAttribute("class", this.toString());
-            };
-          },
-          classListProto = ClassList[protoProp] = [],
-          classListGetter = function() {
-            return new ClassList(this);
+  if (!('classList' in doc.documentElement) && win.Object.defineProperty && typeof HTMLElement !== 'undefined') {
+    win.Object.defineProperty(HTMLElement.prototype, 'classList', {
+      get: function() {
+        var self = this;
+        function update(fn) {
+          return function(value) {
+            var classes = self.className.split(/\s+/),
+                index = classes.indexOf(value);
+
+            fn(classes, index, value);
+            self.className = classes.join(' ');
           };
-        // Most DOMException implementations don't allow calling DOMException's toString()
-        // on non-DOMExceptions. Error's toString() is sufficient here.
-        DOMEx[protoProp] = Error[protoProp];
-        classListProto.item = function(i) {
-          return this[i] || null;
-        };
-        classListProto.contains = function(token) {
-          token += "";
-          return checkTokenAndGetIndex(this, token) !== -1;
-        };
-        classListProto.add = function() {
-          var
-            tokens = arguments,
-            i = 0,
-            l = tokens.length,
-            token, updated = false;
-          do {
-            token = tokens[i] + "";
-            if (checkTokenAndGetIndex(this, token) === -1) {
-              this.push(token);
-              updated = true;
-            }
-          }
-          while (++i < l);
-
-          if (updated) {
-            this._updateClassName();
-          }
-        };
-        classListProto.remove = function() {
-          var
-            tokens = arguments,
-            i = 0,
-            l = tokens.length,
-            token, updated = false,
-            index;
-          do {
-            token = tokens[i] + "";
-            index = checkTokenAndGetIndex(this, token);
-            while (index !== -1) {
-              this.splice(index, 1);
-              updated = true;
-              index = checkTokenAndGetIndex(this, token);
-            }
-          }
-          while (++i < l);
-
-          if (updated) {
-            this._updateClassName();
-          }
-        };
-        classListProto.toggle = function(token, force) {
-          token += "";
-
-          var
-            result = this.contains(token),
-            method = result ?
-            force !== true && "remove" :
-            force !== false && "add";
-
-          if (method) {
-            this[method](token);
-          }
-
-          if (force === true || force === false) {
-            return force;
-          } else {
-            return !result;
-          }
-        };
-        classListProto.toString = function() {
-          return this.join(" ");
-        };
-
-        if (objCtr.defineProperty) {
-          var classListPropDesc = {
-            get: classListGetter,
-            enumerable: true,
-            configurable: true
-          };
-          try {
-            objCtr.defineProperty(elemCtrProto, classListProp, classListPropDesc);
-          } catch (ex) { // IE 8 doesn't support enumerable:true
-            if (ex.number === -0x7FF5EC54) {
-              classListPropDesc.enumerable = false;
-              objCtr.defineProperty(elemCtrProto, classListProp, classListPropDesc);
-            }
-          }
-        } else if (objCtr[protoProp].__defineGetter__) {
-          elemCtrProto.__defineGetter__(classListProp, classListGetter);
         }
 
-      }(win));
+        var ret = {
+            add: update(function(classes, index, value) {
+              ~index || classes.push(value);
+            }),
 
-    } else if ("DOMTokenList" in win) {
-      // There is full or partial native classList support, so just check if we need
-      // to normalize the add/remove and toggle APIs.
-      // DOMTokenList is expected to exist (removes conflicts with multiple polyfills present on site)
+            remove: update(function(classes, index) {
+              ~index && classes.splice(index, 1);
+            }),
 
-      (function() {
-        "use strict";
+            toggle: update(function(classes, index, value) {
+              ~index ? classes.splice(index, 1) : classes.push(value);
+            }),
 
-        var testElement = doc.createElement("_");
+            contains: function(value) {
+              return !!~self.className.split(/\s+/).indexOf(value);
+            },
 
-        testElement.classList.add("c1", "c2");
-
-        // Polyfill for IE 10/11 and Firefox <26, where classList.add and
-        // classList.remove exist but support only one argument at a time.
-        if (!testElement.classList.contains("c2")) {
-          var createMethod = function(method) {
-            var original = win.DOMTokenList.prototype[method];
-
-            win.DOMTokenList.prototype[method] = function(token) {
-              var i, len = arguments.length;
-
-              for (i = 0; i < len; i++) {
-                token = arguments[i];
-                original.call(this, token);
-              }
-            };
-          };
-          createMethod('add');
-          createMethod('remove');
-        }
-
-        testElement.classList.toggle("c3", false);
-
-        // Polyfill for IE 10 and Firefox <24, where classList.toggle does not
-        // support the second argument.
-        if (testElement.classList.contains("c3")) {
-          var _toggle = win.DOMTokenList.prototype.toggle;
-
-          win.DOMTokenList.prototype.toggle = function(token, force) {
-            if (1 in arguments && !this.contains(token) === !force) {
-              return force;
-            } else {
-              return _toggle.call(this, token);
+            item: function(i) {
+              return self.className.split(/\s+/)[i] || null;
             }
           };
 
-        }
+        win.Object.defineProperty(ret, 'length', {
+          get: function() {
+            return self.className.split(/\s+/).length;
+          }
+        });
 
-        testElement = null;
-      }());
-
-    }
-
+        return ret;
+      }
+    });
   }
 
   // Safary has a bug of not restoring selection after node.normalize correctly.
   // Detects the misbegaviour and patches it
   var normalizeHasCaretError = function() {
-    if ("createRange" in document && "getSelection" in window) {
-      var e = document.createElement('div'),
-          t1 = document.createTextNode('a'),
-          t2 = document.createTextNode('a'),
-          t3 = document.createTextNode('a'),
-          r = document.createRange(),
+    if ("createRange" in doc && "getSelection" in win) {
+      var e = doc.createElement('div'),
+          t1 = doc.createTextNode('a'),
+          t2 = doc.createTextNode('a'),
+          t3 = doc.createTextNode('a'),
+          r = doc.createRange(),
           s, ret;
 
       e.setAttribute('contenteditable', 'true');
       e.appendChild(t1);
       e.appendChild(t2);
       e.appendChild(t3);
-      document.body.appendChild(e);
+      doc.body.appendChild(e);
       r.setStart(t2, 1);
       r.setEnd(t2, 1);
 
-      s = window.getSelection();
+      s = win.getSelection();
       s.removeAllRanges();
       s.addRange(r);
       e.normalize();
-      s = window.getSelection();
+      s = win.getSelection();
 
       ret = (e.childNodes.length !== 1 || s.anchorNode !== e.firstChild || s.anchorOffset !== 2);
       e.parentNode.removeChild(e);
@@ -444,7 +192,7 @@ wysihtml.polyfills = function(win, doc) {
   };
 
   var normalizeFix = function() {
-    var f = Node.prototype.normalize;
+    var f = win.Node.prototype.normalize;
     var nf = function() {
       var texts = getTextNodes(this),
           s = this.ownerDocument.defaultView.getSelection(),
@@ -470,7 +218,7 @@ wysihtml.polyfills = function(win, doc) {
         aelement = undefined;
       }
 
-      if ((anode === fnode && foffset < aoffset) || (anode !== fnode && (anode.compareDocumentPosition(fnode) & Node.DOCUMENT_POSITION_PRECEDING) && !(anode.compareDocumentPosition(fnode) & Node.DOCUMENT_POSITION_CONTAINS))) {
+      if ((anode === fnode && foffset < aoffset) || (anode !== fnode && (anode.compareDocumentPosition(fnode) & win.Node.DOCUMENT_POSITION_PRECEDING) && !(anode.compareDocumentPosition(fnode) & win.Node.DOCUMENT_POSITION_CONTAINS))) {
         fnode = [anode, anode = fnode][0];
         foffset = [aoffset, aoffset = foffset][0];
       }
@@ -509,18 +257,18 @@ wysihtml.polyfills = function(win, doc) {
         s.addRange(r);
       }
     };
-    Node.prototype.normalize = nf;
+    win.Node.prototype.normalize = nf;
   };
   
   var F = function() {
-    window.removeEventListener("load", F);
-    if ("Node" in window && "normalize" in Node.prototype && normalizeHasCaretError()) {
+    win.removeEventListener("load", F);
+    if ("Node" in win && "normalize" in win.Node.prototype && normalizeHasCaretError()) {
       normalizeFix();
     }
   };
   
   if (doc.readyState !== "complete") {
-    window.addEventListener("load", F);
+    win.addEventListener("load", F);
   } else {
     F();
   }
@@ -537,7 +285,7 @@ wysihtml.polyfills = function(win, doc) {
 
   // Polyfills CustomEvent object for IE9 and up
   (function() {
-    if (!customEventSupported && "CustomEvent" in window) {
+    if (!customEventSupported && "CustomEvent" in win) {
       function CustomEvent(event, params) {
         params = params || {bubbles: false, cancelable: false, detail: undefined};
         var evt = doc.createEvent('CustomEvent');
@@ -7539,9 +7287,9 @@ wysihtml.lang.object = function(obj) {
    * for the given document object
    */
   function _getTempElement(context) {
-    var tempElement = context._wysihtml5_tempElement;
+    var tempElement = context._wysihtml_tempElement;
     if (!tempElement) {
-      tempElement = context._wysihtml5_tempElement = context.createElement("div");
+      tempElement = context._wysihtml_tempElement = context.createElement("div");
     }
     return tempElement;
   }
@@ -7752,7 +7500,7 @@ wysihtml.dom.contains = (function() {
         this.callback = readyCallback || wysihtml.EMPTY_FUNCTION;
         this.config   = wysihtml.lang.object({}).merge(config).get();
         if (!this.config.className) {
-          this.config.className = "wysihtml5-sandbox";
+          this.config.className = "wysihtml-sandbox";
         }
         if (contentEditable) {
             this.element = this._bindElement(contentEditable);
@@ -7775,7 +7523,7 @@ wysihtml.dom.contains = (function() {
 
       // initiates an allready existent contenteditable
       _bindElement: function(contentEditable) {
-        contentEditable.className = contentEditable.className ? contentEditable.className + " wysihtml5-sandbox" : "wysihtml5-sandbox";
+        contentEditable.className = contentEditable.className ? contentEditable.className + " wysihtml-sandbox" : "wysihtml-sandbox";
         this._loadElement(contentEditable, true);
         return contentEditable;
       },
@@ -8443,13 +8191,13 @@ wysihtml.dom.getAsDom = (function() {
    * Make sure IE supports HTML5 tags, which is accomplished by simply creating one instance of each element
    */
   var _ensureHTML5Compatibility = function(context) {
-    if (context._wysihtml5_supportsHTML5Tags) {
+    if (context._wysihtml_supportsHTML5Tags) {
       return;
     }
     for (var i=0, length=HTML5_ELEMENTS.length; i<length; i++) {
       context.createElement(HTML5_ELEMENTS[i]);
     }
-    context._wysihtml5_supportsHTML5Tags = true;
+    context._wysihtml_supportsHTML5Tags = true;
   };
 
 
@@ -8733,7 +8481,7 @@ wysihtml.dom.getTextNodes = function(node, ingoreEmpty){
       DOCUMENT_IDENTIFIER = 1;
 
   function _getDocumentIdentifier(doc) {
-    return doc._wysihtml5_identifier || (doc._wysihtml5_identifier = DOCUMENT_IDENTIFIER++);
+    return doc._wysihtml_identifier || (doc._wysihtml_identifier = DOCUMENT_IDENTIFIER++);
   }
 
   wysihtml.dom.hasElementWithClassName = function(doc, className) {
@@ -8768,7 +8516,7 @@ wysihtml.dom.hasElementWithTagName = (function() {
       DOCUMENT_IDENTIFIER = 1;
 
   function _getDocumentIdentifier(doc) {
-    return doc._wysihtml5_identifier || (doc._wysihtml5_identifier = DOCUMENT_IDENTIFIER++);
+    return doc._wysihtml_identifier || (doc._wysihtml_identifier = DOCUMENT_IDENTIFIER++);
   }
 
   return function(doc, tagName) {
@@ -9177,7 +8925,7 @@ wysihtml.dom.parse = function(elementOrHtml_current, config_current) {
     if (cleanUp &&
         newNode.nodeName.toLowerCase() === DEFAULT_NODE_NAME &&
         (!newNode.childNodes.length ||
-         ((/^\s*$/gi).test(newNode.innerHTML) && (clearInternals || (oldNode.className !== "_wysihtml5-temp-placeholder" && oldNode.className !== "rangySelectionBoundary"))) ||
+         ((/^\s*$/gi).test(newNode.innerHTML) && (clearInternals || (oldNode.className !== "_wysihtml-temp-placeholder" && oldNode.className !== "rangySelectionBoundary"))) ||
          !newNode.attributes.length)
         ) {
       fragment = newNode.ownerDocument.createDocumentFragment();
@@ -9226,12 +8974,12 @@ wysihtml.dom.parse = function(elementOrHtml_current, config_current) {
      * We already parsed that element
      * ignore it! (yes, this sometimes happens in IE8 when the html is invalid)
      */
-    if (oldNode._wysihtml5) {
+    if (oldNode._wysihtml) {
       return null;
     }
-    oldNode._wysihtml5 = 1;
+    oldNode._wysihtml = 1;
 
-    if (oldNode.className === "wysihtml5-temp") {
+    if (oldNode.className === "wysihtml-temp") {
       return null;
     }
 
@@ -9301,7 +9049,7 @@ wysihtml.dom.parse = function(elementOrHtml_current, config_current) {
     var definition, type;
 
     // do not interfere with placeholder span or pasting caret position is not maintained
-    if (oldNode.nodeName === "SPAN" && !clearInternals && (oldNode.className === "_wysihtml5-temp-placeholder" || oldNode.className === "rangySelectionBoundary")) {
+    if (oldNode.nodeName === "SPAN" && !clearInternals && (oldNode.className === "_wysihtml-temp-placeholder" || oldNode.className === "rangySelectionBoundary")) {
       return true;
     }
 
@@ -9552,9 +9300,9 @@ wysihtml.dom.parse = function(elementOrHtml_current, config_current) {
         }
       }
     } else {
-      // make sure that wysihtml5 temp class doesn't get stripped out
+      // make sure that wysihtml temp class doesn't get stripped out
       if (!clearInternals) {
-        allowedClasses["_wysihtml5-temp-placeholder"] = 1;
+        allowedClasses["_wysihtml-temp-placeholder"] = 1;
         allowedClasses["_rangySelectionBoundary"] = 1;
         allowedClasses["wysiwyg-tmp-selected-cell"] = 1;
       }
@@ -10090,7 +9838,7 @@ wysihtml.dom.replaceWithChildNodes = function(node) {
       this.callback = readyCallback || wysihtml.EMPTY_FUNCTION;
       this.config   = wysihtml.lang.object({}).merge(config).get();
       if (!this.config.className) {
-        this.config.className = "wysihtml5-sandbox";
+        this.config.className = "wysihtml-sandbox";
       }
       this.editableArea   = this._createIframe();
     },
@@ -10343,7 +10091,7 @@ wysihtml.dom.setStyles = function(styles) {
  */
 (function(dom) {
   dom.simulatePlaceholder = function(editor, view, placeholderText, placeholderClassName) {
-    var CLASS_NAME = placeholderClassName || "wysihtml5-placeholder",
+    var CLASS_NAME = placeholderClassName || "wysihtml-placeholder",
         unset = function() {
           var composerIsVisible   = view.element.offsetWidth > 0 && view.element.offsetHeight > 0;
           if (view.hasPlaceholderSet()) {
@@ -10569,7 +10317,7 @@ wysihtml.quirks.ensureProperClearing = (function() {
  *    wysihtml.quirks.redraw(document.body);
  */
 (function(wysihtml) {
-  var CLASS_NAME = "wysihtml5-quirks-redraw";
+  var CLASS_NAME = "wysihtml-quirks-redraw";
 
   wysihtml.quirks.redraw = function(element) {
     wysihtml.dom.addClass(element, CLASS_NAME);
@@ -10807,7 +10555,7 @@ wysihtml.quirks.ensureProperClearing = (function() {
     };
 
     blankNode.appendChild(container.ownerDocument.createTextNode(wysihtml.INVISIBLE_SPACE));
-    blankNode.className = '_wysihtml5-temp-caret-fix';
+    blankNode.className = '_wysihtml-temp-caret-fix';
     blankNode.style.display = 'block';
     blankNode.style.minWidth = '1px';
     blankNode.style.height = '0px';
@@ -10940,7 +10688,7 @@ wysihtml.quirks.ensureProperClearing = (function() {
             }
           };
 
-      caretPlaceholder.className = '_wysihtml5-temp-caret-fix';
+      caretPlaceholder.className = '_wysihtml-temp-caret-fix';
       caretPlaceholder.style.position = 'absolute';
       caretPlaceholder.style.display = 'block';
       caretPlaceholder.style.minWidth = '1px';
@@ -11144,7 +10892,7 @@ wysihtml.quirks.ensureProperClearing = (function() {
     },
 
     // Deletes selection contents making sure uneditables/unselectables are not partially deleted
-    // Triggers wysihtml5:uneditable:delete custom event on all deleted uneditables if customevents suppoorted
+    // Triggers wysihtml:uneditable:delete custom event on all deleted uneditables if customevents suppoorted
     deleteContents: function()  {
       var range = this.getRange();
       this.deleteRangeContents(range);
@@ -11169,7 +10917,7 @@ wysihtml.quirks.ensureProperClearing = (function() {
         }).bind(this));
         for (var i = uneditables.length; i--;) {
           try {
-            ev = new CustomEvent("wysihtml5:uneditable:delete");
+            ev = new CustomEvent("wysihtml:uneditable:delete");
             uneditables[i].dispatchEvent(ev);
           } catch (err) {}
         }
@@ -11357,7 +11105,7 @@ wysihtml.quirks.ensureProperClearing = (function() {
       }
 
       // Escape temproray helper nodes if selection in them
-      inTmpCaret = wysihtml.dom.getParentElement(startNode, { query: '._wysihtml5-temp-caret-fix' }, 1);
+      inTmpCaret = wysihtml.dom.getParentElement(startNode, { query: '._wysihtml-temp-caret-fix' }, 1);
       if (inTmpCaret) {
         startNode = inTmpCaret.parentNode;
         startOffset = Array.prototype.indexOf.call(startNode.childNodes, inTmpCaret);
@@ -11441,7 +11189,7 @@ wysihtml.quirks.ensureProperClearing = (function() {
       var body                  = this.doc.body,
           oldScrollTop          = restoreScrollPosition && body.scrollTop,
           oldScrollLeft         = restoreScrollPosition && body.scrollLeft,
-          className             = "_wysihtml5-temp-placeholder",
+          className             = "_wysihtml-temp-placeholder",
           placeholderHtml       = '<span class="' + className + '">' + wysihtml.INVISIBLE_SPACE + '</span>',
           range                 = this.getRange(true),
           caretPlaceholder,
@@ -11686,7 +11434,7 @@ wysihtml.quirks.ensureProperClearing = (function() {
       var doc           = this.doc,
           tolerance     = 5, // px
           hasScrollBars = doc.documentElement.scrollHeight > doc.documentElement.offsetHeight,
-          tempElement   = doc._wysihtml5ScrollIntoViewElement = doc._wysihtml5ScrollIntoViewElement || (function() {
+          tempElement   = doc._wysihtmlScrollIntoViewElement = doc._wysihtmlScrollIntoViewElement || (function() {
             var element = doc.createElement("span");
             // The element needs content in order to be able to calculate it's position properly
             element.innerHTML = wysihtml.INVISIBLE_SPACE;
@@ -13971,7 +13719,7 @@ wysihtml.commands.insertList = (function(wysihtml) {
     var sel = rangy.saveSelection(composer.win);
 
     // Fallback for Create list
-    var tempClassName =  "_wysihtml5-temp-" + new Date().getTime(),
+    var tempClassName =  "_wysihtml-temp-" + new Date().getTime(),
         isEmpty, list;
 
     composer.commands.exec("formatBlock", {
@@ -14177,7 +13925,7 @@ wysihtml.commands.insertList = (function(wysihtml) {
 }(wysihtml));
 
 /**
- * Undo Manager for wysihtml5
+ * Undo Manager for wysihtml
  * slightly inspired by http://rniwa.com/editing/undomanager.html#the-undomanager-interface
  */
 (function(wysihtml) {
@@ -14186,15 +13934,15 @@ wysihtml.commands.insertList = (function(wysihtml) {
       BACKSPACE_KEY       = 8,
       DELETE_KEY          = 46,
       MAX_HISTORY_ENTRIES = 25,
-      DATA_ATTR_NODE      = "data-wysihtml5-selection-node",
-      DATA_ATTR_OFFSET    = "data-wysihtml5-selection-offset",
-      UNDO_HTML           = '<span id="_wysihtml5-undo" class="_wysihtml5-temp">' + wysihtml.INVISIBLE_SPACE + '</span>',
-      REDO_HTML           = '<span id="_wysihtml5-redo" class="_wysihtml5-temp">' + wysihtml.INVISIBLE_SPACE + '</span>',
+      DATA_ATTR_NODE      = "data-wysihtml-selection-node",
+      DATA_ATTR_OFFSET    = "data-wysihtml-selection-offset",
+      UNDO_HTML           = '<span id="_wysihtml-undo" class="_wysihtml-temp">' + wysihtml.INVISIBLE_SPACE + '</span>',
+      REDO_HTML           = '<span id="_wysihtml-redo" class="_wysihtml-temp">' + wysihtml.INVISIBLE_SPACE + '</span>',
       dom                 = wysihtml.dom;
 
   function cleanTempElements(doc) {
     var tempElement;
-    while (tempElement = doc.querySelector("._wysihtml5-temp")) {
+    while (tempElement = doc.querySelector("._wysihtml-temp")) {
       tempElement.parentNode.removeChild(tempElement);
     }
   }
@@ -14637,7 +14385,7 @@ wysihtml.views.View = Base.extend(
         if (this.textarea.element.form) {
           var hiddenField = document.createElement("input");
           hiddenField.type   = "hidden";
-          hiddenField.name   = "_wysihtml5_mode";
+          hiddenField.name   = "_wysihtml_mode";
           hiddenField.value  = 1;
           dom.insert(hiddenField).after(this.textarea.element);
         }
@@ -14978,7 +14726,7 @@ wysihtml.views.View = Base.extend(
         "html                 { height: 100%; }",
         "body                 { height: 100%; padding: 1px 0 0 0; margin: -1px 0 0 0; }",
         "body > p:first-child { margin-top: 0; }",
-        "._wysihtml5-temp     { display: none; }",
+        "._wysihtml-temp     { display: none; }",
         wysihtml.browser.isGecko ?
           "body.placeholder { color: graytext !important; }" :
           "body.placeholder { color: #a9a9a9 !important; }",
@@ -15199,7 +14947,7 @@ wysihtml.views.View = Base.extend(
           return true;
         }
         try {
-          var ev = new CustomEvent("wysihtml5:uneditable:delete", {bubbles: true, cancelable: false});
+          var ev = new CustomEvent("wysihtml:uneditable:delete", {bubbles: true, cancelable: false});
           before.node.dispatchEvent(ev);
         } catch (err) {}
         before.node.parentNode.removeChild(before.node);
@@ -15258,7 +15006,9 @@ wysihtml.views.View = Base.extend(
         var selection = composer.selection.getSelection(),
             aNode = selection.anchorNode,
             listNode, prevNode, firstNode,
-            isInBeginnig = composer.selection.caretIsFirstInSelection();
+            isInBeginnig = composer.selection.caretIsFirstInSelection(),
+            prevNode,
+            intermediaryNode;
 
         // Fix caret at the beginnig of first textNode in LI
         if (aNode.nodeType === 3 && selection.anchorOffset === 0 && aNode === aNode.parentNode.firstChild) {
@@ -15270,10 +15020,16 @@ wysihtml.views.View = Base.extend(
           prevNode = domNode(aNode).prev({nodeTypes: [1,3], ignoreBlankTexts: true});
           if (!prevNode && aNode.parentNode && (aNode.parentNode.nodeName === "UL" || aNode.parentNode.nodeName === "OL")) {
             prevNode = domNode(aNode.parentNode).prev({nodeTypes: [1,3], ignoreBlankTexts: true});
+            intermediaryNode = aNode.parentNode;
           }
           if (prevNode) {
             firstNode = aNode.firstChild;
             domNode(aNode).transferContentTo(prevNode, true);
+
+            if (intermediaryNode && intermediaryNode.children.length === 0){
+              intermediaryNode.remove();
+            }
+
             if (firstNode) {
               composer.selection.setBefore(firstNode);
             } else if (prevNode) {
@@ -15807,7 +15563,7 @@ wysihtml.views.View = Base.extend(
 
       if (!this.textarea) {
         this.textarea = this.composer.doc.createElement('textarea');
-        this.textarea.className = "wysihtml5-source-view";
+        this.textarea.className = "wysihtml-source-view";
       }
       this.textarea.style.width = width + 'px';
       this.textarea.style.height = height + 'px';
@@ -15917,7 +15673,7 @@ wysihtml.views.Textarea = wysihtml.views.View.extend(
 });
 
 /**
- * WYSIHTML5 Editor
+ * WYSIHTML Editor
  *
  * @param {Element} editableElement Reference to the textarea which should be turned into a rich text interface
  * @param {Object} [config] See defaults object below for explanation of each individual config option
@@ -15968,7 +15724,7 @@ wysihtml.views.Textarea = wysihtml.views.View.extend(
       pasteParserRulesets: null,
       // Parser method to use when the user inserts content
       parser:               wysihtml.dom.parse,
-      // By default wysihtml5 will insert a <br> for line breaks, set this to false to use <p>
+      // By default wysihtml will insert a <br> for line breaks, set this to false to use <p>
       useLineBreaks:        true,
       // Double enter (enter on blank line) exits block element in useLineBreaks mode.
       // It enables a way of escaping out of block elements and splitting block elements
@@ -15977,7 +15733,7 @@ wysihtml.views.Textarea = wysihtml.views.View.extend(
       stylesheets:          [],
       // Placeholder text to use, defaults to the placeholder attribute on the textarea element
       placeholderText:      undef,
-      // Whether the rich text editor should be rendered on touch devices (wysihtml5 >= 0.3.0 comes with basic support for iOS 5)
+      // Whether the rich text editor should be rendered on touch devices (wysihtml >= 0.3.0 comes with basic support for iOS 5)
       supportTouchDevices:  true,
       // Whether senseless <span> elements (empty or without attributes) should be removed/replaced with their content
       cleanUp:              true,
@@ -15985,21 +15741,21 @@ wysihtml.views.Textarea = wysihtml.views.View.extend(
       contentEditableMode: false,
       classNames: {
         // Class name which should be set on the contentEditable element in the created sandbox iframe, can be styled via the 'stylesheets' option
-        composer: "wysihtml5-editor",
-        // Class name to add to the body when the wysihtml5 editor is supported
-        body: "wysihtml5-supported",
+        composer: "wysihtml-editor",
+        // Class name to add to the body when the wysihtml editor is supported
+        body: "wysihtml-supported",
         // classname added to editable area element (iframe/div) on creation
-        sandbox: "wysihtml5-sandbox",
+        sandbox: "wysihtml-sandbox",
         // class on editable area with placeholder
-        placeholder: "wysihtml5-placeholder",
+        placeholder: "wysihtml-placeholder",
         // Classname of container that editor should not touch and pass through
-        uneditableContainer: "wysihtml5-uneditable-container"
+        uneditableContainer: "wysihtml-uneditable-container"
       },
       // Browsers that support copied source handling will get a marking of the origin of the copied source (for determinig code cleanup rules on paste)
       // Also copied source is based directly on selection - 
       // (very useful for webkit based browsers where copy will otherwise contain a lot of code and styles based on whatever and not actually in selection).
       // If falsy value is passed source override is also disabled
-      copyedFromMarking: '<meta name="copied-from" content="wysihtml5">'
+      copyedFromMarking: '<meta name="copied-from" content="wysihtml">'
     },
     
     constructor: function(editableElement, config) {
@@ -16053,7 +15809,7 @@ wysihtml.views.Textarea = wysihtml.views.View.extend(
     runEditorExtenders: function() {
       wysihtml.editorExtenders.forEach(function(extender) {
         extender(this);
-      }.bind(this)); 
+      }.bind(this));
     },
 
     isCompatible: function() {

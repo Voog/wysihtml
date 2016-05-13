@@ -17,7 +17,7 @@
 
       if (!this.textarea) {
         this.textarea = this.composer.doc.createElement('textarea');
-        this.textarea.className = "wysihtml5-source-view";
+        this.textarea.className = "wysihtml-source-view";
       }
       this.textarea.style.width = width + 'px';
       this.textarea.style.height = height + 'px';

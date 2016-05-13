@@ -1,7 +1,7 @@
 (function(wysihtml) {
   var dom                     = wysihtml.dom,
-      SELECTOR_FIELDS         = "[data-wysihtml5-dialog-field]",
-      ATTRIBUTE_FIELDS        = "data-wysihtml5-dialog-field";
+      SELECTOR_FIELDS         = "[data-wysihtml-dialog-field]",
+      ATTRIBUTE_FIELDS        = "data-wysihtml-dialog-field";
 
   wysihtml.toolbar.Dialog_bgColorStyle = wysihtml.toolbar.Dialog.extend({
     multiselect: true,

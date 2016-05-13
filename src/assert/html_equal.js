@@ -1,4 +1,4 @@
-var wysihtml5 = wysihtml5 || {};
+var wysihtml = wysihtml || {};
 wysihtml.assert = wysihtml.assert || {};
 
 /**

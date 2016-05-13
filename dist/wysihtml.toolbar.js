@@ -6,22 +6,22 @@
  *
  * @example
  *    <!-- Toolbar link -->
- *    <a data-wysihtml5-command="insertImage">insert an image</a>
+ *    <a data-wysihtml-command="insertImage">insert an image</a>
  *
  *    <!-- Dialog -->
- *    <div data-wysihtml5-dialog="insertImage" style="display: none;">
+ *    <div data-wysihtml-dialog="insertImage" style="display: none;">
  *      <label>
- *        URL: <input data-wysihtml5-dialog-field="src" value="http://">
+ *        URL: <input data-wysihtml-dialog-field="src" value="http://">
  *      </label>
  *      <label>
- *        Alternative text: <input data-wysihtml5-dialog-field="alt" value="">
+ *        Alternative text: <input data-wysihtml-dialog-field="alt" value="">
  *      </label>
  *    </div>
  *
  *    <script>
  *      var dialog = new wysihtml.toolbar.Dialog(
- *        document.querySelector("[data-wysihtml5-command='insertImage']"),
- *        document.querySelector("[data-wysihtml5-dialog='insertImage']")
+ *        document.querySelector("[data-wysihtml-command='insertImage']"),
+ *        document.querySelector("[data-wysihtml-dialog='insertImage']")
  *      );
  *      dialog.observe("save", function(attributes) {
  *        // do something
@@ -30,10 +30,10 @@
  */
 (function(wysihtml) {
   var dom                     = wysihtml.dom,
-      CLASS_NAME_OPENED       = "wysihtml5-command-dialog-opened",
+      CLASS_NAME_OPENED       = "wysihtml-command-dialog-opened",
       SELECTOR_FORM_ELEMENTS  = "input, select, textarea",
-      SELECTOR_FIELDS         = "[data-wysihtml5-dialog-field]",
-      ATTRIBUTE_FIELDS        = "data-wysihtml5-dialog-field";
+      SELECTOR_FIELDS         = "[data-wysihtml-dialog-field]",
+      ATTRIBUTE_FIELDS        = "data-wysihtml-dialog-field";
 
 
   wysihtml.toolbar.Dialog = wysihtml.lang.Dispatcher.extend(
@@ -73,9 +73,9 @@
         }
       });
 
-      dom.delegate(this.container, "[data-wysihtml5-dialog-action=save]", "click", callbackWrapper);
+      dom.delegate(this.container, "[data-wysihtml-dialog-action=save]", "click", callbackWrapper);
 
-      dom.delegate(this.container, "[data-wysihtml5-dialog-action=cancel]", "click", function(event) {
+      dom.delegate(this.container, "[data-wysihtml-dialog-action=cancel]", "click", function(event) {
         that.cancel();
         event.preventDefault();
         event.stopPropagation();
@@ -108,12 +108,12 @@
      *    <a href="http://www.google.com" target="_blank">foo</a>
      *
      * and we have the following dialog:
-     *    <input type="text" data-wysihtml5-dialog-field="href" value="">
-     *    <input type="text" data-wysihtml5-dialog-field="target" value="">
+     *    <input type="text" data-wysihtml-dialog-field="href" value="">
+     *    <input type="text" data-wysihtml-dialog-field="target" value="">
      *
      * after calling _interpolate() the dialog will look like this
-     *    <input type="text" data-wysihtml5-dialog-field="href" value="http://www.google.com">
-     *    <input type="text" data-wysihtml5-dialog-field="target" value="_blank">
+     *    <input type="text" data-wysihtml-dialog-field="href" value="http://www.google.com">
+     *    <input type="text" data-wysihtml-dialog-field="target" value="_blank">
      *
      * Basically it adopted the attribute values into the corresponding input fields
      *
@@ -196,8 +196,8 @@
 
 (function(wysihtml) {
   var dom                     = wysihtml.dom,
-      SELECTOR_FIELDS         = "[data-wysihtml5-dialog-field]",
-      ATTRIBUTE_FIELDS        = "data-wysihtml5-dialog-field";
+      SELECTOR_FIELDS         = "[data-wysihtml-dialog-field]",
+      ATTRIBUTE_FIELDS        = "data-wysihtml-dialog-field";
 
   wysihtml.toolbar.Dialog_bgColorStyle = wysihtml.toolbar.Dialog.extend({
     multiselect: true,
@@ -263,19 +263,19 @@
 
 (function(wysihtml) {
   var dom                     = wysihtml.dom,
-      SELECTOR_FIELDS         = "[data-wysihtml5-dialog-field]",
-      ATTRIBUTE_FIELDS        = "data-wysihtml5-dialog-field";
+      SELECTOR_FIELDS         = "[data-wysihtml-dialog-field]",
+      ATTRIBUTE_FIELDS        = "data-wysihtml-dialog-field";
 
   wysihtml.toolbar.Dialog_fontSizeStyle = wysihtml.toolbar.Dialog.extend({
     multiselect: true,
 
     _serialize: function() {
-      return {"size" : this.container.querySelector('[data-wysihtml5-dialog-field="size"]').value};
+      return {"size" : this.container.querySelector('[data-wysihtml-dialog-field="size"]').value};
     },
 
     _interpolate: function(avoidHiddenFields) {
       var focusedElement = document.querySelector(":focus"),
-          field          = this.container.querySelector("[data-wysihtml5-dialog-field='size']"),
+          field          = this.container.querySelector("[data-wysihtml-dialog-field='size']"),
           firstElement   = (this.elementToChange) ? ((wysihtml.lang.object(this.elementToChange).isArray()) ? this.elementToChange[0] : this.elementToChange) : null,
           styleStr       = (firstElement) ? firstElement.getAttribute('style') : null,
           size           = (styleStr) ? wysihtml.quirks.styleParser.parseFontSize(styleStr) : null;
@@ -288,8 +288,8 @@
 })(wysihtml);
 
 (function(wysihtml) {
-  var SELECTOR_FIELDS         = "[data-wysihtml5-dialog-field]",
-      ATTRIBUTE_FIELDS        = "data-wysihtml5-dialog-field";
+  var SELECTOR_FIELDS         = "[data-wysihtml-dialog-field]",
+      ATTRIBUTE_FIELDS        = "data-wysihtml-dialog-field";
 
   wysihtml.toolbar.Dialog_foreColorStyle = wysihtml.toolbar.Dialog.extend({
     multiselect: true,
@@ -425,7 +425,7 @@
     });
 
     dom.observe(input, "click", function(event) {
-      if (dom.hasClass(link, "wysihtml5-command-disabled")) {
+      if (dom.hasClass(link, "wysihtml-command-disabled")) {
         event.preventDefault();
       }
 
@@ -442,8 +442,8 @@
  *
  * @example
  *    <div id="toolbar">
- *      <a data-wysihtml5-command="createLink">insert link</a>
- *      <a data-wysihtml5-command="formatBlock" data-wysihtml5-command-value="h1">insert h1</a>
+ *      <a data-wysihtml-command="createLink">insert link</a>
+ *      <a data-wysihtml-command="formatBlock" data-wysihtml-command-value="h1">insert h1</a>
  *    </div>
  *
  *    <script>
@@ -451,10 +451,10 @@
  *    </script>
  */
 (function(wysihtml) {
-  var CLASS_NAME_COMMAND_DISABLED   = "wysihtml5-command-disabled",
-      CLASS_NAME_COMMANDS_DISABLED  = "wysihtml5-commands-disabled",
-      CLASS_NAME_COMMAND_ACTIVE     = "wysihtml5-command-active",
-      CLASS_NAME_ACTION_ACTIVE      = "wysihtml5-action-active",
+  var CLASS_NAME_COMMAND_DISABLED   = "wysihtml-command-disabled",
+      CLASS_NAME_COMMANDS_DISABLED  = "wysihtml-commands-disabled",
+      CLASS_NAME_COMMAND_ACTIVE     = "wysihtml-command-active",
+      CLASS_NAME_ACTION_ACTIVE      = "wysihtml-action-active",
       dom                           = wysihtml.dom;
 
   wysihtml.toolbar.Toolbar = Base.extend(
@@ -483,7 +483,7 @@
         CLASS_NAME_ACTION_ACTIVE = editor.config.classNameActionActive;
       }
 
-      var speechInputLinks  = this.container.querySelectorAll("[data-wysihtml5-command=insertSpeech]"),
+      var speechInputLinks  = this.container.querySelectorAll("[data-wysihtml-command=insertSpeech]"),
           length            = speechInputLinks.length,
           i                 = 0;
       for (; i<length; i++) {
@@ -492,7 +492,7 @@
     },
 
     _getLinks: function(type) {
-      var links   = this[type + "Links"] = wysihtml.lang.array(this.container.querySelectorAll("[data-wysihtml5-" + type + "]")).get(),
+      var links   = this[type + "Links"] = wysihtml.lang.array(this.container.querySelectorAll("[data-wysihtml-" + type + "]")).get(),
           length  = links.length,
           i       = 0,
           mapping = this[type + "Mapping"] = {},
@@ -505,10 +505,10 @@
 
       for (; i<length; i++) {
         link    = links[i];
-        name    = link.getAttribute("data-wysihtml5-" + type);
-        value   = link.getAttribute("data-wysihtml5-" + type + "-value");
-        tracksBlankValue   = link.getAttribute("data-wysihtml5-" + type + "-blank-value");
-        group   = this.container.querySelector("[data-wysihtml5-" + type + "-group='" + name + "']");
+        name    = link.getAttribute("data-wysihtml-" + type);
+        value   = link.getAttribute("data-wysihtml-" + type + "-value");
+        tracksBlankValue   = link.getAttribute("data-wysihtml-" + type + "-blank-value");
+        group   = this.container.querySelector("[data-wysihtml-" + type + "-group='" + name + "']");
         dialog  = this._getDialog(link, name);
 
         mapping[name + ":" + value] = {
@@ -525,7 +525,7 @@
 
     _getDialog: function(link, command) {
       var that          = this,
-          dialogElement = this.container.querySelector("[data-wysihtml5-dialog='" + command + "']"),
+          dialogElement = this.container.querySelector("[data-wysihtml-dialog='" + command + "']"),
           dialog, caretBookmark;
 
       if (dialogElement) {
@@ -628,13 +628,13 @@
       }
 
       // Needed for opera and chrome
-      dom.delegate(container, "[data-wysihtml5-command], [data-wysihtml5-action]", "mousedown", function(event) { event.preventDefault(); });
+      dom.delegate(container, "[data-wysihtml-command], [data-wysihtml-action]", "mousedown", function(event) { event.preventDefault(); });
 
-      dom.delegate(container, "[data-wysihtml5-command]", "click", function(event) {
+      dom.delegate(container, "[data-wysihtml-command]", "click", function(event) {
         var state,
             link          = this,
-            command       = link.getAttribute("data-wysihtml5-command"),
-            commandValue  = link.getAttribute("data-wysihtml5-command-value"),
+            command       = link.getAttribute("data-wysihtml-command"),
+            commandValue  = link.getAttribute("data-wysihtml-command-value"),
             commandObj = that.commandMapping[command + ":" + commandValue];
 
         if (commandValue || !commandObj.dialog) {
@@ -647,8 +647,8 @@
         event.preventDefault();
       });
 
-      dom.delegate(container, "[data-wysihtml5-action]", "click", function(event) {
-        var action = this.getAttribute("data-wysihtml5-action");
+      dom.delegate(container, "[data-wysihtml-action]", "click", function(event) {
+        var action = this.getAttribute("data-wysihtml-action");
         that.execAction(action);
         event.preventDefault();
       });
@@ -671,10 +671,10 @@
 
       if (this.editor.config.handleTables) {
         editor.on("tableselect:composer", function() {
-            that.container.querySelectorAll('[data-wysihtml5-hiddentools="table"]')[0].style.display = "";
+            that.container.querySelectorAll('[data-wysihtml-hiddentools="table"]')[0].style.display = "";
         });
         editor.on("tableunselect:composer", function() {
-            that.container.querySelectorAll('[data-wysihtml5-hiddentools="table"]')[0].style.display = "none";
+            that.container.querySelectorAll('[data-wysihtml-hiddentools="table"]')[0].style.display = "none";
         });
       }
 
@@ -822,20 +822,19 @@
 
     return state;
   }
-  
+
   // Extend defaults
-  
+
   // Id of the toolbar element, pass falsey value if you don't want any toolbar logic
   wysihtml.Editor.prototype.defaults.toolbar = undefined;
-  
+
   // Whether toolbar is displayed after init by script automatically.
   // Can be set to false if toolobar is set to display only on editable area focus
   wysihtml.Editor.prototype.defaults.showToolbarAfterInit = true;
-  
-  
+
   // With default toolbar it shows dialogs in toolbar when their related text format state becomes active (click on link in text opens link dialogue)
   wysihtml.Editor.prototype.defaults.showToolbarDialogsOnSelection= true;
-  
+
   // Bind toolbar initiation on editor instance creation
   wysihtml.extendEditor(function(editor) {
     if (editor.config.toolbar) {

@@ -61,7 +61,7 @@
           return true;
         }
         try {
-          var ev = new CustomEvent("wysihtml5:uneditable:delete", {bubbles: true, cancelable: false});
+          var ev = new CustomEvent("wysihtml:uneditable:delete", {bubbles: true, cancelable: false});
           before.node.dispatchEvent(ev);
         } catch (err) {}
         before.node.parentNode.removeChild(before.node);

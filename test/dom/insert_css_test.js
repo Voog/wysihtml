@@ -3,7 +3,7 @@ if (wysihtml.browser.supported()) {
   module("wysihtml.dom.insertCSS", {
     teardown: function() {
       var iframe;
-      while (iframe = document.querySelector("iframe.wysihtml5-sandbox")) {
+      while (iframe = document.querySelector("iframe.wysihtml-sandbox")) {
         iframe.parentNode.removeChild(iframe);
       }
     }

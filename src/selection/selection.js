@@ -65,7 +65,7 @@
     };
 
     blankNode.appendChild(container.ownerDocument.createTextNode(wysihtml.INVISIBLE_SPACE));
-    blankNode.className = '_wysihtml5-temp-caret-fix';
+    blankNode.className = '_wysihtml-temp-caret-fix';
     blankNode.style.display = 'block';
     blankNode.style.minWidth = '1px';
     blankNode.style.height = '0px';
@@ -198,7 +198,7 @@
             }
           };
 
-      caretPlaceholder.className = '_wysihtml5-temp-caret-fix';
+      caretPlaceholder.className = '_wysihtml-temp-caret-fix';
       caretPlaceholder.style.position = 'absolute';
       caretPlaceholder.style.display = 'block';
       caretPlaceholder.style.minWidth = '1px';
@@ -402,7 +402,7 @@
     },
 
     // Deletes selection contents making sure uneditables/unselectables are not partially deleted
-    // Triggers wysihtml5:uneditable:delete custom event on all deleted uneditables if customevents suppoorted
+    // Triggers wysihtml:uneditable:delete custom event on all deleted uneditables if customevents suppoorted
     deleteContents: function()  {
       var range = this.getRange();
       this.deleteRangeContents(range);
@@ -427,7 +427,7 @@
         }).bind(this));
         for (var i = uneditables.length; i--;) {
           try {
-            ev = new CustomEvent("wysihtml5:uneditable:delete");
+            ev = new CustomEvent("wysihtml:uneditable:delete");
             uneditables[i].dispatchEvent(ev);
           } catch (err) {}
         }
@@ -615,7 +615,7 @@
       }
 
       // Escape temproray helper nodes if selection in them
-      inTmpCaret = wysihtml.dom.getParentElement(startNode, { query: '._wysihtml5-temp-caret-fix' }, 1);
+      inTmpCaret = wysihtml.dom.getParentElement(startNode, { query: '._wysihtml-temp-caret-fix' }, 1);
       if (inTmpCaret) {
         startNode = inTmpCaret.parentNode;
         startOffset = Array.prototype.indexOf.call(startNode.childNodes, inTmpCaret);
@@ -699,7 +699,7 @@
       var body                  = this.doc.body,
           oldScrollTop          = restoreScrollPosition && body.scrollTop,
           oldScrollLeft         = restoreScrollPosition && body.scrollLeft,
-          className             = "_wysihtml5-temp-placeholder",
+          className             = "_wysihtml-temp-placeholder",
           placeholderHtml       = '<span class="' + className + '">' + wysihtml.INVISIBLE_SPACE + '</span>',
           range                 = this.getRange(true),
           caretPlaceholder,
@@ -944,7 +944,7 @@
       var doc           = this.doc,
           tolerance     = 5, // px
           hasScrollBars = doc.documentElement.scrollHeight > doc.documentElement.offsetHeight,
-          tempElement   = doc._wysihtml5ScrollIntoViewElement = doc._wysihtml5ScrollIntoViewElement || (function() {
+          tempElement   = doc._wysihtmlScrollIntoViewElement = doc._wysihtmlScrollIntoViewElement || (function() {
             var element = doc.createElement("span");
             // The element needs content in order to be able to calculate it's position properly
             element.innerHTML = wysihtml.INVISIBLE_SPACE;

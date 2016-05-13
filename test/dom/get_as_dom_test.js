@@ -1,7 +1,7 @@
 module("wysihtml.dom.getAsDom", {
   teardown: function() {
     var iframe;
-    while (iframe = document.querySelector("iframe.wysihtml5-sandbox")) {
+    while (iframe = document.querySelector("iframe.wysihtml-sandbox")) {
       iframe.parentNode.removeChild(iframe);
     }
   }

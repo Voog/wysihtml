@@ -2,13 +2,13 @@ if (wysihtml.browser.supported()) {
   module("wysihtml.Editor", {
     setup: function() {
       wysihtml.dom.insertCSS([
-        "#wysihtml5-test-textarea { width: 50%; height: 100px; margin-top: 5px; font-style: italic; border: 2px solid red; border-radius: 2px; }",
-        "#wysihtml5-test-textarea:focus { margin-top: 10px; }",
-        "#wysihtml5-test-textarea:disabled { margin-top: 20px; }"
+        "#wysihtml-test-textarea { width: 50%; height: 100px; margin-top: 5px; font-style: italic; border: 2px solid red; border-radius: 2px; }",
+        "#wysihtml-test-textarea:focus { margin-top: 10px; }",
+        "#wysihtml-test-textarea:disabled { margin-top: 20px; }"
       ]).into(document);
 
       this.textareaElement        = document.createElement("textarea");
-      this.textareaElement.id     = "wysihtml5-test-textarea";
+      this.textareaElement.id     = "wysihtml-test-textarea";
       this.textareaElement.title  = "Please enter your foo";
       this.textareaElement.value  = "hey tiff, what's up?";
       
@@ -23,7 +23,7 @@ if (wysihtml.browser.supported()) {
 
     teardown: function() {
       var leftover;
-      while (leftover = document.querySelector("iframe.wysihtml5-sandbox, input[name='_wysihtml5_mode']")) {
+      while (leftover = document.querySelector("iframe.wysihtml-sandbox, input[name='_wysihtml_mode']")) {
         leftover.parentNode.removeChild(leftover);
       }
       this.form.parentNode.removeChild(this.form);
@@ -35,7 +35,7 @@ if (wysihtml.browser.supported()) {
     },
 
     getIframeElement: function() {
-      var iframes = document.querySelectorAll("iframe.wysihtml5-sandbox");
+      var iframes = document.querySelectorAll("iframe.wysihtml-sandbox");
       return iframes[iframes.length - 1];
     }
   });
@@ -51,7 +51,7 @@ if (wysihtml.browser.supported()) {
           composerElement = that.getComposerElement(),
           textareaElement = that.textareaElement;
       ok(true, "Load callback triggered");
-      ok(wysihtml.dom.hasClass(document.body, "wysihtml5-supported"), "<body> received correct class name");
+      ok(wysihtml.dom.hasClass(document.body, "wysihtml-supported"), "<body> received correct class name");
       equal(textareaElement.style.display, "none", "Textarea not visible");
       ok(iframeElement.style.display, "", "Editor iFrame is visible");
       equal(editor.currentView.name, "composer", "Current view is 'composer'");
@@ -66,7 +66,7 @@ if (wysihtml.browser.supported()) {
       textareaElement.style.display = "none";
       
       var hiddenField = textareaElement.nextSibling;
-      equal(hiddenField.name, "_wysihtml5_mode", "Hidden field has correct name");
+      equal(hiddenField.name, "_wysihtml_mode", "Hidden field has correct name");
       equal(hiddenField.value, "1", "Hidden field has correct value");
       equal(hiddenField.type, "hidden", "Hidden field is actually hidden");
       equal(textareaElement.nextSibling.nextSibling, iframeElement, "Editor iframe is inserted after the textarea");
@@ -83,7 +83,7 @@ if (wysihtml.browser.supported()) {
       }
       
       equal(composerElement.innerHTML.toLowerCase(), "hey tiff, what's up?", "Copied the initial textarea value to the editor");
-      ok(wysihtml.dom.hasClass(composerElement, "wysihtml5-editor"), "Editor element has correct class name");
+      ok(wysihtml.dom.hasClass(composerElement, "wysihtml-editor"), "Editor element has correct class name");
       
       start();
     });
@@ -308,11 +308,11 @@ if (wysihtml.browser.supported()) {
     editor.on("load", function() {
       var composerElement = that.getComposerElement();
       equal(wysihtml.dom.getTextContent(composerElement), placeholderText, "Placeholder text correctly copied into textarea");
-      ok(wysihtml.dom.hasClass(composerElement, "wysihtml5-placeholder"), "Editor got 'placeholder' css class");
+      ok(wysihtml.dom.hasClass(composerElement, "wysihtml-placeholder"), "Editor got 'placeholder' css class");
       ok(editor.hasPlaceholderSet(), "'hasPlaceholderSet' returns correct value when placeholder is actually set");
       editor.fire("focus:composer");
       equal(wysihtml.dom.getTextContent(composerElement), "", "Editor is empty after focus");
-      ok(!wysihtml.dom.hasClass(composerElement, "wysihtml5-placeholder"), "Editor hasn't got 'placeholder' css class");
+      ok(!wysihtml.dom.hasClass(composerElement, "wysihtml-placeholder"), "Editor hasn't got 'placeholder' css class");
       ok(!editor.hasPlaceholderSet(), "'hasPlaceholderSet' returns correct value when placeholder isn't actually set");
       editor.fire("blur:composer");
       equal(wysihtml.dom.getTextContent(composerElement), placeholderText, "Editor restored placeholder text after unfocus");
@@ -321,14 +321,14 @@ if (wysihtml.browser.supported()) {
       composerElement.innerHTML = "some content";
       editor.fire("blur:composer");
       equal(wysihtml.dom.getTextContent(composerElement), "some content");
-      ok(!wysihtml.dom.hasClass(composerElement, "wysihtml5-placeholder"), "Editor hasn't got 'placeholder' css class");
+      ok(!wysihtml.dom.hasClass(composerElement, "wysihtml-placeholder"), "Editor hasn't got 'placeholder' css class");
       editor.fire("focus:composer");
       // Following html causes innerText and textContent to report an empty string
       var html = '<img>';
       composerElement.innerHTML = html;
       editor.fire("blur:composer");
       equal(composerElement.innerHTML.toLowerCase(), html, "HTML hasn't been cleared even though the innerText and textContent properties indicate empty content.");
-      ok(!wysihtml.dom.hasClass(composerElement, "wysihtml5-placeholder"), "Editor hasn't got 'placeholder' css class");
+      ok(!wysihtml.dom.hasClass(composerElement, "wysihtml-placeholder"), "Editor hasn't got 'placeholder' css class");
       
       setTimeout(function() {
         that.form.reset();
@@ -568,7 +568,7 @@ if (wysihtml.browser.supported()) {
     
     var that = this;
     editor.on("load", function() {
-      ok(!document.querySelector("input[name='_wysihtml5_mode']"), "No hidden _wysihtml5_mode input has been created");
+      ok(!document.querySelector("input[name='_wysihtml_mode']"), "No hidden _wysihtml_mode input has been created");
       ok(that.getIframeElement(), "Editor's iframe has been created");
       equal(textareaElement.style.display, "none", "Textarea is not visible");
       textareaElement.parentNode.removeChild(textareaElement);

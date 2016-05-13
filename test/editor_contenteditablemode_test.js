@@ -2,14 +2,14 @@ if (wysihtml.browser.supported()) {
   module("wysihtml.Editor contenteditable mode", {
     setup: function() {
       wysihtml.dom.insertCSS([
-        "#wysihtml5-test-editable { width: 50%; height: 100px; margin-top: 5px; font-style: italic; border: 2px solid red; border-radius: 2px; }",
-        "#wysihtml5-test-editable:focus { margin-top: 10px; }",
-        "#wysihtml5-test-editable:disabled { margin-top: 20px; }"
+        "#wysihtml-test-editable { width: 50%; height: 100px; margin-top: 5px; font-style: italic; border: 2px solid red; border-radius: 2px; }",
+        "#wysihtml-test-editable:focus { margin-top: 10px; }",
+        "#wysihtml-test-editable:disabled { margin-top: 20px; }"
       ]).into(document);
 
       this.editableArea        = document.createElement("div");
-      this.editableArea.id     = "wysihtml5-test-editable";
-      this.editableArea.className = "wysihtml5-test-class";
+      this.editableArea.id     = "wysihtml-test-editable";
+      this.editableArea.className = "wysihtml-test-class";
       this.editableArea.title  = "Please enter your foo";
       this.editableArea.innerHTML  = "hey tiff, what's up?";
       
@@ -24,7 +24,7 @@ if (wysihtml.browser.supported()) {
       if (this.editableArea && this.editableArea.parentNode) {
         this.editableArea.parentNode.removeChild(this.editableArea);
       }
-      while (leftover = document.querySelector("div.wysihtml5-sandbox, div.wysihtml5-test-class")) {
+      while (leftover = document.querySelector("div.wysihtml-sandbox, div.wysihtml-test-class")) {
         leftover.parentNode.removeChild(leftover);
       }
       document.body.className = this.originalBodyClassName;
@@ -39,9 +39,9 @@ if (wysihtml.browser.supported()) {
       var editableElement   = that.editableArea;
       
       ok(true, "Load callback triggered");
-      ok(wysihtml.dom.hasClass(document.body, "wysihtml5-supported"), "<body> received correct class name");
-      ok(wysihtml.dom.hasClass(editableElement, "wysihtml5-test-class"), "editable kept its original class name");
-      ok(wysihtml.dom.hasClass(editableElement, "wysihtml5-sandbox"), "editable added its own sandbox class name");
+      ok(wysihtml.dom.hasClass(document.body, "wysihtml-supported"), "<body> received correct class name");
+      ok(wysihtml.dom.hasClass(editableElement, "wysihtml-test-class"), "editable kept its original class name");
+      ok(wysihtml.dom.hasClass(editableElement, "wysihtml-sandbox"), "editable added its own sandbox class name");
       
       equal(editor.config.contentEditableMode, true, "contentEditableMode deduced correctly as editable is initiated on non textarea");
       equal(editor.config.noTextarea, true, "noTextarea mode deduced correctly as editable is initiated on non textarea");
@@ -51,7 +51,7 @@ if (wysihtml.browser.supported()) {
       equal(typeof editor.textarea, "undefined", "Textarea correctly not available on editor instance");
       equal(editor.composer.element, editableElement, "contentEditable element available on editor instance");
       equal(editableElement.innerHTML.toLowerCase(), "hey tiff, what's up?", "Initial value preserved in editor");
-      ok(wysihtml.dom.hasClass(editableElement, "wysihtml5-editor"), "Editor element has correct class name");
+      ok(wysihtml.dom.hasClass(editableElement, "wysihtml-editor"), "Editor element has correct class name");
       equal(typeof editor.synchronizer, "undefined", "Syncronizer correctly not initiated in contenteditable mode");
       
       start();
@@ -200,11 +200,11 @@ if (wysihtml.browser.supported()) {
       var composerElement = that.editableArea;
       equal(wysihtml.dom.getTextContent(composerElement), placeholderText, "Placeholder text correctly copied into textarea");
       
-      ok(wysihtml.dom.hasClass(composerElement, "wysihtml5-placeholder"), "Editor got 'placeholder' css class");
+      ok(wysihtml.dom.hasClass(composerElement, "wysihtml-placeholder"), "Editor got 'placeholder' css class");
       ok(editor.hasPlaceholderSet(), "'hasPlaceholderSet' returns correct value when placeholder is actually set");
       editor.fire("focus:composer");
       equal(wysihtml.dom.getTextContent(composerElement), "", "Editor is empty after focus");
-      ok(!wysihtml.dom.hasClass(composerElement, "wysihtml5-placeholder"), "Editor hasn't got 'placeholder' css class");
+      ok(!wysihtml.dom.hasClass(composerElement, "wysihtml-placeholder"), "Editor hasn't got 'placeholder' css class");
       ok(!editor.hasPlaceholderSet(), "'hasPlaceholderSet' returns correct value when placeholder isn't actually set");
       editor.fire("blur:composer");
       equal(wysihtml.dom.getTextContent(composerElement), placeholderText, "Editor restored placeholder text after unfocus");
@@ -213,14 +213,14 @@ if (wysihtml.browser.supported()) {
       composerElement.innerHTML = "some content";
       editor.fire("blur:composer");
       equal(wysihtml.dom.getTextContent(composerElement), "some content");
-      ok(!wysihtml.dom.hasClass(composerElement, "wysihtml5-placeholder"), "Editor hasn't got 'placeholder' css class");
+      ok(!wysihtml.dom.hasClass(composerElement, "wysihtml-placeholder"), "Editor hasn't got 'placeholder' css class");
       editor.fire("focus:composer");
       // Following html causes innerText and textContent to report an empty string
       var html = '<img>';
       composerElement.innerHTML = html;
       editor.fire("blur:composer");
       equal(composerElement.innerHTML.toLowerCase(), html, "HTML hasn't been cleared even though the innerText and textContent properties indicate empty content.");
-      ok(!wysihtml.dom.hasClass(composerElement, "wysihtml5-placeholder"), "Editor hasn't got 'placeholder' css class");
+      ok(!wysihtml.dom.hasClass(composerElement, "wysihtml-placeholder"), "Editor hasn't got 'placeholder' css class");
       start();
     });
   });
@@ -398,7 +398,7 @@ if (wysihtml.browser.supported()) {
         that = this,
         noerror = true;
 
-    toolbar.innerHTML = '<a data-wysihtml5-command="bold">bold</a>';
+    toolbar.innerHTML = '<a data-wysihtml-command="bold">bold</a>';
     document.body.appendChild(toolbar);
 
     var editor = new wysihtml.Editor(this.editableArea, {

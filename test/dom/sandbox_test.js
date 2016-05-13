@@ -1,7 +1,7 @@
 module("wysihtml.dom.Sandbox", {
   teardown: function() {
     var iframe;
-    while (iframe = document.querySelector("iframe.wysihtml5-sandbox")) {
+    while (iframe = document.querySelector("iframe.wysihtml-sandbox")) {
       iframe.parentNode.removeChild(iframe);
     }
   },
@@ -35,7 +35,7 @@ asyncTest("Basic Test", function() {
   var sandbox = new wysihtml.dom.Sandbox(function(param) {
     equal(param, sandbox, "The parameter passed into the readyCallback is the sandbox instance");
     
-    var iframes = document.querySelectorAll("iframe.wysihtml5-sandbox");
+    var iframes = document.querySelectorAll("iframe.wysihtml-sandbox");
     equal(iframes.length, 1, "iFrame sandbox inserted into dom tree");
     
     var iframe = iframes[iframes.length - 1],

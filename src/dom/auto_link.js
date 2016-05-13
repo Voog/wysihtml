@@ -73,9 +73,9 @@
    * for the given document object
    */
   function _getTempElement(context) {
-    var tempElement = context._wysihtml5_tempElement;
+    var tempElement = context._wysihtml_tempElement;
     if (!tempElement) {
-      tempElement = context._wysihtml5_tempElement = context.createElement("div");
+      tempElement = context._wysihtml_tempElement = context.createElement("div");
     }
     return tempElement;
   }

@@ -1,5 +1,5 @@
 /**
- * WYSIHTML5 Editor
+ * WYSIHTML Editor
  *
  * @param {Element} editableElement Reference to the textarea which should be turned into a rich text interface
  * @param {Object} [config] See defaults object below for explanation of each individual config option
@@ -50,7 +50,7 @@
       pasteParserRulesets: null,
       // Parser method to use when the user inserts content
       parser:               wysihtml.dom.parse,
-      // By default wysihtml5 will insert a <br> for line breaks, set this to false to use <p>
+      // By default wysihtml will insert a <br> for line breaks, set this to false to use <p>
       useLineBreaks:        true,
       // Double enter (enter on blank line) exits block element in useLineBreaks mode.
       // It enables a way of escaping out of block elements and splitting block elements
@@ -59,7 +59,7 @@
       stylesheets:          [],
       // Placeholder text to use, defaults to the placeholder attribute on the textarea element
       placeholderText:      undef,
-      // Whether the rich text editor should be rendered on touch devices (wysihtml5 >= 0.3.0 comes with basic support for iOS 5)
+      // Whether the rich text editor should be rendered on touch devices (wysihtml >= 0.3.0 comes with basic support for iOS 5)
       supportTouchDevices:  true,
       // Whether senseless <span> elements (empty or without attributes) should be removed/replaced with their content
       cleanUp:              true,
@@ -67,21 +67,21 @@
       contentEditableMode: false,
       classNames: {
         // Class name which should be set on the contentEditable element in the created sandbox iframe, can be styled via the 'stylesheets' option
-        composer: "wysihtml5-editor",
-        // Class name to add to the body when the wysihtml5 editor is supported
-        body: "wysihtml5-supported",
+        composer: "wysihtml-editor",
+        // Class name to add to the body when the wysihtml editor is supported
+        body: "wysihtml-supported",
         // classname added to editable area element (iframe/div) on creation
-        sandbox: "wysihtml5-sandbox",
+        sandbox: "wysihtml-sandbox",
         // class on editable area with placeholder
-        placeholder: "wysihtml5-placeholder",
+        placeholder: "wysihtml-placeholder",
         // Classname of container that editor should not touch and pass through
-        uneditableContainer: "wysihtml5-uneditable-container"
+        uneditableContainer: "wysihtml-uneditable-container"
       },
       // Browsers that support copied source handling will get a marking of the origin of the copied source (for determinig code cleanup rules on paste)
       // Also copied source is based directly on selection - 
       // (very useful for webkit based browsers where copy will otherwise contain a lot of code and styles based on whatever and not actually in selection).
       // If falsy value is passed source override is also disabled
-      copyedFromMarking: '<meta name="copied-from" content="wysihtml5">'
+      copyedFromMarking: '<meta name="copied-from" content="wysihtml">'
     },
     
     constructor: function(editableElement, config) {

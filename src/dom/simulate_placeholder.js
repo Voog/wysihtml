@@ -14,7 +14,7 @@
  */
 (function(dom) {
   dom.simulatePlaceholder = function(editor, view, placeholderText, placeholderClassName) {
-    var CLASS_NAME = placeholderClassName || "wysihtml5-placeholder",
+    var CLASS_NAME = placeholderClassName || "wysihtml-placeholder",
         unset = function() {
           var composerIsVisible   = view.element.offsetWidth > 0 && view.element.offsetHeight > 0;
           if (view.hasPlaceholderSet()) {

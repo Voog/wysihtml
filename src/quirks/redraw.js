@@ -7,7 +7,7 @@
  *    wysihtml.quirks.redraw(document.body);
  */
 (function(wysihtml) {
-  var CLASS_NAME = "wysihtml5-quirks-redraw";
+  var CLASS_NAME = "wysihtml-quirks-redraw";
 
   wysihtml.quirks.redraw = function(element) {
     wysihtml.dom.addClass(element, CLASS_NAME);

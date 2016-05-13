@@ -3,7 +3,7 @@ if (wysihtml.browser.supported()) {
   module("wysihtml.view.composer", {
     setup: function() {
       this.editableArea        = document.createElement("div");
-      this.editableArea.id     = "wysihtml5-test-editable";
+      this.editableArea.id     = "wysihtml-test-editable";
       this.editableArea.innerHTML  = "";
       this.rules = {
         parserRules: { tags: {

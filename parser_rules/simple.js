@@ -6,7 +6,7 @@
  *
  * For a proper documentation of the format check advanced.js
  */
-var wysihtml5ParserRules = {
+var wysihtmlParserRules = {
   tags: {
     strong: {},
     b:      {},
