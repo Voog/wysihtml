@@ -1,3 +1,14 @@
+;(function (factory) {
+    'use strict';
+    if (typeof define === 'function' && define.amd) {
+        define('wysihtml.table_editing', ['wysihtml'], factory);
+    } else if(typeof exports == 'object') {
+        factory(require('wysihtml'));
+    } else {
+        factory(window.wysihtml);
+    }
+}(function(wysihtml) {
+
 wysihtml.commands.addTableCells = {
   exec: function(composer, command, value) {
     if (composer.tableSelection && composer.tableSelection.start && composer.tableSelection.end) {
@@ -1161,3 +1172,5 @@ wysihtml.commands.mergeTableCells = {
   wysihtml.views.Composer.prototype.observe = extendedObserverFunction;
 
 })();
+
+}));

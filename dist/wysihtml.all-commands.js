@@ -1,3 +1,14 @@
+;(function (factory) {
+    'use strict';
+    if (typeof define === 'function' && define.amd) {
+        define('wysihtml.all-commands', ['wysihtml'], factory);
+    } else if(typeof exports == 'object') {
+        factory(require('wysihtml'));
+    } else {
+        factory(window.wysihtml);
+    }
+}(function(wysihtml) {
+
 wysihtml.commands.alignCenterStyle = (function() {
   var nodeOptions = {
     styleProperty: "textAlign",
@@ -600,3 +611,5 @@ wysihtml.commands.underline = (function() {
   };
 
 })();
+
+}));

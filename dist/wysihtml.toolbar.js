@@ -1,3 +1,14 @@
+;(function (factory) {
+    'use strict';
+    if (typeof define === 'function' && define.amd) {
+        define('wysihtml.toolbar', ['wysihtml'], factory);
+    } else if(typeof exports == 'object') {
+        factory(require('wysihtml'));
+    } else {
+        factory(window.wysihtml);
+    }
+}(function(wysihtml) {
+
 /**
  * Toolbar Dialog
  *
@@ -848,3 +859,5 @@
   });
 
 })(wysihtml);
+
+}));

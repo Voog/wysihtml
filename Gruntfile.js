@@ -29,8 +29,9 @@ module.exports = function(grunt) {
   ];
 
   // Project configuration.
+  var packageJson = grunt.file.readJSON('package.json');
   grunt.initConfig({
-    pkg: grunt.file.readJSON('package.json'),
+    pkg: packageJson,
     concat: {
       options: {
         process: function(src, filepath) {
@@ -39,11 +40,37 @@ module.exports = function(grunt) {
       },
       dist: {
         src: base,
-        dest: 'dist/<%= pkg.name %>.js'
+        dest: 'dist/<%= pkg.name %>.js',
+          options: {
+            banner: ";(function (factory) {\n" +
+            "    'use strict';\n" +
+            "    if (typeof define === 'function' && define.amd) {\n" +
+            "        define('" + packageJson.name + "', [], factory);\n" +
+            "    } else if(typeof exports == 'object') {\n" +
+            "        module.exports = factory();\n" +
+            "    } else {\n" +
+            "        window." + packageJson.name + " = factory();\n" +
+            "    }\n" +
+            "}(function() {\n\n",
+            footer: "\n    return " + packageJson.name + ";\n}));\n"
+          }
       },
       extraCommands: {
         src: 'src/extra-commands/*.js',
-        dest: 'dist/<%= pkg.name %>.all-commands.js'
+        dest: 'dist/<%= pkg.name %>.all-commands.js',
+          options: {
+            banner:";(function (factory) {\n" +
+              "    'use strict';\n" +
+              "    if (typeof define === 'function' && define.amd) {\n" +
+              "        define('" + packageJson.name + ".all-commands', ['" + packageJson.name + "'], factory);\n" +
+              "    } else if(typeof exports == 'object') {\n" +
+              "        factory(require('" + packageJson.name + "'));\n" +
+              "    } else {\n" +
+              "        factory(window." + packageJson.name + ");\n" +
+              "    }\n" +
+              "}(function(" + packageJson.name + ") {\n\n",
+            footer: "\n}));\n"
+          }
       }
     },
     uglify: {
@@ -82,6 +109,19 @@ module.exports = function(grunt) {
       }
 
       concat[dir] = {
+        options: {
+          banner:";(function (factory) {\n" +
+            "    'use strict';\n" +
+            "    if (typeof define === 'function' && define.amd) {\n" +
+            "        define('" + packageJson.name + "." + dir + "', ['" + packageJson.name + "'], factory);\n" +
+            "    } else if(typeof exports == 'object') {\n" +
+            "        factory(require('" + packageJson.name + "'));\n" +
+            "    } else {\n" +
+            "        factory(window." + packageJson.name + ");\n" +
+            "    }\n" +
+            "}(function(" + packageJson.name + ") {\n\n",
+          footer: "\n}));\n"
+        },
         src: grunt.file.isDir(d) ? [d + '/*.js'] : [d],
         dest: 'dist/wysihtml.' + dir + '.js'
       };
@@ -90,10 +130,9 @@ module.exports = function(grunt) {
         options: {
           sourceMap: true
         },
-        files: {
-          ['dist/minified/wysihtml.' + dir + '.min.js']: 'dist/wysihtml.' + dir + '.js'
-        }
+        files: {}
       };
+      uglify[dir].files['dist/minified/wysihtml.' + dir + '.min.js'] = 'dist/wysihtml.' + dir + '.js';
       
     });
     grunt.config.set('concat', concat);
