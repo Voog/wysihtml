@@ -15947,5 +15947,6 @@ wysihtml.views.Textarea = wysihtml.views.View.extend(
   });
 })(wysihtml);
 
+    if (window) {window.rangy = rangy;}
     return wysihtml;
 }));

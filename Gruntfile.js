@@ -26,7 +26,10 @@ module.exports = function(grunt) {
     'src/views/sourceview.js',
     'src/views/textarea.js',
     'src/editor.js'
-  ];
+  ],
+    extras = [
+      'lib/base/base.js'
+    ];
 
   // Project configuration.
   var packageJson = grunt.file.readJSON('package.json');
@@ -52,11 +55,11 @@ module.exports = function(grunt) {
             "        window." + packageJson.name + " = factory();\n" +
             "    }\n" +
             "}(function() {\n\n",
-            footer: "\n    return " + packageJson.name + ";\n}));\n"
+            footer: "\n    if (window) {window.rangy = rangy;}\n    return " + packageJson.name + ";\n}));\n"
           }
       },
       extraCommands: {
-        src: 'src/extra-commands/*.js',
+        src: [].concat(extras, ['src/extra-commands/*.js']),
         dest: 'dist/<%= pkg.name %>.all-commands.js',
           options: {
             banner:";(function (factory) {\n" +
@@ -122,7 +125,7 @@ module.exports = function(grunt) {
             "}(function(" + packageJson.name + ") {\n\n",
           footer: "\n}));\n"
         },
-        src: grunt.file.isDir(d) ? [d + '/*.js'] : [d],
+        src: [].concat(extras, grunt.file.isDir(d) ? [d + '/*.js'] : [d]),
         dest: 'dist/wysihtml.' + dir + '.js'
       };
       
