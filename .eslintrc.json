@@ -1,0 +1,58 @@
+{
+  "globals":  {
+    "wysihtml": 1,
+    "rangy": 1
+  },
+  "env": {
+    "browser": true
+  },
+  "extends": "eslint:recommended",
+  "installedESLint": true,
+  "parserOptions": {
+    "sourceType": "script"
+  },
+  "rules": {
+    "indent": [
+      "error",
+      2,
+      { "VariableDeclarator": 2, "SwitchCase": 1 }
+    ],
+    "linebreak-style": [
+      "error",
+      "unix"
+    ],
+    "no-multiple-empty-lines": [
+      "error",
+      { "max": 1 }
+    ],
+    "no-multi-spaces": [
+       "error"
+    ],
+    "no-trailing-spaces": [
+      "error",
+      { "skipBlankLines": false }
+    ],
+    "one-var": [
+      2,
+      "always"
+    ],
+    "quotes": [
+      "error",
+      "single"
+    ],
+    "semi": [
+      "error",
+      "always"
+    ],
+    "space-infix-ops": [
+      "error"
+    ],
+    "keyword-spacing": [
+      "error",
+      { "after": true }
+    ],
+    "array-bracket-spacing": ["error", "never"],
+    "space-in-parens": ["error", "never"],
+    "computed-property-spacing": ["error", "never"]
+  }
+}
