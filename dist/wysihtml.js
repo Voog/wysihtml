@@ -4390,8 +4390,7 @@ wysihtml5.polyfills(window, document);
     }
 
     return api;
-}, this);
-;/**
+}, this);;/**
  * Text range module for Rangy.
  * Text-based manipulation and searching of ranges and selections.
  *
@@ -7988,7 +7987,7 @@ wysihtml5.dom.copyAttributes = function(attributesToCopy) {
       prev: function(options) {
         var prevNode = node.previousSibling,
             types = (options && options.nodeTypes) ? options.nodeTypes : defaultNodeTypes;
-        
+
         if (!prevNode) {
           return null;
         }
@@ -8000,7 +7999,7 @@ wysihtml5.dom.copyAttributes = function(attributesToCopy) {
         ) {
           return wysihtml5.dom.domNode(prevNode).prev(options);
         }
-        
+
         return prevNode;
       },
 
@@ -8008,7 +8007,7 @@ wysihtml5.dom.copyAttributes = function(attributesToCopy) {
       next: function(options) {
         var nextNode = node.nextSibling,
             types = (options && options.nodeTypes) ? options.nodeTypes : defaultNodeTypes;
-        
+
         if (!nextNode) {
           return null;
         }
@@ -8020,7 +8019,7 @@ wysihtml5.dom.copyAttributes = function(attributesToCopy) {
         ) {
           return wysihtml5.dom.domNode(nextNode).next(options);
         }
-        
+
         return nextNode;
       },
 
@@ -8083,7 +8082,7 @@ wysihtml5.dom.copyAttributes = function(attributesToCopy) {
       escapeParent: function(element, newWrapper) {
         var parent, split2, nodeWrap,
             curNode = node;
-        
+
         // Stop if node is not a descendant of element
         if (!wysihtml5.dom.contains(element, node)) {
           throw new Error("Child is not a descendant of node.");
@@ -8166,7 +8165,7 @@ wysihtml5.dom.copyAttributes = function(attributesToCopy) {
         Tests on principle that all properties defined must have at least one match.
         styleValue parameter works in context of styleProperty and has no effect otherwise.
         Returns true if element matches and false if it does not.
-        
+
         Properties for filtering element:
         {
           query: selector string,
@@ -8194,7 +8193,9 @@ wysihtml5.dom.copyAttributes = function(attributesToCopy) {
         }
 
         if (properties.query) {
-          if (!node.matches(properties.query)) {
+          var matches = (typeof node.matches === 'function' && node.matches(properties.query)) ||
+            (typeof node.matchesSelector === 'function' && node.matchesSelector(properties.query));
+          if (!matches) {
             return false;
           }
         }

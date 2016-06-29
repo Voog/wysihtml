@@ -60,7 +60,7 @@
       prev: function(options) {
         var prevNode = node.previousSibling,
             types = (options && options.nodeTypes) ? options.nodeTypes : defaultNodeTypes;
-        
+
         if (!prevNode) {
           return null;
         }
@@ -72,7 +72,7 @@
         ) {
           return wysihtml5.dom.domNode(prevNode).prev(options);
         }
-        
+
         return prevNode;
       },
 
@@ -80,7 +80,7 @@
       next: function(options) {
         var nextNode = node.nextSibling,
             types = (options && options.nodeTypes) ? options.nodeTypes : defaultNodeTypes;
-        
+
         if (!nextNode) {
           return null;
         }
@@ -92,7 +92,7 @@
         ) {
           return wysihtml5.dom.domNode(nextNode).next(options);
         }
-        
+
         return nextNode;
       },
 
@@ -155,7 +155,7 @@
       escapeParent: function(element, newWrapper) {
         var parent, split2, nodeWrap,
             curNode = node;
-        
+
         // Stop if node is not a descendant of element
         if (!wysihtml5.dom.contains(element, node)) {
           throw new Error("Child is not a descendant of node.");
@@ -238,7 +238,7 @@
         Tests on principle that all properties defined must have at least one match.
         styleValue parameter works in context of styleProperty and has no effect otherwise.
         Returns true if element matches and false if it does not.
-        
+
         Properties for filtering element:
         {
           query: selector string,
@@ -266,7 +266,9 @@
         }
 
         if (properties.query) {
-          if (!node.matches(properties.query)) {
+          var matches = (typeof node.matches === 'function' && node.matches(properties.query)) ||
+            (typeof node.matchesSelector === 'function' && node.matchesSelector(properties.query));
+          if (!matches) {
             return false;
           }
         }
