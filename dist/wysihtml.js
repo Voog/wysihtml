@@ -1,5 +1,5 @@
 /**
- * @license wysihtml v0.6.beta
+ * @license wysihtml v0.6.0-beta
  * https://github.com/Voog/wysihtml
  *
  * Author: Christopher Blum (https://github.com/tiff)
@@ -10,7 +10,7 @@
  *
  */
 var wysihtml = {
-  version: "0.6.beta",
+  version: "0.6.0-beta",
 
   // namespaces
   commands:   {},
@@ -6849,6 +6849,14 @@ wysihtml.browser = (function() {
 
     usesControlRanges: function() {
       return document.body && "createControlRange" in document.body;
+    },
+
+    // Webkit browsers have an issue that when caret is at the end of link it is moved outside of link while inserting new characters,
+    // so all inserted content will be after link. Selection before inserion is reported to be in link though.
+    // This makes changing link texts from problematic to impossible (if link is just 1 characer long) for the user.
+    // TODO: needs to be tested better than just browser as it some day might get fixed
+    hasCaretAtLinkEndInsertionProblems: function() {
+      return isWebKit;
     }
   };
 })();
@@ -11035,23 +11043,57 @@ wysihtml.quirks.ensureProperClearing = (function() {
     getRangeToNodeEnd: function() {
       if (this.isCollapsed()) {
         var range = this.getRange(),
+            sNode, pos, lastR;
+        if (range) {
+          sNode = range.startContainer;
+          pos = range.startOffset;
+          lastR = rangy.createRange(this.doc);
+
+          lastR.selectNodeContents(sNode);
+          lastR.setStart(sNode, pos);
+          return lastR;
+        }
+      }
+    },
+
+    getRangeToNodeBeginning: function() {
+      if (this.isCollapsed()) {
+        var range = this.getRange(),
             sNode = range.startContainer,
             pos = range.startOffset,
             lastR = rangy.createRange(this.doc);
 
         lastR.selectNodeContents(sNode);
-        lastR.setStart(sNode, pos);
+        lastR.setEnd(sNode, pos);
         return lastR;
       }
     },
 
-    caretIsLastInSelection: function() {
+    // This function returns if caret is last in a node (no textual visible content follows)
+    caretIsInTheEndOfNode: function(ignoreIfSpaceIsBeforeCaret) {
       var r = rangy.createRange(this.doc),
           s = this.getSelection(),
-          endc = this.getRangeToNodeEnd().cloneContents(),
-          endtxt = endc.textContent;
+          rangeToNodeEnd = this.getRangeToNodeEnd(),
+          endc, endtxt, beginc, begintxt;
 
-      return (/^\s*$/).test(endtxt);
+      if (rangeToNodeEnd) {
+        endc = rangeToNodeEnd.cloneContents();
+        endtxt = endc.textContent;
+
+        if ((/^\s*$/).test(endtxt)) {
+          if (ignoreIfSpaceIsBeforeCaret) {
+            beginc = this.getRangeToNodeBeginning().cloneContents();
+            begintxt = beginc.textContent;
+            return !(/[\u00A0 ][\s\uFEFF]*$/).test(begintxt);
+          } else {
+            return true;
+          }
+        } else {
+          return false;
+        }
+      } else {
+        return false;
+      }
     },
 
     caretIsFirstInSelection: function(includeLineBreaks) {
@@ -14925,7 +14967,7 @@ wysihtml.views.View = Base.extend(
 
     // Override for giving user ability to delete last line break in table cell
     fixLastBrDeletionInTable: function(composer, force) {
-      if (composer.selection.caretIsLastInSelection()) {
+      if (composer.selection.caretIsInTheEndOfNode()) {
         var sel = composer.selection.getSelection(),
             aNode = sel.anchorNode;
         if (aNode && aNode.nodeType === 1 && (wysihtml.dom.getParentElement(aNode, {query: 'td, th'}, false, composer.element) || force)) {
@@ -15335,7 +15377,9 @@ wysihtml.views.View = Base.extend(
   var handleKeyDown = function(event) {
     var keyCode = event.keyCode,
         command = shortcuts[keyCode],
-        target, parent;
+        target = this.selection.getSelectedNode(true),
+        targetEl = (target && target.nodeType === 3) ? target.parentNode : target, // target guaranteed to be an Element 
+        parent;
 
     // Select all (meta/ctrl + a)
     if ((event.ctrlKey || event.metaKey) && !event.altKey && keyCode === 65) {
@@ -15357,7 +15401,6 @@ wysihtml.views.View = Base.extend(
 
     // Make sure that when pressing backspace/delete on selected images deletes the image and it's anchor
     if (keyCode === wysihtml.BACKSPACE_KEY || keyCode === wysihtml.DELETE_KEY) {
-      target = this.selection.getSelectedNode(true);
       if (target && target.nodeName === "IMG") {
         event.preventDefault();
         parent = target.parentNode;
@@ -15383,6 +15426,63 @@ wysihtml.views.View = Base.extend(
     }
 
   };
+
+  var handleKeyPress = function(event) {
+
+    // This block should run only if some character is inserted (nor command keys like delete, backspace, enter, etc.)
+    if (event.which !== 0) {
+
+      // Test if caret is last in a link in webkit and try to fix webkit problem,
+      // that all inserted content is added outside of link.
+      // This issue was added as a not thought through fix for getting caret after link in contenteditable if it is last in editable area.
+      // Allthough it fixes this minor case it actually introduces a cascade of problems when editing links.
+      // The standard approachi in other wysiwygs seems as a step backwards - introducing a separate modal for managing links content text.
+      // I find it to be too big of a tradeoff in terms of expected simple UI flow, thus trying to fight against it.
+
+      if (browser.hasCaretAtLinkEndInsertionProblems() && this.selection.caretIsInTheEndOfNode()) {
+        var target = this.selection.getSelectedNode(true),
+            targetEl = (target && target.nodeType === 3) ? target.parentNode : target, // target guaranteed to be an Element
+            invisibleSpace, space;
+
+        if (targetEl && targetEl.closest('a')) {
+
+          if (event.which !== 32 || this.selection.caretIsInTheEndOfNode(true)) {
+            // Executed if there is no whitespace before caret in textnode in case of pressing space.
+            // Whitespace before marks that user wants to escape the node by pressing double space.
+            // Otherwise insert the character in the link not out as it woult like to go natively
+
+            invisibleSpace = this.doc.createTextNode(wysihtml.INVISIBLE_SPACE);
+            this.selection.insertNode(invisibleSpace);
+            this.selection.setBefore(invisibleSpace);
+            setTimeout(function() {
+
+              if (invisibleSpace.textContent.length > 1) {
+                invisibleSpace.textContent = invisibleSpace.textContent.replace(wysihtml.INVISIBLE_SPACE_REG_EXP, '');
+                this.selection.setAfter(invisibleSpace);
+              } else {
+                invisibleSpace.remove();
+              }
+
+            }.bind(this), 0);
+          } else if (event.which === 32) {
+            // Seems like space was pressed and there was a space before the caret allready
+            // This means user wants to escape the link now (caret is last in link node too) so we let the native browser do it-s job and escape.
+            // But lets move the trailing space too out of link if present
+
+            if (target.nodeType === 3 && (/[\u00A0 ]$/).test(target.textContent)) {
+
+              target.textContent = target.textContent.replace(/[\u00A0 ]$/, '');
+              space = this.doc.createTextNode(' ');
+              targetEl.parentNode.insertBefore(space, targetEl.nextSibling);
+              this.selection.setAfter(space, false);
+              event.preventDefault();
+
+            }
+          }
+        }
+      }
+    }
+  }
 
   var handleIframeFocus = function(event) {
     setTimeout((function() {
@@ -15422,17 +15522,18 @@ wysihtml.views.View = Base.extend(
       }, 250);
     }
 
-    actions.addListeners(focusBlurElement, ["drop", "paste", "mouseup", "focus", "keyup"], handleUserInteraction.bind(this));
-    focusBlurElement.addEventListener("focus", handleFocus.bind(this), false);
-    focusBlurElement.addEventListener("blur",  handleBlur.bind(this), false);
+    actions.addListeners(focusBlurElement, ['drop', 'paste', 'mouseup', 'focus', 'keyup'], handleUserInteraction.bind(this));
+    focusBlurElement.addEventListener('focus', handleFocus.bind(this), false);
+    focusBlurElement.addEventListener('blur',  handleBlur.bind(this), false);
 
-    actions.addListeners(this.element, ["drop", "paste", "beforepaste"], handlePaste.bind(this), false);
-    this.element.addEventListener("copy",       handleCopy.bind(this), false);
-    this.element.addEventListener("mousedown",  handleMouseDown.bind(this), false);
-    this.element.addEventListener("click",      handleClick.bind(this), false);
-    this.element.addEventListener("drop",       handleDrop.bind(this), false);
-    this.element.addEventListener("keyup",      handleKeyUp.bind(this), false);
-    this.element.addEventListener("keydown",    handleKeyDown.bind(this), false);
+    actions.addListeners(this.element, ['drop', 'paste', 'beforepaste'], handlePaste.bind(this), false);
+    this.element.addEventListener('copy',       handleCopy.bind(this), false);
+    this.element.addEventListener('mousedown',  handleMouseDown.bind(this), false);
+    this.element.addEventListener('click',      handleClick.bind(this), false);
+    this.element.addEventListener('drop',       handleDrop.bind(this), false);
+    this.element.addEventListener('keyup',      handleKeyUp.bind(this), false);
+    this.element.addEventListener('keydown',    handleKeyDown.bind(this), false);
+    this.element.addEventListener('keypress',   handleKeyPress.bind(this), false);
 
     // IE controlselect madness fix
     if (wysihtml.browser.usesControlRanges()) {
