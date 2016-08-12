@@ -41,7 +41,7 @@ module.exports = function(grunt) {
         src: base,
         dest: 'dist/<%= pkg.name %>.js'
       },
-      extraCommands: {
+      extracommands: {
         src: 'src/extra-commands/*.js',
         dest: 'dist/<%= pkg.name %>.all-commands.js'
       }
@@ -51,9 +51,13 @@ module.exports = function(grunt) {
         banner: '/*! <%= pkg.name %> - v<%= pkg.version %> (<%= grunt.template.today("yyyy-mm-dd") %>) */\n',
         sourceMap: true
       },
-      build: {
+      dist: {
         files: {
           'dist/minified/<%= pkg.name %>.min.js': 'dist/<%= pkg.name %>.js',
+        }
+      },
+      extracommands: {
+        files: {
           'dist/minified/<%= pkg.name %>.all-commands.min.js': 'dist/<%= pkg.name %>.all-commands.js'
         }
       }
@@ -62,12 +66,28 @@ module.exports = function(grunt) {
       test: {
         path: 'test/index.html'
       }
+    },
+    watch: {
+      scripts: {
+        files: base,
+        tasks: ['concat:dist', 'uglify:dist']
+      },
+      extracommands: {
+        files: ['src/extra-commands/*.js'],
+        tasks: ['concat:extracommands', 'uglify:extracommands']
+      },
+      extensions: {
+        files: ['./src/extensions/*/*.js'],
+        tasks: ['build-modules']
+      }
     }
   });
 
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-open');
+  grunt.loadNpmTasks('grunt-contrib-watch');
+  
   grunt.registerTask('build-modules', 'Builds all extension files', function() {
     var concat = {},
         uglify = {};

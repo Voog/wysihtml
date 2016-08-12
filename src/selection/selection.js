@@ -545,23 +545,57 @@
     getRangeToNodeEnd: function() {
       if (this.isCollapsed()) {
         var range = this.getRange(),
+            sNode, pos, lastR;
+        if (range) {
+          sNode = range.startContainer;
+          pos = range.startOffset;
+          lastR = rangy.createRange(this.doc);
+
+          lastR.selectNodeContents(sNode);
+          lastR.setStart(sNode, pos);
+          return lastR;
+        }
+      }
+    },
+
+    getRangeToNodeBeginning: function() {
+      if (this.isCollapsed()) {
+        var range = this.getRange(),
             sNode = range.startContainer,
             pos = range.startOffset,
             lastR = rangy.createRange(this.doc);
 
         lastR.selectNodeContents(sNode);
-        lastR.setStart(sNode, pos);
+        lastR.setEnd(sNode, pos);
         return lastR;
       }
     },
 
-    caretIsLastInSelection: function() {
+    // This function returns if caret is last in a node (no textual visible content follows)
+    caretIsInTheEndOfNode: function(ignoreIfSpaceIsBeforeCaret) {
       var r = rangy.createRange(this.doc),
           s = this.getSelection(),
-          endc = this.getRangeToNodeEnd().cloneContents(),
-          endtxt = endc.textContent;
+          rangeToNodeEnd = this.getRangeToNodeEnd(),
+          endc, endtxt, beginc, begintxt;
 
-      return (/^\s*$/).test(endtxt);
+      if (rangeToNodeEnd) {
+        endc = rangeToNodeEnd.cloneContents();
+        endtxt = endc.textContent;
+
+        if ((/^\s*$/).test(endtxt)) {
+          if (ignoreIfSpaceIsBeforeCaret) {
+            beginc = this.getRangeToNodeBeginning().cloneContents();
+            begintxt = beginc.textContent;
+            return !(/[\u00A0 ][\s\uFEFF]*$/).test(begintxt);
+          } else {
+            return true;
+          }
+        } else {
+          return false;
+        }
+      } else {
+        return false;
+      }
     },
 
     caretIsFirstInSelection: function(includeLineBreaks) {

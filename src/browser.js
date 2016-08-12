@@ -412,6 +412,14 @@ wysihtml.browser = (function() {
 
     usesControlRanges: function() {
       return document.body && "createControlRange" in document.body;
+    },
+
+    // Webkit browsers have an issue that when caret is at the end of link it is moved outside of link while inserting new characters,
+    // so all inserted content will be after link. Selection before inserion is reported to be in link though.
+    // This makes changing link texts from problematic to impossible (if link is just 1 characer long) for the user.
+    // TODO: needs to be tested better than just browser as it some day might get fixed
+    hasCaretAtLinkEndInsertionProblems: function() {
+      return isWebKit;
     }
   };
 })();
