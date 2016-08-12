@@ -15233,6 +15233,18 @@ wysihtml.views.View = Base.extend(
         }
       }
     }
+
+    if (browser.hasCaretAtLinkEndInsertionProblems() && composer.selection.caretIsInTheEndOfNode()) {
+      var target = composer.selection.getSelectedNode(true),
+          targetEl = (target && target.nodeType === 3) ? target.parentNode : target, // target guaranteed to be an Element
+          invisibleSpace, space;
+
+      if (targetEl && targetEl.closest('a') && target.nodeType === 3 && target === targetEl.lastChild) {
+        // Seems like enter was pressed and caret was at the end of link node
+        // This means user wants to escape the link now (caret is last in link node too).
+        composer.selection.setAfter(targetEl);
+      }
+    }
   };
 
   var handleTabKeyDown = function(composer, element, shiftKey) {
@@ -15438,18 +15450,19 @@ wysihtml.views.View = Base.extend(
       // Allthough it fixes this minor case it actually introduces a cascade of problems when editing links.
       // The standard approachi in other wysiwygs seems as a step backwards - introducing a separate modal for managing links content text.
       // I find it to be too big of a tradeoff in terms of expected simple UI flow, thus trying to fight against it.
+      // Also adds link escaping by double space with caret at the end of link for all browsers
 
-      if (browser.hasCaretAtLinkEndInsertionProblems() && this.selection.caretIsInTheEndOfNode()) {
+      if (this.selection.caretIsInTheEndOfNode()) {
         var target = this.selection.getSelectedNode(true),
             targetEl = (target && target.nodeType === 3) ? target.parentNode : target, // target guaranteed to be an Element
             invisibleSpace, space;
 
-        if (targetEl && targetEl.closest('a')) {
+        if (targetEl && targetEl.closest('a') && target === targetEl.lastChild) {
 
-          if (event.which !== 32 || this.selection.caretIsInTheEndOfNode(true)) {
+          if (event.which !== 32 || this.selection.caretIsInTheEndOfNode(true) && browser.hasCaretAtLinkEndInsertionProblems()) {
             // Executed if there is no whitespace before caret in textnode in case of pressing space.
             // Whitespace before marks that user wants to escape the node by pressing double space.
-            // Otherwise insert the character in the link not out as it woult like to go natively
+            // Otherwise insert the character in the link not out as it would like to go natively
 
             invisibleSpace = this.doc.createTextNode(wysihtml.INVISIBLE_SPACE);
             this.selection.insertNode(invisibleSpace);
