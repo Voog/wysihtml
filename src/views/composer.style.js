@@ -165,7 +165,7 @@
 
     // --------- restore focus ---------
     if (originalActiveElement) {
-      originalActiveElement.focus();
+      focusWithoutScrolling(originalActiveElement);
     } else {
       textareaElement.blur();
     }
