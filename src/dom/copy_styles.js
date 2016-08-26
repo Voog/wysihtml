@@ -62,9 +62,9 @@
         }
 
         return {
-          to: function(element) {
+          to: function pasteStylesTo(element) {
             dom.setStyles(cssText).on(element);
-            return { andTo: arguments.callee };
+            return { andTo: pasteStylesTo };
           }
         };
       }

@@ -17,7 +17,7 @@ wysihtml.dom.copyAttributes = function(attributesToCopy) {
   return {
     from: function(elementToCopyFrom) {
       return {
-        to: function(elementToCopyTo) {
+        to: function pasteElementAttributesTo(elementToCopyTo) {
           var attribute,
               i         = 0,
               length    = attributesToCopy.length;
@@ -27,7 +27,7 @@ wysihtml.dom.copyAttributes = function(attributesToCopy) {
               elementToCopyTo[attribute] = elementToCopyFrom[attribute];
             }
           }
-          return { andTo: arguments.callee };
+          return { andTo: pasteElementAttributesTo };
         }
       };
     }
