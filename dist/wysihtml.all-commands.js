@@ -432,6 +432,29 @@ wysihtml.commands.insertBlockQuote = (function() {
   };
 })();
 
+wysihtml.commands.insertHorizontalRule = (function() {
+  return {
+    exec: function(composer) {
+      var node = composer.selection.getSelectedNode(),
+          parent = wysihtml.dom.getParentElement(node, { query: wysihtml.PERMITTED_PHRASING_CONTENT_ONLY }, null, composer.editableArea),
+          elem, range;
+
+      if (parent) {
+        elem = document.createElement('hr');
+        composer.selection.splitElementAtCaret(parent, elem);
+        composer.selection.selectNode(elem.nextSibling || elem);
+        range = composer.selection.getSelection();
+        range.collapseToStart();
+      } else {
+        composer.selection.insertHTML('<hr>');
+      }
+    },
+    state: function() {
+      return false; // :(
+    }
+  };
+})();
+
 wysihtml.commands.insertOrderedList = (function() {
   return {
     exec: function(composer, command) {
