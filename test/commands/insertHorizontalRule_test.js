@@ -20,7 +20,14 @@ if (wysihtml.browser.supported()) {
       r1.setEnd(el, offset);
       r1.setStart(el, offset);
       editor.composer.selection.setSelection(r1);
-    }
+    },
+
+    setSelection: function(editor, el, offset, el2, offset2) {
+      var r1 = editor.composer.selection.createRange();
+      r1.setEnd(el2, offset2);
+      r1.setStart(el, offset);
+      editor.composer.selection.setSelection(r1);
+    },
   });
 
   asyncTest('Insert HR at various places with caret', function() {
@@ -76,7 +83,46 @@ if (wysihtml.browser.supported()) {
   });
 
   asyncTest('Insert HR at various places with selection', function() {
-    
+    expect(7);
+
+    var parserRules = {
+          tags: {
+            h1: true,
+            p: true,
+            div: true,
+            br: true,
+            a: true
+          }
+        },
+        editor = new wysihtml.Editor(this.editableArea, {
+          parserRules: parserRules
+        });
+
+    editor.on('load', function() {
+      var prev;
+
+      editor.setValue(this.htmlTemplate, true);
+      this.setSelection(editor, this.editableArea.firstChild, 4, this.editableArea.childNodes[2], 2);
+      editor.composer.commands.exec('insertHorizontalRule');
+      ok(this.editableArea.firstChild.nodeType === 3 && this.editableArea.firstChild.data === 'Some', 'Selection start handled correctly');
+      ok(this.editableArea.childNodes[1].nodeType === 1 && this.editableArea.childNodes[1].nodeName === 'HR', 'Hr inserted at correct spot');
+      ok(this.editableArea.childNodes[2].nodeType === 3 && this.editableArea.childNodes[2].data === ' multiple lines', 'Selected text removed and Selection end handled correctly');
+      editor.composer.commands.exec('insertHTML', 'test');
+      ok(this.editableArea.childNodes[2].nodeType === 3 && this.editableArea.childNodes[2].data === 'test', 'Caret is corretctly after HR');
+
+      editor.setValue(this.htmlTemplate, true);
+      this.setSelection(editor, this.editableArea.querySelector('a').firstChild, 10, this.editableArea.querySelector('p').firstChild, 9);
+      editor.composer.commands.exec('insertHorizontalRule');
+      ok(this.editableArea.querySelector('a').innerHTML === 'containing', 'Wrapped start in link split correctly');
+      ok(this.editableArea.querySelector('h1').lastChild === this.editableArea.querySelector('a') &&
+         this.editableArea.querySelector('h1').nextSibling.nodeType === 1 &&
+         this.editableArea.querySelector('h1').nextSibling.nodeName === 'HR' &&
+         this.editableArea.querySelector('h1').nextSibling.nextSibling.nodeType === 1 &&
+         this.editableArea.querySelector('h1').nextSibling.nextSibling.nodeName === 'P', 'HR inserted at correct place: escaping H1 and P');
+      ok(this.editableArea.querySelector('p').innerHTML === 'by a parahraph', 'End of selection text split and removed correctly from P');
+
+      start();
+    }.bind(this));
   });
 
 
