@@ -91,7 +91,8 @@ wysihtml.polyfills = function(win, doc) {
   // Detects the misbegaviour and patches it
   var normalizeHasCaretError = function() {
     if ("createRange" in doc && "getSelection" in win) {
-      var e = doc.createElement('div'),
+      var originalTarget = document.activeElement,
+          e = doc.createElement('div'),
           t1 = doc.createTextNode('a'),
           t2 = doc.createTextNode('a'),
           t3 = doc.createTextNode('a'),
@@ -115,6 +116,9 @@ wysihtml.polyfills = function(win, doc) {
       ret = (e.childNodes.length !== 1 || s.anchorNode !== e.firstChild || s.anchorOffset !== 2);
       e.parentNode.removeChild(e);
       s.removeAllRanges();
+
+      originalTarget.focus();
+
       return ret;
     }
   };
