@@ -23,7 +23,7 @@
         }.bind(this),
         iframeInitiator = (function() {
           hideHandlers.call(this);
-          actions.removeListeners(this.sandbox.getIframe(), ['focus', 'mouseup', 'mouseover'], iframeInitiator);
+          this.actions.removeListeners(this.sandbox.getIframe(), ['focus', 'mouseup', 'mouseover'], iframeInitiator);
         }).bind(this);
 
     if (
@@ -32,14 +32,14 @@
       wysihtml.browser.supportsCommand(this.doc, 'enableInlineTableEditing')
     ) {
       if (this.sandbox.getIframe) {
-        actions.addListeners(this.sandbox.getIframe(), ['focus', 'mouseup', 'mouseover'], iframeInitiator);
+        this.actions.addListeners(this.sandbox.getIframe(), ['focus', 'mouseup', 'mouseover'], iframeInitiator);
       } else {
         this.win.addEventListener('load', hideHandlers);
       }
     }
     this.tableSelection = wysihtml.quirks.tableCellsSelection(this.element, this.parent);
   };
-  
+
   // Cell selections handling
   var tableCellsSelection = function(editable, editor) {
 

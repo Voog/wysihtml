@@ -462,7 +462,7 @@
     var keyCode = event.keyCode,
         command = shortcuts[keyCode],
         target = this.selection.getSelectedNode(true),
-        targetEl = (target && target.nodeType === 3) ? target.parentNode : target, // target guaranteed to be an Element 
+        targetEl = (target && target.nodeType === 3) ? target.parentNode : target, // target guaranteed to be an Element
         parent;
 
     // Select all (meta/ctrl + a)
@@ -593,6 +593,7 @@
         focusBlurElement    = (browser.supportsEventsInIframeCorrectly() || this.sandbox.getContentEditable) ? this.element : this.sandbox.getWindow();
 
     this.focusState = this.getValue(false, false);
+    this.actions = actions;
 
     // --------- destroy:composer event ---------
     container.addEventListener(["DOMNodeRemoved"], handleDomNodeRemoved.bind(this), false);

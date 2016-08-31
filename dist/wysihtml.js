@@ -165,8 +165,8 @@ wysihtml.polyfills = function(win, doc) {
 
       }(win.Element.prototype));
 
-      if (!('classList' in doc.documentElement) && win.Object.defineProperty && typeof HTMLElement !== 'undefined') {
-        win.Object.defineProperty(HTMLElement.prototype, 'classList', {
+      if (!('classList' in doc.documentElement) && win.Object.defineProperty && typeof win.HTMLElement !== 'undefined') {
+        win.Object.defineProperty(win.HTMLElement.prototype, 'classList', {
           get: function() {
             var self = this;
             function update(fn) {
@@ -15439,7 +15439,7 @@ wysihtml.views.View = Base.extend(
     var keyCode = event.keyCode,
         command = shortcuts[keyCode],
         target = this.selection.getSelectedNode(true),
-        targetEl = (target && target.nodeType === 3) ? target.parentNode : target, // target guaranteed to be an Element 
+        targetEl = (target && target.nodeType === 3) ? target.parentNode : target, // target guaranteed to be an Element
         parent;
 
     // Select all (meta/ctrl + a)
@@ -15570,6 +15570,7 @@ wysihtml.views.View = Base.extend(
         focusBlurElement    = (browser.supportsEventsInIframeCorrectly() || this.sandbox.getContentEditable) ? this.element : this.sandbox.getWindow();
 
     this.focusState = this.getValue(false, false);
+    this.actions = actions;
 
     // --------- destroy:composer event ---------
     container.addEventListener(["DOMNodeRemoved"], handleDomNodeRemoved.bind(this), false);

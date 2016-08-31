@@ -118,8 +118,8 @@ wysihtml.polyfills = function(win, doc) {
 
       }(win.Element.prototype));
 
-      if (!('classList' in doc.documentElement) && win.Object.defineProperty && typeof HTMLElement !== 'undefined') {
-        win.Object.defineProperty(HTMLElement.prototype, 'classList', {
+      if (!('classList' in doc.documentElement) && win.Object.defineProperty && typeof win.HTMLElement !== 'undefined') {
+        win.Object.defineProperty(win.HTMLElement.prototype, 'classList', {
           get: function() {
             var self = this;
             function update(fn) {
