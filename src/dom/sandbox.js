@@ -199,7 +199,7 @@
       }
 
       if (wysihtml.polyfills) {
-        wysihtml.polyfills(iframeWindow, iframeDocument);
+        wysihtml.polyfills(iframeWindow, iframeDocument).apply();
       }
 
       this.loaded = true;

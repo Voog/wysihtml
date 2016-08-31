@@ -87,14 +87,14 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-open');
   grunt.loadNpmTasks('grunt-contrib-watch');
-  
+
   grunt.registerTask('build-modules', 'Builds all extension files', function() {
     var concat = {},
         uglify = {};
 
     grunt.file.expand('./src/extensions/*').forEach(function (d) {
       var dir = d.split('/').pop();
-      
+
       if (!grunt.file.isDir(d)) {
         var fnameArr = dir.split('.');
         fnameArr.pop();
@@ -105,7 +105,7 @@ module.exports = function(grunt) {
         src: grunt.file.isDir(d) ? [d + '/*.js'] : [d],
         dest: 'dist/wysihtml.' + dir + '.js'
       };
-      
+
       uglify[dir] = {
         options: {
           sourceMap: true
@@ -114,7 +114,7 @@ module.exports = function(grunt) {
           ['dist/minified/wysihtml.' + dir + '.min.js']: 'dist/wysihtml.' + dir + '.js'
         }
       };
-      
+
     });
     grunt.config.set('concat', concat);
     grunt.task.run('concat');
