@@ -1,5 +1,5 @@
 /**
- * @license wysihtml v0.6.0-beta
+ * @license wysihtml v0.6.0-beta1
  * https://github.com/Voog/wysihtml
  *
  * Author: Christopher Blum (https://github.com/tiff)
@@ -10,7 +10,7 @@
  *
  */
 var wysihtml = {
-  version: '0.6.0-beta',
+  version: '0.6.0-beta1',
 
   // namespaces
   commands:   {},

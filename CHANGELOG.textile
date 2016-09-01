@@ -1,8 +1,11 @@
-*wysihtml 0.6.0 (May 13 , 2016) (BREAKING CHANGES)
+*wysihtml 0.6.0 (latest beta: Setpember 1, 2016) (BREAKING CHANGES)
 * Object namespace is now wysihtyml (was previously wysihtml5)
 * Restructures code into separate modules, so users can build their own bundle of needed features (wysihtml-toolbar.js all bundle no longer present)
 * Fixes problems when bundling code by removing conflicting internal bundled UMD wrappers
 * Reduced size by removing some IE8 only targeting code.
+* Fixes a webkit issue where last character of a link can not be edited
+* Adds HR command
+* Fixes issue of selections/autofocus being lost after loading wysihtml javacript (polyfill tests did not restore selection)
 
 *wysihtml5x 0.5.5* (January 6, 2016)
 * Fixes some editing issues with IE proprietary control selection
@@ -103,14 +106,14 @@
 
 
 *wysihtml5x 0.5.0-beta1* (December 4, 2014)
-* formatBlock update 
-* Selections apply format to selection not its parent block, 
+* formatBlock update
+* Selections apply format to selection not its parent block,
 * Removed toggle functionality from many formatBlock commands (h1-6, p, pre ...) and added plaintext state to formatblock instead.
 * Code modernization
 * Changes API!
 * Allow tel: scheme in links
 * Fixed atributeless A tags
-* Added "dimension" to checkattributes methods (for with/height attributes where floating point numbrs and percentages are allowed) 
+* Added "dimension" to checkattributes methods (for with/height attributes where floating point numbrs and percentages are allowed)
 
 *wysihtml5x 0.4.17* (November 6, 2014)
 * Updated rangy and added as node package

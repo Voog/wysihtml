@@ -1,6 +1,6 @@
 {
   "name": "wysihtml",
-  "main": "dist/wysihtml-toolbar.js",
+  "main": "dist/wysihtml.js",
   "dependencies": {
   },
   "homepage": "https://github.com/Voog/wysihtml",
