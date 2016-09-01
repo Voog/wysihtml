@@ -102,11 +102,12 @@ if (wysihtml.browser.supported()) {
       var prev;
 
       editor.setValue(this.htmlTemplate, true);
-      this.setSelection(editor, this.editableArea.firstChild, 4, this.editableArea.childNodes[2], 2);
+      this.setSelection(editor, this.editableArea.firstChild, 4, this.editableArea.childNodes[2], 3);
       editor.composer.commands.exec('insertHorizontalRule');
       ok(this.editableArea.firstChild.nodeType === 3 && this.editableArea.firstChild.data === 'Some', 'Selection start handled correctly');
       ok(this.editableArea.childNodes[1].nodeType === 1 && this.editableArea.childNodes[1].nodeName === 'HR', 'Hr inserted at correct spot');
-      ok(this.editableArea.childNodes[2].nodeType === 3 && this.editableArea.childNodes[2].data === ' multiple lines', 'Selected text removed and Selection end handled correctly');
+
+      ok(this.editableArea.childNodes[2].nodeType === 3 && this.editableArea.childNodes[2].data === 'multiple lines', 'Selected text removed and Selection end handled correctly');
       editor.composer.commands.exec('insertHTML', 'test');
       ok(this.editableArea.childNodes[2].nodeType === 3 && this.editableArea.childNodes[2].data === 'test', 'Caret is corretctly after HR');
 

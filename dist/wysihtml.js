@@ -10788,7 +10788,7 @@ wysihtml.quirks.ensureProperClearing = (function() {
             if (!sel || (lastSibling === node && node.nodeType === 1 && win.getComputedStyle(node).display === "block")) {
               if (notVisual) {
                 // If setAfter is used as internal between actions, self-removing caretPlaceholder has simpler implementation
-                // and remove itself in call stack end instead on user interaction 
+                // and remove itself in call stack end instead on user interaction
                 var caretPlaceholder = this.doc.createTextNode(wysihtml.INVISIBLE_SPACE);
                 node.parentNode.insertBefore(caretPlaceholder, node.nextSibling);
                 this.selectNode(caretPlaceholder);
@@ -10955,11 +10955,11 @@ wysihtml.quirks.ensureProperClearing = (function() {
       this.deleteRangeContents(range);
       this.setSelection(range);
     },
-    
+
     // Makes sure all uneditable sare notified before deleting contents
     deleteRangeContents: function (range) {
       var startParent, endParent, uneditables, ev;
-      
+
       if (this.unselectableClass) {
         if ((startParent = wysihtml.dom.getParentElement(range.startContainer, { query: "." + this.unselectableClass }, false, this.contain))) {
           range.setStartBefore(startParent);
@@ -11055,7 +11055,7 @@ wysihtml.quirks.ensureProperClearing = (function() {
           if (r[0].startOffset === 0 && r[0].startContainer.previousSibling) {
             caretNode = r[0].startContainer.previousSibling;
             if (caretNode.nodeType === 3) {
-              offset = caretNode.data.length; 
+              offset = caretNode.data.length;
             }
           } else {
             caretNode = r[0].startContainer;
@@ -11150,7 +11150,7 @@ wysihtml.quirks.ensureProperClearing = (function() {
           s = this.getSelection(),
           range = this.getRange(),
           startNode = getRangeNode(range.startContainer, range.startOffset);
-      
+
       if (startNode) {
         if (startNode.nodeType === wysihtml.TEXT_NODE) {
           if (!startNode.parentNode) {
@@ -11375,7 +11375,7 @@ wysihtml.quirks.ensureProperClearing = (function() {
           node = this.doc.createElement('DIV'),
           fragment = this.doc.createDocumentFragment(),
           lastChild, lastEditorElement;
-      
+
       if (range) {
         range.deleteContents();
         node.innerHTML = html;
@@ -11385,7 +11385,7 @@ wysihtml.quirks.ensureProperClearing = (function() {
           fragment.appendChild(node.firstChild);
         }
         range.insertNode(fragment);
-        
+
         lastEditorElement = this.contain.lastChild;
         while (lastEditorElement && lastEditorElement.nodeType === 3 && lastEditorElement.previousSibling && (/^\s*$/).test(lastEditorElement.data)) {
           lastEditorElement = lastEditorElement.previousSibling;
@@ -11411,6 +11411,7 @@ wysihtml.quirks.ensureProperClearing = (function() {
     insertNode: function(node) {
       var range = this.getRange();
       if (range) {
+        range.deleteContents();
         range.insertNode(node);
       }
     },
@@ -11555,7 +11556,7 @@ wysihtml.quirks.ensureProperClearing = (function() {
         this._selectLineUniversal();
       }
     },
-    
+
     includeRangyRangeHelpers: function() {
       var s = this.getSelection(),
           r = s.getRangeAt(0),
@@ -11571,7 +11572,7 @@ wysihtml.quirks.ensureProperClearing = (function() {
           },
           anode = s.anchorNode.nodeType === 1 ? s.anchorNode.childNodes[s.anchorOffset] : s.anchorNode,
           fnode = s.focusNode.nodeType === 1 ? s.focusNode.childNodes[s.focusOffset] : s.focusNode;
-      
+
       if (fnode && s.focusOffset === getNodeLength(fnode) && fnode.nextSibling && isHelperNode(fnode.nextSibling)) {
         r.setEndAfter(fnode.nextSibling);
       }
@@ -11587,10 +11588,10 @@ wysihtml.quirks.ensureProperClearing = (function() {
     _selectLine_W3C: function() {
       var selection = this.win.getSelection(),
           initialBoundry = [selection.anchorNode, selection.anchorOffset, selection.focusNode, selection.focusOffset];
-          
+
       selection.modify("move", "left", "lineboundary");
       selection.modify("extend", "right", "lineboundary");
-      
+
       // IF lineboundary extending did not change selection try universal fallback (FF fails sometimes without a reason)
       if (selection.anchorNode === initialBoundry[0] &&
           selection.anchorOffset === initialBoundry[1] &&
@@ -11692,14 +11693,14 @@ wysihtml.quirks.ensureProperClearing = (function() {
       if (!r.collapsed) {
         r.insertNode(this.doc.createTextNode(wysihtml.INVISIBLE_SPACE));
       }
-      
+
       // Is probably just empty line as can not be expanded
       rect = r.nativeRange.getBoundingClientRect();
       // If startnode is not line break allready move the start position of range by -1 character until clientRect top changes;
       do {
         amount = r.moveStart('character', -1);
         testRect =  r.nativeRange.getBoundingClientRect();
-        
+
         if (!testRect || Math.floor(testRect.top) !== Math.floor(rect.top)) {
           r.moveStart('character', 1);
           found = true;
@@ -11709,7 +11710,7 @@ wysihtml.quirks.ensureProperClearing = (function() {
       count = 0;
       found = false;
       rect = r.nativeRange.getBoundingClientRect();
-      
+
       if (r.endContainer !== this.contain || (this.contain.lastChild && this.contain.childNodes[r.endOffset] !== this.contain.lastChild)) {
         do {
           amount = r.moveEnd('character', 1);
@@ -11903,7 +11904,7 @@ wysihtml.quirks.ensureProperClearing = (function() {
 
       wysihtml.dom.removeInvisibleSpaces(this.composer.element);
       doSelect();
-      
+
       if (this.composer.element.firstChild && notSelected())  {
         // Try fixing end
         this.composer.element.appendChild(blankEndNode);
@@ -11912,11 +11913,11 @@ wysihtml.quirks.ensureProperClearing = (function() {
         if (notSelected()) {
           // Remove end fix
           blankEndNode.parentNode.removeChild(blankEndNode);
-          
+
           // Try fixing beginning
           this.composer.element.insertBefore(blankStartNode, this.composer.element.firstChild);
           doSelect();
-          
+
           if (notSelected()) {
             // Try fixing both
             this.composer.element.appendChild(blankEndNode);
