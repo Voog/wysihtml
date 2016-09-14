@@ -334,7 +334,7 @@
     composer.commands.exec("insertHTML", "&emsp;");
   };
 
-  var handleDomNodeRemoved = function(event) {
+  var handleDomNodeRemoved = function(event) {      
       if (this.domNodeRemovedInterval) {
         clearInterval(domNodeRemovedInterval);
       }
@@ -595,8 +595,9 @@
     this.focusState = this.getValue(false, false);
     this.actions = actions;
 
-    // --------- destroy:composer event ---------
+    // --------- destroy:composer event ---------    
     container.addEventListener(["DOMNodeRemoved"], handleDomNodeRemoved.bind(this), false);
+    container.addEventListener(["DOMNodeRemovedFromDocument"], handleDomNodeRemoved.bind(this), false);
 
     // DOMNodeRemoved event is not supported in IE 8
     // TODO: try to figure out a polyfill style fix, so it could be transferred to polyfills and removed if ie8 is not needed
