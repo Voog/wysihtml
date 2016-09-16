@@ -1,4 +1,4 @@
-*wysihtml 0.6.0 (latest beta: Setpember 1, 2016) (BREAKING CHANGES)
+*wysihtml 0.6.0* (latest beta: Setpember 1, 2016) (BREAKING CHANGES)
 * Object namespace is now wysihtyml (was previously wysihtml5)
 * Restructures code into separate modules, so users can build their own bundle of needed features (wysihtml-toolbar.js all bundle no longer present)
 * Fixes problems when bundling code by removing conflicting internal bundled UMD wrappers
