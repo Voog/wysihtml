@@ -14733,41 +14733,41 @@ wysihtml.views.View = Base.extend(
       dom.observe(this.element, "keydown", function(event) {
         var keyCode = event.keyCode;
 
-        if (event.shiftKey || event.ctrlKey || event.defaultPrevented) {
+        if (event.ctrlKey || event.defaultPrevented) {
           return;
         }
 
         if (keyCode !== wysihtml.ENTER_KEY && keyCode !== wysihtml.BACKSPACE_KEY) {
           return;
         }
-        var blockElement = dom.getParentElement(that.selection.getSelectedNode(), { query: USE_NATIVE_LINE_BREAK_INSIDE_TAGS }, 4);
-        if (blockElement) {
-          setTimeout(function() {
-            // Unwrap paragraph after leaving a list or a H1-6
-            var selectedNode = that.selection.getSelectedNode(),
-                list;
-
-            if (blockElement.nodeName === "LI") {
-              if (!selectedNode) {
-                return;
-              }
-
-              list = dom.getParentElement(selectedNode, { query: LIST_TAGS }, 2);
-
-              if (!list) {
-                adjust(selectedNode);
-              }
-            }
-
-            if (keyCode === wysihtml.ENTER_KEY && blockElement.nodeName.match(/^H[1-6]$/)) {
-              adjust(selectedNode);
-            }
-          }, 0);
-          return;
-        }
-        if (that.config.useLineBreaks && keyCode === wysihtml.ENTER_KEY && !wysihtml.browser.insertsLineBreaksOnReturn()) {
+        if (keyCode === wysihtml.ENTER_KEY && (that.config.useLineBreaks || event.shiftKey) && !wysihtml.browser.insertsLineBreaksOnReturn()) {
           event.preventDefault();
           that.commands.exec("insertLineBreak");
+        } else {
+          var blockElement = dom.getParentElement(that.selection.getSelectedNode(), { query: USE_NATIVE_LINE_BREAK_INSIDE_TAGS }, 4);
+          if (blockElement) {
+            setTimeout(function() {
+              // Unwrap paragraph after leaving a list or a H1-6
+              var selectedNode = that.selection.getSelectedNode(),
+              list;
+
+              if (blockElement.nodeName === "LI") {
+                if (!selectedNode) {
+                  return;
+                }
+
+                list = dom.getParentElement(selectedNode, { query: LIST_TAGS }, 2);
+
+                if (!list) {
+                  adjust(selectedNode);
+                }
+              }
+
+              if (keyCode === wysihtml.ENTER_KEY && blockElement.nodeName.match(/^H[1-6]$/)) {
+                adjust(selectedNode);
+              }
+            }, 0);
+          }
         }
       });
     }
