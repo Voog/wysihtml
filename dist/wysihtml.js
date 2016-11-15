@@ -362,7 +362,7 @@ var Base = function() {
 
 Base.extend = function(_instance, _static) { // subclass
 	var extend = Base.prototype.extend;
-	
+
 	// build the prototype
 	Base._prototyping = true;
 	var proto = new this;
@@ -371,7 +371,7 @@ Base.extend = function(_instance, _static) { // subclass
     // call this method from any other method to invoke that method's ancestor
   };
 	delete Base._prototyping;
-	
+
 	// create the wrapper for the constructor function
 	//var constructor = proto.constructor.valueOf(); //-dean
 	var constructor = proto.constructor;
@@ -386,7 +386,7 @@ Base.extend = function(_instance, _static) { // subclass
 			}
 		}
 	};
-	
+
 	// build the class interface
 	klass.ancestor = this;
 	klass.extend = this.extend;
@@ -404,7 +404,7 @@ Base.extend = function(_instance, _static) { // subclass
 	return klass;
 };
 
-Base.prototype = {	
+Base.prototype = {
 	extend: function(source, value) {
 		if (arguments.length > 1) { // extending with a name/value pair
 			var ancestor = this[source];
@@ -463,7 +463,7 @@ Base = Base.extend({
 }, {
 	ancestor: Object,
 	version: "1.1",
-	
+
 	forEach: function(object, block, context) {
 		for (var key in object) {
 			if (this.prototype[key] === undefined) {
@@ -471,7 +471,7 @@ Base = Base.extend({
 			}
 		}
 	},
-		
+
 	implement: function() {
 		for (var i = 0; i < arguments.length; i++) {
 			if (typeof arguments[i] == "function") {
@@ -484,7 +484,7 @@ Base = Base.extend({
 		}
 		return this;
 	},
-	
+
 	toString: function() {
 		return String(this.valueOf());
 	}
@@ -4293,7 +4293,7 @@ var rangy;
             win = null;
         });
     });
-    
+
 
     /*----------------------------------------------------------------------------------------------------------------*/
 
@@ -7915,7 +7915,7 @@ wysihtml.dom.copyAttributes = function(attributesToCopy) {
       prev: function(options) {
         var prevNode = node.previousSibling,
             types = (options && options.nodeTypes) ? options.nodeTypes : defaultNodeTypes;
-        
+
         if (!prevNode) {
           return null;
         }
@@ -7927,7 +7927,7 @@ wysihtml.dom.copyAttributes = function(attributesToCopy) {
         ) {
           return wysihtml.dom.domNode(prevNode).prev(options);
         }
-        
+
         return prevNode;
       },
 
@@ -7935,7 +7935,7 @@ wysihtml.dom.copyAttributes = function(attributesToCopy) {
       next: function(options) {
         var nextNode = node.nextSibling,
             types = (options && options.nodeTypes) ? options.nodeTypes : defaultNodeTypes;
-        
+
         if (!nextNode) {
           return null;
         }
@@ -7947,7 +7947,7 @@ wysihtml.dom.copyAttributes = function(attributesToCopy) {
         ) {
           return wysihtml.dom.domNode(nextNode).next(options);
         }
-        
+
         return nextNode;
       },
 
@@ -8010,7 +8010,7 @@ wysihtml.dom.copyAttributes = function(attributesToCopy) {
       escapeParent: function(element, newWrapper) {
         var parent, split2, nodeWrap,
             curNode = node;
-        
+
         // Stop if node is not a descendant of element
         if (!wysihtml.dom.contains(element, node)) {
           throw new Error("Child is not a descendant of node.");
@@ -8093,7 +8093,7 @@ wysihtml.dom.copyAttributes = function(attributesToCopy) {
         Tests on principle that all properties defined must have at least one match.
         styleValue parameter works in context of styleProperty and has no effect otherwise.
         Returns true if element matches and false if it does not.
-        
+
         Properties for filtering element:
         {
           query: selector string,
@@ -8383,12 +8383,12 @@ wysihtml.dom.getParentElement = (function() {
 
 })();
 
-/* 
+/*
  * Methods for fetching pasted html before it gets inserted into content
 **/
 
 /* Modern event.clipboardData driven approach.
- * Advantage is that it does not have to loose selection or modify dom to catch the data. 
+ * Advantage is that it does not have to loose selection or modify dom to catch the data.
  * IE does not support though.
 **/
 wysihtml.dom.getPastedHtml = function(event) {
@@ -8409,7 +8409,7 @@ wysihtml.dom.getPastedHtmlWithDiv = function (composer, f) {
       doc = composer.element.ownerDocument,
       cleanerDiv = doc.createElement('DIV'),
       scrollPos = composer.getScrollPos();
-  
+
   doc.body.appendChild(cleanerDiv);
 
   cleanerDiv.style.width = "1px";
@@ -9707,7 +9707,7 @@ wysihtml.dom.renameElement = function(element, newNodeName) {
     newElement.appendChild(firstChild);
   }
   wysihtml.dom.copyAttributes(["align", "className"]).from(element).to(newElement);
-  
+
   if (element.parentNode) {
     element.parentNode.replaceChild(newElement, element);
   }
@@ -10390,7 +10390,7 @@ wysihtml.quirks.ensureProperClearing = (function() {
 })(wysihtml);
 
 (function(wysihtml) {
-  
+
   // List of supported color format parsing methods
   // If radix is not defined 10 is expected as default
   var colorParseMethods = {
@@ -10433,7 +10433,7 @@ wysihtml.quirks.ensureProperClearing = (function() {
     }
   }
 
-  // Takes color string value ("#abc", "rgb(1,2,3)", ...) as an argument and returns the type of that color format "hex", "rgb", "rgba". 
+  // Takes color string value ("#abc", "rgb(1,2,3)", ...) as an argument and returns the type of that color format "hex", "rgb", "rgba".
   function getColorFormat (colorStr) {
     var type = getColorParseMethod(colorStr);
 
@@ -10446,9 +10446,9 @@ wysihtml.quirks.ensureProperClearing = (function() {
     // Takes color string value as an argument and returns suitable parsing method for it
     getColorParseMethod : getColorParseMethod,
 
-    // Takes color string value as an argument and returns the type of that color format "hex", "rgb", "rgba". 
+    // Takes color string value as an argument and returns the type of that color format "hex", "rgb", "rgba".
     getColorFormat : getColorFormat,
-    
+
     /* Parses a color string to and array of [red, green, blue, alpha].
      * paramName: optional argument to parse color value directly from style string parameter
      *
@@ -12052,7 +12052,7 @@ wysihtml.Commands = Base.extend(
         result  = null;
 
     // If composer ahs placeholder unset it before command
-    // Do not apply on commands that are behavioral 
+    // Do not apply on commands that are behavioral
     if (this.composer.hasPlaceholderSet() && !wysihtml.lang.array(['styleWithCSS', 'enableObjectResizing', 'enableInlineTableEditing']).contains(command)) {
       this.composer.element.innerHTML = "";
       this.composer.selection.selectNode(this.composer.element);
@@ -12157,9 +12157,9 @@ wysihtml.Commands = Base.extend(
 })(wysihtml);
 
 /* Formatblock
- * Is used to insert block level elements 
+ * Is used to insert block level elements
  * It tries to solve the case that some block elements should not contain other block level elements (h1-6, p, ...)
- * 
+ *
 */
 (function(wysihtml) {
 
@@ -12227,7 +12227,7 @@ wysihtml.Commands = Base.extend(
         elements[i].parentNode.removeChild(elements[i]);
       }
     }
-    
+
     return newBlockElements;
   }
 
@@ -12239,7 +12239,7 @@ wysihtml.Commands = Base.extend(
   function findOuterBlock(node, container, allBlocks) {
     var n = node,
         block = null;
-        
+
     while (n && container && n !== container) {
       if (n.nodeType === 1 && n.matches(allBlocks ? BLOCK_ELEMENTS : UNNESTABLE_BLOCK_ELEMENTS)) {
         block = n;
@@ -12364,7 +12364,7 @@ wysihtml.Commands = Base.extend(
     for (var i = blocks.length; i--;) {
       nextEl = wysihtml.dom.domNode(blocks[i]).next({nodeTypes: [1,3], ignoreBlankTexts: true}),
       prevEl = wysihtml.dom.domNode(blocks[i]).prev({nodeTypes: [1,3], ignoreBlankTexts: true});
-      
+
       if (nextEl && nextEl.nodeType !== 1 && nextEl.nodeName !== 'BR') {
         if ((blocks[i].innerHTML || blocks[i].nodeValue || '').trim() !== '') {
           blocks[i].parentNode.insertBefore(blocks[i].ownerDocument.createElement('BR'), nextEl);
@@ -12406,7 +12406,7 @@ wysihtml.Commands = Base.extend(
       }
       return;
     }
-    
+
     // If range ends outside of node and starts inside at textrange and covers the whole node visually, extend start to cover the node start too
     if (end && end.nodeType === 1 && start.nodeType === 3) {
       if (end.firstChild === start && range.startOffset === 0) {
@@ -12417,7 +12417,7 @@ wysihtml.Commands = Base.extend(
       return;
     }
 
-    // If range covers a whole textnode and the textnode is the only child of node, extend range to node 
+    // If range covers a whole textnode and the textnode is the only child of node, extend range to node
     if (start && start.nodeType === 3 && start === end && start.parentNode.childNodes.length === 1) {
       if (range.endOffset == end.data.length && range.startOffset === 0) {
         node = start.parentNode;
@@ -12429,16 +12429,16 @@ wysihtml.Commands = Base.extend(
       return;
     }
   }
-  
+
   // Scans ranges array for insertion points that are not allowed to insert block tags fixes/splits illegal ranges
   // Some places do not allow block level elements inbetween (inside ul and outside li)
   // TODO: might need extending for other nodes besides li (maybe dd,dl,dt)
   function fixNotPermittedInsertionPoints(ranges) {
     var newRanges = [],
         lis, j, maxj, tmpRange, rangePos, closestLI;
-        
+
     for (var i = 0, maxi = ranges.length; i < maxi; i++) {
-      
+
       // Fixes range start and end positions if inside UL or OL element (outside of LI)
       if (ranges[i].startContainer.nodeType === 1 && ranges[i].startContainer.matches('ul, ol')) {
         ranges[i].setStart(ranges[i].startContainer.childNodes[ranges[i].startOffset], 0);
@@ -12458,7 +12458,7 @@ wysihtml.Commands = Base.extend(
         return node.nodeName === "LI";
       });
       if (lis.length > 0) {
-      
+
         for (j = 0, maxj = lis.length; j < maxj; j++) {
           rangePos = ranges[i].compareNode(lis[j]);
 
@@ -12468,7 +12468,7 @@ wysihtml.Commands = Base.extend(
 
             tmpRange = ranges[i].cloneRange();
             closestLI = wysihtml.dom.domNode(lis[j]).prev({nodeTypes: [1]});
-            
+
             if (closestLI) {
               tmpRange.setEnd(closestLI, closestLI.childNodes.length);
             } else if (lis[j].closest('ul, ol')) {
@@ -12479,16 +12479,16 @@ wysihtml.Commands = Base.extend(
             newRanges.push(tmpRange);
             ranges[i].setStart(lis[j], 0);
           }
-          
+
           // Fixes end of range that crosses li border
           if (rangePos === ranges[i].NODE_BEFORE || rangePos === ranges[i].NODE_INSIDE) {
             // Range starts inside the node and ends after node
-            
+
             tmpRange = ranges[i].cloneRange();
             tmpRange.setEnd(lis[j], lis[j].childNodes.length);
             newRanges.push(tmpRange);
-            
-            // Find next LI in list and if present set range to it, else 
+
+            // Find next LI in list and if present set range to it, else
             closestLI = wysihtml.dom.domNode(lis[j]).next({nodeTypes: [1]});
             if (closestLI) {
               ranges[i].setStart(closestLI, 0);
@@ -12496,7 +12496,7 @@ wysihtml.Commands = Base.extend(
               ranges[i].setStartAfter(lis[j].closest('ul, ol'));
             } else {
               ranges[i].setStartAfter(lis[j]);
-            } 
+            }
           }
         }
         newRanges.push(ranges[i]);
@@ -12506,17 +12506,17 @@ wysihtml.Commands = Base.extend(
     }
     return newRanges;
   }
-  
+
   // Return options object with nodeName set if original did not have any
   // Node name is set to local or global default
   function getOptionsWithNodename(options, defaultName, composer) {
     var correctedOptions = (options) ? wysihtml.lang.object(options).clone(true) : null;
-    if (correctedOptions) {  
+    if (correctedOptions) {
       correctedOptions.nodeName = correctedOptions.nodeName || defaultName || defaultNodeName(composer);
     }
     return correctedOptions;
   }
-  
+
   // Injects document fragment to range ensuring outer elements are split to a place where block elements are allowed to be inserted
   // Also wraps empty clones of split parent tags around fragment to keep formatting
   // If firstOuterBlock is given assume that instead of finding outer (useful for solving cases of some blocks are allowed into others while others are not)
@@ -12524,7 +12524,7 @@ wysihtml.Commands = Base.extend(
     var rangeStartContainer = range.startContainer,
         firstOuterBlock = firstOuterBlock || findOuterBlock(rangeStartContainer, composer.element, true),
         outerInlines, first, last, prev, next;
-    
+
     if (firstOuterBlock) {
       // If selection starts inside un-nestable block, split-escape the unnestable point and insert node between
       first = fragment.firstChild;
@@ -12565,7 +12565,7 @@ wysihtml.Commands = Base.extend(
       }
     }
   }
-  
+
   // Removes all block formatting from range
   function clearRangeBlockFromating(range, closestBlockName, composer) {
     var r = range.cloneRange(),
@@ -12575,16 +12575,16 @@ wysihtml.Commands = Base.extend(
         fragment = composer.doc.createDocumentFragment(),
         children, blocks,
         first = true;
-        
+
     while(content.firstChild) {
       // Iterate over all selection content first level childNodes
       if (content.firstChild.nodeType === 1 && content.firstChild.matches(BLOCK_ELEMENTS)) {
         // If node is a block element
         // Split block formating and add new block to wrap caret
-        
+
         unwrapBlocksFromContent(content.firstChild);
         children = wysihtml.dom.unwrap(content.firstChild);
-        
+
         // Add line break before if needed
         if (children.length > 0) {
           if (
@@ -12594,11 +12594,11 @@ wysihtml.Commands = Base.extend(
             fragment.appendChild(composer.doc.createElement('BR'));
           }
         }
-        
+
         for (var c = 0, cmax = children.length; c < cmax; c++) {
           fragment.appendChild(children[c]);
         }
-        
+
         // Add line break after if needed
         if (children.length > 0) {
           if (fragment.lastChild.nodeType !== 1 || !isLineBreaking(fragment.lastChild, composer)) {
@@ -12607,18 +12607,18 @@ wysihtml.Commands = Base.extend(
             }
           }
         }
-        
+
       } else {
         fragment.appendChild(content.firstChild);
       }
-      
+
       first = false;
     }
     blocks = wysihtml.lang.array(fragment.childNodes).get();
     injectFragmentToRange(fragment, r, composer);
     return blocks;
   }
-  
+
   // When block node is inserted, look surrounding nodes and remove surplous linebreak tags (as block format breaks line itself)
   function removeSurroundingLineBreaks(prevNode, nextNode, composer) {
     var prevPrev = prevNode && wysihtml.dom.domNode(prevNode).prev({nodeTypes: [1,3], ignoreBlankTexts: true});
@@ -12721,25 +12721,25 @@ wysihtml.Commands = Base.extend(
     trimBlankTextsAndBreaks(content);
 
     if (options && options.nodeName === "BLOCKQUOTE") {
-      
+
       // If blockquote is to be inserted no quessing just add it as outermost block on line or selection
       var tmpEl = applyOptionsToElement(null, options, composer);
       tmpEl.appendChild(content);
       fragment.appendChild(tmpEl);
       blocks = [tmpEl];
-      
+
     } else {
 
       if (!content.firstChild) {
-        // IF selection is caret (can happen if line is empty) add format around tag 
+        // IF selection is caret (can happen if line is empty) add format around tag
         fragment.appendChild(applyOptionsToElement(null, options, composer));
       } else {
 
         while(content.firstChild) {
           // Iterate over all selection content first level childNodes
-          
+
           if (content.firstChild.nodeType == 1 && content.firstChild.matches(BLOCK_ELEMENTS)) {
-            
+
             // If node is a block element
             // Escape(split) block formatting at caret
             applyOptionsToElement(content.firstChild, options, composer);
@@ -12747,9 +12747,9 @@ wysihtml.Commands = Base.extend(
               unwrapBlocksFromContent(content.firstChild);
             }
             fragment.appendChild(content.firstChild);
-            
+
           } else {
-            
+
             // Wrap subsequent non-block nodes inside new block element
             wrapper = applyOptionsToElement(null, getOptionsWithNodename(options, closestBlockName, composer), composer);
             while(content.firstChild && (content.firstChild.nodeType !== 1 || !content.firstChild.matches(BLOCK_ELEMENTS))) {
@@ -12788,7 +12788,7 @@ wysihtml.Commands = Base.extend(
 
     return (parentNode) ? parentNode.nodeName : null;
   }
-  
+
   // Expands caret to cover the closest block that:
   //   * cannot contain other block level elements (h1-6,p, etc)
   //   * Has the same nodeName that is to be inserted
@@ -12810,7 +12810,7 @@ wysihtml.Commands = Base.extend(
       composer.selection.selectLine();
     }
   }
-  
+
   // Set selection to begin inside first created block element (beginning of it) and end inside (and after content) of last block element
   // TODO: Checking nodetype might be unnescescary as nodes inserted by formatBlock are nodetype 1 anyway
   function selectElements(newBlockElements, composer) {
@@ -12822,18 +12822,18 @@ wysihtml.Commands = Base.extend(
     range.setEnd(lastEl, lastOffset);
     range.select();
   }
-  
+
   // Get all ranges from selection (takes out uneditables and out of editor parts) and apply format to each
-  // Return created/modified block level elements 
+  // Return created/modified block level elements
   // Method can be either "apply" or "remove"
   function formatSelection(method, composer, options) {
     var ranges = composer.selection.getOwnRanges(),
         newBlockElements = [],
         closestBlockName;
-        
+
     // Some places do not allow block level elements inbetween (inside ul and outside li, inside table and outside of td/th)
     ranges = fixNotPermittedInsertionPoints(ranges);
-        
+
     for (var i = ranges.length; i--;) {
       fixRangeCoverage(ranges[i], composer);
       closestBlockName = getParentBlockNodeName(ranges[i].startContainer, composer);
@@ -12845,8 +12845,8 @@ wysihtml.Commands = Base.extend(
     }
     return newBlockElements;
   }
-  
-  // If properties is passed as a string, look for tag with that tagName/query 
+
+  // If properties is passed as a string, look for tag with that tagName/query
   function parseOptions(options) {
     if (typeof options === "string") {
       options = {
@@ -12913,13 +12913,13 @@ wysihtml.Commands = Base.extend(
           // Options == null means block formatting should be removed from selection
           newBlockElements = formatSelection("remove", composer);
         }
-        
+
       }
 
       // Remove empty block elements that may be left behind
       // Also remove them from new blocks list
       newBlockElements = cleanup(composer, newBlockElements);
-      
+
       // Restore selection
       if (bookmark) {
         rangy.restoreSelection(bookmark);
@@ -12927,21 +12927,21 @@ wysihtml.Commands = Base.extend(
         selectElements(newBlockElements, composer);
       }
     },
-    
+
     // Removes all block formatting from selection
     remove: function(composer, command, options) {
       options = parseOptions(options);
       var newBlockElements, bookmark;
-      
+
       // If selection is caret expand it to cover nearest suitable block element or row if none found
       if (composer.selection.isCollapsed()) {
         bookmark = rangy.saveSelection(composer.win);
         expandCaretToBlock(composer, options && options.nodeName ? options.nodeName.toUpperCase() : undefined);
       }
-      
+
       newBlockElements = formatSelection("remove", composer);
       newBlockElements = cleanup(composer, newBlockElements);
-      
+
       // Restore selection
       if (bookmark) {
         rangy.restoreSelection(bookmark);
@@ -13081,7 +13081,7 @@ wysihtml.Commands = Base.extend(
   }
 
   // If attrbutes and values are the same > remove
-  // if attributes or values 
+  // if attributes or values
   function updateElementAttributes(element, newAttributes, toggle) {
     var attr = wysihtml.dom.getAttributes(element),
         fullContain = containsSameAttributes(newAttributes, attr),
@@ -13155,7 +13155,7 @@ wysihtml.Commands = Base.extend(
     // Handle similar semantically same elements (queryAliasMap)
     nodeNameQuery = options.nodeName ? queryAliasMap[options.nodeName.toLowerCase()] || options.nodeName.toLowerCase() : null;
     nodeQueryMatch = nodeNameQuery ? wysihtml.dom.domNode(element).test({ query: nodeNameQuery }) : false;
-    
+
     // Unwrap element if no attributes present and node name given
     // or no attributes and if no nodename set but node is the default
     if (!options.nodeName || options.nodeName === defaultTag || nodeQueryMatch) {
@@ -13228,7 +13228,7 @@ wysihtml.Commands = Base.extend(
         selection = rangy.getSelection(composer.win);
 
     rangy.getSelection(composer.win).removeAllRanges();
-    
+
     // IE looses focus of contenteditable on removeallranges and can not set new selection unless contenteditable is focused again
     try {
       rangy.getSelection(composer.win).addRange(range);
@@ -13250,7 +13250,7 @@ wysihtml.Commands = Base.extend(
       range.setEnd(lastText, lastText.length);
       selectRange(composer, range);
     }
-    
+
   }
 
   function selectTextNode(composer, node, start, end) {
@@ -13302,7 +13302,7 @@ wysihtml.Commands = Base.extend(
       }
 
     }
-    
+
     return {
       nodes: nodes,
       partial: partial
@@ -13326,7 +13326,7 @@ wysihtml.Commands = Base.extend(
   }
 
   // Returns a range and textnode containing object from caret position covering a whole word
-  // wordOffsety describes the original position of caret in the new textNode 
+  // wordOffsety describes the original position of caret in the new textNode
   // Caret has to be inside a textNode.
   function getRangeForWord(selection) {
     var anchor, offset, doc, range, offsetStart, offsetEnd, beforeChar, afterChar,
@@ -13374,7 +13374,7 @@ wysihtml.Commands = Base.extend(
 
   function mergeConsequentSimilarElements(elements) {
     for (var i = elements.length; i--;) {
-      
+
       if (elements[i] && elements[i].parentNode) { // Test if node is not allready removed in cleanup
 
         if (elements[i].nextSibling && isSameNode(elements[i], elements[i].nextSibling)) {
@@ -13458,7 +13458,7 @@ wysihtml.Commands = Base.extend(
       if (options.toggle !== false) {
         if (caretIsInsideWord(selection)) {
 
-          // Unformat whole word 
+          // Unformat whole word
           wordObj = getRangeForWord(selection);
           textNode = wordObj.textNode;
           unformatTextNode(wordObj.textNode, composer, options);
@@ -13500,13 +13500,13 @@ wysihtml.Commands = Base.extend(
         }
 
       } else {
-        
+
         // Selection is partially in format
         // change it to new if format if textnode allreafy in similar state
         // else just apply
-        
+
         for (i = textNodes.length; i--;) {
-          
+
           if (findSimilarTextNodeWrapper(textNodes[i], options, composer.element)) {
             unformatTextNode(textNodes[i], composer, options);
           }
@@ -13527,7 +13527,7 @@ wysihtml.Commands = Base.extend(
     var textNode, textOffset, newNode, i,
         selection = composer.selection.getSelection();
 
-    if (!textNodes.length) {    
+    if (!textNodes.length) {
       textNode = selection.anchorNode;
       textOffset = selection.anchorOffset;
 
@@ -13548,7 +13548,7 @@ wysihtml.Commands = Base.extend(
   function applyFormat(composer, textNodes, options) {
     var wordObj, i,
         selection = composer.selection.getSelection();
- 
+
     if (!textNodes.length) {
       // Handle collapsed selection caret and return
       if (caretIsInsideWord(selection)) {
@@ -13563,7 +13563,7 @@ wysihtml.Commands = Base.extend(
           formatTextRange(r, composer, options);
         }
       }
-      
+
     } else {
       // Handle textnodes in selection and apply format
       for (i = textNodes.length; i--;) {
@@ -13572,7 +13572,7 @@ wysihtml.Commands = Base.extend(
       cleanupAndSetSelection(composer, textNodes, options);
     }
   }
-  
+
   // If properties is passed as a string, correct options with that nodeName
   function fixOptions(options) {
     options = (typeof options === "string") ? { nodeName: options } : options;
@@ -13615,7 +13615,7 @@ wysihtml.Commands = Base.extend(
         // Text allready has the format applied
         removeFormat(composer, textNodes, state, options);
       }
-      
+
       composer.element.normalize();
     },
 
@@ -15917,12 +15917,12 @@ wysihtml.views.Textarea = wysihtml.views.View.extend(
         uneditableContainer: "wysihtml-uneditable-container"
       },
       // Browsers that support copied source handling will get a marking of the origin of the copied source (for determinig code cleanup rules on paste)
-      // Also copied source is based directly on selection - 
+      // Also copied source is based directly on selection -
       // (very useful for webkit based browsers where copy will otherwise contain a lot of code and styles based on whatever and not actually in selection).
       // If falsy value is passed source override is also disabled
       copyedFromMarking: '<meta name="copied-from" content="wysihtml">'
     },
-    
+
     constructor: function(editableElement, config) {
       this.editableElement  = typeof(editableElement) === "string" ? document.getElementById(editableElement) : editableElement;
       this.config           = wysihtml.lang.object({}).merge(this.defaults).merge(config).get();
@@ -15970,7 +15970,7 @@ wysihtml.views.Textarea = wysihtml.views.View.extend(
         }
         this.runEditorExtenders();
     },
-    
+
     runEditorExtenders: function() {
       wysihtml.editorExtenders.forEach(function(extender) {
         extender(this);
@@ -16096,7 +16096,7 @@ wysihtml.views.Textarea = wysihtml.views.View.extend(
         "uneditableClass": this.config.classNames.uneditableContainer
       });
       this.composer.selection.deleteContents();
-      this.composer.selection.insertHTML(cleanHtml);
+      this.composer.selection.insertHTML(cleanHtml); 
     }
   });
 })(wysihtml);
