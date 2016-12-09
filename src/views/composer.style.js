@@ -58,43 +58,50 @@
    * In order to prevent the element being scrolled into view when focusing it, we simply
    * move it out of the scrollable area, focus it, and reset it's position
    */
-  var focusWithoutScrolling = function(element) {
-    if (element.setActive) {
-      // Following line could cause a js error when the textarea is invisible
-      // See https://github.com/xing/wysihtml5/issues/9
-      try { element.setActive(); } catch(e) {}
-    } else {
-      var elementStyle = element.style,
-          originalScrollTop = doc.documentElement.scrollTop || doc.body.scrollTop,
-          originalScrollLeft = doc.documentElement.scrollLeft || doc.body.scrollLeft,
-          originalStyles = {
-            position:         elementStyle.position,
-            top:              elementStyle.top,
-            left:             elementStyle.left,
-            WebkitUserSelect: elementStyle.WebkitUserSelect
-          };
+   
+	var focusWithoutScrolling;
+	// Allow this method to be custom defined because it can cause scrolling issues in
+	// some scenarios
+	if (typeof wysihtml.quirks.focusWithoutScrolling === "function") {		  
+		focusWithoutScrolling = function(element) {
+			if (element.setActive) {
+			  // Following line could cause a js error when the textarea is invisible
+			  // See https://github.com/xing/wysihtml5/issues/9
+			  try { element.setActive(); } catch(e) {}
+			} else {
+			  var elementStyle = element.style,
+				  originalScrollTop = doc.documentElement.scrollTop || doc.body.scrollTop,
+				  originalScrollLeft = doc.documentElement.scrollLeft || doc.body.scrollLeft,
+				  originalStyles = {
+					position:         elementStyle.position,
+					top:              elementStyle.top,
+					left:             elementStyle.left,
+					WebkitUserSelect: elementStyle.WebkitUserSelect
+				  };
 
-      dom.setStyles({
-        position:         "absolute",
-        top:              "-99999px",
-        left:             "-99999px",
-        // Don't ask why but temporarily setting -webkit-user-select to none makes the whole thing performing smoother
-        WebkitUserSelect: "none"
-      }).on(element);
+			  dom.setStyles({
+				position:         "absolute",
+				top:              "-99999px",
+				left:             "-99999px",
+				// Don't ask why but temporarily setting -webkit-user-select to none makes the whole thing performing smoother
+				WebkitUserSelect: "none"
+			  }).on(element);
+			  
+			  element.focus();
 
-      element.focus();
+			  dom.setStyles(originalStyles).on(element);
 
-      dom.setStyles(originalStyles).on(element);
-
-      if (win.scrollTo) {
-        // Some browser extensions unset this method to prevent annoyances
-        // "Better PopUp Blocker" for Chrome http://code.google.com/p/betterpopupblocker/source/browse/trunk/blockStart.js#100
-        // Issue: http://code.google.com/p/betterpopupblocker/issues/detail?id=1
-        win.scrollTo(originalScrollLeft, originalScrollTop);
-      }
-    }
-  };
-
+			  if (win.scrollTo) {
+				// Some browser extensions unset this method to prevent annoyances
+				// "Better PopUp Blocker" for Chrome http://code.google.com/p/betterpopupblocker/source/browse/trunk/blockStart.js#100
+				// Issue: http://code.google.com/p/betterpopupblocker/issues/detail?id=1
+				win.scrollTo(originalScrollLeft, originalScrollTop);
+			  }
+			}
+		  };
+	} else {
+		focusWithoutScrolling = wysihtml.quirks.focusWithoutScrolling;
+	}
 
   wysihtml.views.Composer.prototype.style = function() {
     var that                  = this,

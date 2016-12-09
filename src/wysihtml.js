@@ -1,4 +1,7 @@
 /**
+ * Fork of wysihtml by Justin R Buchanan (CSG)
+ * https://github.com/csgsolutions/wysihtml
+ *
  * @license wysihtml v@VERSION
  * https://github.com/Voog/wysihtml
  *
@@ -7,6 +10,7 @@
  *
  * Copyright (C) 2012 XING AG
  * Licensed under the MIT license (MIT)
+ *
  *
  */
 var wysihtml = {
