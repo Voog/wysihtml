@@ -63,6 +63,8 @@
 	// Allow this method to be custom defined because it can cause scrolling issues in
 	// some scenarios
 	if (typeof wysihtml.quirks.focusWithoutScrolling === "function") {		  
+		focusWithoutScrolling = wysihtml.quirks.focusWithoutScrolling;		
+	} else {
 		focusWithoutScrolling = function(element) {
 			if (element.setActive) {
 			  // Following line could cause a js error when the textarea is invisible
@@ -99,8 +101,6 @@
 			  }
 			}
 		  };
-	} else {
-		focusWithoutScrolling = wysihtml.quirks.focusWithoutScrolling;
 	}
 
   wysihtml.views.Composer.prototype.style = function() {
