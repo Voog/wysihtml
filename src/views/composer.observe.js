@@ -335,10 +335,12 @@
   };
 
   var handleDomNodeRemoved = function(event) {
+    if (event.target == this.element) {
       if (this.domNodeRemovedInterval) {
         clearInterval(domNodeRemovedInterval);
       }
       this.parent.fire("destroy:composer");
+    }
   };
 
   // Listens to "drop", "paste", "mouseup", "focus", "keyup" events and fires
