@@ -598,7 +598,8 @@
     this.actions = actions;
 
     // --------- destroy:composer event ---------
-    container.addEventListener(["DOMNodeRemoved"], handleDomNodeRemoved.bind(this), false);
+    container.addEventListener("DOMNodeRemoved", handleDomNodeRemoved.bind(this), false);
+    container.addEventListener("DOMNodeRemovedFromDocument", handleDomNodeRemoved.bind(this), false);
 
     // DOMNodeRemoved event is not supported in IE 8
     // TODO: try to figure out a polyfill style fix, so it could be transferred to polyfills and removed if ie8 is not needed
