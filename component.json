@@ -1,0 +1,19 @@
+{
+	"name": "Voog/wysihtml",
+	"description": "wysihtml is an extended and less strict approach on xing/wysihtml5 open source rich text editor based on HTML5 technology.",
+
+	"repository": "Voog/wysihtml",
+
+	"keywords": [
+		"wysiwyg"
+	],
+
+	"main": "dist/wysihtml-toolbar.js",
+
+	"scripts": [
+		"dist/wysihtml-toolbar.js",
+		"dist/wysihtml.js"
+	],
+
+	"license": "MIT"
+}
