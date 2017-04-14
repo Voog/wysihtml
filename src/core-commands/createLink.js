@@ -7,7 +7,7 @@
 
   function getOptions(value) {
     var options = typeof value === 'object' ? value : {'href': value};
-    return wysihtml.lang.object({}).merge(nodeOptions).merge({'attribute': value}).get();
+    return wysihtml.lang.object({}).merge(nodeOptions).merge({'attribute': options}).get();
   }
 
   wysihtml.commands.createLink  = {
