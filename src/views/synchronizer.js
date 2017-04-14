@@ -60,6 +60,8 @@
       var interval,
           that          = this,
           form          = this.textarea.element.form,
+          formSubmitHandler = null,
+          formResetHandler = null,
           startInterval = function() {
             interval = setInterval(function() { that.fromComposerToTextarea(); }, INTERVAL);
           },
@@ -73,10 +75,10 @@
       if (form) {
         // If the textarea is in a form make sure that after onreset and onsubmit the composer
         // has the correct state
-        wysihtml.dom.observe(form, "submit", function() {
+        formSubmitHandler = wysihtml.dom.observe(form, "submit", function() {
           that.sync(true);
         });
-        wysihtml.dom.observe(form, "reset", function() {
+        formResetHandler = wysihtml.dom.observe(form, "reset", function() {
           setTimeout(function() { that.fromTextareaToComposer(); }, 0);
         });
       }
@@ -91,7 +93,21 @@
         }
       });
 
-      this.editor.on("destroy:composer", stopInterval);
+      function onDestroyComposer() {
+        stopInterval();
+
+        //Cleanup handlers if exist
+        if (formSubmitHandler != null) {
+          formSubmitHandler.stop();
+          formSubmitHandler = null;
+        }
+        if (formResetHandler != null) {
+          formResetHandler.stop();
+          formResetHandler = null;
+        }
+      }
+
+      this.editor.on("destroy:composer", onDestroyComposer);
     }
   });
 })(wysihtml);
