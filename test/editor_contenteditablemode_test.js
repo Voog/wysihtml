@@ -13,9 +13,15 @@ if (wysihtml.browser.supported()) {
       this.editableArea.title  = "Please enter your foo";
       this.editableArea.innerHTML  = "hey tiff, what's up?";
 
+      this.textareaElement        = document.createElement("textarea");
+      this.textareaElement.id     = "wysihtml-test-textarea";
+      this.textareaElement.title  = "Please enter your foo";
+      this.textareaElement.value  = "hey tiff, what's up?";
+
       this.originalBodyClassName = document.body.className;
 
       document.body.appendChild(this.editableArea);
+      document.body.appendChild(this.textareaElement);
 
     },
 
@@ -447,6 +453,29 @@ if (wysihtml.browser.supported()) {
       }, 100);
 
     }.bind(this));
+  });
+
+  asyncTest("DomNodeRemoved", function() {
+    expect(1);
+
+    var that = this,
+        editor = new wysihtml.Editor(this.textareaElement, {
+          contentEditableMode: true,
+          parserRules: {
+            tags: {
+              b: true
+            }
+          }
+        });
+
+    editor.on("load", function () {
+      editor.setValue("<b>bold text</b>", true);
+
+      setTimeout(function () {
+        equal(that.textareaElement.value, editor.composer.getValue(false, false), "Composer still sync");
+        start();
+      }, 800);
+    });
   });
 
   /*
