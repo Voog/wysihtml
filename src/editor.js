@@ -94,6 +94,8 @@
         wysihtml.lang.object(this.config.classNames).merge(config.classNames);
       }
 
+      editableElement.dataset.rangyRoot = 'true'
+
       if (this.editableElement.nodeName.toLowerCase() != "textarea") {
           this.config.contentEditableMode = true;
           this.config.noTextarea = true;
