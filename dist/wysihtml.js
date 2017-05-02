@@ -4595,7 +4595,7 @@ rangy.createModule("SaveRestore", ["WrappedRange"], function(api, module) {
  * Copyright 2015, Tim Down
  * Licensed under the MIT license.
  * Version: 1.3.1-dev
- * Build date: 20 May 2015
+ * Build date: 1 May 2017
  */
 
 /**
@@ -5509,6 +5509,11 @@ rangy.createModule("TextRange", ["WrappedSelection"], function(api, module) {
             }
             var nextNode, nextOffset, child;
             if (offset == nodeWrapper.getLength()) {
+                if (node.dataset && node.dataset.rangyRoot == 'true') {
+                  // If already at the root, don't go any further up the DOM tree
+                  return null;
+                }
+
                 // Move onto the next node
                 nextNode = node.parentNode;
                 nextOffset = nextNode ? nodeWrapper.getNodeIndex() + 1 : 0;
@@ -5536,6 +5541,11 @@ rangy.createModule("TextRange", ["WrappedSelection"], function(api, module) {
             var nodeWrapper = pos.nodeWrapper, node = pos.node, offset = pos.offset, session = nodeWrapper.session;
             var previousNode, previousOffset, child;
             if (offset == 0) {
+                if (node.dataset && node.dataset.rangyRoot == 'true') {
+                  // If already at the root, don't go any further up the DOM tree
+                  return null;
+                }
+
                 previousNode = node.parentNode;
                 previousOffset = previousNode ? nodeWrapper.getNodeIndex() : 0;
             } else {
@@ -9525,7 +9535,7 @@ wysihtml.dom.parse = function(elementOrHtml_current, config_current) {
       return function(attributeValue) {
         return mapping[String(attributeValue).toLowerCase()];
       };
-    })(),
+    })()
   };
 
   // ------------ class converter (converts an html attribute to a class name) ------------ \\
@@ -12134,7 +12144,7 @@ wysihtml.Commands = Base.extend(
 
   function getOptions(value) {
     var options = typeof value === 'object' ? value : {'href': value};
-    return wysihtml.lang.object({}).merge(nodeOptions).merge({'attribute': value}).get();
+    return wysihtml.lang.object({}).merge(nodeOptions).merge({'attribute': options}).get();
   }
 
   wysihtml.commands.createLink  = {
@@ -15932,6 +15942,8 @@ wysihtml.views.Textarea = wysihtml.views.View.extend(
       if (config && config.classNames) {
         wysihtml.lang.object(this.config.classNames).merge(config.classNames);
       }
+
+      editableElement.dataset.rangyRoot = 'true'
 
       if (this.editableElement.nodeName.toLowerCase() != "textarea") {
           this.config.contentEditableMode = true;
