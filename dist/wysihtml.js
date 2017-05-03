@@ -12134,7 +12134,7 @@ wysihtml.Commands = Base.extend(
 
   function getOptions(value) {
     var options = typeof value === 'object' ? value : {'href': value};
-    return wysihtml.lang.object({}).merge(nodeOptions).merge({'attribute': value}).get();
+    return wysihtml.lang.object({}).merge(nodeOptions).merge({'attribute': options}).get();
   }
 
   wysihtml.commands.createLink  = {
@@ -14714,8 +14714,8 @@ wysihtml.views.View = Base.extend(
       // Ensures when editor is empty and not line breaks mode, the inital state has a paragraph in it on focus with caret inside paragraph
       if (!this.config.useLineBreaks) {
         dom.observe(this.element, ["focus"], function() {
-          if (that.isEmpty()) {
-            setTimeout(function() {
+          setTimeout(function() {
+            if (that.isEmpty()) {
               var paragraph = that.doc.createElement("P");
               that.element.innerHTML = "";
               that.element.appendChild(paragraph);
@@ -14725,8 +14725,8 @@ wysihtml.views.View = Base.extend(
               } else {
                 that.selection.selectNode(paragraph, true);
               }
-            }, 0);
-          }
+            }
+          }, 0);
         });
       }
 
