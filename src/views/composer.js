@@ -425,8 +425,8 @@
       // Ensures when editor is empty and not line breaks mode, the inital state has a paragraph in it on focus with caret inside paragraph
       if (!this.config.useLineBreaks) {
         dom.observe(this.element, ["focus"], function() {
-          if (that.isEmpty()) {
-            setTimeout(function() {
+          setTimeout(function() {
+            if (that.isEmpty()) {
               var paragraph = that.doc.createElement("P");
               that.element.innerHTML = "";
               that.element.appendChild(paragraph);
@@ -436,8 +436,8 @@
               } else {
                 that.selection.selectNode(paragraph, true);
               }
-            }, 0);
-          }
+            }
+          }, 0);
         });
       }
 
