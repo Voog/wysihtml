@@ -1,9 +1,9 @@
-/* 
+/*
  * Methods for fetching pasted html before it gets inserted into content
 **/
 
 /* Modern event.clipboardData driven approach.
- * Advantage is that it does not have to loose selection or modify dom to catch the data. 
+ * Advantage is that it does not have to loose selection or modify dom to catch the data.
  * IE does not support though.
 **/
 wysihtml.dom.getPastedHtml = function(event) {
@@ -18,13 +18,19 @@ wysihtml.dom.getPastedHtml = function(event) {
   return html;
 };
 
+wysihtml.dom.cleanerDivs = [];
+wysihtml.dom.isCleanerDiv = function(element) {
+  return this.cleanerDivs.indexOf(element) !== -1;
+};
 /* Older temprorary contenteditable as paste source catcher method for fallbacks */
 wysihtml.dom.getPastedHtmlWithDiv = function (composer, f) {
   var selBookmark = composer.selection.getBookmark(),
       doc = composer.element.ownerDocument,
       cleanerDiv = doc.createElement('DIV'),
       scrollPos = composer.getScrollPos();
-  
+
+  this.cleanerDivs.push(cleanerDiv);
+
   doc.body.appendChild(cleanerDiv);
 
   cleanerDiv.style.width = "1px";
@@ -46,6 +52,7 @@ wysihtml.dom.getPastedHtmlWithDiv = function (composer, f) {
       html = false;
     }
     f(html);
+    wysihtml.dom.cleanerDivs.splice(wysihtml.dom.cleanerDivs.indexOf(cleanerDiv), 1);
     cleanerDiv.parentNode.removeChild(cleanerDiv);
   }, 0);
 };

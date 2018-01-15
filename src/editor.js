@@ -78,12 +78,12 @@
         uneditableContainer: "wysihtml-uneditable-container"
       },
       // Browsers that support copied source handling will get a marking of the origin of the copied source (for determinig code cleanup rules on paste)
-      // Also copied source is based directly on selection - 
+      // Also copied source is based directly on selection -
       // (very useful for webkit based browsers where copy will otherwise contain a lot of code and styles based on whatever and not actually in selection).
       // If falsy value is passed source override is also disabled
       copyedFromMarking: '<meta name="copied-from" content="wysihtml">'
     },
-    
+
     constructor: function(editableElement, config) {
       this.editableElement  = typeof(editableElement) === "string" ? document.getElementById(editableElement) : editableElement;
       this.config           = wysihtml.lang.object({}).merge(this.defaults).merge(config).get();
@@ -131,7 +131,7 @@
         }
         this.runEditorExtenders();
     },
-    
+
     runEditorExtenders: function() {
       wysihtml.editorExtenders.forEach(function(extender) {
         extender(this);
@@ -237,6 +237,10 @@
       } else {
         this.on("beforepaste:composer", function(event) {
           event.preventDefault();
+          // Ignore second beforepaste fired by IE11.
+          if(wysihtml.dom.isCleanerDiv(event.target)) {
+            return;
+          }
           var scrollPos = this.composer.getScrollPos();
 
           wysihtml.dom.getPastedHtmlWithDiv(this.composer, function(pastedHTML) {
