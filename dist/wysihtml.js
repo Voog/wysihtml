@@ -12134,7 +12134,7 @@ wysihtml.Commands = Base.extend(
 
   function getOptions(value) {
     var options = typeof value === 'object' ? value : {'href': value};
-    return wysihtml.lang.object({}).merge(nodeOptions).merge({'attribute': value}).get();
+    return wysihtml.lang.object({}).merge(nodeOptions).merge({'attribute': options}).get();
   }
 
   wysihtml.commands.createLink  = {
@@ -14714,8 +14714,8 @@ wysihtml.views.View = Base.extend(
       // Ensures when editor is empty and not line breaks mode, the inital state has a paragraph in it on focus with caret inside paragraph
       if (!this.config.useLineBreaks) {
         dom.observe(this.element, ["focus"], function() {
-          if (that.isEmpty()) {
-            setTimeout(function() {
+          setTimeout(function() {
+            if (that.isEmpty()) {
               var paragraph = that.doc.createElement("P");
               that.element.innerHTML = "";
               that.element.appendChild(paragraph);
@@ -14725,8 +14725,8 @@ wysihtml.views.View = Base.extend(
               } else {
                 that.selection.selectNode(paragraph, true);
               }
-            }, 0);
-          }
+            }
+          }, 0);
         });
       }
 
@@ -15917,12 +15917,12 @@ wysihtml.views.Textarea = wysihtml.views.View.extend(
         uneditableContainer: "wysihtml-uneditable-container"
       },
       // Browsers that support copied source handling will get a marking of the origin of the copied source (for determinig code cleanup rules on paste)
-      // Also copied source is based directly on selection - 
+      // Also copied source is based directly on selection -
       // (very useful for webkit based browsers where copy will otherwise contain a lot of code and styles based on whatever and not actually in selection).
       // If falsy value is passed source override is also disabled
       copyedFromMarking: '<meta name="copied-from" content="wysihtml">'
     },
-    
+
     constructor: function(editableElement, config) {
       this.editableElement  = typeof(editableElement) === "string" ? document.getElementById(editableElement) : editableElement;
       this.config           = wysihtml.lang.object({}).merge(this.defaults).merge(config).get();
@@ -15970,7 +15970,7 @@ wysihtml.views.Textarea = wysihtml.views.View.extend(
         }
         this.runEditorExtenders();
     },
-    
+
     runEditorExtenders: function() {
       wysihtml.editorExtenders.forEach(function(extender) {
         extender(this);
@@ -16096,6 +16096,21 @@ wysihtml.views.Textarea = wysihtml.views.View.extend(
         "uneditableClass": this.config.classNames.uneditableContainer
       });
       this.composer.selection.deleteContents();
+
+      if (!this.config.useLineBreaks && this.composer.selection.caretIsInTheEndOfNode()) {
+        var sel = this.composer.selection.getSelection(),
+            aNode = sel.anchorNode,
+            childNode;
+
+        if (aNode && aNode.nodeName === 'P' && aNode.childNodes.length === 1) {
+          childNode = aNode.firstChild;
+
+          if (childNode.nodeName === 'BR') {
+            aNode.removeChild(childNode);
+          }
+        }
+      }
+
       this.composer.selection.insertHTML(cleanHtml);
     }
   });
