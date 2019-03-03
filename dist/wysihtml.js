@@ -4,6 +4,7 @@
  *
  * Author: Christopher Blum (https://github.com/tiff)
  * Secondary author of extended features: Oliver Pulges (https://github.com/pulges)
+ * Reviewed: Jordi Corbila (https://github.com/JordiCorbilla)
  *
  * Copyright (C) 2012 XING AG
  * Licensed under the MIT license (MIT)
@@ -106,9 +107,11 @@ wysihtml.polyfills = function(win, doc) {
         if (originalTarget) {
           if (originalTarget.type === 'form') {
             // The selection parameters are not present for all form elements
-            if (typeof originalTarget.start !== 'undefined' && typeof originalTarget.end !== 'undefined') {
-              originalTarget.node.setSelectionRange(originalTarget.start, originalTarget.end);
-            }
+	    if (originalTarget.start !== null && originalTarget.end !== null) {
+              if (typeof originalTarget.start !== 'undefined' && typeof originalTarget.end !== 'undefined') {
+                originalTarget.node.setSelectionRange(originalTarget.start, originalTarget.end);
+              }
+	    }
             originalTarget.node.focus();
           } else if (originalTarget.type === 'range') {
             r = doc.createRange();
