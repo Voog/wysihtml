@@ -4,6 +4,7 @@
  *
  * Author: Christopher Blum (https://github.com/tiff)
  * Secondary author of extended features: Oliver Pulges (https://github.com/pulges)
+ * Reviewed: Jordi Corbila (https://github.com/JordiCorbilla)
  *
  * Copyright (C) 2012 XING AG
  * Licensed under the MIT license (MIT)
@@ -106,9 +107,11 @@ wysihtml.polyfills = function(win, doc) {
         if (originalTarget) {
           if (originalTarget.type === 'form') {
             // The selection parameters are not present for all form elements
-            if (typeof originalTarget.start !== 'undefined' && typeof originalTarget.end !== 'undefined') {
-              originalTarget.node.setSelectionRange(originalTarget.start, originalTarget.end);
-            }
+	    if (originalTarget.start !== null && originalTarget.end !== null) {
+              if (typeof originalTarget.start !== 'undefined' && typeof originalTarget.end !== 'undefined') {
+                originalTarget.node.setSelectionRange(originalTarget.start, originalTarget.end);
+              }
+	    }
             originalTarget.node.focus();
           } else if (originalTarget.type === 'range') {
             r = doc.createRange();
@@ -3896,7 +3899,7 @@ var rangy;
                     range.collapse(true);
                 }
 
-                if (sel.docSelection.type == CONTROL) {
+                if (sel.docSelection.type === CONTROL) {
                     updateControlSelection(sel);
                 } else if (isTextRange(range)) {
                     updateFromTextRange(sel, range);
@@ -3904,13 +3907,20 @@ var rangy;
                     updateEmptySelection(sel);
                 }
             };
-        } else if (isHostMethod(testSelection, "getRangeAt") && typeof testSelection.rangeCount == NUMBER) {
+        } else if (isHostMethod(testSelection, "getRangeAt") && typeof testSelection.rangeCount === NUMBER) {
             refreshSelection = function(sel) {
-                if (implementsControlRange && implementsDocSelection && sel.docSelection.type == CONTROL) {
+                if (implementsControlRange && implementsDocSelection && sel.docSelection.type === CONTROL) {
                     updateControlSelection(sel);
                 } else {
-                    sel._ranges.length = sel.rangeCount = sel.nativeSelection.rangeCount;
-                    if (sel.rangeCount) {
+                    if (sel.nativeSelection !== null) {
+                        sel._ranges.length = sel.rangeCount = sel.nativeSelection.rangeCount;
+                    }
+                    else {
+                        if (typeof sel.rangeCount !== 'undefined') {
+                            sel._ranges.length = sel.rangeCount;
+                        }
+                    }
+                    if (typeof sel.rangeCount !== 'undefined' && sel.rangeCount) {
                         for (var i = 0, len = sel.rangeCount; i < len; ++i) {
                             sel._ranges[i] = new api.WrappedRange(sel.nativeSelection.getRangeAt(i));
                         }
@@ -9982,10 +9992,10 @@ wysihtml.dom.replaceWithChildNodes = function(node) {
       return iframe;
     },
 
-    /**
-     * Callback for when the iframe has finished loading
-     */
-    _onLoadIframe: function(iframe) {
+    // Callback for when the iframe has finished loading
+
+      _onLoadIframe: function (iframe) {
+              
       // don't resume when the iframe got unloaded (eg. by removing it from the dom)
       if (!wysihtml.dom.contains(doc.documentElement, iframe)) {
         return;
@@ -10004,9 +10014,9 @@ wysihtml.dom.replaceWithChildNodes = function(node) {
       iframeDocument.open("text/html", "replace");
       iframeDocument.write(sandboxHtml);
       iframeDocument.close();
-
-      this.getWindow = function() { return iframe.contentWindow; };
-      this.getDocument = function() { return iframe.contentWindow.document; };
+              
+              this.getWindow = function () { return iframeWindow; };
+              this.getDocument = function () { return iframeDocument; };
 
       // Catch js errors and pass them to the parent's onerror event
       // addEventListener("error") doesn't work properly in some browsers
